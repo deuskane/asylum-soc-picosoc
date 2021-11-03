@@ -14,12 +14,26 @@ CAPI=2:
 # Revisions  :
 # Date        Version  Author   Description
 # 2021-10-26  1.0.0    mrosiere Created
+# 2021-11-03  1.0.1    mrosiere Use generator
 #-----------------------------------------------------------------------------
 
 name : asylum:soc:OB8_GPIO:1.0.0
 description : SoC with OpenBlaze8, switch and led
 
+generate:
+  gen_asm_identity:
+    generator : pbcc_gen
+    parameters:
+      file: soft/identity.psm
+      type: pblazeide
+
 filesets:
+  #---------------------------------------
+  # Generator
+  #---------------------------------------
+  pbcc_dep:
+    depend:
+      - asylum:utils:generators:1.0.0      
 
   #---------------------------------------
   # Source Files
@@ -39,7 +53,6 @@ filesets:
   files_sim:
     files:
       - sim/tb_OB8_GPIO.vhd
-      - src/OpenBlaze8_ROM.vhd
     file_type : vhdlSource
     depend :
       - ">=xilinx:primitive:unisim:11.1"
@@ -61,6 +74,8 @@ targets:
     description     : Simulation of all cases
     filesets_append :
       - files_sim
+      - pbcc_dep
+    generate : [gen_asm_identity]
     toplevel        : tb_OB8_GPIO
     default_tool    : ghdl
     tools :

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2021-09-02
+-- Last update: 2021-11-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -93,8 +93,9 @@ begin  -- architecture rtl
   ins_pbi_OpenBlaze8_ROM : entity work.OpenBlaze8_ROM(rtl)
     port map (
       clk_i            => clk    ,
-      addr_i           => iaddr  ,
-      data_o           => idata  
+      cke_i            => '1'    ,
+      address_i        => iaddr  ,
+      instruction_o    => idata  
     );
   
   ins_pbi_switch : entity work.pbi_GPIO(rtl)
