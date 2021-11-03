@@ -17,7 +17,7 @@ CAPI=2:
 # 2021-11-03  1.0.1    mrosiere Use generator
 #-----------------------------------------------------------------------------
 
-name : asylum:soc:OB8_GPIO:1.0.0
+name : asylum:soc:OB8_GPIO:1.0.1
 description : SoC with OpenBlaze8, switch and led
 
 generate:
