@@ -27,6 +27,11 @@ generate:
       file: soft/identity.psm
       type: pblazeide
 
+  # Next line is a pragma, don't modify
+  #<GENERATE_BEGIN>
+  #<GENERATE_END>
+  # Previous line is a pragma, don't modify
+
 filesets:
   #---------------------------------------
   # Generator
@@ -46,7 +51,7 @@ filesets:
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:pbi_GPIO:1.0.0"
       - ">=asylum:processor:pbi_PicoBlaze8:1.0.0"
-      
+
   #---------------------------------------
   # Testbench Files
   #---------------------------------------
@@ -56,6 +61,23 @@ filesets:
     file_type : vhdlSource
     depend :
       - ">=xilinx:primitive:unisim:11.1"
+
+  #---------------------------------------
+  # Synthesis Files
+  #---------------------------------------
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Digilent Basys
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  files_basys:
+    files:
+      - boards/Digilent-Basys1/pads.ucf : {file_type : UCF}
+      - boards/Digilent-Basys1/OB8_GPIO_Basys1.vhd
+    file_type : vhdlSource
+
+  # Next line is a pragma, don't modify
+  #<FILESETS_BEGIN>
+  #<FILESETS_END>
+  # Previous line is a pragma, don't modify
 
 targets:
 
@@ -81,8 +103,35 @@ targets:
     tools :
       ghdl :
         analyze_options : ["-fsynopsys"]
-        run_options      : ["--vcd=dut.vcd"]
-        
+        run_options     : ["--vcd=dut.vcd"]
+
+  basys:
+    description  : Synthesis for Digilent Basys
+    default_tool : ise
+    filesets     :
+      - files_hdl
+      - files_basys 
+      - pbcc_dep
+    generate : [gen_asm_identity]
+#    parameters   :
+#      - FSYS=50000000
+#      - FSYS_INT=50000000
+    tools:
+      ise:
+        family  : Spartan3E
+        device  : xc3s100e
+        package : tq144
+        speed   : -5
+    toplevel : OB8_GPIO_Basys1
+
+
+  # Next line is a pragma, don't modify
+  #<TARGETS_BEGIN>
+  #<TARGETS_END>
+  # Previous line is a pragma, don't modify
+
+
+
 parameters :
 
   RATIO :
