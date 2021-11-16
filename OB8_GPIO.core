@@ -15,20 +15,27 @@ CAPI=2:
 # Date        Version  Author   Description
 # 2021-10-26  1.0.0    mrosiere Created
 # 2021-11-03  1.0.1    mrosiere Use generator
+# 2021-11-16  1.0.2    mrosiere Add identity.c
 #-----------------------------------------------------------------------------
 
-name : asylum:soc:OB8_GPIO:1.0.1
+name : asylum:soc:OB8_GPIO:1.0.2
 description : SoC with OpenBlaze8, switch and led
 
 generate:
+  # Next line is a pragma, don't modify
+  #<GENERATE_BEGIN>
   gen_asm_identity:
     generator : pbcc_gen
     parameters:
       file: soft/identity.psm
       type: pblazeide
 
-  # Next line is a pragma, don't modify
-  #<GENERATE_BEGIN>
+  gen_c_identity:
+    generator : pbcc_gen
+    parameters:
+      file: soft/identity.c
+      type: c
+
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
 
@@ -91,14 +98,9 @@ targets:
     toplevel        : OB8_GPIO
     default_tool    : ghdl
 
-  sim:
+  sim: &sim
     << : *default
-    description     : Simulation of all cases
-    filesets_append :
-      - files_sim
-      - pbcc_dep
-    generate : [gen_asm_identity]
-    toplevel        : tb_OB8_GPIO
+    description     : default rule to sim
     default_tool    : ghdl
     tools :
       ghdl :
@@ -127,6 +129,22 @@ targets:
 
   # Next line is a pragma, don't modify
   #<TARGETS_BEGIN>
+  sim_asm_identity:
+    << : *sim
+    description     : Simulation tof the test soft/identity.psm
+    filesets_append :
+      - files_sim
+      - pbcc_dep
+    generate : [gen_asm_identity]
+
+  sim_c_identity:
+    << : *sim
+    description     : Simulation tof the test soft/identity.c
+    filesets_append :
+      - files_sim
+      - pbcc_dep
+    generate : [gen_c_identity]
+
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
