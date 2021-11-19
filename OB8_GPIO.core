@@ -45,7 +45,7 @@ filesets:
   #---------------------------------------
   pbcc_dep:
     depend:
-      - asylum:utils:generators:1.0.0      
+      - ">=asylum:utils:generators:1.0.0"      
 
   #---------------------------------------
   # Source Files
@@ -92,7 +92,7 @@ targets:
   # Default Target
   #---------------------------------------
   default: &default
-    description     : Default Target
+    description     : Default Target (DON'T RUN)
     filesets        :
       - files_hdl
     toplevel        : OB8_GPIO
@@ -100,15 +100,16 @@ targets:
 
   sim: &sim
     << : *default
-    description     : default rule to sim
+    description     : default rule to sim (DON'T RUN)
     default_tool    : ghdl
+    toplevel        : tb_OB8_GPIO
     tools :
       ghdl :
         analyze_options : ["-fsynopsys"]
         run_options     : ["--vcd=dut.vcd"]
 
-  basys:
-    description  : Synthesis for Digilent Basys
+  basys_asm_identity:
+    description  : Synthesis for Digilent Basys board of the test soft/identity.psm
     default_tool : ise
     filesets     :
       - files_hdl
@@ -131,7 +132,7 @@ targets:
   #<TARGETS_BEGIN>
   sim_asm_identity:
     << : *sim
-    description     : Simulation tof the test soft/identity.psm
+    description     : Simulation of the test soft/identity.psm
     filesets_append :
       - files_sim
       - pbcc_dep
@@ -139,7 +140,7 @@ targets:
 
   sim_c_identity:
     << : *sim
-    description     : Simulation tof the test soft/identity.c
+    description     : Simulation of the test soft/identity.c
     filesets_append :
       - files_sim
       - pbcc_dep
@@ -147,8 +148,6 @@ targets:
 
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
-
-
 
 parameters :
 
