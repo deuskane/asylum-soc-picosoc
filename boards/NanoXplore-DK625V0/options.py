@@ -1,0 +1,2 @@
+p.setOptions({'ManageAsynchronousReadPort' : 'Yes'
+})
