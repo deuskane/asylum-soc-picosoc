@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2021-11-03
+-- Last update: 2022-01-07
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -27,15 +27,15 @@ use work.pbi_pkg.all;
 
 entity OB8_GPIO is
   generic (
-    FSYS       : positive:= 50_000_000;
-    FSYS_INT   : positive:= 50_000_000;
-    USE_KCPSM  : boolean  := false;
-    NB_SWITCH  : positive := 8;
-    NB_LED     : positive := 8
+    FSYS           : positive := 50_000_000;
+    FSYS_INT       : positive := 50_000_000;
+    NB_SWITCH      : positive := 8;
+    NB_LED         : positive := 8;
+    RESET_POLARITY : string   := "neg"       -- "pos" / "neg"
     );
   port (
     clk_i      : in  std_logic;
-    arstn_i    : in  std_logic;
+    arst_i     : in  std_logic;
 
     switch_i   : in  std_logic_vector(NB_SWITCH-1 downto 0);
     led_o      : out std_logic_vector(NB_LED   -1 downto 0)
@@ -49,7 +49,8 @@ architecture rtl of OB8_GPIO is
   --                                                                                    "00000011"
 
   signal clk                          : std_logic;
-
+  signal arstn                        : std_logic;
+  
   signal iaddr                        : std_logic_vector(10-1 downto 0);
   signal idata                        : std_logic_vector(17 downto 0);
   signal pbi_ini                      : pbi_ini_t;
@@ -58,25 +59,36 @@ architecture rtl of OB8_GPIO is
   signal pbi_tgt_led                  : pbi_tgt_t;
 
 begin  -- architecture rtl
+
+  gen_arstn:
+  if RESET_POLARITY = "neg"
+  generate
+    arstn <=     arst_i;
+  end generate gen_arstn;
+
+  gen_arst:
+  if RESET_POLARITY = "pos"
+  generate
+    arstn <= not arst_i;
+  end generate gen_arst;
+
+  
   ins_clock_divider : entity work.clock_divider(rtl)
     generic map(
       RATIO            => FSYS/FSYS_INT
       )
     port map (
       clk_i            => clk_i  ,
-      arstn_i          => arstn_i,
+      arstn_i          => arstn  ,
       cke_i            => '1',
       clk_div_o        => clk
       );
 
-  ins_pbi_PicoBlaze : entity work.pbi_PicoBlaze(rtl)
-  generic map(
-     USE_KCPSM       => USE_KCPSM
-     )
+  ins_pbi_OpenBlaze8 : entity work.pbi_OpenBlaze8(rtl)
   port map (
     clk_i            => clk    ,
     cke_i            => '1'    ,
-    arstn_i          => arstn_i,
+    arstn_i          => arstn  ,
     iaddr_o          => iaddr  ,
     idata_i          => idata  ,
     pbi_ini_o        => pbi_ini,
@@ -109,7 +121,7 @@ begin  -- architecture rtl
   port map  (
     clk_i            => clk           ,
     cke_i            => '1'           ,
-    arstn_i          => arstn_i       ,
+    arstn_i          => arstn         ,
     pbi_ini_i        => pbi_ini       ,
     pbi_tgt_o        => pbi_tgt_switch,
     data_i           => switch_i      ,
@@ -130,7 +142,7 @@ begin  -- architecture rtl
   port map  (
     clk_i            => clk        ,
     cke_i            => '1'        ,
-    arstn_i          => arstn_i    ,
+    arstn_i          => arstn      ,
     pbi_ini_i        => pbi_ini    ,
     pbi_tgt_o        => pbi_tgt_led,
     data_i           => X"00"      ,

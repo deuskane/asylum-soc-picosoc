@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2021-09-03
+-- Last update: 2022-01-07
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -70,9 +70,11 @@ architecture tb of tb_OB8_GPIO is
 begin  -- architecture tb
 
   dut : entity work.OB8_GPIO(rtl)
+  generic map (
+    RESET_POLARITY => "neg")
   port map(
     clk_i      => clk_i   ,
-    arstn_i    => arstn_i ,
+    arst_i     => arstn_i ,
     switch_i   => switch_i,
     led_o      => led_o   
     );

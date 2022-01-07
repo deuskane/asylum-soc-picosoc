@@ -16,9 +16,10 @@ CAPI=2:
 # 2021-10-26  1.0.0    mrosiere Created
 # 2021-11-03  1.0.1    mrosiere Use generator
 # 2021-11-16  1.0.2    mrosiere Add identity.c
+# 2022-01-06  1.0.3    mrosiere Support nxmap
 #-----------------------------------------------------------------------------
 
-name : asylum:soc:OB8_GPIO:1.0.2
+name : asylum:soc:OB8_GPIO:1.0.3
 description : SoC with OpenBlaze8, switch and led
 
 generate:
@@ -57,7 +58,7 @@ filesets:
     depend :
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:pbi_GPIO:1.0.0"
-      - ">=asylum:processor:pbi_PicoBlaze8:1.0.0"
+      - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
 
   #---------------------------------------
   # Testbench Files
@@ -78,7 +79,15 @@ filesets:
   files_basys:
     files:
       - boards/Digilent-Basys1/pads.ucf : {file_type : UCF}
-      - boards/Digilent-Basys1/OB8_GPIO_Basys1.vhd
+    file_type : vhdlSource
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Nanoxplore NG-MEDIUM
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  files_ng_medium:
+    files:
+      - boards/NanoXplore-DK625V0/pads.py    : {file_type : nx_pads}
+      - boards/NanoXplore-DK625V0/options.py : {file_type : nx_options}
     file_type : vhdlSource
 
   # Next line is a pragma, don't modify
@@ -116,16 +125,40 @@ targets:
       - files_basys 
       - pbcc_dep
     generate : [gen_asm_identity]
-#    parameters   :
-#      - FSYS=50000000
-#      - FSYS_INT=50000000
+    parameters   :
+      - FSYS=50000000
+      - FSYS_INT=50000000
+      - NB_SWITCH=8
+      - NB_LED=8
+      - RESET_POLARITY=pos
     tools:
       ise:
         family  : Spartan3E
         device  : xc3s100e
         package : tq144
         speed   : -5
-    toplevel : OB8_GPIO_Basys1
+    toplevel : OB8_GPIO
+
+  ng_medium_c_identity:
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    default_tool : nxmap
+    filesets     :
+      - files_hdl
+      - files_ng_medium 
+      - pbcc_dep
+    generate : [gen_c_identity]
+    parameters   :
+      - FSYS=50000000
+      - FSYS_INT=50000000
+      - NB_SWITCH=6
+      - NB_LED=8
+      - RESET_POLARITY=neg
+    tools:
+      nxmap:
+        board   : 
+        fpga    : NG-MEDIUM
+        program : True
+    toplevel : OB8_GPIO
 
 
   # Next line is a pragma, don't modify
@@ -151,20 +184,32 @@ targets:
 
 parameters :
 
-  RATIO :
-    description : fixed clock division ratio
+  FSYS :
+    description : External frequency
     datatype    : int
-    default     : 2
+    default     : 500000000
     paramtype   : generic
 
-  ALGO :
-    description : Clock division algorithm
+  FSYS_INT :
+    description : Internal frequency
     datatype    : int
-    default     : 0
+    default     : 500000000
     paramtype   : generic
 
-  GATED_CLK :
-    description : Add clock gated after divider
-    datatype    : bool
-    default     : true
+  NB_SWITCH :
+    description : Switch number on board
+    datatype    : int
+    default     : 8
+    paramtype   : generic
+
+  NB_LED :
+    description : led number on board
+    datatype    : int
+    default     : 8
+    paramtype   : generic
+
+  RESET_POLARITY :
+    description : Polarity of arst_i signal (neg / pos)
+    datatype    : str
+    default     : neg
     paramtype   : generic
