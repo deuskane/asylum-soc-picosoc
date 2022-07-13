@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2022-01-07
+-- Last update: 2022-07-13
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -48,6 +48,9 @@ architecture rtl of OB8_GPIO is
   constant ID_LED                     : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00000100";
   --                                                                                    "00000011"
 
+  constant cst0                       : std_logic_vector (8-1 downto 0) := (others => '0');
+  constant cst1                       : std_logic_vector (8-1 downto 0) := (others => '1');
+  
   signal clk                          : std_logic;
   signal arstn                        : std_logic;
   
@@ -113,8 +116,8 @@ begin  -- architecture rtl
   ins_pbi_switch : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_SWITCH,
-    DATA_OE_INIT     => false,
-    DATA_OE_FORCE    => true ,
+    DATA_OE_INIT     => cst0(NB_SWITCH-1 downto 0),
+    DATA_OE_FORCE    => cst1(NB_SWITCH-1 downto 0),
     IT_ENABLE        => false, -- GPIO can generate interruption
     ID               => ID_SWITCH
     )
@@ -134,8 +137,8 @@ begin  -- architecture rtl
   ins_pbi_led : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED,
-    DATA_OE_INIT     => true ,
-    DATA_OE_FORCE    => true ,
+    DATA_OE_INIT     => cst1(NB_SWITCH-1 downto 0),
+    DATA_OE_FORCE    => cst1(NB_SWITCH-1 downto 0),
     IT_ENABLE        => false, -- GPIO can generate interruption
     ID               => ID_LED
     )
