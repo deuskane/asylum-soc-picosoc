@@ -118,7 +118,7 @@ begin  -- architecture rtl
     NB_IO            => NB_SWITCH,
     DATA_OE_INIT     => cst0(NB_SWITCH-1 downto 0),
     DATA_OE_FORCE    => cst1(NB_SWITCH-1 downto 0),
-    IT_ENABLE        => false, -- GPIO can generate interruption
+    IT_ENABLE        => false, -- GPIO can't generate interruption
     ID               => ID_SWITCH
     )
   port map  (
@@ -139,7 +139,7 @@ begin  -- architecture rtl
     NB_IO            => NB_LED,
     DATA_OE_INIT     => cst1(NB_SWITCH-1 downto 0),
     DATA_OE_FORCE    => cst1(NB_SWITCH-1 downto 0),
-    IT_ENABLE        => false, -- GPIO can generate interruption
+    IT_ENABLE        => false, -- GPIO can't generate interruption
     ID               => ID_LED
     )
   port map  (
