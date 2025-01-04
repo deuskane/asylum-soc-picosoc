@@ -19,12 +19,15 @@ CAPI=2:
 # 2022-01-06  1.0.3    mrosiere Support nxmap
 # 2022-07-13  1.1.0    mrosiere DATA_OE_<INIT/FORCE> in NB_IO
 # 2024-12-31  1.1.1    mrosiere Fix constant in gpio declaration
+# 2025-01-04  1.1.2    mrosiere Update Target and Makefile 
 #-----------------------------------------------------------------------------
 
-name : asylum:soc:OB8_GPIO:1.1.1
+name        : asylum:soc:OB8_GPIO:1.1.2
 description : SoC with OpenBlaze8, switch and led
 
+#=========================================
 generate:
+#=========================================
   # Next line is a pragma, don't modify
   #<GENERATE_BEGIN>
   gen_asm_identity:
@@ -42,18 +45,18 @@ generate:
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
 
+#=========================================
 filesets:
-  #---------------------------------------
-  # Generator
+#=========================================
   #---------------------------------------
   pbcc_dep:
+  #---------------------------------------
     depend:
       - ">=asylum:utils:generators:1.0.0"      
 
   #---------------------------------------
-  # Source Files
-  #---------------------------------------
   files_hdl:
+  #---------------------------------------
     files:
       - src/OB8_GPIO.vhd
     file_type : vhdlSource
@@ -63,9 +66,8 @@ filesets:
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
 
   #---------------------------------------
-  # Testbench Files
-  #---------------------------------------
   files_sim:
+  #---------------------------------------
     files:
       - sim/tb_OB8_GPIO.vhd
     file_type : vhdlSource
@@ -73,20 +75,15 @@ filesets:
       - ">=xilinx:primitive:unisim:11.1"
 
   #---------------------------------------
-  # Synthesis Files
-  #---------------------------------------
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Digilent Basys
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   files_basys:
+  #---------------------------------------
     files:
       - boards/Digilent-Basys1/pads.ucf : {file_type : UCF}
     file_type : vhdlSource
 
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Nanoxplore NG-MEDIUM
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #---------------------------------------
   files_ng_medium:
+  #---------------------------------------
     files:
       - boards/NanoXplore-DK625V0/pads.py    : {file_type : nx_pads}
       - boards/NanoXplore-DK625V0/options.py : {file_type : nx_options}
@@ -97,19 +94,22 @@ filesets:
   #<FILESETS_END>
   # Previous line is a pragma, don't modify
 
+#=========================================
 targets:
+#=========================================
 
   #---------------------------------------
-  # Default Target
-  #---------------------------------------
   default: &default
+  #---------------------------------------
     description     : Default Target (DON'T RUN)
     filesets        :
       - files_hdl
     toplevel        : OB8_GPIO
     default_tool    : ghdl
 
+  #---------------------------------------
   sim: &sim
+  #---------------------------------------
     << : *default
     description     : default rule to sim (DON'T RUN)
     default_tool    : ghdl
@@ -119,7 +119,9 @@ targets:
         analyze_options : ["-fsynopsys"]
         run_options     : ["--vcd=dut.vcd"]
 
-  basys_asm_identity:
+  #---------------------------------------
+  emu_basys_asm_identity:
+  #---------------------------------------
     description  : Synthesis for Digilent Basys board of the test soft/identity.psm
     default_tool : ise
     filesets     :
@@ -141,7 +143,9 @@ targets:
         speed   : -5
     toplevel : OB8_GPIO
 
-  ng_medium_c_identity:
+  #---------------------------------------
+  emu_ng_medium_c_identity:
+  #---------------------------------------
     description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
     default_tool : nxmap
     filesets     :
@@ -184,7 +188,9 @@ targets:
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
+#=========================================
 parameters :
+#=========================================
 
   FSYS :
     description : External frequency
