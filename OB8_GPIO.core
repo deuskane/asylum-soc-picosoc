@@ -21,7 +21,7 @@ CAPI=2:
 # 2024-12-31  1.1.1    mrosiere Fix constant in gpio declaration
 #-----------------------------------------------------------------------------
 
-name : asylum:soc:OB8_GPIO:1.1.0
+name : asylum:soc:OB8_GPIO:1.1.1
 description : SoC with OpenBlaze8, switch and led
 
 generate:
