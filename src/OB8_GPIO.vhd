@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2022-07-13
+-- Last update: 2024-12-31
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -137,8 +137,8 @@ begin  -- architecture rtl
   ins_pbi_led : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED,
-    DATA_OE_INIT     => cst1(NB_SWITCH-1 downto 0),
-    DATA_OE_FORCE    => cst1(NB_SWITCH-1 downto 0),
+    DATA_OE_INIT     => cst1(NB_LED-1 downto 0),
+    DATA_OE_FORCE    => cst1(NB_LED-1 downto 0),
     IT_ENABLE        => false, -- GPIO can't generate interruption
     ID               => ID_LED
     )
