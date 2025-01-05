@@ -1,5 +1,17 @@
 #-----------------------------------------------------------------------------
-# Auto-generate file
+# Title      : Makefile
+# Project    : OB8_GPIO
+#-----------------------------------------------------------------------------
+# File       : OB8_GPIO.vhd
+# Author     : Mathieu Rosiere
+#-----------------------------------------------------------------------------
+# Description: Makefile to execute fusesoc & impulse
+#-----------------------------------------------------------------------------
+# Copyright (c) 2024
+#-----------------------------------------------------------------------------
+# Revisions  :
+# Date        Version  Author   Description
+# 2024-12-31  1.0      mrosiere	Created
 #-----------------------------------------------------------------------------
 
 #=============================================================================
@@ -7,10 +19,11 @@
 #=============================================================================
 SHELL    	 = /bin/bash
 
-FILE_CORE 	?= OB8_GPIO.core
+NAME		?= OB8_GPIO
 TARGET          ?= emu_ng_medium_c_identity
+TOOL		?= nxmap
 
-CORE_NAME       := $(shell grep name $(FILE_CORE) | head -n1 | tr -d ' ')
+CORE_NAME       := $(shell grep name $(NAME).core | head -n1 | tr -d ' ')
 
 VENDOR		 = $(shell echo $(CORE_NAME) | cut -d':' -f2)
 LIBRARY 	 = $(shell echo $(CORE_NAME) | cut -d':' -f3)
@@ -39,6 +52,8 @@ help :
 	@echo "             $(VLNV)"
 	@echo "TARGET     : Specific Target for Fusesoc"
 	@echo "             $(TARGET)"
+	@echo "TOOL       : Specific Tool for Fusesoc"
+	@echo "             $(TOOL)"
 	@echo "TARGET_SIM : All simulation targets"
 	@echo "             $(TARGETS_SIM)"
 	@echo "TARGET_EMU : All emulation targets"
@@ -50,10 +65,10 @@ help :
 	@echo "help       : Print this message"
 	@echo "info       : Display library list and cores list"
 	@echo "nonreg     : Run all simulation targets"
-	@echo "setup      : Execute Setup stage of fusesoc flow for specific target"
-	@echo "build      : Execute Build stage of fusesoc flow for specific target"
-	@echo "run        : Execute Run   stage of fusesoc flow for specific target"
-	@echo "*          : Run command"
+	@echo "setup      : Execute Setup stage of fusesoc flow for specific target and tool"
+	@echo "build      : Execute Build stage of fusesoc flow for specific target and tool"
+	@echo "run        : Execute Run   stage of fusesoc flow for specific target and tool"
+	@echo "*          : Run target with default tool"
 	@echo "clean      : delete build directory"
 	@echo ""
 	@echo ">>>>>>>  Core Information"
@@ -74,9 +89,14 @@ info :
 #--------------------------------------------------------
 setup build run :
 #--------------------------------------------------------
-	fusesoc run --build-root $(PATH_BUILD) --$@ --target $(TARGET) $(VLNV)
+	fusesoc run --build-root $(PATH_BUILD) --$@ --target $(TARGET) --tool $(TOOL) $(VLNV)
 
 .PHONY : setup build run
+
+#--------------------------------------------------------
+impulse :
+#--------------------------------------------------------
+	(cd $(PATH_BUILD)/$(TARGET)-$(TOOL)/work; ${IMPULSE} $(NAME)_native.nym)
 
 #--------------------------------------------------------
 % :
