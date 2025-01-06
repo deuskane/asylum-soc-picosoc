@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2024-12-31
+-- Last update: 2025-01-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -15,8 +15,9 @@
 -- Copyright (c) 2017 
 -------------------------------------------------------------------------------
 -- Revisions  :
--- Date        Version  Author  Description
--- 2017-03-30  1.0      mrosiere	Created
+-- Date        Version  Author   Description
+-- 2017-03-30  1.0      mrosiere Created
+-- 2024-12-31  1.0      mrosiere Fix parameter to GPIO
 -------------------------------------------------------------------------------
 
 library ieee;
