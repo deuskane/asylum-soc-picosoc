@@ -68,6 +68,7 @@ help :
 	@echo "setup      : Execute Setup stage of fusesoc flow for specific target and tool"
 	@echo "build      : Execute Build stage of fusesoc flow for specific target and tool"
 	@echo "run        : Execute Run   stage of fusesoc flow for specific target and tool"
+	@echo "impulse    : Execute the specific target in gui, Warning, the target must be previously build"
 	@echo "*          : Run target with default tool"
 	@echo "clean      : delete build directory"
 	@echo ""
