@@ -69,7 +69,7 @@ architecture tb of tb_OB8_GPIO is
     
 begin  -- architecture tb
 
-  dut : entity work.OB8_GPIO(rtl)
+  dut : entity work.OB8_GPIO_top(rtl)
   generic map (
     RESET_POLARITY => "neg")
   port map(

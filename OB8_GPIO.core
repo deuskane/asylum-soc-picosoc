@@ -21,9 +21,11 @@ CAPI=2:
 # 2024-12-31  1.1.1    mrosiere Fix constant in gpio declaration
 # 2025-01-04  1.1.2    mrosiere Update Target and Makefile 
 # 2025-01-06  1.1.3    mrosiere Add reset resynchonizer
+# 2025-01-06  1.1.4    mrosiere Add top level to separate clock and reset management
+#                               Usefull to student
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:1.1.2
+name        : asylum:soc:OB8_GPIO:1.1.4
 description : SoC with OpenBlaze8, switch and led
 
 #=========================================
@@ -59,6 +61,7 @@ filesets:
   files_hdl:
   #---------------------------------------
     files:
+      - src/OB8_GPIO_top.vhd
       - src/OB8_GPIO.vhd
     file_type : vhdlSource
     depend :
@@ -149,7 +152,7 @@ targets:
         device  : xc3s100e
         package : tq144
         speed   : -5
-    toplevel : OB8_GPIO
+    toplevel : OB8_GPIO_top
 
   #---------------------------------------
   emu_ng_medium_c_identity:
@@ -163,8 +166,8 @@ targets:
       - target_generic
     generate : [gen_c_identity]
     parameters   :
-      - FSYS=50000000
-      - FSYS_INT=50000000
+      - FSYS=25000000
+      - FSYS_INT=25000000
       - NB_SWITCH=6
       - NB_LED=8
       - RESET_POLARITY=neg
@@ -173,7 +176,7 @@ targets:
         board   : 
         fpga    : NG-MEDIUM
         program : True
-    toplevel : OB8_GPIO
+    toplevel : OB8_GPIO_top
 
 
   # Next line is a pragma, don't modify
