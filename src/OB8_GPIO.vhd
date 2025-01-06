@@ -54,6 +54,7 @@ architecture rtl of OB8_GPIO is
   
   signal clk                          : std_logic;
   signal arstn                        : std_logic;
+  signal arstn_sync                   : std_logic;
   
   signal iaddr                        : std_logic_vector(10-1 downto 0);
   signal idata                        : std_logic_vector(17 downto 0);
@@ -76,28 +77,35 @@ begin  -- architecture rtl
     arstn <= not arst_i;
   end generate gen_arst;
 
+  ins_reset_resynchronizer : entity work.sync2dffrn(rtl)
+    port map(
+    clk_i    => clk_i     ,
+    arst_b_i => arstn     ,
+    d_i      => '1'       ,
+    q_o      => arstn_sync
+    );
   
   ins_clock_divider : entity work.clock_divider(rtl)
     generic map(
       RATIO            => FSYS/FSYS_INT
       )
     port map (
-      clk_i            => clk_i  ,
-      arstn_i          => arstn  ,
-      cke_i            => '1',
+      clk_i            => clk_i     ,
+      arstn_i          => arstn_sync,
+      cke_i            => '1'       ,
       clk_div_o        => clk
       );
 
   ins_pbi_OpenBlaze8 : entity work.pbi_OpenBlaze8(rtl)
   port map (
-    clk_i            => clk    ,
-    cke_i            => '1'    ,
-    arstn_i          => arstn  ,
-    iaddr_o          => iaddr  ,
-    idata_i          => idata  ,
-    pbi_ini_o        => pbi_ini,
-    pbi_tgt_i        => pbi_tgt,
-    interrupt_i      => '0'    ,
+    clk_i            => clk       ,
+    cke_i            => '1'       ,
+    arstn_i          => arstn_sync,
+    iaddr_o          => iaddr     ,
+    idata_i          => idata     ,
+    pbi_ini_o        => pbi_ini   ,
+    pbi_tgt_i        => pbi_tgt   ,
+    interrupt_i      => '0'       ,
     interrupt_ack_o  => open 
     );
 
@@ -125,7 +133,7 @@ begin  -- architecture rtl
   port map  (
     clk_i            => clk           ,
     cke_i            => '1'           ,
-    arstn_i          => arstn         ,
+    arstn_i          => arstn_sync    ,
     pbi_ini_i        => pbi_ini       ,
     pbi_tgt_o        => pbi_tgt_switch,
     data_i           => switch_i      ,
@@ -146,7 +154,7 @@ begin  -- architecture rtl
   port map  (
     clk_i            => clk        ,
     cke_i            => '1'        ,
-    arstn_i          => arstn      ,
+    arstn_i          => arstn_sync ,
     pbi_ini_i        => pbi_ini    ,
     pbi_tgt_o        => pbi_tgt_led,
     data_i           => X"00"      ,

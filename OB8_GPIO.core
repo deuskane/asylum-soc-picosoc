@@ -20,6 +20,7 @@ CAPI=2:
 # 2022-07-13  1.1.0    mrosiere DATA_OE_<INIT/FORCE> in NB_IO
 # 2024-12-31  1.1.1    mrosiere Fix constant in gpio declaration
 # 2025-01-04  1.1.2    mrosiere Update Target and Makefile 
+# 2025-01-06  1.1.3    mrosiere Add reset resynchonizer
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:OB8_GPIO:1.1.2
@@ -89,6 +90,12 @@ filesets:
       - boards/NanoXplore-DK625V0/options.py : {file_type : nx_options}
     file_type : vhdlSource
 
+  #---------------------------------------
+  target_generic:
+  #---------------------------------------
+    depend :
+      - ">=asylum:target:generic:1.0.0"
+
   # Next line is a pragma, don't modify
   #<FILESETS_BEGIN>
   #<FILESETS_END>
@@ -128,6 +135,7 @@ targets:
       - files_hdl
       - files_basys 
       - pbcc_dep
+      - target_generic
     generate : [gen_asm_identity]
     parameters   :
       - FSYS=50000000
@@ -152,6 +160,7 @@ targets:
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
+      - target_generic
     generate : [gen_c_identity]
     parameters   :
       - FSYS=50000000
@@ -175,6 +184,7 @@ targets:
     filesets_append :
       - files_sim
       - pbcc_dep
+      - target_generic
     generate : [gen_asm_identity]
 
   sim_c_identity:
@@ -183,6 +193,7 @@ targets:
     filesets_append :
       - files_sim
       - pbcc_dep
+      - target_generic
     generate : [gen_c_identity]
 
   #<TARGETS_END>
