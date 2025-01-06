@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2022-01-07
+-- Last update: 2025-01-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -93,10 +93,17 @@ begin  -- architecture tb
       switch_i <= "01010110";
       wait until (led_o = switch_i) ;
 
+      -- Wait next clock posege
+      wait until rising_edge(clk_i);
+
       for i in 0 to 7 loop
         switch_i    <= (others => '0');
         switch_i(i) <= '1';
         wait until (led_o = switch_i) ;
+
+        -- Wait next clock posege
+        wait until rising_edge(clk_i);
+
       end loop;  -- i
 
       report "[TESTBENCH] Test OK";
