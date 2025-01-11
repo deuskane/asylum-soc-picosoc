@@ -19,17 +19,17 @@
 #=============================================================================
 SHELL    	 = /bin/bash
 
-NAME		?= OB8_GPIO
+FILE_CORE	?= OB8_GPIO.core
 TARGET          ?= emu_ng_medium_c_identity
 TOOL		?= nxmap
 
-CORE_NAME       := $(shell grep name $(NAME).core | head -n1 | tr -d ' ')
+CORE_NAME       := $(shell grep name $(FILE_CORE) | head -n1 | tr -d ' ')
 
-VENDOR		 = $(shell echo $(CORE_NAME) | cut -d':' -f2)
-LIBRARY 	 = $(shell echo $(CORE_NAME) | cut -d':' -f3)
-NAME		 = $(shell echo $(CORE_NAME) | cut -d':' -f4)
-VERSION		 = $(shell echo $(CORE_NAME) | cut -d':' -f5)
-VLNV		 = $(VENDOR):$(LIBRARY):$(NAME):$(VERSION)
+IP_VENDOR	 = $(shell echo $(CORE_NAME) | cut -d':' -f2)
+IP_LIBRARY 	 = $(shell echo $(CORE_NAME) | cut -d':' -f3)
+IP_NAME		 = $(shell echo $(CORE_NAME) | cut -d':' -f4)
+IP_VERSION	 = $(shell echo $(CORE_NAME) | cut -d':' -f5)
+VLNV		 = $(IP_VENDOR):$(IP_LIBRARY):$(IP_NAME):$(IP_VERSION)
 
 TARGETS_SIM	:= $(shell fusesoc core-info $(VLNV) | grep sim_ | cut -d ':' -f1 | tr -d ' ')
 TARGETS_EMU	:= $(shell fusesoc core-info $(VLNV) | grep emu_ | cut -d ':' -f1 | tr -d ' ')
