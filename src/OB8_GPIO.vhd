@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-06
+-- Last update: 2025-01-12
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -71,10 +71,8 @@ begin  -- architecture rtl
     interrupt_ack_o  => open 
     );
 
-  pbi_tgt.rdata <= pbi_tgt_switch.rdata or
-                   pbi_tgt_led0  .rdata;
-  pbi_tgt.busy  <= pbi_tgt_switch.busy  or
-                   pbi_tgt_led0  .busy;
+  pbi_tgt <= pbi_tgt_switch or
+             pbi_tgt_led0  ;
 
   ins_pbi_OpenBlaze8_ROM : entity work.OpenBlaze8_ROM(rtl)
     port map (
