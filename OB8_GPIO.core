@@ -23,9 +23,10 @@ CAPI=2:
 # 2025-01-06  1.1.3    mrosiere Add reset resynchonizer
 # 2025-01-06  1.1.4    mrosiere Add top level to separate clock and reset management
 #                               Usefull to student
+# 2025-01-12  2.0.0    mrosiere Add supervisor and add safety
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:1.1.4
+name        : asylum:soc:OB8_GPIO:2.0.0
 description : SoC with OpenBlaze8, switch and led
 
 #=========================================
@@ -44,7 +45,14 @@ generate:
     parameters:
       file: soft/identity.c
       type: c
+      entity : ROM_user
 
+  gen_c_supervisor :
+    generator : pbcc_gen
+    parameters :
+      file : soft/supervisor.c
+      type : c
+      entity : ROM_supervisor
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
 
@@ -62,7 +70,9 @@ filesets:
   #---------------------------------------
     files:
       - src/OB8_GPIO_top.vhd
-      - src/OB8_GPIO.vhd
+      - src/OB8_GPIO_user.vhd
+      - src/OB8_GPIO_supervisor.vhd
+      - src/it_ctrl.vhd
     file_type : vhdlSource
     depend :
       - ">=asylum:component:clock_divider:1.0.0"
@@ -127,7 +137,7 @@ targets:
     tools :
       ghdl :
         analyze_options : ["-fsynopsys"]
-        run_options     : ["--vcd=dut.vcd",","--ieee-asserts=disable"]
+        run_options     : ["--vcd=dut.vcd","--ieee-asserts=disable"]
 
   #---------------------------------------
   emu_basys_asm_identity:
@@ -145,7 +155,7 @@ targets:
       - FSYS_INT=50000000
       - NB_SWITCH=8
       - NB_LED=8
-      - RESET_POLARITY=pos
+      - RESET_POLARITY=high
     tools:
       ise:
         family  : Spartan3E
@@ -164,13 +174,18 @@ targets:
       - files_ng_medium 
       - pbcc_dep
       - target_generic
-    generate : [gen_c_identity]
+    generate : [gen_c_identity,gen_c_supervisor]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
       - NB_SWITCH=6
-      - NB_LED=8
-      - RESET_POLARITY=neg
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
     tools:
       nxmap:
         board   : 
@@ -197,7 +212,8 @@ targets:
       - files_sim
       - pbcc_dep
       - target_generic
-    generate : [gen_c_identity]
+    generate : [gen_c_identity,gen_c_supervisor]
+  
 
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
@@ -231,7 +247,37 @@ parameters :
     paramtype   : generic
 
   RESET_POLARITY :
-    description : Polarity of arst_i signal (neg / pos)
+    description : Polarity of arst_i signal (low / high)
     datatype    : str
-    default     : neg
+    default     : low
+    paramtype   : generic
+
+  SUPERVISOR :
+    description : Instanciate the supervisor
+    datatype    : bool
+    default     : false
+    paramtype   : generic
+
+  SAFETY :
+    description : Safety Algorithm (none / lock-step / tmr)
+    datatype    : str
+    default     : none
+    paramtype   : generic
+
+  FAULT_INJECTION :
+    description : Polarity of arst_i signal (low / high)
+    datatype    : bool
+    default     : false
+    paramtype   : generic
+
+  IT_USER_POLARITY :
+    description : Polarity of it_user_i signal (low / high)
+    datatype    : str
+    default     : low
+    paramtype   : generic
+
+  FAULT_POLARITY :
+    description : Polarity of inject_err_r_i signal (low / high)
+    datatype    : str
+    default     : low
     paramtype   : generic

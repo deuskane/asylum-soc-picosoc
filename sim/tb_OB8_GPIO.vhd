@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-06
+-- Last update: 2025-01-11
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -16,7 +16,8 @@
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author  Description
--- 2017-03-30  1.0      mrosiere	Created
+-- 2017-03-30  1.0      mrosiere Created
+-- 2025-01-11  1.1      mrosiere Add fault test
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -24,6 +25,19 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity tb_OB8_GPIO is
+  generic (
+    FSYS             : positive := 50_000_000;
+    FSYS_INT         : positive := 50_000_000;
+    NB_SWITCH        : positive := 8;
+    NB_LED           : positive := 19;
+    RESET_POLARITY   : string   := "low";       -- "high" / "low"
+    SUPERVISOR       : boolean  := True ;
+    SAFETY           : string   := "lock-step"; -- "none" / "lock-step" / "tmr"
+    FAULT_INJECTION  : boolean  := True ; 
+    IT_USER_POLARITY : string   := "low";       -- "high" / "low"
+    FAULT_POLARITY   : string   := "low"        -- "high" / "low"
+
+    );
   
 end entity tb_OB8_GPIO;
 
@@ -33,10 +47,12 @@ architecture tb of tb_OB8_GPIO is
   constant TB_DURATION             : natural := 10000;
 
   -- =====[ Signals ]=============================
-  signal clk_i      : std_logic := '0';
-  signal arstn_i    : std_logic;
-  signal switch_i   : std_logic_vector(7 downto 0);
-  signal led_o      : std_logic_vector(7 downto 0);
+  signal clk_i          : std_logic := '0';
+  signal arstn_i        : std_logic;
+  signal switch_i       : std_logic_vector(NB_SWITCH-1 downto 0);
+  signal led_o          : std_logic_vector(NB_LED   -1 downto 0);
+  signal it_user_i      : std_logic;
+  signal inject_error_i : std_logic_vector(3-1 downto 0);
 
   -------------------------------------------------------
   -- run
@@ -66,17 +82,29 @@ architecture tb of tb_OB8_GPIO is
   -----------------------------------------------------
   signal test_done  : std_logic := '0';
   signal test_ok    : std_logic := '0';
-    
+
 begin  -- architecture tb
 
   dut : entity work.OB8_GPIO_top(rtl)
   generic map (
-    RESET_POLARITY => "neg")
+    FSYS             => FSYS            ,
+    FSYS_INT         => FSYS_INT        ,
+    NB_SWITCH        => NB_SWITCH       ,
+    NB_LED           => NB_LED          ,
+    RESET_POLARITY   => RESET_POLARITY  ,
+    SUPERVISOR       => SUPERVISOR      ,
+    SAFETY           => SAFETY          ,
+    FAULT_INJECTION  => FAULT_INJECTION ,
+    IT_USER_POLARITY => IT_USER_POLARITY,
+    FAULT_POLARITY   => FAULT_POLARITY  
+    )  
   port map(
-    clk_i      => clk_i   ,
-    arst_i     => arstn_i ,
-    switch_i   => switch_i,
-    led_o      => led_o   
+    clk_i          => clk_i         ,
+    arst_i         => arstn_i       ,
+    switch_i       => switch_i      ,
+    led_o          => led_o         ,
+    it_user_i      => it_user_i     ,
+    inject_error_i => inject_error_i
     );
 
   clk_i <= not test_done and not clk_i after TB_PERIOD/2;
@@ -84,28 +112,45 @@ begin  -- architecture tb
   process is
   begin  -- process
 
+      run(10);
+
+      report "[TESTBENCH] Init signals";
+      it_user_i      <= '1';             -- active low
+      inject_error_i <= (others => '1'); -- active low
+
+      report "[TESTBENCH] Reset Sequence"; 
       arstn_i <= '0';
-        
       run(1);
-
       arstn_i <= '1';
-
-      switch_i <= "01010110";
-      wait until (led_o = switch_i) ;
-
-      -- Wait next clock posege
-      wait until rising_edge(clk_i);
-
-      for i in 0 to 7 loop
+      
+      report "[TESTBENCH] Change Switch" ;
+      for i in 0 to NB_SWITCH-1 loop
         switch_i    <= (others => '0');
         switch_i(i) <= '1';
-        wait until (led_o = switch_i) ;
-
-        -- Wait next clock posege
-        wait until rising_edge(clk_i);
-
+        wait until (led_o(NB_SWITCH-1 downto 0) = switch_i) ;
+        
       end loop;  -- i
 
+      report "[TESTBENCH] Inject error in CPU0" ;
+      inject_error_i(0) <= '0';
+      run(2);
+      inject_error_i(0) <= '1';
+
+      wait until (led_o(NB_SWITCH-1 downto 0) /= switch_i) ;
+      wait until (led_o(NB_SWITCH-1 downto 0)  = switch_i) ;      
+
+      report "[TESTBENCH] Inject error in CPU1" ;
+      inject_error_i(1) <= '0';
+      run(2);
+      inject_error_i(1) <= '1';
+
+      wait until (led_o(NB_SWITCH-1 downto 0) /= switch_i) ;
+      wait until (led_o(NB_SWITCH-1 downto 0)  = switch_i) ;      
+
+      report "[TESTBENCH] Inject error in CPU0 in continue" ;
+      inject_error_i(1) <= '0';
+      run(1000);
+      
       report "[TESTBENCH] Test OK";
       test_done <= '1';
       wait;
