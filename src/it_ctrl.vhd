@@ -31,7 +31,7 @@ begin
     elsif clk_i'event and clk_i = '1' then  -- rising clock edge
       it_r <= it_i;
       
-      if it_ack_i = '1' then
+      if    it_ack_i = '1' then
         it_val_r <= '0';
       elsif it = '1' then
         it_val_r <= '1';
