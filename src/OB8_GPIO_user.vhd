@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-12
+-- Last update: 2025-01-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -124,7 +124,8 @@ begin  -- architecture rtl
 
   pbi_tgt <= pbi_tgt_switch or
              pbi_tgt_led0   or
-             pbi_tgt_led1;
+             pbi_tgt_led1
+             ;
 
   gen_cpu_vote: if SAFETY = "tmr"
   generate
