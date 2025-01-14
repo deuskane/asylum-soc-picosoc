@@ -17,10 +17,9 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2017-03-30  1.0      mrosiere Created
--- 2024-12-31  1.0      mrosiere Fix parameter to GPIO
+-- 2024-12-31  1.1      mrosiere Fix parameter to GPIO
+-- 2025-01-12  2.0      mrosiere Add Safety feature
 -------------------------------------------------------------------------------
-
-
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -129,13 +128,15 @@ begin  -- architecture rtl
 
   gen_cpu_vote: if SAFETY = "tmr"
   generate
-    rom_addr      <= iaddr0   ;
+    rom_addr      <= ((iaddr0   and iaddr1  ) or
+                      (iaddr1   and iaddr2  ) or
+                      (iaddr2   and iaddr0  ));
     pbi_ini       <= ((pbi_ini0 and pbi_ini1) or
                       (pbi_ini1 and pbi_ini2) or
                       (pbi_ini2 and pbi_ini0));
-    it_ack        <= ((it_ack0  and it_ack1) or
-                      (it_ack1  and it_ack2) or
-                      (it_ack2  and it_ack0));
+    it_ack        <= ((it_ack0  and it_ack1 ) or
+                      (it_ack1  and it_ack2 ) or
+                      (it_ack2  and it_ack0 ));
   end generate;
 
   gen_cpu_vote_b: if SAFETY /= "tmr"
