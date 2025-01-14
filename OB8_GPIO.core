@@ -37,21 +37,29 @@ generate:
   gen_asm_identity:
     generator : pbcc_gen
     parameters:
-      file: soft/identity.psm
-      type: pblazeide
+      file   : soft/identity.psm
+      type   : pblazeide
+
+  gen_c_identity_inverted:
+    generator : pbcc_gen
+    parameters:
+      file   : soft/identity.c
+      type   : c
+      entity : ROM_user
+      cflags : -DINVERT_SWITCH
 
   gen_c_identity:
     generator : pbcc_gen
     parameters:
-      file: soft/identity.c
-      type: c
+      file   : soft/identity.c
+      type   : c
       entity : ROM_user
 
   gen_c_supervisor :
     generator : pbcc_gen
     parameters :
-      file : soft/supervisor.c
-      type : c
+      file   : soft/supervisor.c
+      type   : c
       entity : ROM_supervisor
   #<GENERATE_END>
   # Previous line is a pragma, don't modify

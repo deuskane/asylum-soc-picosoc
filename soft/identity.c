@@ -84,7 +84,13 @@ void setup (void)
 // Read Switch and write to led
 void loop (void)
 {
-  PORT_WR(LED0, PORT_RD(SWITCH));
+  uint8_t sw = PORT_RD(SWITCH);
+
+#ifdef INVERT_SWITCH
+  sw = ~sw;
+#endif
+  
+  PORT_WR(LED0, sw);
 
   null ();
 }
