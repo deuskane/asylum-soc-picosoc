@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-11
+-- Last update: 2025-01-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -53,9 +53,9 @@ architecture rtl of OB8_GPIO_supervisor is
   signal clk                          : std_logic;
   signal arst_b                        : std_logic;
   
-  signal iaddr0                       : std_logic_vector(10-1 downto 0);
+  signal iaddr                        : std_logic_vector(10-1 downto 0);
   signal idata                        : std_logic_vector(17 downto 0);
-  signal pbi_ini0                     : pbi_ini_t;
+  signal pbi_ini                      : pbi_ini_t;
   signal pbi_tgt                      : pbi_tgt_t;
   signal pbi_tgt_led0                 : pbi_tgt_t;
   signal pbi_tgt_led1                 : pbi_tgt_t;
@@ -77,24 +77,23 @@ begin  -- architecture rtl
     clk_i            => clk      ,
     cke_i            => '1'      ,
     arstn_i          => arst_b   ,
-    iaddr_o          => iaddr0   ,
+    iaddr_o          => iaddr    ,
     idata_i          => idata    ,
-    pbi_ini_o        => pbi_ini0 ,
+    pbi_ini_o        => pbi_ini  ,
     pbi_tgt_i        => pbi_tgt  ,
     interrupt_i      => diff_i(0),
     interrupt_ack_o  => it_ack0
     );
 
-  pbi_tgt.rdata <= pbi_tgt_led0  .rdata or
-                   pbi_tgt_led1  .rdata;
-  pbi_tgt.busy  <= pbi_tgt_led0  .busy  or
-                   pbi_tgt_led1  .busy;
+  pbi_tgt <= pbi_tgt_led0   or
+             pbi_tgt_led1
+             ;
 
   ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rtl)
     port map (
       clk_i            => clk    ,
       cke_i            => '1'    ,
-      address_i        => iaddr0 ,
+      address_i        => iaddr  ,
       instruction_o    => idata  
     );
 
@@ -110,9 +109,9 @@ begin  -- architecture rtl
     clk_i            => clk         ,
     cke_i            => '1'         ,
     arstn_i          => arst_b      ,
-    pbi_ini_i        => pbi_ini0    ,
+    pbi_ini_i        => pbi_ini     ,
     pbi_tgt_o        => pbi_tgt_led0,
-    data_i           => "0"         ,
+    data_i           => CST0(NB_LED0-1 downto 0),
     data_o           => led0        ,
     data_oe_o        => open        ,
     interrupt_o      => open        ,
@@ -131,9 +130,9 @@ begin  -- architecture rtl
     clk_i            => clk         ,
     cke_i            => '1'         ,
     arstn_i          => arst_b      ,
-    pbi_ini_i        => pbi_ini0    ,
+    pbi_ini_i        => pbi_ini     ,
     pbi_tgt_o        => pbi_tgt_led1,
-    data_i           => "000"       ,
+    data_i           => CST0(NB_LED1-1 downto 0),
     data_o           => led1        ,
     data_oe_o        => open        ,
     interrupt_o      => open        ,
