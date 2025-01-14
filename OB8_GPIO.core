@@ -173,9 +173,9 @@ targets:
     toplevel : OB8_GPIO_top
 
   #---------------------------------------
-  emu_ng_medium_c_identity:
+  emu_ng_medium_c_identity: &emu_ng_medium_default
   #---------------------------------------
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.c
     default_tool : nxmap
     filesets     :
       - files_hdl
@@ -189,17 +189,94 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
     tools:
       nxmap:
         board   : 
         fpga    : NG-MEDIUM
         program : True
     toplevel : OB8_GPIO_top
+
+  #---------------------------------------
+  emu_ng_medium_lab5:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    generate : [gen_c_identity,gen_c_supervisor]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+
+  #---------------------------------------
+  emu_ng_medium_lab6:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    generate : [gen_c_identity,gen_c_supervisor]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
+
+  #---------------------------------------
+  emu_ng_medium_lab7:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    generate : [gen_c_identity,gen_c_supervisor]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=true
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
+
+  #---------------------------------------
+  emu_ng_medium_lab8:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    generate : [gen_c_identity,gen_c_supervisor]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=true
 
 
   # Next line is a pragma, don't modify
