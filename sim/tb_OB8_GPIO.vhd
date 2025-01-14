@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-11
+-- Last update: 2025-01-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -54,18 +54,29 @@ architecture tb of tb_OB8_GPIO is
   signal it_user_i      : std_logic;
   signal inject_error_i : std_logic_vector(3-1 downto 0);
 
+  alias led_switch : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
+  alias led_it     : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
+  alias led_diff   : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
+  
   -------------------------------------------------------
   -- run
   -------------------------------------------------------
   procedure xrun
     (constant n     : in positive;           -- nb cycle
+     constant pol   : in string;
      signal   clk_i : in std_logic
      ) is
     
   begin
     for i in 0 to n-1
     loop
-      wait until rising_edge(clk_i);        
+      if (pol="pos")
+      then
+        wait until rising_edge(clk_i);
+      else
+        wait until falling_edge(clk_i);
+      end if;
+      
     end loop;  -- i
   end xrun;
 
@@ -74,7 +85,7 @@ architecture tb of tb_OB8_GPIO is
      ) is
     
   begin
-    xrun(n,clk_i);
+    xrun(n,"pos",clk_i);
   end run;
 
   -----------------------------------------------------
@@ -127,25 +138,40 @@ begin  -- architecture tb
       for i in 0 to NB_SWITCH-1 loop
         switch_i    <= (others => '0');
         switch_i(i) <= '1';
-        wait until (led_o(NB_SWITCH-1 downto 0) = switch_i) ;
+        wait until (led_switch = switch_i) ;
         
       end loop;  -- i
 
+      report "[TESTBENCH] User Interruption" ;
+      xrun(1,"neg",clk_i);
+      it_user_i        <= '0';
+      xrun(1,"neg",clk_i);
+      it_user_i        <= '1';
+      run(1000);
+
+      xrun(1,"neg",clk_i);
+      it_user_i        <= '0';
+      run(100);
+      xrun(1,"neg",clk_i);
+      it_user_i        <= '1';
+      it_user_i        <= '1';
+      run(1000);
+      
       report "[TESTBENCH] Inject error in CPU0" ;
       inject_error_i(0) <= '0';
       run(2);
       inject_error_i(0) <= '1';
 
-      wait until (led_o(NB_SWITCH-1 downto 0) /= switch_i) ;
-      wait until (led_o(NB_SWITCH-1 downto 0)  = switch_i) ;      
+      wait until (led_switch /= switch_i) ;
+      wait until (led_switch  = switch_i) ;      
 
       report "[TESTBENCH] Inject error in CPU1" ;
       inject_error_i(1) <= '0';
       run(2);
       inject_error_i(1) <= '1';
 
-      wait until (led_o(NB_SWITCH-1 downto 0) /= switch_i) ;
-      wait until (led_o(NB_SWITCH-1 downto 0)  = switch_i) ;      
+      wait until (led_switch /= switch_i) ;
+      wait until (led_switch  = switch_i) ;      
 
       report "[TESTBENCH] Inject error in CPU0 in continue" ;
       inject_error_i(1) <= '0';
