@@ -5,8 +5,8 @@
 -- File       : OB8_GPIO.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
--- Created    : 2017-03-30
--- Last update: 2025-01-11
+-- Created    : 2025-01-15
+-- Last update: 2025-01-15
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -16,8 +16,7 @@
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
--- 2017-03-30  1.0      mrosiere Created
--- 2024-12-31  1.0      mrosiere Fix parameter to GPIO
+-- 2025-01-15  1.0      mrosiere Created
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -70,6 +69,7 @@ architecture rtl of OB8_GPIO_top is
   signal   diff                         : std_logic_vector(3-1 downto 0);
            
   signal   it_user                      : std_logic;
+  signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 begin  -- architecture rtl
 
@@ -101,7 +101,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Clock Management
   -----------------------------------------------------------------------------
-
   ins_clock_divider : entity work.clock_divider(rtl)
     generic map(
       RATIO            => FSYS/FSYS_INT
@@ -112,6 +111,16 @@ begin  -- architecture rtl
       cke_i            => '1'              ,
       clk_div_o        => clk
       );
+
+  -----------------------------------------------------------------------------
+  -- Input synchronization
+  -----------------------------------------------------------------------------
+  ins_it_user : entity work.sync2dff(rtl)
+    port map
+    (clk_i    => clk
+    ,d_i      => it_user
+    ,q_o      => it_user_sync
+    );
 
   -----------------------------------------------------------------------------
   -- SoC User
@@ -130,7 +139,7 @@ begin  -- architecture rtl
     switch_i       => switch_i,
     led0_o         => led0,
     led1_o         => led1,
-    it_i           => it_user,
+    it_i           => it_user_sync,
     diff_o         => diff,
     inject_error_i => inject_error
     );
@@ -165,7 +174,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- LED
   -----------------------------------------------------------------------------
-  led_o <= led2 & led1 & led0;
+  led_o <= led1 & led2 & led0;
 
   -----------------------------------------------------------------------------
   -- IT_USER User
