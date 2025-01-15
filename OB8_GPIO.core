@@ -24,9 +24,10 @@ CAPI=2:
 # 2025-01-06  1.1.4    mrosiere Add top level to separate clock and reset management
 #                               Usefull to student
 # 2025-01-12  2.0.0    mrosiere Add supervisor and add safety
+# 2025-01-15  2.1.0    mrosiere Support TMR safety
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.0.0
+name        : asylum:soc:OB8_GPIO:2.1.0
 description : SoC with OpenBlaze8, switch and led
 
 #=========================================
@@ -61,6 +62,15 @@ generate:
       file   : soft/supervisor.c
       type   : c
       entity : ROM_supervisor
+
+  gen_c_supervisor_tmr :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/supervisor.c
+      type   : c
+      entity : ROM_supervisor
+      cflags : -DSAFETY_TMR
+
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
 
@@ -142,6 +152,10 @@ targets:
     description     : default rule to sim (DON'T RUN)
     default_tool    : ghdl
     toplevel        : tb_OB8_GPIO
+    filesets_append :
+      - files_sim
+      - pbcc_dep
+      - target_generic
     tools :
       ghdl :
         analyze_options : ["-fsynopsys"]
@@ -175,7 +189,7 @@ targets:
   #---------------------------------------
   emu_ng_medium_c_identity: &emu_ng_medium_default
   #---------------------------------------
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.c
+    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - No Supervisor, No Safety, No Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
@@ -203,29 +217,10 @@ targets:
     toplevel : OB8_GPIO_top
 
   #---------------------------------------
-  emu_ng_medium_lab5:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
-    generate : [gen_c_identity,gen_c_supervisor]
-    parameters   :
-      - FSYS=25000000
-      - FSYS_INT=25000000
-      - NB_SWITCH=6
-      - NB_LED=19
-      - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
-
-      - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
-
-  #---------------------------------------
   emu_ng_medium_lab6:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - No Supervisor, No Safety, No Fault Injection
     generate : [gen_c_identity,gen_c_supervisor]
     parameters   :
       - FSYS=25000000
@@ -244,7 +239,7 @@ targets:
   emu_ng_medium_lab7:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate : [gen_c_identity,gen_c_supervisor]
     parameters   :
       - FSYS=25000000
@@ -263,8 +258,8 @@ targets:
   emu_ng_medium_lab8:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
-    generate : [gen_c_identity,gen_c_supervisor]
+    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - With Supervisor, Safety TMR, With Fault Injection
+    generate : [gen_c_identity,gen_c_supervisor_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -278,27 +273,30 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=true
 
-
   # Next line is a pragma, don't modify
   #<TARGETS_BEGIN>
   sim_asm_identity:
     << : *sim
     description     : Simulation of the test soft/identity.psm
-    filesets_append :
-      - files_sim
-      - pbcc_dep
-      - target_generic
     generate : [gen_asm_identity]
 
   sim_c_identity:
     << : *sim
-    description     : Simulation of the test soft/identity.c
-    filesets_append :
-      - files_sim
-      - pbcc_dep
-      - target_generic
+    description     : Simulation of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    parameters :
+      - SUPERVISOR=true
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
     generate : [gen_c_identity,gen_c_supervisor]
-  
+
+  sim_c_identity_tmr:
+    << : *sim
+    description     : Simulation of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    parameters :
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=true
+    generate : [gen_c_identity,gen_c_supervisor_tmr]
 
   #<TARGETS_END>
   # Previous line is a pragma, don't modify

@@ -46,6 +46,10 @@ architecture rtl of OB8_GPIO_supervisor is
   --                                                                                    "00000011"
   constant ID_LED1                    : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00000100";
   --                                                                                    "00000011"
+  constant ID_IT_VECTOR_MASK          : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00001000";
+  --                                                                                    "00000011"
+  constant ID_IT_VECTOR               : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00001100";
+  --                                                                                    "00000011"
 
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
@@ -59,12 +63,16 @@ architecture rtl of OB8_GPIO_supervisor is
   signal pbi_tgt                      : pbi_tgt_t;
   signal pbi_tgt_led0                 : pbi_tgt_t;
   signal pbi_tgt_led1                 : pbi_tgt_t;
+  signal pbi_tgt_it_vector_mask       : pbi_tgt_t;
+  signal pbi_tgt_it_vector            : pbi_tgt_t;
   
-  signal it_ack0                      : std_logic;
+  signal it_val                       : std_logic;
+  signal it_ack                       : std_logic;
 
-  signal led0                         : std_logic_vector(NB_LED0  -1 downto 0);
-  signal led1                         : std_logic_vector(NB_LED1  -1 downto 0);
+  signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
+  signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
 
+  signal diff_mask                    : std_logic_vector(      3-1 downto 0);
   
 begin  -- architecture rtl
 
@@ -81,12 +89,14 @@ begin  -- architecture rtl
     idata_i          => idata    ,
     pbi_ini_o        => pbi_ini  ,
     pbi_tgt_i        => pbi_tgt  ,
-    interrupt_i      => diff_i(0),
-    interrupt_ack_o  => it_ack0
+    interrupt_i      => it_val   ,
+    interrupt_ack_o  => open
     );
 
-  pbi_tgt <= pbi_tgt_led0   or
-             pbi_tgt_led1
+  pbi_tgt <= pbi_tgt_led0           or
+             pbi_tgt_led1           or
+             pbi_tgt_it_vector_mask or
+             pbi_tgt_it_vector
              ;
 
   ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rtl)
@@ -139,9 +149,54 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  ins_pbi_it_vector_mask : entity work.pbi_GPIO(rtl)
+    generic map(
+    NB_IO            => 3,
+    DATA_OE_INIT     => CST1(3-1 downto 0),
+    DATA_OE_FORCE    => CST1(3-1 downto 0),
+    IT_ENABLE        => false, -- GPIO can generate interruption
+    ID               => ID_IT_VECTOR_MASK
+    )
+  port map  (
+    clk_i            => clk         ,
+    cke_i            => '1'         ,
+    arstn_i          => arst_b      ,
+    pbi_ini_i        => pbi_ini     ,
+    pbi_tgt_o        => pbi_tgt_it_vector_mask,
+    data_i           => CST0(3-1 downto 0),
+    data_o           => diff_mask   ,
+    data_oe_o        => open        ,
+    interrupt_o      => open        ,
+    interrupt_ack_i  => '0'
+    );
+
+  ins_pbi_it_vector : entity work.pbi_GPIO(rtl)
+    generic map(
+    NB_IO            => 3,
+    DATA_OE_INIT     => CST0(3-1 downto 0),
+    DATA_OE_FORCE    => CST1(3-1 downto 0),
+    IT_ENABLE        => false, -- GPIO can generate interruption
+    ID               => ID_IT_VECTOR
+    )
+  port map  (
+    clk_i            => clk         ,
+    cke_i            => '1'         ,
+    arstn_i          => arst_b      ,
+    pbi_ini_i        => pbi_ini     ,
+    pbi_tgt_o        => pbi_tgt_it_vector,
+    data_i           => diff_i      ,
+    data_o           => open        ,
+    data_oe_o        => open        ,
+    interrupt_o      => open        ,
+    interrupt_ack_i  => '0'
+    );
 
   led0_o <= led0;
   led1_o <= led1;
+
+  it_val <= ((diff_i(0) and diff_mask(0)) or
+             (diff_i(1) and diff_mask(1)) or
+             (diff_i(2) and diff_mask(2)));
   
 end architecture rtl;
     
