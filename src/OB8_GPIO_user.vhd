@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-14
+-- Last update: 2025-01-15
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 -- 2017-03-30  1.0      mrosiere Created
 -- 2024-12-31  1.1      mrosiere Fix parameter to GPIO
 -- 2025-01-12  2.0      mrosiere Add Safety feature
+-- 2025-01-15  2.1      mrosiere Update diff detection
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -91,6 +92,9 @@ architecture rtl of OB8_GPIO_user is
   signal it_ack1                      : std_logic;
   signal it_ack2                      : std_logic;
 
+  signal diff                         : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
+                                                                        -- bit 1 : cpu1 vs cpu2
+                                                                        -- bit 2 : cpu2 vs cpu0
   signal diff_r                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
@@ -113,7 +117,7 @@ begin  -- architecture rtl
   port map (
     clk_i            => clk     ,
     cke_i            => '1'     ,
-    arstn_i          => arst_b   ,
+    arstn_i          => arst_b  ,
     iaddr_o          => iaddr0  ,
     idata_i          => idata0  ,
     pbi_ini_o        => pbi_ini0,
@@ -146,7 +150,6 @@ begin  -- architecture rtl
     pbi_ini       <= pbi_ini0 ;
     it_ack        <= it_ack0  ;
   end generate;
-  
   
   ins_pbi_OpenBlaze8_ROM : entity work.ROM_user(rtl)
     port map (
@@ -234,21 +237,20 @@ begin  -- architecture rtl
         interrupt_i      => it_val  ,
         interrupt_ack_o  => it_ack1
         );
+
+    diff(0) <= '1' when (   (iaddr0         /= iaddr1        )
+                         or (it_ack0        /= it_ack1       )
+                       --or (pbi_ini0       /= pbi_ini1      )
+                            ) else
+               '0';
     
     p_diff_r: process (clk, arst_b) is
     begin  -- process p_diff_r
       if arst_b = '0' then                 -- asynchronous reset (active low)
         diff_r(0) <= '0';
       elsif clk'event and clk = '1' then  -- rising clock edge
-
-        if (   (iaddr0         /= iaddr1        )
-            or (it_ack0        /= it_ack1       )
-            or (pbi_ini0       /= pbi_ini1      )
-            )
-        then
-          diff_r(0) <= '1';
-        end if;
-        
+        -- Trap 1
+        diff_r(0) <= diff_r(0) or diff(0);
       end if;
     end process p_diff_r;
 
@@ -275,35 +277,30 @@ begin  -- architecture rtl
         interrupt_i      => it_val  ,
         interrupt_ack_o  => it_ack2
         );
+
+    diff(1) <= '1' when (   (iaddr1         /= iaddr2        )
+                         or (it_ack1        /= it_ack2       )
+                       --or (pbi_ini1       /= pbi_ini2      )
+                         ) else
+               '0';
+    diff(2) <= '1' when (   (iaddr2         /= iaddr0        )
+                         or (it_ack2        /= it_ack0       )
+                       --or (pbi_ini2       /= pbi_ini0      )
+                         ) else
+               '0';
     
     p_diff_r: process (clk, arst_b) is
     begin  -- process p_diff_r
       if arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(1) <= '0';
-        diff_r(2) <= '0';
+        diff_r(2 downto 1) <= "00";
       elsif clk'event and clk = '1' then  -- rising clock edge
 
-        if (   (iaddr1         /= iaddr2        )
-            or (it_ack1        /= it_ack2       )
-            or (pbi_ini1       /= pbi_ini2      )
-            )
-        then
-          diff_r(1) <= '1';
-        end if;
-
-        if (   (iaddr2         /= iaddr0        )
-            or (it_ack2        /= it_ack0       )
-            or (pbi_ini2       /= pbi_ini0      )
-            )
-        then
-          diff_r(2) <= '1';
-        end if;
-        
+        -- Trap 1
+        diff_r(2 downto 1) <= diff_r(2 downto 1) or diff(2 downto 1);
       end if;
     end process p_diff_r;
 
-    diff_o(1) <= diff_r(1);
-    diff_o(2) <= diff_r(2);
+    diff_o(2 downto 1) <= diff_r(2 downto 1);
   end generate gen_cpu2_enable;
   
   gen_cpu2_disable: if CPU2_ENABLE = false
@@ -318,11 +315,12 @@ begin  -- architecture rtl
     idata0(17 downto 1) <= rom_data(17 downto 1);
     idata0(0)           <= rom_data(0)  xor inject_error_i(0);
 
-    idata1(16 downto 0) <= rom_data(16 downto 0);
-    idata1(17)          <= rom_data(17) xor inject_error_i(1);
+    idata1(17 downto 1) <= rom_data(17 downto 1);
+    idata1(0)           <= rom_data(0)  xor inject_error_i(1);
 
-    idata2              <= rom_data    when inject_error_i(2) = '0' else
-                           not rom_data;
+    idata2(17 downto 1) <= rom_data(17 downto 1);
+    idata2(0)           <= rom_data(0)  xor inject_error_i(2);
+    
   end generate gen_inject_error;
 
   gen_inject_error_n: if FAULT_INJECTION = false
