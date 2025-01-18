@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-14
+-- Last update: 2025-01-15
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ begin  -- architecture rtl
              pbi_tgt_it_vector
              ;
 
-  ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rtl)
+  ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rom)
     port map (
       clk_i            => clk    ,
       cke_i            => '1'    ,

@@ -151,7 +151,7 @@ begin  -- architecture rtl
     it_ack        <= it_ack0  ;
   end generate;
   
-  ins_pbi_OpenBlaze8_ROM : entity work.ROM_user(rtl)
+  ins_pbi_OpenBlaze8_ROM : entity work.ROM_user(rom)
     port map (
       clk_i            => clk    ,
       cke_i            => '1'    ,
