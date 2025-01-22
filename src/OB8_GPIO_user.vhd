@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-15
+-- Last update: 2025-01-21
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 -- 2024-12-31  1.1      mrosiere Fix parameter to GPIO
 -- 2025-01-12  2.0      mrosiere Add Safety feature
 -- 2025-01-15  2.1      mrosiere Update diff detection
+-- 2025-01-21  2.2      mrosiere Add UART
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -30,6 +31,8 @@ use work.pbi_pkg.all;
 
 entity OB8_GPIO_user is
     generic (
+    CLOCK_FREQ     : integer  := 50000000;
+    BAUD_RATE      : integer  := 115200;
     NB_SWITCH      : positive := 8;
     NB_LED0        : positive := 8;
     NB_LED1        : positive := 8;
@@ -43,6 +46,11 @@ entity OB8_GPIO_user is
     switch_i       : in  std_logic_vector(NB_SWITCH-1 downto 0);
     led0_o         : out std_logic_vector(NB_LED0  -1 downto 0);
     led1_o         : out std_logic_vector(NB_LED1  -1 downto 0);
+
+    uart_tx_o      : out std_logic;
+    uart_rx_i      : in  std_logic;
+    
+
     it_i           : in  std_logic;
     inject_error_i : in  std_logic_vector(        3-1 downto 0);
     diff_o         : out std_logic_vector(        3-1 downto 0)  -- bit 0 : cpu0 vs cpu1
@@ -61,6 +69,8 @@ architecture rtl of OB8_GPIO_user is
   constant ID_LED0                    : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00000100";
   --                                                                                    "00000011"
   constant ID_LED1                    : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00001000";
+  --                                                                                    "00000011"
+  constant ID_UART                    : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00001100";
   --                                                                                    "00000011"
 
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
@@ -85,6 +95,8 @@ architecture rtl of OB8_GPIO_user is
   signal pbi_tgt_switch               : pbi_tgt_t;
   signal pbi_tgt_led0                 : pbi_tgt_t;
   signal pbi_tgt_led1                 : pbi_tgt_t;
+  signal pbi_tgt_uart                 : pbi_tgt_t;
+  signal pbi_tgt_busy                 : std_logic;
 
   signal it_val                       : std_logic;
   signal it_ack                       : std_logic;
@@ -126,7 +138,10 @@ begin  -- architecture rtl
     interrupt_ack_o  => it_ack0
     );
 
-  pbi_tgt <= pbi_tgt_switch or
+  pbi_tgt_busy <= pbi_tgt.busy;
+
+  pbi_tgt <= pbi_tgt_uart   or
+             pbi_tgt_switch or
              pbi_tgt_led0   or
              pbi_tgt_led1
              ;
@@ -222,6 +237,21 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  ins_pbi_uart : entity work.pbi_uart(rtl)
+    generic map(
+      BAUD_RATE      => BAUD_RATE     ,
+      CLOCK_FREQ     => CLOCK_FREQ    ,
+      ID             => ID_UART
+      )
+    port map  (
+      clk_i          => clk           ,
+      arst_b_i       => arst_b        ,
+      pbi_ini_i      => pbi_ini       ,
+      pbi_tgt_o      => pbi_tgt_uart  ,
+      uart_tx_o      => uart_tx_o     ,
+      uart_rx_i      => uart_rx_i     
+      );
+  
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
     -- Lock Step

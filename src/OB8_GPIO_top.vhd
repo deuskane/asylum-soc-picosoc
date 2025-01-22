@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-01-15
+-- Last update: 2025-01-21
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -29,6 +29,7 @@ entity OB8_GPIO_top is
   generic (
     FSYS             : positive := 50_000_000;
     FSYS_INT         : positive := 50_000_000;
+    BAUD_RATE        : integer  := 115200;
     NB_SWITCH        : positive := 8;
     NB_LED           : positive := 19;
     RESET_POLARITY   : string   := "low";       -- "high" / "low"
@@ -42,10 +43,14 @@ entity OB8_GPIO_top is
   port (
     clk_i          : in  std_logic;
     arst_i         : in  std_logic;
-                   
+
     switch_i       : in  std_logic_vector(NB_SWITCH-1 downto 0);
     led_o          : out std_logic_vector(NB_LED   -1 downto 0);
     it_user_i      : in  std_logic;
+
+    uart_tx_o      : out std_logic;
+    uart_rx_i      : in  std_logic;
+    
     inject_error_i : in  std_logic_vector(        3-1 downto 0)
     );
 end OB8_GPIO_top;
@@ -71,6 +76,9 @@ architecture rtl of OB8_GPIO_top is
   signal   it_user                      : std_logic;
   signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
+
+--signal   uart_baud_tick               : std_logic;
+--signal   uart_tx                      : std_logic;
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -127,10 +135,12 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_soc_user : entity work.OB8_GPIO_user(rtl)
     generic map(
-    NB_SWITCH    => NB_SWITCH   ,
-    NB_LED0      => NB_LED0     ,
-    NB_LED1      => NB_LED1     ,
-    SAFETY       => SAFETY      ,
+    CLOCK_FREQ      => FSYS_INT    ,
+    BAUD_RATE       => BAUD_RATE   ,
+    NB_SWITCH       => NB_SWITCH   ,
+    NB_LED0         => NB_LED0     ,
+    NB_LED1         => NB_LED1     ,
+    SAFETY          => SAFETY      ,
     FAULT_INJECTION => FAULT_INJECTION
     )
   port map(
@@ -139,6 +149,8 @@ begin  -- architecture rtl
     switch_i       => switch_i,
     led0_o         => led0,
     led1_o         => led1,
+    uart_tx_o      => uart_tx_o,
+    uart_rx_i      => uart_rx_i,
     it_i           => it_user_sync,
     diff_o         => diff,
     inject_error_i => inject_error
@@ -205,5 +217,52 @@ begin  -- architecture rtl
   generate
     inject_error <=     inject_error_i;
   end generate gen_inject_error;
+
+
+--ins_uart_baud_rate_gen : entity work.uart_baud_rate_gen(rtl)
+--  generic map(
+--    BAUD_RATE      => 115200,
+--    CLOCK_FREQ     => FSYS_INT
+--    )
+--  port map(
+--    clk_i          => clk,
+--    arst_b_i       => arst_b_supervisor,
+--    baud_tick_en_i => '1',
+--    baud_tick_o    => uart_baud_tick
+--    );
+--
+--ins_uart_tx_axis : entity work.uart_tx_axis(rtl)
+--  generic map
+--  ( WIDTH           => 8
+--    )
+--  port map
+--  ( clk_i           => clk
+--   ,arst_b_i        => arst_b_supervisor
+--   ,s_axis_tdata_i  => x"30"
+--   ,s_axis_tvalid_i => '1'
+--   ,s_axis_tready_o => open
+--   ,uart_tx_o       => uart_tx
+--   ,baud_tick_i     => uart_baud_tick
+--   ,parity_enable_i => '0'
+--   ,parity_odd_i    => '0'
+--    );
+--
+--ins_uart_rx_axis : entity work.uart_rx_axis(rtl)
+--  generic map
+--  ( WIDTH           => 8
+--    )
+--  port map
+--  ( clk_i           => clk
+--   ,arst_b_i        => arst_b_supervisor
+--   ,m_axis_tdata_o  => open
+--   ,m_axis_tvalid_o => open
+--   ,m_axis_tready_i => '1'
+--   ,uart_rx_i       => uart_tx
+--   ,baud_tick_i     => uart_baud_tick
+--   ,parity_enable_i => '0'
+--   ,parity_odd_i    => '0'
+--    );
+--
+--uart_tx_o <= uart_tx;
   
 end architecture rtl;
