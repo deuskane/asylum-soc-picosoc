@@ -5,13 +5,14 @@
 # File       : OB8_GPIO.vhd
 # Author     : Mathieu Rosiere
 #-----------------------------------------------------------------------------
-# Description: Makefile to execute fusesoc & impulse
+# Description: Makefile to execute fusesoc
 #-----------------------------------------------------------------------------
 # Copyright (c) 2024
 #-----------------------------------------------------------------------------
 # Revisions  :
 # Date        Version  Author   Description
 # 2024-12-31  1.0      mrosiere	Created
+# 2025-01-22  1.1      mrosiere Delete impulse target
 #-----------------------------------------------------------------------------
 
 #=============================================================================
@@ -20,7 +21,7 @@
 SHELL    	 = /bin/bash
 
 FILE_CORE	?= OB8_GPIO.core
-TARGET          ?= emu_ng_medium_c_identity
+TARGET          ?= emu_ng_medium_c_user
 TOOL		?= nxmap
 
 CORE_NAME       := $(shell grep name $(FILE_CORE) | head -n1 | tr -d ' ')
@@ -68,7 +69,6 @@ help :
 	@echo "setup      : Execute Setup stage of fusesoc flow for specific target and tool"
 	@echo "build      : Execute Build stage of fusesoc flow for specific target and tool"
 	@echo "run        : Execute Run   stage of fusesoc flow for specific target and tool"
-	@echo "impulse    : Execute the specific target in gui, Warning, the target must be previously build"
 	@echo "*          : Run target with default tool"
 	@echo "clean      : delete build directory"
 	@echo ""
@@ -93,11 +93,6 @@ setup build run :
 	fusesoc run --build-root $(PATH_BUILD) --$@ --target $(TARGET) --tool $(TOOL) $(VLNV)
 
 .PHONY : setup build run
-
-#--------------------------------------------------------
-impulse :
-#--------------------------------------------------------
-	(cd $(PATH_BUILD)/$(TARGET)-$(TOOL)/work; ${IMPULSE} $(NAME)_native.nym)
 
 #--------------------------------------------------------
 % :

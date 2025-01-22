@@ -25,23 +25,25 @@ CAPI=2:
 #                               Usefull to student
 # 2025-01-12  2.0.0    mrosiere Add supervisor and add safety
 # 2025-01-15  2.1.0    mrosiere Support TMR safety
+# 2025-01-21  2.2.0    mrosiere Add UART
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.1.0
-description : SoC with OpenBlaze8, switch and led
+name        : asylum:soc:OB8_GPIO:2.2.0
+description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
 generate:
 #=========================================
   # Next line is a pragma, don't modify
   #<GENERATE_BEGIN>
-  gen_asm_identity:
+  gen_user_asm_identity:
     generator : pbcc_gen
     parameters:
       file   : soft/identity.psm
       type   : pblazeide
+      entity : ROM_user
 
-  gen_c_identity_inverted:
+  gen_user_c_identity_inverted:
     generator : pbcc_gen
     parameters:
       file   : soft/identity.c
@@ -49,27 +51,41 @@ generate:
       entity : ROM_user
       cflags : -DINVERT_SWITCH
 
-  gen_c_identity:
+  gen_user_c_identity:
     generator : pbcc_gen
     parameters:
       file   : soft/identity.c
       type   : c
       entity : ROM_user
 
-  gen_c_supervisor :
+  gen_user_c :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+
+  gen_supervisor_c :
     generator : pbcc_gen
     parameters :
       file   : soft/supervisor.c
       type   : c
       entity : ROM_supervisor
 
-  gen_c_supervisor_tmr :
+  gen_supervisor_c_tmr :
     generator : pbcc_gen
     parameters :
       file   : soft/supervisor.c
       type   : c
       entity : ROM_supervisor
       cflags : -DSAFETY_TMR
+
+  gen_supervisor_c_dummy :
+    generator  : pbcc_gen
+    parameters :
+      file   : soft/dummy.c
+      type   : c
+      entity : ROM_supervisor
 
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
@@ -96,6 +112,7 @@ filesets:
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:pbi_GPIO:1.0.0"
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
+      - ">=asylum:communication:uart:1.0.0"
 
   #---------------------------------------
   files_sim:
@@ -171,7 +188,7 @@ targets:
       - files_basys 
       - pbcc_dep
       - target_generic
-    generate : [gen_asm_identity]
+    generate : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=50000000
       - FSYS_INT=50000000
@@ -187,16 +204,16 @@ targets:
     toplevel : OB8_GPIO_top
 
   #---------------------------------------
-  emu_ng_medium_c_identity: &emu_ng_medium_default
+  emu_ng_medium_c_user: &emu_ng_medium_default
   #---------------------------------------
-    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - No Supervisor, No Safety, No Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
       - target_generic
-    generate : [gen_c_identity,gen_c_supervisor]
+    generate : [gen_user_c,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -220,8 +237,8 @@ targets:
   emu_ng_medium_lab6:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_c_identity,gen_c_supervisor]
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+    generate : [gen_user_c,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -239,8 +256,8 @@ targets:
   emu_ng_medium_lab7:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
-    generate : [gen_c_identity,gen_c_supervisor]
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate : [gen_user_c,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -258,8 +275,8 @@ targets:
   emu_ng_medium_lab8:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/identity.c - With Supervisor, Safety TMR, With Fault Injection
-    generate : [gen_c_identity,gen_c_supervisor_tmr]
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -277,26 +294,39 @@ targets:
   #<TARGETS_BEGIN>
   sim_asm_identity:
     << : *sim
-    description     : Simulation of the test soft/identity.psm
-    generate : [gen_asm_identity]
+    description  : Simulation of the test soft/identity.psm
+    generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
 
   sim_c_identity:
     << : *sim
-    description     : Simulation of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
-    parameters :
+    description  : Simulation of the test soft/identity.c
+    generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+
+  sim_c_user:
+    << : *sim
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c]
+    parameters   :
       - SUPERVISOR=true
       - SAFETY=lock-step
       - FAULT_INJECTION=true
-    generate : [gen_c_identity,gen_c_supervisor]
 
-  sim_c_identity_tmr:
+  sim_c_user_tmr:
     << : *sim
-    description     : Simulation of the test soft/identity.c - With Supervisor, Safety Lock-Step, With Fault Injection
-    parameters :
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c_tmr]
+    parameters   :
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
-    generate : [gen_c_identity,gen_c_supervisor_tmr]
 
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
