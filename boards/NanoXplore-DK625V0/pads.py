@@ -34,7 +34,11 @@ p.addPad('inject_error_i[0]' ,{'location':'IOB10_D07P', 'standard' : 'LVCMOS', '
 p.addPad('inject_error_i[1]' ,{'location':'IOB10_D12P', 'standard' : 'LVCMOS', 'drive' : '2mA'})
 p.addPad('inject_error_i[2]' ,{'location':'IOB10_D07N', 'standard' : 'LVCMOS', 'drive' : '2mA'})
 
+p.addPad('uart_tx_o'         ,{'location':'IOB5_D03N',  'standard' : 'LVCMOS', 'drive' : '2mA'})
+p.addPad('uart_rx_i'         ,{'location':'IOB5_D03P',  'standard' : 'LVCMOS', 'drive' : '2mA'})
+
 p.addBank('IOB0' ,{'voltage' : '3.3'})
 p.addBank('IOB1' ,{'voltage' : '3.3'})
+p.addBank('IOB5' ,{'voltage' : '3.3'})
 p.addBank('IOB10',{'voltage' : '1.8'})
 p.addBank('IOB12',{'voltage' : '2.5'})
