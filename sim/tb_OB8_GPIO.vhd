@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-15
+-- Last update: 2025-01-21
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -36,11 +36,11 @@ end entity tb_OB8_GPIO;
 
 architecture tb of tb_OB8_GPIO is
   -- =====[ Parameters ]==========================
-  constant TB_PERIOD               : time    := 10 ns;
-  constant TB_DURATION             : natural := 10000;
+  constant TB_PERIOD               : time    := 40 ns;
+  constant TB_DURATION             : natural := 100000;
 
-  constant FSYS                    : positive := 100_000_000;
-  constant FSYS_INT                : positive := 100_000_000;
+  constant FSYS                    : positive := 25_000_000;
+  constant FSYS_INT                : positive := 25_000_000;
   constant NB_SWITCH               : positive :=  8;
   constant NB_LED                  : positive := 19;
 
@@ -125,6 +125,8 @@ begin  -- architecture tb
     ,led_o            => led_o           
     ,it_user_i        => it_user_i     
     ,inject_error_i   => inject_error_i
+    ,uart_tx_o        => open
+    ,uart_rx_i        => '1' 
     );
 
   -----------------------------------------------------
