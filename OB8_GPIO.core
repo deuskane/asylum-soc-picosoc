@@ -42,6 +42,7 @@ generate:
       file   : soft/identity.psm
       type   : pblazeide
       entity : ROM_user
+      cflags : --verbose --all-callee-saves
 
   gen_user_c_identity_inverted:
     generator : pbcc_gen
@@ -49,7 +50,7 @@ generate:
       file   : soft/identity.c
       type   : c
       entity : ROM_user
-      cflags : -DINVERT_SWITCH
+      cflags : --verbose --all-callee-saves -DINVERT_SWITCH
 
   gen_user_c_identity:
     generator : pbcc_gen
@@ -57,6 +58,7 @@ generate:
       file   : soft/identity.c
       type   : c
       entity : ROM_user
+      cflags : --verbose --all-callee-saves
 
   gen_user_c :
     generator : pbcc_gen
@@ -64,6 +66,7 @@ generate:
       file   : soft/user.c
       type   : c
       entity : ROM_user
+      cflags : --verbose --all-callee-saves
 
   gen_user_c_uart :
     generator : pbcc_gen
@@ -71,7 +74,7 @@ generate:
       file   : soft/user.c
       type   : c
       entity : ROM_user
-      cflags : -DHAVE_UART
+      cflags : --verbose --all-callee-saves -DHAVE_UART
 
   gen_supervisor_c :
     generator : pbcc_gen
@@ -79,6 +82,7 @@ generate:
       file   : soft/supervisor.c
       type   : c
       entity : ROM_supervisor
+      cflags : --verbose --all-callee-saves
 
   gen_supervisor_c_tmr :
     generator : pbcc_gen
@@ -86,7 +90,7 @@ generate:
       file   : soft/supervisor.c
       type   : c
       entity : ROM_supervisor
-      cflags : -DSAFETY_TMR
+      cflags : --verbose --all-callee-saves -DSAFETY_TMR
 
   gen_supervisor_c_dummy :
     generator  : pbcc_gen
@@ -94,6 +98,7 @@ generate:
       file   : soft/dummy.c
       type   : c
       entity : ROM_supervisor
+      cflags : --verbose --all-callee-saves
 
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
@@ -221,7 +226,7 @@ targets:
       - files_ng_medium 
       - pbcc_dep
       - target_generic
-    generate : [gen_user_c_uart,gen_supervisor_c]
+    generate : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
