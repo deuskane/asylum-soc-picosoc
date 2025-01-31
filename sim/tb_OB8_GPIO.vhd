@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-21
+-- Last update: 2025-01-22
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ end entity tb_OB8_GPIO;
 architecture tb of tb_OB8_GPIO is
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := 40 ns;
-  constant TB_DURATION             : natural := 100000;
+  constant TB_DURATION             : natural := 10000;
 
   constant FSYS                    : positive := 25_000_000;
   constant FSYS_INT                : positive := 25_000_000;
@@ -193,7 +193,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU0" ;
         inject_error_i(0) <= '1';
-        run(1);
+        run(10);
         inject_error_i(0) <= '0';
 
         wait until (led_switch /= switch_i) ;
@@ -201,7 +201,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(1);
+        run(10);
         inject_error_i(1) <= '0';
 
         wait until (led_switch /= switch_i) ;
