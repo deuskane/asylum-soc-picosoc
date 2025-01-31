@@ -18,7 +18,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
-#include <intr.h>
+//#include <intr.h>
 
 //--------------------------------------
 // Port Macro
@@ -42,36 +42,27 @@ extern char PBLAZEPORT[];
 static char cpt;
 
 //--------------------------------------
-// Null function
-//--------------------------------------
-void null (void)
-{
-  // Empty
-}
-
-//--------------------------------------
 // putchar : send char into uart
 // puthex  : translate byte into ascii and send into uart
 //--------------------------------------
 #ifdef HAVE_UART
 #define putchar(c) PORT_WR(UART, c)
 
-void puthex(uint8_t byte) {
-  uint8_t msb = byte >> 4;
-  uint8_t lsb = byte & 0x0F;
-
-  if (msb>9)
-    putchar('A'+msb-10);
-  else
-    putchar('0'+msb);
-
-  if (lsb>9)
-    putchar('A'+lsb-10);
-  else
-    putchar('0'+lsb);
-
-  null();
-}
+#define puthex(byte)           \
+do {			      \
+  uint8_t msb = byte >> 4;    \
+  uint8_t lsb = byte & 0x0F;  \
+			      \
+  if (msb>9)		      \
+    putchar('A'+msb-10);      \
+  else			      \
+    putchar('0'+msb);	      \
+			      \
+  if (lsb>9)		      \
+    putchar('A'+lsb-10);      \
+  else			      \
+    putchar('0'+lsb);         \
+ } while (0)
 #else
 
 #define putchar(c)   do {} while (0)
@@ -86,54 +77,6 @@ void isr (void) __interrupt(1)
 {
   cpt ++;
   PORT_WR(LED1,cpt);
-
-  // Workaround in sdcc :
-  // The cpt STORE is update after the context restoration
-  // With null call, we force to make context restoration after the update of cpu variable
-  null();
-}
-
-//--------------------------------------
-// Application Setup
-//--------------------------------------
-// Init counter
-// Send counter to led
-// Enable interuption
-void setup (void)
-{
-  cpt = 0;
-  PORT_WR(LED1,cpt);
-
-  pbcc_enable_interrupt();
-
-  null ();
-}
-
-//--------------------------------------
-// Application Run Loop
-//--------------------------------------
-// Read Switch and write to led
-void loop (void)
-{
-  uint8_t sw = PORT_RD(SWITCH);
-
-#ifdef INVERT_SWITCH
-  sw = ~sw;
-#endif
-  
-  PORT_WR(LED0, sw);
-  
-  putchar('H');
-  putchar('e');
-  putchar('l');
-  putchar('l');
-  putchar('o');
-  putchar(' ');
-  puthex (sw);
-  putchar('\r');
-  putchar('\n');
-  
-  null ();
 }
 
 //--------------------------------------
@@ -142,7 +85,43 @@ void loop (void)
 // Arduino Style, Don't modify
 void main()
 {
-  setup ();
+  //------------------------------------
+  // Application Setup
+  //------------------------------------
+  // Init counter
+  // Send counter to led
+  // Enable interuption
+  cpt = 0;
+  PORT_WR(LED1,cpt);
+
+  //pbcc_enable_interrupt();
+  __asm
+    ENABLE INTERRUPT
+  __endasm;
+    
+  //------------------------------------
+  // Application Run Loop
+  //------------------------------------
+  // Read Switch and write to led
   while (1)
-    loop ();
+    {
+      uint8_t sw = PORT_RD(SWITCH);
+
+#ifdef INVERT_SWITCH
+      sw = ~sw;
+#endif
+  
+      PORT_WR(LED0, sw);
+  
+      putchar('H');
+      putchar('e');
+      putchar('l');
+      putchar('l');
+      putchar('o');
+      putchar(' ');
+      puthex (sw);
+      putchar('\r');
+      putchar('\n');
+    }
+ 
 }

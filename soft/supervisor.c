@@ -1,4 +1,21 @@
-#include <intr.h>
+//-----------------------------------------------------------------------------
+// Title      : kcpsm3 file for identity fonction
+// Project    : Asylum
+//-----------------------------------------------------------------------------
+// File       : identity.c
+// Author     : mrosiere
+//-----------------------------------------------------------------------------
+// Description:
+// Read  switch
+// Write led
+//-----------------------------------------------------------------------------
+// Copyright (c) 2021
+//-----------------------------------------------------------------------------
+// Revisions  :
+// Date        Version  Author   Description
+// 2017-03-30  1.0      mrosiere Created
+// 2025-01-06  1.0      mrosiere Add comments
+//-----------------------------------------------------------------------------
 #include <stdint.h>
 
 //--------------------------------------
@@ -28,11 +45,6 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 static char cpt = 0;
 
-void null (void)
-{
-  // Empty
-}
-
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
@@ -51,16 +63,12 @@ void isr (void) __interrupt(1)
       cpt ++;
       PORT_WR(LED,cpt);
       PORT_WR(RST,1);
-      null();
     }
   else
     {
       // First error
       PORT_WR(IT_VECTOR_MASK,~it_vector);
-      null();
     }
-
-  null();
 }
 
 #else
@@ -72,45 +80,33 @@ void isr (void) __interrupt(1)
   cpt ++;
   PORT_WR(LED,cpt);
   PORT_WR(RST,1);
-  
-  null();
 }
 
 #endif
-//--------------------------------------
-// Application Setup
-//--------------------------------------
-void setup (void)
-{
-  PORT_WR(RST,0);
-
-  cpt = 0;
-  // Mask Enable
-  PORT_WR(IT_VECTOR_MASK,VECTOR_MASK_DEFAULT);
-  pbcc_enable_interrupt();
-
-  PORT_WR(RST,1);
-  
-  null ();
-}
-
-//--------------------------------------
-// Application Run Loop
-//--------------------------------------
-void loop (void)
-{
-  null ();
-}
 
 //--------------------------------------
 // Main
 //--------------------------------------
 void main()
 {
-  setup ();
+  //------------------------------------
+  // Application Setup
+  //------------------------------------
+  PORT_WR(RST,0);
 
+  cpt = 0;
+  // Mask Enable
+  PORT_WR(IT_VECTOR_MASK,VECTOR_MASK_DEFAULT);
+
+  __asm
+    ENABLE INTERRUPT
+  __endasm;
+
+  PORT_WR(RST,1);
+
+  //------------------------------------
+  // Application Run Loop
+  //-----------------------------------_
   while (1);
   //    loop ();
-
-  null();
 }
