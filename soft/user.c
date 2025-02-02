@@ -37,11 +37,6 @@ extern char PBLAZEPORT[];
 #define UART      0x0C
 
 //--------------------------------------
-// Global Variable
-//--------------------------------------
-static char cpt;
-
-//--------------------------------------
 // putchar : send char into uart
 // puthex  : translate byte into ascii and send into uart
 //--------------------------------------
@@ -75,8 +70,7 @@ do {			      \
 //--------------------------------------
 void isr (void) __interrupt(1)
 {
-  cpt ++;
-  PORT_WR(LED1,cpt);
+  PORT_WR(LED1,PORT_RD(LED1)+1);
 }
 
 //--------------------------------------
@@ -91,8 +85,7 @@ void main()
   // Init counter
   // Send counter to led
   // Enable interuption
-  cpt = 0;
-  PORT_WR(LED1,cpt);
+  PORT_WR(LED1,0);
 
   //pbcc_enable_interrupt();
   __asm

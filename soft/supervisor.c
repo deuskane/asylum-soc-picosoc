@@ -29,21 +29,17 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define RST            0x00
-#define LED            0x04
-#define IT_VECTOR_MASK 0x08
-#define IT_VECTOR      0x0C
-
-#define GPIO_DATA      0x0
-#define GPIO_DATA_OE   0x1
-#define GPIO_DATA_IN   0x2
-#define GPIO_DATA_OUT  0x3
+#define RST                 0x00
+#define LED                 0x04
+#define IT_VECTOR_MASK      0x08
+#define IT_VECTOR           0x0C
+		            
+#define GPIO_DATA           0x0
+#define GPIO_DATA_OE        0x1
+#define GPIO_DATA_IN        0x2
+#define GPIO_DATA_OUT       0x3
 
 #define VECTOR_MASK_DEFAULT 0x7
-//--------------------------------------
-// Global Variable
-//--------------------------------------
-static char cpt = 0;
 
 //--------------------------------------
 // Interrupt Sub Routine
@@ -60,8 +56,7 @@ void isr (void) __interrupt(1)
       // Not the first error
       PORT_WR(RST,0);
       PORT_WR(IT_VECTOR_MASK,VECTOR_MASK_DEFAULT);
-      cpt ++;
-      PORT_WR(LED,cpt);
+      PORT_WR(LED,PORT_RD(LED)+1);
       PORT_WR(RST,1);
     }
   else
@@ -77,8 +72,7 @@ void isr (void) __interrupt(1)
 {
   PORT_WR(RST,0);
   PORT_WR(IT_VECTOR_MASK,VECTOR_MASK_DEFAULT);
-  cpt ++;
-  PORT_WR(LED,cpt);
+  PORT_WR(LED,PORT_RD(LED)+1);
   PORT_WR(RST,1);
 }
 
@@ -93,8 +87,8 @@ void main()
   // Application Setup
   //------------------------------------
   PORT_WR(RST,0);
+  PORT_WR(LED,0);
 
-  cpt = 0;
   // Mask Enable
   PORT_WR(IT_VECTOR_MASK,VECTOR_MASK_DEFAULT);
 
