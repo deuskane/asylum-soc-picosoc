@@ -360,6 +360,15 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=true
 
+  sim_c_user_tmr_uart:
+    << : *sim
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
+    parameters   :
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
@@ -425,4 +434,10 @@ parameters :
     description : Polarity of inject_err_r_i signal (low / high)
     datatype    : str
     default     : low
+    paramtype   : generic
+
+  TB_WATCHDOG :
+    description : Testbench Watchdog
+    datatype    : int
+    default     : 10000
     paramtype   : generic

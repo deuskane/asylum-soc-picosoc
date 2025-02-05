@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-22
+-- Last update: 2025-02-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ entity tb_OB8_GPIO is
     (SUPERVISOR       : boolean  := True
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION  : boolean  := True
+    ;TB_WATCHDOG      : natural  := 10_000
     );
   
 end entity tb_OB8_GPIO;
@@ -37,7 +38,7 @@ end entity tb_OB8_GPIO;
 architecture tb of tb_OB8_GPIO is
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := 40 ns;
-  constant TB_DURATION             : natural := 10000;
+--constant TB_WATCHDOG             : natural := 10000;
 
   constant FSYS                    : positive := 25_000_000;
   constant FSYS_INT                : positive := 25_000_000;
@@ -139,7 +140,7 @@ begin  -- architecture tb
   -----------------------------------------------------------------------------
   p_watchdog: process is
   begin
-    run(TB_DURATION);
+    run(TB_WATCHDOG);
 
     assert (test_done = '1') report "[TESTBENCH] Test KO : Maximum cycle is reached" severity failure;
 
