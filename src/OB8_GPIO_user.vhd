@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-01-21
+-- Last update: 2025-03-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,10 +24,11 @@
 -------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+use     ieee.std_logic_1164.all;
+use     ieee.numeric_std.all;
 library work;
-use work.pbi_pkg.all;
+use     work.pbi_pkg.all;
+library asylum;
 
 entity OB8_GPIO_user is
     generic (
