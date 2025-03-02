@@ -86,6 +86,11 @@ void main()
   //------------------------------------
   // Application Setup
   //------------------------------------
+  PORT_WR(RST           +GPIO_DATA_OE,0xFF);
+  PORT_WR(LED           +GPIO_DATA_OE,0xFF);
+  PORT_WR(IT_VECTOR_MASK+GPIO_DATA_OE,0xFF);
+  PORT_WR(IT_VECTOR     +GPIO_DATA_OE,0x00);
+
   PORT_WR(RST,0);
   PORT_WR(LED,0);
 

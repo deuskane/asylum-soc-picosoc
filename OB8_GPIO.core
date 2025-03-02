@@ -26,9 +26,10 @@ CAPI=2:
 # 2025-01-12  2.0.0    mrosiere Add supervisor and add safety
 # 2025-01-15  2.1.0    mrosiere Support TMR safety
 # 2025-01-21  2.2.0    mrosiere Add UART
+# 2025-01-21  2.2.1    mrosiere Add UART Baud Rate in tb
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.2.0
+name        : asylum:soc:OB8_GPIO:2.2.1
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
@@ -133,8 +134,8 @@ filesets:
     files:
       - sim/tb_OB8_GPIO.vhd
     file_type : vhdlSource
-    depend :
-      - ">=xilinx:primitive:unisim:11.1"
+#    depend :
+#      - ">=xilinx:primitive:unisim:11.1"
 
   #---------------------------------------
   files_basys:
@@ -369,6 +370,7 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=false
       - TB_WATCHDOG=50000
+      - BAUD_RATE=921600
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
@@ -386,6 +388,12 @@ parameters :
     description : Internal frequency
     datatype    : int
     default     : 500000000
+    paramtype   : generic
+
+  BAUD_RATE :
+    description : Baud Rate
+    datatype    : int
+    default     : 115200
     paramtype   : generic
 
   NB_SWITCH :

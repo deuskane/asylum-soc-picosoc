@@ -31,10 +31,15 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define SWITCH    0x00
-#define LED0      0x04
-#define LED1      0x08
-#define UART      0x0C
+#define SWITCH              0x00
+#define LED0                0x04
+#define LED1                0x08
+#define UART                0x0C
+
+#define GPIO_DATA           0x0
+#define GPIO_DATA_OE        0x1
+#define GPIO_DATA_IN        0x2
+#define GPIO_DATA_OUT       0x3
 
 //--------------------------------------
 // putchar : send char into uart
@@ -85,6 +90,10 @@ void main()
   // Init counter
   // Send counter to led
   // Enable interuption
+  PORT_WR(SWITCH +GPIO_DATA_OE,0x00);
+  PORT_WR(LED0   +GPIO_DATA_OE,0xFF);
+  PORT_WR(LED1   +GPIO_DATA_OE,0xFF);
+
   PORT_WR(LED1,0);
 
   //pbcc_enable_interrupt();

@@ -31,14 +31,22 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define SWITCH    0x00
-#define LED0      0x04
+#define SWITCH              0x00
+#define LED0                0x04
+
+#define GPIO_DATA           0x0
+#define GPIO_DATA_OE        0x1
+#define GPIO_DATA_IN        0x2
+#define GPIO_DATA_OUT       0x3
 
 //--------------------------------------
 // Main
 //--------------------------------------
 void main()
 {
+  PORT_WR(SWITCH +GPIO_DATA_OE,0x00);
+  PORT_WR(LED0   +GPIO_DATA_OE,0xFF);
+
   while (1)
     {
       uint8_t sw = PORT_RD(SWITCH);

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-02-05
+-- Last update: 2025-03-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -31,7 +31,8 @@ entity tb_OB8_GPIO is
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION  : boolean  := True
     ;TB_WATCHDOG      : natural  := 10_000
-    );
+    ;BAUD_RATE        : integer  := 115200
+     );
   
 end entity tb_OB8_GPIO;
 
@@ -110,6 +111,7 @@ begin  -- architecture tb
     generic map
     (FSYS             => FSYS            
     ,FSYS_INT         => FSYS_INT        
+    ,BAUD_RATE        => BAUD_RATE
     ,NB_SWITCH        => NB_SWITCH       
     ,NB_LED           => NB_LED          
     ,RESET_POLARITY   => RESET_POLARITY  
