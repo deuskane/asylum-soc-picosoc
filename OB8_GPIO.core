@@ -23,27 +23,83 @@ CAPI=2:
 # 2025-01-06  1.1.3    mrosiere Add reset resynchonizer
 # 2025-01-06  1.1.4    mrosiere Add top level to separate clock and reset management
 #                               Usefull to student
+# 2025-01-12  2.0.0    mrosiere Add supervisor and add safety
+# 2025-01-15  2.1.0    mrosiere Support TMR safety
+# 2025-01-21  2.2.0    mrosiere Add UART
+# 2025-01-21  2.2.1    mrosiere Add UART Baud Rate in tb
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:1.1.4
-description : SoC with OpenBlaze8, switch and led
+name        : asylum:soc:OB8_GPIO:2.2.1
+description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
 generate:
 #=========================================
   # Next line is a pragma, don't modify
   #<GENERATE_BEGIN>
-  gen_asm_identity:
+  gen_user_asm_identity:
     generator : pbcc_gen
     parameters:
-      file: soft/identity.psm
-      type: pblazeide
+      file   : soft/identity.psm
+      type   : pblazeide
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves
 
-  gen_c_identity:
+  gen_user_c_identity_inverted:
     generator : pbcc_gen
     parameters:
-      file: soft/identity.c
-      type: c
+      file   : soft/identity.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves -DINVERT_SWITCH
+
+  gen_user_c_identity:
+    generator : pbcc_gen
+    parameters:
+      file   : soft/identity.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves
+
+  gen_user_c :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves
+
+  gen_user_c_uart :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves -DHAVE_UART
+
+  gen_supervisor_c :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/supervisor.c
+      type   : c
+      entity : ROM_supervisor
+      cflags : --verbose --all-callee-saves
+
+  gen_supervisor_c_tmr :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/supervisor.c
+      type   : c
+      entity : ROM_supervisor
+      cflags : --verbose --all-callee-saves -DSAFETY_TMR
+
+  gen_supervisor_c_dummy :
+    generator  : pbcc_gen
+    parameters :
+      file   : soft/dummy.c
+      type   : c
+      entity : ROM_supervisor
+      cflags : --verbose --all-callee-saves
 
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
@@ -62,12 +118,15 @@ filesets:
   #---------------------------------------
     files:
       - src/OB8_GPIO_top.vhd
-      - src/OB8_GPIO.vhd
+      - src/OB8_GPIO_user.vhd
+      - src/OB8_GPIO_supervisor.vhd
+      - src/it_ctrl.vhd
     file_type : vhdlSource
     depend :
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:pbi_GPIO:1.0.0"
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
+      - ">=asylum:communication:uart:1.0.0"
 
   #---------------------------------------
   files_sim:
@@ -75,8 +134,8 @@ filesets:
     files:
       - sim/tb_OB8_GPIO.vhd
     file_type : vhdlSource
-    depend :
-      - ">=xilinx:primitive:unisim:11.1"
+#    depend :
+#      - ">=xilinx:primitive:unisim:11.1"
 
   #---------------------------------------
   files_basys:
@@ -124,6 +183,10 @@ targets:
     description     : default rule to sim (DON'T RUN)
     default_tool    : ghdl
     toplevel        : tb_OB8_GPIO
+    filesets_append :
+      - files_sim
+      - pbcc_dep
+      - target_generic
     tools :
       ghdl :
         analyze_options : ["-fsynopsys"]
@@ -139,13 +202,13 @@ targets:
       - files_basys 
       - pbcc_dep
       - target_generic
-    generate : [gen_asm_identity]
+    generate : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=50000000
       - FSYS_INT=50000000
       - NB_SWITCH=8
       - NB_LED=8
-      - RESET_POLARITY=pos
+      - RESET_POLARITY=high
     tools:
       ise:
         family  : Spartan3E
@@ -155,22 +218,28 @@ targets:
     toplevel : OB8_GPIO_top
 
   #---------------------------------------
-  emu_ng_medium_c_identity:
+  emu_ng_medium_c_user: &emu_ng_medium_default
   #---------------------------------------
-    description  : Synthesis for NanoXplore Ng_Medium board of the test soft/identity.psm
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
       - target_generic
-    generate : [gen_c_identity]
+    generate : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
       - NB_SWITCH=6
-      - NB_LED=8
-      - RESET_POLARITY=neg
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=true
     tools:
       nxmap:
         board   : 
@@ -178,27 +247,130 @@ targets:
         program : True
     toplevel : OB8_GPIO_top
 
+  #---------------------------------------
+  emu_ng_medium_lab5:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+    generate : [gen_user_c,gen_supervisor_c]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+
+  #---------------------------------------
+  emu_ng_medium_lab6:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
+    generate : [gen_user_c,gen_supervisor_c]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
+
+  #---------------------------------------
+  emu_ng_medium_lab7:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate : [gen_user_c,gen_supervisor_c]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=true
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
+
+  #---------------------------------------
+  emu_ng_medium_lab8:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c_tmr]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=true
 
   # Next line is a pragma, don't modify
   #<TARGETS_BEGIN>
   sim_asm_identity:
     << : *sim
-    description     : Simulation of the test soft/identity.psm
-    filesets_append :
-      - files_sim
-      - pbcc_dep
-      - target_generic
-    generate : [gen_asm_identity]
+    description  : Simulation of the test soft/identity.psm
+    generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
 
   sim_c_identity:
     << : *sim
-    description     : Simulation of the test soft/identity.c
-    filesets_append :
-      - files_sim
-      - pbcc_dep
-      - target_generic
-    generate : [gen_c_identity]
+    description  : Simulation of the test soft/identity.c
+    generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
 
+  sim_c_user:
+    << : *sim
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c]
+    parameters   :
+      - SUPERVISOR=true
+      - SAFETY=lock-step
+      - FAULT_INJECTION=true
+
+  sim_c_user_tmr:
+    << : *sim
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c_tmr]
+    parameters   :
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=true
+
+  sim_c_user_tmr_uart:
+    << : *sim
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
+    parameters   :
+      - SUPERVISOR=true
+      - SAFETY=tmr
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
+      - BAUD_RATE=921600
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
@@ -218,6 +390,12 @@ parameters :
     default     : 500000000
     paramtype   : generic
 
+  BAUD_RATE :
+    description : Baud Rate
+    datatype    : int
+    default     : 115200
+    paramtype   : generic
+
   NB_SWITCH :
     description : Switch number on board
     datatype    : int
@@ -231,7 +409,43 @@ parameters :
     paramtype   : generic
 
   RESET_POLARITY :
-    description : Polarity of arst_i signal (neg / pos)
+    description : Polarity of arst_i signal (low / high)
     datatype    : str
-    default     : neg
+    default     : low
+    paramtype   : generic
+
+  SUPERVISOR :
+    description : Instanciate the supervisor
+    datatype    : bool
+    default     : false
+    paramtype   : generic
+
+  SAFETY :
+    description : Safety Algorithm (none / lock-step / tmr)
+    datatype    : str
+    default     : none
+    paramtype   : generic
+
+  FAULT_INJECTION :
+    description : Polarity of arst_i signal (low / high)
+    datatype    : bool
+    default     : false
+    paramtype   : generic
+
+  IT_USER_POLARITY :
+    description : Polarity of it_user_i signal (low / high)
+    datatype    : str
+    default     : low
+    paramtype   : generic
+
+  FAULT_POLARITY :
+    description : Polarity of inject_err_r_i signal (low / high)
+    datatype    : str
+    default     : low
+    paramtype   : generic
+
+  TB_WATCHDOG :
+    description : Testbench Watchdog
+    datatype    : int
+    default     : 10000
     paramtype   : generic
