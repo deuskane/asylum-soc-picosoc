@@ -24,7 +24,7 @@ FILE_CORE	?= OB8_GPIO.core
 TARGET          ?= emu_ng_medium_c_user
 TOOL		?= nxmap
 
-CORE_NAME       := $(shell grep name $(FILE_CORE) | head -n1 | tr -d ' ')
+CORE_NAME       := $(shell grep ^name $(FILE_CORE) | head -n1 | tr -d ' ')
 
 IP_VENDOR	 = $(shell echo $(CORE_NAME) | cut -d':' -f2)
 IP_LIBRARY 	 = $(shell echo $(CORE_NAME) | cut -d':' -f3)
