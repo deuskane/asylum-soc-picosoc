@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-03-02
+-- Last update: 2025-03-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,7 +24,6 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
-library asylum;
 
 entity OB8_GPIO_supervisor is
   generic (
@@ -60,12 +59,13 @@ architecture rtl of OB8_GPIO_supervisor is
   
   signal iaddr                        : std_logic_vector(10-1 downto 0);
   signal idata                        : std_logic_vector(17 downto 0);
-  signal pbi_ini                      : pbi_ini_t;
-  signal pbi_tgt                      : pbi_tgt_t;
-  signal pbi_tgt_led0                 : pbi_tgt_t;
-  signal pbi_tgt_led1                 : pbi_tgt_t;
-  signal pbi_tgt_it_vector_mask       : pbi_tgt_t;
-  signal pbi_tgt_it_vector            : pbi_tgt_t;
+  signal pbi_ini                      : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt                      : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_led0                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_led1                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_it_vector_mask       : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_it_vector            : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   
   signal it_val                       : std_logic;
   signal it_ack                       : std_logic;

@@ -27,9 +27,10 @@ CAPI=2:
 # 2025-01-15  2.1.0    mrosiere Support TMR safety
 # 2025-01-21  2.2.0    mrosiere Add UART
 # 2025-01-21  2.2.1    mrosiere Add UART Baud Rate in tb
+# 2025-03-08  2.2.2    mrosiere Use unconstrained pbi
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.2.1
+name        : asylum:soc:OB8_GPIO:2.2.2
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================

@@ -74,7 +74,7 @@ help :
 	@echo ""
 	@echo ">>>>>>>  Core Information"
 	@echo ""
-	@fusesoc core-info $(VLNV)
+	@fusesoc core show $(VLNV)
 
 .PHONY  : help
 
@@ -83,7 +83,8 @@ help :
 info :
 #--------------------------------------------------------
 	@fusesoc library list
-	@fusesoc list-cores
+	@fusesoc gen     list
+	@fusesoc core    list
 
 .PHONY : info
 

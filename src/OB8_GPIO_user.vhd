@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-03-02
+-- Last update: 2025-03-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -23,12 +23,12 @@
 -- 2025-01-21  2.2      mrosiere Add UART
 -------------------------------------------------------------------------------
 
+
 library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
-library asylum;
 
 entity OB8_GPIO_user is
     generic (
@@ -88,15 +88,19 @@ architecture rtl of OB8_GPIO_user is
   signal idata0                       : std_logic_vector(18-1 downto 0);
   signal idata1                       : std_logic_vector(18-1 downto 0);
   signal idata2                       : std_logic_vector(18-1 downto 0);
-  signal pbi_ini                      : pbi_ini_t;
-  signal pbi_ini0                     : pbi_ini_t;
-  signal pbi_ini1                     : pbi_ini_t;
-  signal pbi_ini2                     : pbi_ini_t;
-  signal pbi_tgt                      : pbi_tgt_t;
-  signal pbi_tgt_switch               : pbi_tgt_t;
-  signal pbi_tgt_led0                 : pbi_tgt_t;
-  signal pbi_tgt_led1                 : pbi_tgt_t;
-  signal pbi_tgt_uart                 : pbi_tgt_t;
+  signal pbi_ini                      : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_ini0                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_ini1                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_ini2                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt                      : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_switch               : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_led0                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_led1                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_uart                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt_busy                 : std_logic;
 
   signal it_val                       : std_logic;
