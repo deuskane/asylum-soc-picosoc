@@ -16,17 +16,17 @@ p.addPad('led_o[4]'          ,{'location':'IOB1_D05P' , 'standard' : 'LVCMOS', '
 p.addPad('led_o[5]'          ,{'location':'IOB1_D06N' , 'standard' : 'LVCMOS', 'drive' : '2mA'})
 p.addPad('led_o[6]'          ,{'location':'IOB1_D06P' , 'standard' : 'LVCMOS', 'drive' : '2mA'})
 p.addPad('led_o[7]'          ,{'location':'IOB1_D02N' , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[8]'          ,{'location':'USER_D0'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[9]'          ,{'location':'USER_D1'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[10]'         ,{'location':'USER_D2'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[11]'         ,{'location':'USER_D3'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[12]'         ,{'location':'USER_D4'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[13]'         ,{'location':'USER_D5'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[14]'         ,{'location':'USER_D6'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[15]'         ,{'location':'USER_D7'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[16]'         ,{'location':'USER_D8'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[17]'         ,{'location':'USER_D9'   , 'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('led_o[18]'         ,{'location':'USER_D10'  , 'standard' : 'LVCMOS', 'drive' : '2mA'})
+p.addPad('led_o[8]'          ,{'location':'USER_D0'   }) # USER_* have predefined parameters
+p.addPad('led_o[9]'          ,{'location':'USER_D1'   }) # USER_* have predefined parameters
+p.addPad('led_o[10]'         ,{'location':'USER_D2'   }) # USER_* have predefined parameters
+p.addPad('led_o[11]'         ,{'location':'USER_D3'   }) # USER_* have predefined parameters
+p.addPad('led_o[12]'         ,{'location':'USER_D4'   }) # USER_* have predefined parameters
+p.addPad('led_o[13]'         ,{'location':'USER_D5'   }) # USER_* have predefined parameters
+p.addPad('led_o[14]'         ,{'location':'USER_D6'   }) # USER_* have predefined parameters
+p.addPad('led_o[15]'         ,{'location':'USER_D7'   }) # USER_* have predefined parameters
+p.addPad('led_o[16]'         ,{'location':'USER_D8'   }) # USER_* have predefined parameters
+p.addPad('led_o[17]'         ,{'location':'USER_D9'   }) # USER_* have predefined parameters
+p.addPad('led_o[18]'         ,{'location':'USER_D10'  }) # USER_* have predefined parameters
                              
 p.addPad('it_user_i'         ,{'location':'IOB10_D14P', 'standard' : 'LVCMOS', 'drive' : '2mA'})
 
