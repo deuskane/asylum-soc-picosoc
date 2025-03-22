@@ -1,0 +1,14 @@
+default                : Default Target (DON'T RUN)
+emu_basys_asm_identity : Synthesis for Digilent Basys board of the test soft/identity.psm
+emu_ng_medium_c_user   : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+emu_ng_medium_lab5     : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+emu_ng_medium_lab6     : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
+emu_ng_medium_lab7     : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+emu_ng_medium_lab8     : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+sim                    : default rule to sim (DON'T RUN)
+sim_asm_identity       : Simulation of the test soft/identity.psm
+sim_c_identity         : Simulation of the test soft/identity.c
+sim_c_user             : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+sim_c_user_tmr         : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+sim_c_user_tmr_uart    : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+
