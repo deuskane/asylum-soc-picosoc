@@ -1,6 +1,6 @@
 default                : Default Target (DON'T RUN)
 emu_basys_asm_identity : Synthesis for Digilent Basys board of the test soft/identity.psm
-emu_ng_medium_c_user   : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+emu_ng_medium_c_user   : NanoXplore NG_MEDIUM Board of the test soft/user.c - Supervisor, Safety TMR, Fault Injection
 emu_ng_medium_lab5     : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
 emu_ng_medium_lab6     : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
 emu_ng_medium_lab7     : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection

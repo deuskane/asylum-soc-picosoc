@@ -38,6 +38,9 @@ TARGETS_LINT	:= $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | tr 
 
 PATH_BUILD	?= $(CURDIR)/build
 
+FUSESOC_OPT     += --build-root $(PATH_BUILD)
+FUSESOC_OPT     += --no-export
+
 NONREG          ?= SIM
 
 #=============================================================================
@@ -105,14 +108,14 @@ info :
 #--------------------------------------------------------
 setup build run :
 #--------------------------------------------------------
-	fusesoc run --build-root $(PATH_BUILD) --$@ --target $(TARGET) --tool $(TOOL) $(VLNV)
+	fusesoc run $(FUSESOC_OPT) --$@ --target $(TARGET) --tool $(TOOL) $(VLNV)
 
 .PHONY : setup build run
 
 #--------------------------------------------------------
 % :
 #--------------------------------------------------------
-	@fusesoc run --build-root $(PATH_BUILD) --target $* $(VLNV)
+	@fusesoc run $(FUSESOC_OPT) --target $* $(VLNV)
 
 #--------------------------------------------------------
 nonreg : $(TARGETS_$(NONREG))

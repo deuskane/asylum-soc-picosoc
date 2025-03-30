@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-03-08
+-- Last update: 2025-03-30
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -61,10 +61,24 @@ entity OB8_GPIO_user is
 end OB8_GPIO_user;
 
 architecture rtl of OB8_GPIO_user is
+
   constant CPU1_ENABLE                : boolean := ((SAFETY = "lock-step") or
                                                     (SAFETY = "tmr"));
   constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
   
+  constant NB_TARGET                  : positive := 4;
+  constant TARGET_SWITCH              : integer := 0;
+  constant TARGET_LED0                : integer := 1;
+  constant TARGET_LED1                : integer := 2;
+  constant TARGET_UART                : integer := 3;
+  
+  constant TARGET_ID                  : pbi_addrs_t(NB_TARGET-1 downto 0) :=
+    ( TARGET_SWITCH => "00000000",
+      TARGET_LED0   => "00000100",
+      TARGET_LED1   => "00001000",
+      TARGET_UART   => "00001100" 
+      );
+
   constant ID_SWITCH                  : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00000000";
   --                                                                                    "00000011"
   constant ID_LED0                    : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := "00000100";
@@ -89,20 +103,22 @@ architecture rtl of OB8_GPIO_user is
   signal idata1                       : std_logic_vector(18-1 downto 0);
   signal idata2                       : std_logic_vector(18-1 downto 0);
   signal pbi_ini                      : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_ini0                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_ini1                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_ini2                     : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt                      : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgt_icn                  : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt_switch               : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt_led0                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt_led1                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal pbi_tgt_uart                 : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
-  signal pbi_tgt_busy                 : std_logic;
-
+  signal pbi_inis                     : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
+                                                                         wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal pbi_tgts                     : pbi_tgts_t(NB_TARGET-1 downto 0)(rdata(PBI_DATA_WIDTH-1 downto 0));
   signal it_val                       : std_logic;
   signal it_ack                       : std_logic;
   signal it_ack0                      : std_logic;
@@ -115,6 +131,9 @@ architecture rtl of OB8_GPIO_user is
   signal diff_r                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
+
+
+
 begin  -- architecture rtl
 
   -- Clock & Reset
@@ -143,13 +162,22 @@ begin  -- architecture rtl
     interrupt_ack_o  => it_ack0
     );
 
-  pbi_tgt_busy <= pbi_tgt.busy;
 
-  pbi_tgt <= pbi_tgt_uart   or
-             pbi_tgt_switch or
-             pbi_tgt_led0   or
-             pbi_tgt_led1
-             ;
+  ins_pci_icn : entity work.pci_icn(rtl)
+    generic map (
+      NB_TARGET         => NB_TARGET,
+      TARGET_ID         => TARGET_ID,
+      TARGET_ADDR_WIDTH => TARGET_ID
+      )
+    port map (
+      clk_i            => clk        ,
+      cke_i            => '1'        ,
+      arst_b_i         => arst_b    ,
+      pbi_ini_i        => pbi_ini0   ,
+      pbi_tgt_o        => pbi_tgt    ,
+      pbi_inis_o       => pbi_inis   ,
+      pbi_tgts_i       => pbi_tgts
+    );
 
   gen_cpu_vote: if SAFETY = "tmr"
   generate
@@ -191,8 +219,10 @@ begin  -- architecture rtl
     clk_i            => clk           ,
     cke_i            => '1'           ,
     arstn_i          => arst_b         ,
-    pbi_ini_i        => pbi_ini       ,
-    pbi_tgt_o        => pbi_tgt_switch,
+--  pbi_ini_i        => pbi_ini       ,
+--  pbi_tgt_o        => pbi_tgt_switch,
+    pbi_ini_i        => pbi_inis(TARGET_SWITCH)   ,
+    pbi_tgt_o        => pbi_tgts(TARGET_SWITCH)   ,
     data_i           => switch_i      ,
     data_o           => open          ,
     data_oe_o        => open          ,
@@ -212,8 +242,10 @@ begin  -- architecture rtl
     clk_i            => clk         ,
     cke_i            => '1'         ,
     arstn_i          => arst_b       ,
-    pbi_ini_i        => pbi_ini     ,
-    pbi_tgt_o        => pbi_tgt_led0,
+--  pbi_ini_i        => pbi_ini     ,
+--  pbi_tgt_o        => pbi_tgt_led0,
+    pbi_ini_i        => pbi_inis(TARGET_LED0) ,
+    pbi_tgt_o        => pbi_tgts(TARGET_LED0) ,
     data_i           => X"00"       ,
     data_o           => led0_o      ,
     data_oe_o        => open        ,
@@ -233,8 +265,10 @@ begin  -- architecture rtl
     clk_i            => clk         ,
     cke_i            => '1'         ,
     arstn_i          => arst_b       ,
-    pbi_ini_i        => pbi_ini     ,
-    pbi_tgt_o        => pbi_tgt_led1,
+--  pbi_ini_i        => pbi_ini     ,
+--  pbi_tgt_o        => pbi_tgt_led1,
+    pbi_ini_i        => pbi_inis(TARGET_LED1) ,
+    pbi_tgt_o        => pbi_tgts(TARGET_LED1) ,
     data_i           => X"00"       ,
     data_o           => led1_o      ,
     data_oe_o        => open        ,
@@ -251,8 +285,10 @@ begin  -- architecture rtl
     port map  (
       clk_i          => clk           ,
       arst_b_i       => arst_b        ,
-      pbi_ini_i      => pbi_ini       ,
-      pbi_tgt_o      => pbi_tgt_uart  ,
+--    pbi_ini_i      => pbi_ini       ,
+--    pbi_tgt_o      => pbi_tgt_uart  ,
+      pbi_ini_i      => pbi_inis(TARGET_UART)   ,
+      pbi_tgt_o      => pbi_tgts(TARGET_UART)   ,
       uart_tx_o      => uart_tx_o     ,
       uart_rx_i      => uart_rx_i     
       );

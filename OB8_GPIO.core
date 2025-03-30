@@ -28,9 +28,10 @@ CAPI=2:
 # 2025-01-21  2.2.0    mrosiere Add UART
 # 2025-01-21  2.2.1    mrosiere Add UART Baud Rate in tb
 # 2025-03-08  2.2.2    mrosiere Use unconstrained pbi
+# 2025-03-30  2.3.0    mrosiere Use ICN
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.2.2
+name        : asylum:soc:OB8_GPIO:2.3.0
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
@@ -128,6 +129,7 @@ filesets:
       - ">=asylum:component:GPIO:1.0.0"
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
       - ">=asylum:communication:uart:1.0.0"
+      - ">=asylum:infrastructure:icn:1.0.0"
 
   #---------------------------------------
   files_sim:
@@ -221,7 +223,7 @@ targets:
   #---------------------------------------
   emu_ng_medium_c_user: &emu_ng_medium_default
   #---------------------------------------
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - Supervisor, Safety TMR, Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
