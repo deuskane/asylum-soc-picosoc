@@ -169,7 +169,7 @@ begin  -- architecture rtl
     interrupt_ack_o  => cpu0_it_ack
     );
 
-  ins_pci_icn : entity work.pci_icn(rtl)
+  ins_pbi_icn : entity work.pbi_icn(rtl)
     generic map (
       NB_TARGET         => NB_TARGET,
       TARGET_ID         => TARGET_ID,
