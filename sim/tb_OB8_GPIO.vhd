@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-03-08
+-- Last update: 2025-04-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -192,7 +192,7 @@ begin  -- architecture tb
       
       if (FAULT_INJECTION and SAFETY="lock-step")
       then
-        report "[TESTBENCH] Inject error" ;
+        report "[TESTBENCH] Inject error (lock-step)" ;
         assert led_diff = "000" report "Bad value of led_diff" severity failure;
         
         report "[TESTBENCH] Inject error in CPU0" ;
@@ -220,7 +220,7 @@ begin  -- architecture tb
 
       if (FAULT_INJECTION and SAFETY="tmr")
       then
-        report "[TESTBENCH] Inject error" ;
+        report "[TESTBENCH] Inject error (TMR)" ;
         assert led_diff = "000" report "Bad value of led_diff" severity failure;
         
         report "[TESTBENCH] Inject error in CPU0" ;
