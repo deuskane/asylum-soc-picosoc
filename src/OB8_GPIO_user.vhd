@@ -218,8 +218,7 @@ begin  -- architecture rtl
     NB_IO            => NB_SWITCH,
     DATA_OE_INIT     => CST0(NB_SWITCH-1 downto 0),
     DATA_OE_FORCE    => CST1(NB_SWITCH-1 downto 0),
-    IT_ENABLE        => false,
-    ID               => TARGET_ID(TARGET_SWITCH)
+    IT_ENABLE        => false
     )
   port map  (
     clk_i            => clk           ,
@@ -239,8 +238,7 @@ begin  -- architecture rtl
     NB_IO            => NB_LED0,
     DATA_OE_INIT     => CST1(NB_LED0-1 downto 0),
     DATA_OE_FORCE    => CST1(NB_LED0-1 downto 0),
-    IT_ENABLE        => false,
-    ID               => TARGET_ID(TARGET_LED0)
+    IT_ENABLE        => false
     )
   port map  (
     clk_i            => clk         ,
@@ -260,8 +258,7 @@ begin  -- architecture rtl
     NB_IO            => NB_LED1,
     DATA_OE_INIT     => CST1(NB_LED1-1 downto 0),
     DATA_OE_FORCE    => CST1(NB_LED1-1 downto 0),
-    IT_ENABLE        => false,
-    ID               => TARGET_ID(TARGET_LED1)
+    IT_ENABLE        => false
     )
   port map  (
     clk_i            => clk         ,
@@ -279,8 +276,7 @@ begin  -- architecture rtl
   ins_pbi_uart : entity work.pbi_uart(rtl)
     generic map(
       BAUD_RATE      => BAUD_RATE     ,
-      CLOCK_FREQ     => CLOCK_FREQ    ,
-      ID             => TARGET_ID(TARGET_UART)
+      CLOCK_FREQ     => CLOCK_FREQ
       )
     port map  (
       clk_i          => clk           ,
