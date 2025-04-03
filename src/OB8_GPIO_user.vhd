@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-02
+-- Last update: 2025-04-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -107,20 +107,21 @@ architecture rtl of OB8_GPIO_user is
 
   -- Signals CPUs
   signal cpu0_iaddr                   : std_logic_vector(10-1 downto 0);
-  signal cpu1_iaddr                   : std_logic_vector(10-1 downto 0);
-  signal cpu2_iaddr                   : std_logic_vector(10-1 downto 0);
   signal cpu0_idata                   : std_logic_vector(18-1 downto 0);
-  signal cpu1_idata                   : std_logic_vector(18-1 downto 0);
-  signal cpu2_idata                   : std_logic_vector(18-1 downto 0);
   signal cpu0_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal cpu0_it_ack                  : std_logic;
+  
+  signal cpu1_iaddr                   : std_logic_vector(10-1 downto 0);
+  signal cpu1_idata                   : std_logic_vector(18-1 downto 0);
   signal cpu1_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal cpu1_it_ack                  : std_logic;
+
+  signal cpu2_iaddr                   : std_logic_vector(10-1 downto 0);
+  signal cpu2_idata                   : std_logic_vector(18-1 downto 0);
   signal cpu2_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
-
-  signal cpu0_it_ack                  : std_logic;
-  signal cpu1_it_ack                  : std_logic;
   signal cpu2_it_ack                  : std_logic;
 
   -- Signals CPU (post lockstep / TMR)
@@ -143,10 +144,17 @@ architecture rtl of OB8_GPIO_user is
 
 begin  -- architecture rtl
 
+  -----------------------------------------------------------------------------
   -- Clock & Reset
+  -----------------------------------------------------------------------------
   clk    <= clk_i;
   arst_b <= arst_b_i;
 
+  -----------------------------------------------------------------------------
+  -- Interruption
+  --
+  -- From level to Val/Ack interruption
+  -----------------------------------------------------------------------------
   ins_it_ctrl : entity work.it_ctrl(rtl)
   port map(
     clk_i    => clk          ,
@@ -156,6 +164,9 @@ begin  -- architecture rtl
     it_ack_i => cpu_it_ack
     );
   
+  -----------------------------------------------------------------------------
+  -- CPU 0
+  -----------------------------------------------------------------------------
   ins_pbi_OpenBlaze8_0 : entity work.pbi_OpenBlaze8(rtl)
   port map (
     clk_i            => clk         ,
@@ -169,22 +180,26 @@ begin  -- architecture rtl
     interrupt_ack_o  => cpu0_it_ack
     );
 
-  ins_pbi_icn : entity work.pbi_icn(rtl)
-    generic map (
-      NB_TARGET         => NB_TARGET,
-      TARGET_ID         => TARGET_ID,
-      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH
-      )
+  -----------------------------------------------------------------------------
+  -- CPU ROM
+  -----------------------------------------------------------------------------
+  ins_pbi_OpenBlaze8_ROM : entity work.ROM_user(rom)
     port map (
-      clk_i            => clk         ,
-      cke_i            => '1'         ,
-      arst_b_i         => arst_b      ,
-      pbi_ini_i        => cpu_pbi_ini ,
-      pbi_tgt_o        => cpu_pbi_tgt ,
-      pbi_inis_o       => icn_pbi_inis,
-      pbi_tgts_i       => icn_pbi_tgts
+      clk_i            => clk      ,
+      cke_i            => '1'      ,
+      address_i        => cpu_iaddr,
+      instruction_o    => cpu_idata
     );
 
+  -----------------------------------------------------------------------------
+  -- CPU Signals
+  --  * ROM interface
+  --  * ICN interface
+  --  * IT  interface
+  --
+  -- If safety none or lock-step : take cpu 0
+  -- else if tmr : vote all cpu output
+  -----------------------------------------------------------------------------
   gen_cpu_vote: if SAFETY = "tmr"
   generate
     cpu_iaddr     <= ((cpu0_iaddr   and cpu1_iaddr  ) or
@@ -205,14 +220,29 @@ begin  -- architecture rtl
     cpu_it_ack     <= cpu0_it_ack  ;
   end generate;
   
-  ins_pbi_OpenBlaze8_ROM : entity work.ROM_user(rom)
+  -----------------------------------------------------------------------------
+  -- Interconnect
+  -- From 1 Initiator to N Target
+  -----------------------------------------------------------------------------
+  ins_pbi_icn : entity work.pbi_icn(rtl)
+    generic map (
+      NB_TARGET         => NB_TARGET,
+      TARGET_ID         => TARGET_ID,
+      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH
+      )
     port map (
-      clk_i            => clk      ,
-      cke_i            => '1'      ,
-      address_i        => cpu_iaddr,
-      instruction_o    => cpu_idata
+      clk_i            => clk         ,
+      cke_i            => '1'         ,
+      arst_b_i         => arst_b      ,
+      pbi_ini_i        => cpu_pbi_ini ,
+      pbi_tgt_o        => cpu_pbi_tgt ,
+      pbi_inis_o       => icn_pbi_inis,
+      pbi_tgts_i       => icn_pbi_tgts
     );
-  
+
+  -----------------------------------------------------------------------------
+  -- GPIO 0 - Switch
+  -----------------------------------------------------------------------------
   ins_pbi_switch : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_SWITCH,
@@ -233,6 +263,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- GPIO 1 - LED
+  -----------------------------------------------------------------------------
   ins_pbi_led0 : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED0,
@@ -253,6 +286,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- GPIO 2 - LED
+  -----------------------------------------------------------------------------
   ins_pbi_led1 : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED1,
@@ -273,6 +309,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- UART
+  -----------------------------------------------------------------------------
   ins_pbi_uart : entity work.pbi_uart(rtl)
     generic map(
       BAUD_RATE      => BAUD_RATE     ,
@@ -287,6 +326,10 @@ begin  -- architecture rtl
       uart_rx_i      => uart_rx_i     
       );
   
+  -----------------------------------------------------------------------------
+  -- CPU 1
+  -- diff cpu0 vs cpu1
+  -----------------------------------------------------------------------------
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
     -- Lock Step
@@ -327,6 +370,11 @@ begin  -- architecture rtl
     diff_o(0) <= '0';
   end generate gen_cpu1_disable;
 
+  -----------------------------------------------------------------------------
+  -- CPU 2
+  -- diff cpu1 vs cpu2
+  -- diff cpu2 vs cpu0
+  -----------------------------------------------------------------------------
   gen_cpu2_enable: if CPU2_ENABLE = true
   generate
     -- TMR
@@ -374,7 +422,9 @@ begin  -- architecture rtl
     diff_o(2) <= '0';
   end generate gen_cpu2_disable;
 
-
+  -----------------------------------------------------------------------------
+  -- Fault Injection
+  -----------------------------------------------------------------------------
   gen_inject_error:   if FAULT_INJECTION = true
   generate
     cpu0_idata(17 downto 1) <= cpu_idata(17 downto 1);
