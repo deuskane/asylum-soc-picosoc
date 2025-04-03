@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-02
+-- Last update: 2025-04-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -97,10 +97,15 @@ architecture rtl of OB8_GPIO_supervisor is
   
 begin  -- architecture rtl
 
+  -----------------------------------------------------------------------------
   -- Clock & Reset
+  -----------------------------------------------------------------------------
   clk    <= clk_i;
   arst_b <= arst_b_i;
   
+  -----------------------------------------------------------------------------
+  -- CPU 0
+  -----------------------------------------------------------------------------
   ins_pbi_OpenBlaze8_0 : entity work.pbi_OpenBlaze8(rtl)
   port map (
     clk_i            => clk      ,
@@ -114,6 +119,21 @@ begin  -- architecture rtl
     interrupt_ack_o  => open
     );
 
+  -----------------------------------------------------------------------------
+  -- CPU ROM
+  -----------------------------------------------------------------------------
+  ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rom)
+    port map (
+      clk_i            => clk      ,
+      cke_i            => '1'      ,
+      address_i        => cpu_iaddr,
+      instruction_o    => cpu_idata  
+    );
+
+  -----------------------------------------------------------------------------
+  -- Interconnect
+  -- From 1 Initiator to N Target
+  -----------------------------------------------------------------------------
   ins_pbi_icn : entity work.pbi_icn(rtl)
     generic map (
       NB_TARGET         => NB_TARGET,
@@ -130,14 +150,10 @@ begin  -- architecture rtl
       pbi_tgts_i       => icn_pbi_tgts
     );
 
-  ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rom)
-    port map (
-      clk_i            => clk      ,
-      cke_i            => '1'      ,
-      address_i        => cpu_iaddr,
-      instruction_o    => cpu_idata  
-    );
-
+  -----------------------------------------------------------------------------
+  -- GPIO 0 - LED
+  -- Used as resetb for soc user
+  -----------------------------------------------------------------------------
   ins_pbi_led0 : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED0,
@@ -158,6 +174,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- GPIO 1 - LED
+  -----------------------------------------------------------------------------
   ins_pbi_led1 : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => NB_LED1,
@@ -178,6 +197,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- GPIO 2 - Interruption Vector Mask
+  -----------------------------------------------------------------------------
   ins_pbi_it_vector_mask : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => 3,
@@ -198,6 +220,9 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
+  -----------------------------------------------------------------------------
+  -- GPIO 3 - Interruption Vector
+  -----------------------------------------------------------------------------
   ins_pbi_it_vector : entity work.pbi_GPIO(rtl)
     generic map(
     NB_IO            => 3,
@@ -218,13 +243,19 @@ begin  -- architecture rtl
     interrupt_ack_i  => '0'
     );
 
-  led0_o <= led0;
-  led1_o <= led1;
-
+  -----------------------------------------------------------------------------
+  -- CPU Interruption
+  -----------------------------------------------------------------------------
   cpu_it_val <= ((diff_i(0) and diff_mask(0)) or
                  (diff_i(1) and diff_mask(1)) or
                  (diff_i(2) and diff_mask(2)));
   
+  -----------------------------------------------------------------------------
+  -- Output
+  -----------------------------------------------------------------------------
+  led0_o <= led0;
+  led1_o <= led1;
+
 end architecture rtl;
     
   

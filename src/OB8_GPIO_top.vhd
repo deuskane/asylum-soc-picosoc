@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-03-05
+-- Last update: 2025-04-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -217,52 +217,5 @@ begin  -- architecture rtl
   generate
     inject_error <=     inject_error_i;
   end generate gen_inject_error;
-
-
---ins_uart_baud_rate_gen : entity work.uart_baud_rate_gen(rtl)
---  generic map(
---    BAUD_RATE      => 115200,
---    CLOCK_FREQ     => FSYS_INT
---    )
---  port map(
---    clk_i          => clk,
---    arst_b_i       => arst_b_supervisor,
---    baud_tick_en_i => '1',
---    baud_tick_o    => uart_baud_tick
---    );
---
---ins_uart_tx_axis : entity work.uart_tx_axis(rtl)
---  generic map
---  ( WIDTH           => 8
---    )
---  port map
---  ( clk_i           => clk
---   ,arst_b_i        => arst_b_supervisor
---   ,s_axis_tdata_i  => x"30"
---   ,s_axis_tvalid_i => '1'
---   ,s_axis_tready_o => open
---   ,uart_tx_o       => uart_tx
---   ,baud_tick_i     => uart_baud_tick
---   ,parity_enable_i => '0'
---   ,parity_odd_i    => '0'
---    );
---
---ins_uart_rx_axis : entity work.uart_rx_axis(rtl)
---  generic map
---  ( WIDTH           => 8
---    )
---  port map
---  ( clk_i           => clk
---   ,arst_b_i        => arst_b_supervisor
---   ,m_axis_tdata_o  => open
---   ,m_axis_tvalid_o => open
---   ,m_axis_tready_i => '1'
---   ,uart_rx_i       => uart_tx
---   ,baud_tick_i     => uart_baud_tick
---   ,parity_enable_i => '0'
---   ,parity_odd_i    => '0'
---    );
---
---uart_tx_o <= uart_tx;
   
 end architecture rtl;
