@@ -64,13 +64,15 @@ architecture rtl of OB8_GPIO_supervisor is
       TARGET_IT_VECTOR                => "10000000" 
       );
 
-  constant TARGET_ADDR_WIDTH          : pbi_naturals_t(NB_TARGET-1 downto 0) :=
+  constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => GPIO_ADDR_WIDTH,
       TARGET_LED1                     => GPIO_ADDR_WIDTH,
       TARGET_IT_VECTOR_MASK           => GPIO_ADDR_WIDTH,
       TARGET_IT_VECTOR                => GPIO_ADDR_WIDTH
       );
       
+  constant TARGET_ALGO                : string := "one_hot";
+
   -- Signals Clock/Reset
   signal clk                          : std_logic;
   signal arst_b                       : std_logic;
@@ -138,7 +140,8 @@ begin  -- architecture rtl
     generic map (
       NB_TARGET         => NB_TARGET,
       TARGET_ID         => TARGET_ID,
-      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH
+      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH,
+      TARGET_ALGO       => TARGET_ALGO
       )
     port map (
       clk_i            => clk        ,
