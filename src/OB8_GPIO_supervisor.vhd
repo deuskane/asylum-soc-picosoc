@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-03
+-- Last update: 2025-04-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -58,10 +58,10 @@ architecture rtl of OB8_GPIO_supervisor is
   constant TARGET_IT_VECTOR           : integer  := 3;
 
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => "00000000",
-      TARGET_LED1                     => "00000100",
-      TARGET_IT_VECTOR_MASK           => "00001000",
-      TARGET_IT_VECTOR                => "00001100" 
+    ( TARGET_LED0                     => "00010000",
+      TARGET_LED1                     => "00100000",
+      TARGET_IT_VECTOR_MASK           => "01000000",
+      TARGET_IT_VECTOR                => "10000000" 
       );
 
   constant TARGET_ADDR_WIDTH          : pbi_naturals_t(NB_TARGET-1 downto 0) :=

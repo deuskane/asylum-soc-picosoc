@@ -31,10 +31,10 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define SWITCH              0x00
-#define LED0                0x04
-#define LED1                0x08
-#define UART                0x0C
+#define SWITCH              0x10
+#define LED0                0x20
+#define LED1                0x40
+#define UART                0x80
 
 #define GPIO_DATA           0x0
 #define GPIO_DATA_OE        0x1

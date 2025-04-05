@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-03
+-- Last update: 2025-04-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -83,10 +83,10 @@ architecture rtl of OB8_GPIO_user is
   constant TARGET_UART                : integer  := 3;
   
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => "00000000",
-      TARGET_LED0                     => "00000100",
-      TARGET_LED1                     => "00001000",
-      TARGET_UART                     => "00001100" 
+    ( TARGET_SWITCH                   => "00010000",
+      TARGET_LED0                     => "00100000",
+      TARGET_LED1                     => "01000000",
+      TARGET_UART                     => "10000000" 
       );
 
   constant TARGET_ADDR_WIDTH          : pbi_naturals_t(NB_TARGET-1 downto 0) :=

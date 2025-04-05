@@ -29,10 +29,10 @@ extern char PBLAZEPORT[];
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define RST                 0x00
-#define LED                 0x04
-#define IT_VECTOR_MASK      0x08
-#define IT_VECTOR           0x0C
+#define RST                 0x10
+#define LED                 0x20
+#define IT_VECTOR_MASK      0x40
+#define IT_VECTOR           0x80
 		            
 #define GPIO_DATA           0x0
 #define GPIO_DATA_OE        0x1
