@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-05
+-- Last update: 2025-04-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ architecture rtl of OB8_GPIO_user is
       TARGET_UART                     => UART_ADDR_WIDTH
       );
 
-  constant TARGET_ALGO                : string := "one_hot";
+  constant TARGET_ADDR_ENCODING       : string := "one_hot";
   
   -- Signals ICN
   signal icn_pbi_inis                 : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
@@ -228,10 +228,10 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_pbi_icn : entity work.pbi_icn(rtl)
     generic map (
-      NB_TARGET         => NB_TARGET,
-      TARGET_ID         => TARGET_ID,
-      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH,
-      TARGET_ALGO       => TARGET_ALGO
+      NB_TARGET            => NB_TARGET,
+      TARGET_ID            => TARGET_ID,
+      TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH,
+      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
       )
     port map (
       clk_i            => clk         ,

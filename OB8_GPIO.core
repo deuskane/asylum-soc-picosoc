@@ -154,6 +154,7 @@ filesets:
     files:
       - boards/NanoXplore-DK625V0/pads.py    : {file_type : nx_pads}
       - boards/NanoXplore-DK625V0/options.py : {file_type : nx_options}
+      - boards/NanoXplore-DK625V0/features.py: {file_type : nx_features}
     file_type : vhdlSource
 
   #---------------------------------------
@@ -256,7 +257,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_user_c,gen_supervisor_c]
+    generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -275,7 +276,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
-    generate : [gen_user_c,gen_supervisor_c]
+    generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -294,7 +295,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
-    generate : [gen_user_c,gen_supervisor_c]
+    generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -313,7 +314,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c_tmr]
+    generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000

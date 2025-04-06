@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-05
+-- Last update: 2025-04-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ architecture rtl of OB8_GPIO_supervisor is
       TARGET_IT_VECTOR                => GPIO_ADDR_WIDTH
       );
       
-  constant TARGET_ALGO                : string := "one_hot";
+  constant TARGET_ADDR_ENCODING       : string := "one_hot";
 
   -- Signals Clock/Reset
   signal clk                          : std_logic;
@@ -138,10 +138,10 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_pbi_icn : entity work.pbi_icn(rtl)
     generic map (
-      NB_TARGET         => NB_TARGET,
-      TARGET_ID         => TARGET_ID,
-      TARGET_ADDR_WIDTH => TARGET_ADDR_WIDTH,
-      TARGET_ALGO       => TARGET_ALGO
+      NB_TARGET            => NB_TARGET,
+      TARGET_ID            => TARGET_ID,
+      TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH,
+      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
       )
     port map (
       clk_i            => clk        ,
