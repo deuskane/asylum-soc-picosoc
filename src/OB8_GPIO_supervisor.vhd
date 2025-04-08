@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-06
+-- Last update: 2025-04-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -29,8 +29,11 @@ use     work.GPIO_csr_pkg.all;
 
 entity OB8_GPIO_supervisor is
   generic (
-    NB_LED0        : positive := 8;
-    NB_LED1        : positive := 8
+    NB_LED0               : positive := 8;
+    NB_LED1               : positive := 8;
+
+    TARGET_ADDR_ENCODING  : string := "one_hot";
+    ICN_ALGO_SEL          : string := "or"
     );
   port (
     clk_i      : in  std_logic;
@@ -71,8 +74,6 @@ architecture rtl of OB8_GPIO_supervisor is
       TARGET_IT_VECTOR                => GPIO_ADDR_WIDTH
       );
       
-  constant TARGET_ADDR_ENCODING       : string := "one_hot";
-
   -- Signals Clock/Reset
   signal clk                          : std_logic;
   signal arst_b                       : std_logic;
@@ -141,7 +142,8 @@ begin  -- architecture rtl
       NB_TARGET            => NB_TARGET,
       TARGET_ID            => TARGET_ID,
       TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH,
-      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
+      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
+      ALGO_SEL             => ICN_ALGO_SEL
       )
     port map (
       clk_i            => clk        ,

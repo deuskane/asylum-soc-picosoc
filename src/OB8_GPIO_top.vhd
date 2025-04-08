@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-04-03
+-- Last update: 2025-04-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -56,6 +56,9 @@ entity OB8_GPIO_top is
 end OB8_GPIO_top;
   
 architecture rtl of OB8_GPIO_top is
+
+  constant TARGET_ADDR_ENCODING         : string := "one_hot";
+  constant ICN_ALGO_SEL                 : string := "or";
 
   constant NB_LED0                      : positive := 8;
   constant NB_LED1                      : positive := 8;
@@ -135,13 +138,17 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_soc_user : entity work.OB8_GPIO_user(rtl)
     generic map(
-    CLOCK_FREQ      => FSYS_INT    ,
-    BAUD_RATE       => BAUD_RATE   ,
-    NB_SWITCH       => NB_SWITCH   ,
-    NB_LED0         => NB_LED0     ,
-    NB_LED1         => NB_LED1     ,
-    SAFETY          => SAFETY      ,
-    FAULT_INJECTION => FAULT_INJECTION
+    CLOCK_FREQ           => FSYS_INT           ,
+    BAUD_RATE            => BAUD_RATE          ,
+    NB_SWITCH            => NB_SWITCH          ,
+    NB_LED0              => NB_LED0            ,
+    NB_LED1              => NB_LED1            ,
+    SAFETY               => SAFETY             ,
+    FAULT_INJECTION      => FAULT_INJECTION    ,
+    
+    TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
+    ICN_ALGO_SEL         => ICN_ALGO_SEL        
+
     )
   port map(
     clk_i          => clk,
@@ -163,8 +170,11 @@ begin  -- architecture rtl
   generate
     ins_soc_supervisor : entity work.OB8_GPIO_supervisor(rtl)
       generic map(
-        NB_LED0   => 1,
-        NB_LED1   => 3
+        NB_LED0              => 1,
+        NB_LED1              => 3,
+    
+        TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
+        ICN_ALGO_SEL         => ICN_ALGO_SEL        
         )
       port map(
         clk_i      => clk,

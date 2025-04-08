@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-06
+-- Last update: 2025-04-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -35,13 +35,16 @@ use     work.UART_csr_pkg.all;
 
 entity OB8_GPIO_user is
     generic (
-    CLOCK_FREQ     : integer  := 50000000;
-    BAUD_RATE      : integer  := 115200;
-    NB_SWITCH      : positive := 8;
-    NB_LED0        : positive := 8;
-    NB_LED1        : positive := 8;
-    SAFETY         : string   := "lock-step"; -- "none" / "lock-step" / "tmr"
-    FAULT_INJECTION: boolean  := False
+    CLOCK_FREQ            : integer  := 50000000;
+    BAUD_RATE             : integer  := 115200;
+    NB_SWITCH             : positive := 8;
+    NB_LED0               : positive := 8;
+    NB_LED1               : positive := 8;
+    SAFETY                : string   := "lock-step"; -- "none" / "lock-step" / "tmr"
+    FAULT_INJECTION       : boolean  := False;
+    
+    TARGET_ADDR_ENCODING  : string := "one_hot";
+    ICN_ALGO_SEL          : string := "or"
     );
   port (
     clk_i          : in  std_logic;
@@ -95,8 +98,6 @@ architecture rtl of OB8_GPIO_user is
       TARGET_LED1                     => GPIO_ADDR_WIDTH,
       TARGET_UART                     => UART_ADDR_WIDTH
       );
-
-  constant TARGET_ADDR_ENCODING       : string := "one_hot";
   
   -- Signals ICN
   signal icn_pbi_inis                 : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
@@ -231,7 +232,8 @@ begin  -- architecture rtl
       NB_TARGET            => NB_TARGET,
       TARGET_ID            => TARGET_ID,
       TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH,
-      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
+      TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
+      ALGO_SEL             => ICN_ALGO_SEL
       )
     port map (
       clk_i            => clk         ,

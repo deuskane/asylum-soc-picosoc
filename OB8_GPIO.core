@@ -30,9 +30,10 @@ CAPI=2:
 # 2025-03-08  2.2.2    mrosiere Use unconstrained pbi
 # 2025-03-30  2.3.0    mrosiere Use ICN
 # 2025-04-05  2.3.1    mrosiere Change AddressMap to be compliant with OneHot encoding
+# 2025-04-08  2.3.2    mrosiere Add parameters for ICN
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.3.1
+name        : asylum:soc:OB8_GPIO:2.3.2
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================

@@ -39,7 +39,7 @@ TARGETS_LINT	:= $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | tr 
 PATH_BUILD	?= $(CURDIR)/build
 
 FUSESOC_OPT     += --build-root $(PATH_BUILD)
-#FUSESOC_OPT     += --no-export
+FUSESOC_OPT     += --no-export
 
 NONREG          ?= SIM
 
