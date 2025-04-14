@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-08
+-- Last update: 2025-04-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,6 +32,7 @@ library work;
 use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
 use     work.UART_csr_pkg.all;
+use     work.OB8_GPIO_pkg.all;
 
 entity OB8_GPIO_user is
     generic (
@@ -47,22 +48,24 @@ entity OB8_GPIO_user is
     ICN_ALGO_SEL          : string := "or"
     );
   port (
-    clk_i          : in  std_logic;
-    arst_b_i       : in  std_logic;
-                   
-    switch_i       : in  std_logic_vector(NB_SWITCH-1 downto 0);
-    led0_o         : out std_logic_vector(NB_LED0  -1 downto 0);
-    led1_o         : out std_logic_vector(NB_LED1  -1 downto 0);
-
-    uart_tx_o      : out std_logic;
-    uart_rx_i      : in  std_logic;
-    
-
-    it_i           : in  std_logic;
-    inject_error_i : in  std_logic_vector(        3-1 downto 0);
-    diff_o         : out std_logic_vector(        3-1 downto 0)  -- bit 0 : cpu0 vs cpu1
-                                                                 -- bit 1 : cpu1 vs cpu2
-                                                                 -- bit 2 : cpu2 vs cpu0
+    clk_i                 : in  std_logic;
+    arst_b_i              : in  std_logic;
+                          
+    switch_i              : in  std_logic_vector(NB_SWITCH-1 downto 0);
+    led0_o                : out std_logic_vector(NB_LED0  -1 downto 0);
+    led1_o                : out std_logic_vector(NB_LED1  -1 downto 0);
+                          
+    uart_tx_o             : out std_logic;
+    uart_rx_i             : in  std_logic;
+                          
+                          
+    it_i                  : in  std_logic;
+    inject_error_i        : in  std_logic_vector(        3-1 downto 0);
+    diff_o                : out std_logic_vector(        3-1 downto 0); -- bit 0 : cpu0 vs cpu1
+                                                                        -- bit 1 : cpu1 vs cpu2
+                                                                        -- bit 2 : cpu2 vs cpu0
+                                 
+    debug_o               : out OB8_GPIO_user_debug_t
     );
 end OB8_GPIO_user;
 
@@ -450,5 +453,10 @@ begin  -- architecture rtl
     cpu2_idata              <= cpu_idata;        
   end generate gen_inject_error_n;
 
+  -----------------------------------------------------------------------------
+  -- Debug
+  -----------------------------------------------------------------------------
+  debug_o.arst_b <= arst_b;
+  
 end architecture rtl;
     

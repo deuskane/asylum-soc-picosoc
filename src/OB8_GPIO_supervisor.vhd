@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-08
+-- Last update: 2025-04-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -26,6 +26,7 @@ use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
+use     work.OB8_GPIO_pkg.all;
 
 entity OB8_GPIO_supervisor is
   generic (
@@ -36,13 +37,15 @@ entity OB8_GPIO_supervisor is
     ICN_ALGO_SEL          : string := "or"
     );
   port (
-    clk_i      : in  std_logic;
-    arst_b_i   : in  std_logic;
-
-    led0_o     : out std_logic_vector(NB_LED0  -1 downto 0);
-    led1_o     : out std_logic_vector(NB_LED1  -1 downto 0);
-
-    diff_i     : in  std_logic_vector(        3-1 downto 0)
+    clk_i                 : in  std_logic;
+    arst_b_i              : in  std_logic;
+                          
+    led0_o                : out std_logic_vector(NB_LED0  -1 downto 0);
+    led1_o                : out std_logic_vector(NB_LED1  -1 downto 0);
+                          
+    diff_i                : in  std_logic_vector(        3-1 downto 0);
+                          
+    debug_o               : out OB8_GPIO_supervisor_debug_t
 );
 end OB8_GPIO_supervisor;
 
@@ -261,6 +264,11 @@ begin  -- architecture rtl
   led0_o <= led0;
   led1_o <= led1;
 
+  -----------------------------------------------------------------------------
+  -- Debug
+  -----------------------------------------------------------------------------
+  debug_o.arst_b <= arst_b;
+  
 end architecture rtl;
     
   

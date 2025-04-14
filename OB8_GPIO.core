@@ -31,9 +31,10 @@ CAPI=2:
 # 2025-03-30  2.3.0    mrosiere Use ICN
 # 2025-04-05  2.3.1    mrosiere Change AddressMap to be compliant with OneHot encoding
 # 2025-04-08  2.3.2    mrosiere Add parameters for ICN
+# 2025-04-14  2.3.3    mrosiere Add debug bus
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.3.2
+name        : asylum:soc:OB8_GPIO:2.3.3
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
@@ -121,6 +122,7 @@ filesets:
   files_hdl:
   #---------------------------------------
     files:
+      - src/OB8_GPIO_pkg.vhd
       - src/OB8_GPIO_top.vhd
       - src/OB8_GPIO_user.vhd
       - src/OB8_GPIO_supervisor.vhd

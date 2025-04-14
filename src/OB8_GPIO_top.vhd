@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-04-08
+-- Last update: 2025-04-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,6 +24,7 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
+use     work.OB8_GPIO_pkg.all;
 
 entity OB8_GPIO_top is
   generic (
@@ -80,8 +81,10 @@ architecture rtl of OB8_GPIO_top is
   signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
---signal   uart_baud_tick               : std_logic;
---signal   uart_tx                      : std_logic;
+  signal   debug_user                   : OB8_GPIO_user_debug_t;
+  signal   debug_supervisor             : OB8_GPIO_supervisor_debug_t;
+
+  
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -136,7 +139,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
-  ins_soc_user : entity work.OB8_GPIO_user(rtl)
+  ins_soc_user : OB8_GPIO_user
     generic map(
     CLOCK_FREQ           => FSYS_INT           ,
     BAUD_RATE            => BAUD_RATE          ,
@@ -150,17 +153,18 @@ begin  -- architecture rtl
     ICN_ALGO_SEL         => ICN_ALGO_SEL        
 
     )
-  port map(
-    clk_i          => clk,
-    arst_b_i       => arst_b_user(0),
-    switch_i       => switch_i,
-    led0_o         => led0,
-    led1_o         => led1,
-    uart_tx_o      => uart_tx_o,
-    uart_rx_i      => uart_rx_i,
-    it_i           => it_user_sync,
-    diff_o         => diff,
-    inject_error_i => inject_error
+  port map
+    (clk_i          => clk
+    ,arst_b_i       => arst_b_user(0)
+    ,switch_i       => switch_i
+    ,led0_o         => led0
+    ,led1_o         => led1
+    ,uart_tx_o      => uart_tx_o
+    ,uart_rx_i      => uart_rx_i
+    ,it_i           => it_user_sync
+    ,diff_o         => diff
+    ,inject_error_i => inject_error
+    ,debug_o        => debug_user
     );
 
   -----------------------------------------------------------------------------
@@ -168,7 +172,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_supervisor: if SUPERVISOR = True
   generate
-    ins_soc_supervisor : entity work.OB8_GPIO_supervisor(rtl)
+    ins_soc_supervisor : OB8_GPIO_supervisor
       generic map(
         NB_LED0              => 1,
         NB_LED1              => 3,
@@ -176,12 +180,13 @@ begin  -- architecture rtl
         TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
         ICN_ALGO_SEL         => ICN_ALGO_SEL        
         )
-      port map(
-        clk_i      => clk,
-        arst_b_i   => arst_b_supervisor,
-        led0_o     => arst_b_user,
-        led1_o     => led2,
-        diff_i     => diff 
+      port map
+       (clk_i      => clk
+       ,arst_b_i   => arst_b_supervisor
+       ,led0_o     => arst_b_user
+       ,led1_o     => led2
+       ,diff_i     => diff 
+       ,debug_o    => debug_supervisor
         );
 
   end generate gen_supervisor;
