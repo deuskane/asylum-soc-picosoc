@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-02
+-- Last update: 2025-04-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -60,8 +60,8 @@ architecture tb of tb_OB8_GPIO is
   signal inject_error_i            : std_logic_vector(        3-1 downto 0);
                                    
   alias  led_switch                : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
-  alias  led_it                    : std_logic_vector(        8-1 downto 0) is led_o(       19-1 downto 11);
-  alias  led_diff                  : std_logic_vector(        3-1 downto 0) is led_o(       11-1 downto  8);
+  alias  led_it                    : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
+  alias  led_diff                  : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
 
   -- =====[ Test Signals ]========================
   signal test_done                 : std_logic := '0';

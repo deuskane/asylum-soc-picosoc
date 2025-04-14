@@ -61,16 +61,16 @@ architecture rtl of OB8_GPIO_top is
   constant TARGET_ADDR_ENCODING         : string := "one_hot";
   constant ICN_ALGO_SEL                 : string := "or";
 
-  constant NB_LED0                      : positive := 8;
-  constant NB_LED1                      : positive := 8;
-  constant NB_LED2                      : positive := 3;
+  constant NB_LED0_USER                 : positive := 8;
+  constant NB_LED1_USER                 : positive := 8;
+  constant NB_LED_SUPERVISOR            : positive := 3;
   
   signal   clk                          : std_logic;
   signal   arst_b                       : std_logic;
   signal   arst_b_sync                  : std_logic;
-  signal   led0                         : std_logic_vector(NB_LED0-1 downto 0);
-  signal   led1                         : std_logic_vector(NB_LED1-1 downto 0);
-  signal   led2                         : std_logic_vector(NB_LED2-1 downto 0);
+  signal   led0_user                    : std_logic_vector(NB_LED0_USER-1 downto 0);
+  signal   led1_user                    : std_logic_vector(NB_LED1_USER-1 downto 0);
+  signal   led_supervisor               : std_logic_vector(NB_LED_SUPERVISOR-1 downto 0);
            
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
@@ -144,8 +144,8 @@ begin  -- architecture rtl
     CLOCK_FREQ           => FSYS_INT           ,
     BAUD_RATE            => BAUD_RATE          ,
     NB_SWITCH            => NB_SWITCH          ,
-    NB_LED0              => NB_LED0            ,
-    NB_LED1              => NB_LED1            ,
+    NB_LED0              => NB_LED0_USER       ,
+    NB_LED1              => NB_LED1_USER       ,
     SAFETY               => SAFETY             ,
     FAULT_INJECTION      => FAULT_INJECTION    ,
     
@@ -157,8 +157,8 @@ begin  -- architecture rtl
     (clk_i          => clk
     ,arst_b_i       => arst_b_user(0)
     ,switch_i       => switch_i
-    ,led0_o         => led0
-    ,led1_o         => led1
+    ,led0_o         => led0_user
+    ,led1_o         => led1_user
     ,uart_tx_o      => uart_tx_o
     ,uart_rx_i      => uart_rx_i
     ,it_i           => it_user_sync
@@ -175,7 +175,7 @@ begin  -- architecture rtl
     ins_soc_supervisor : OB8_GPIO_supervisor
       generic map(
         NB_LED0              => 1,
-        NB_LED1              => 3,
+        NB_LED1              => NB_LED_SUPERVISOR,
     
         TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING,
         ICN_ALGO_SEL         => ICN_ALGO_SEL        
@@ -184,7 +184,7 @@ begin  -- architecture rtl
        (clk_i      => clk
        ,arst_b_i   => arst_b_supervisor
        ,led0_o     => arst_b_user
-       ,led1_o     => led2
+       ,led1_o     => led_supervisor
        ,diff_i     => diff 
        ,debug_o    => debug_supervisor
         );
@@ -194,14 +194,14 @@ begin  -- architecture rtl
   gen_supervisor_n: if SUPERVISOR = False
   generate
     arst_b_user(0) <= arst_b_supervisor;
-  --led2           <= (others => '0');
-    led2           <= diff;
+  --led_supervisor <= (others => '0');
+    led_supervisor <= diff;
   end generate gen_supervisor_n;
   
   -----------------------------------------------------------------------------
   -- LED
   -----------------------------------------------------------------------------
-  led_o <= led1 & led2 & led0;
+  led_o <= led_supervisor & led1_user & led0_user;
 
   -----------------------------------------------------------------------------
   -- IT_USER User
