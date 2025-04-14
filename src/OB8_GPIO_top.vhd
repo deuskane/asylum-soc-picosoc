@@ -81,9 +81,11 @@ architecture rtl of OB8_GPIO_top is
   signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
+  signal   debug_en                     : std_logic;
+  signal   debug_mux                    : unsigned        (3-1 downto 0);
+  signal   debug                        : std_logic_vector(8-1 downto 0);
   signal   debug_user                   : OB8_GPIO_user_debug_t;
   signal   debug_supervisor             : OB8_GPIO_supervisor_debug_t;
-
   
 begin  -- architecture rtl
 
@@ -232,5 +234,13 @@ begin  -- architecture rtl
   generate
     inject_error <=     inject_error_i;
   end generate gen_inject_error;
+
+  -----------------------------------------------------------------------------
+  -- Debug
+  -----------------------------------------------------------------------------
+  debug_en       <= '0';
+  debug_mux      <= (others => '0');
+  debug          <= (others => '0') when debug_mux = 0 else
+                    (others => '0');
   
 end architecture rtl;
