@@ -82,8 +82,10 @@ architecture rtl of OB8_GPIO_supervisor is
   signal arst_b                       : std_logic;
   
   -- Signals CPUs
+  signal cpu_ics                      : std_logic;
   signal cpu_iaddr                    : std_logic_vector(10-1 downto 0);
   signal cpu_idata                    : std_logic_vector(17 downto 0);
+  
   signal cpu_pbi_ini                  : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
   signal cpu_pbi_tgt                  : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
@@ -117,6 +119,7 @@ begin  -- architecture rtl
     clk_i            => clk      ,
     cke_i            => '1'      ,
     arstn_i          => arst_b   ,
+    ics_o            => cpu_ics  ,
     iaddr_o          => cpu_iaddr,
     idata_i          => cpu_idata,
     pbi_ini_o        => cpu_pbi_ini  ,

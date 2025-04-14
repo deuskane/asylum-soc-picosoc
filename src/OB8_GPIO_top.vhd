@@ -240,7 +240,9 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   debug_en       <= '0';
   debug_mux      <= (others => '0');
-  debug          <= (others => '0') when debug_mux = 0 else
+  debug          <= (0      => debug_user      .arst_b,
+                     1      => debug_supervisor.arst_b,
+                     others => '0') when debug_mux = 0 else
                     (others => '0');
   
 end architecture rtl;
