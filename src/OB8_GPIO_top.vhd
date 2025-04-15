@@ -39,7 +39,7 @@ entity OB8_GPIO_top is
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG            : boolean  := True 
+    ;DEBUG_ENABLE     : boolean  := True 
     );
   port
     (clk_i            : in  std_logic
