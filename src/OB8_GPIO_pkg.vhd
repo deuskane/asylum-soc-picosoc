@@ -80,7 +80,7 @@ package OB8_GPIO_pkg is
       diff_o                : out std_logic_vector(        3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                           -- bit 1 : cpu1 vs cpu2
                                                                           -- bit 2 : cpu2 vs cpu0
-                            
+
       debug_o               : out OB8_GPIO_user_debug_t
       );
   end component;
