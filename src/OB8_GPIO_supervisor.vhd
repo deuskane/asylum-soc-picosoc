@@ -134,7 +134,7 @@ begin  -- architecture rtl
   ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rom)
     port map
     (clk_i                => clk      
-    ,cke_i                => '1'      
+    ,cke_i                => cpu_ics
     ,address_i            => cpu_iaddr
     ,instruction_o        => cpu_idata  
     );
