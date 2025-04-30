@@ -39,7 +39,7 @@ entity OB8_GPIO_top is
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-  --;DEBUG_ENABLE     : boolean  := True 
+    ;DEBUG_ENABLE     : boolean  := True 
     );
   port
     (clk_i            : in  std_logic
@@ -220,7 +220,9 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- LED
   -----------------------------------------------------------------------------
-  led_o <= led_supervisor & led1_user & led0_user;
+  led_o <= led_supervisor &
+           led1_user      &
+           led0_user;
 
   -----------------------------------------------------------------------------
   -- FAULT_INJECTION
@@ -240,14 +242,24 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  debug_mux      <= unsigned(debug_mux_i);
-  debug_o        <= led0_user                                      when debug_mux = 0 else
-                    std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
-                    (0      => debug_user      .arst_b,
-                     1      => debug_supervisor.arst_b,
-                     others => '0')                                when debug_mux = 2 else
-                    debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
-                    debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
-                    (others => '0');
-  
+  gen_debug:
+  if DEBUG_ENABLE = True
+  generate
+    debug_mux      <= unsigned(debug_mux_i);
+    debug_o        <= led0_user                                      when debug_mux = 0 else
+                      std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
+                      (0      => debug_user      .arst_b,
+                       1      => debug_supervisor.arst_b,
+                       others => '0')                                when debug_mux = 2 else
+                      debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
+                      debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
+                      (others => '0');
+  end generate gen_debug;
+
+  gen_debug_b:
+  if DEBUG_ENABLE = False
+  generate
+    debug_o        <= (others => '0');
+  end generate gen_debug_b;
+    
 end architecture rtl;
