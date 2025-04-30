@@ -36,6 +36,9 @@ extern char PBLAZEPORT[];
 #define LED1                0x40
 #define UART                0x80
 
+#define UART_DATA           0x0
+#define UART_CTRL           0x1
+
 #define GPIO_DATA           0x0
 #define GPIO_DATA_OE        0x1
 #define GPIO_DATA_IN        0x2
@@ -46,7 +49,7 @@ extern char PBLAZEPORT[];
 // puthex  : translate byte into ascii and send into uart
 //--------------------------------------
 #ifdef HAVE_UART
-#define putchar(c) PORT_WR(UART, c)
+#define putchar(c) PORT_WR(UART+UART_DATA, c)
 
 #define puthex(byte)           \
 do {			      \
@@ -94,6 +97,11 @@ void main()
   PORT_WR(LED0   +GPIO_DATA_OE,0xFF);
   PORT_WR(LED1   +GPIO_DATA_OE,0xFF);
 
+#ifdef HAVE_UART
+  PORT_WR(UART   +UART_CTRL   ,0x80); // RX Use Loopback
+  PORT_WR(UART   +UART_CTRL   ,0x91); // RX Use Loopback, Enable TX, Enable RX, 
+#endif
+  
   PORT_WR(LED1,0);
 
   //pbcc_enable_interrupt();
