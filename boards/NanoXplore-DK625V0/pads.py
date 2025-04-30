@@ -46,45 +46,45 @@ p.addPad('led_o[17]'         ,{'location':'USER_WE_N'   }) # USER_* have predefi
 p.addPad('led_o[18]'         ,{'location':'USER_DATA_OE'}) # USER_* have predefined parameters
 
 # Bank5 spare I/Os
-p.addPad('uart_tx_o'         ,{'location':'IOB5_D03N',  'standard' : 'LVCMOS', 'drive' : '2mA'})
-p.addPad('uart_rx_i'         ,{'location':'IOB5_D03P',  'standard' : 'LVCMOS', 'drive' : '2mA'})
-#                             {'location': 'IOB5_D01N', 'standard' : 'LVCMOS', 'drive' : '2mA'}
-#                             {'location': 'IOB5_D01P', 'standard' : 'LVCMOS', 'drive' : '2mA'}
-#                             {'location': 'IOB5_D05N', 'standard' : 'LVCMOS', 'drive' : '2mA'}
-#                             {'location': 'IOB5_D05P', 'standard' : 'LVCMOS', 'drive' : '2mA'}
-
-# Bank0 spare I/Os
-#                             {'location': 'IOB0_D06P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D07P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D05P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D09P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D01N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D08P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D10N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D02N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D04N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D06N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D07N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D05N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D09N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D11N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D08N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D02P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB0_D04P', 'standard': 'LVCMOS', 'drive':'2mA'}
+p.addPad('uart_tx_o'         ,{'location':'IOB5_D03N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 7 from left
+p.addPad('uart_rx_i'         ,{'location':'IOB5_D03P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 6 from left
+#                             {'location':'IOB5_D01N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 5 from left
+#                             {'location':'IOB5_D01P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 4 from left
+#                             {'location':'IOB5_D05N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 3 from left
+#                             {'location':'IOB5_D05P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left
+                                                        
+# Bank0 spare I/Os                                      
+#                             {'location':'IOB0_D06P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 2  from bottom
+#                             {'location':'IOB0_D07P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 3  from bottom
+#                             {'location':'IOB0_D05P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 4  from bottom
+#                             {'location':'IOB0_D09P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 5  from bottom
+#                             {'location':'IOB0_D01N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 6  from bottom
+#                             {'location':'IOB0_D08P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 7  from bottom
+#                             {'location':'IOB0_D10N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 8  from bottom
+#                             {'location':'IOB0_D02N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 9  from bottom
+#                             {'location':'IOB0_D04N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 10 from bottom
+#                             {'location':'IOB0_D06N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 2  from bottom
+#                             {'location':'IOB0_D07N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 3  from bottom
+#                             {'location':'IOB0_D05N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 4  from bottom
+#                             {'location':'IOB0_D09N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 5  from bottom
+#                             {'location':'IOB0_D11N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 6  from bottom
+#                             {'location':'IOB0_D08N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 7  from bottom
+#                             {'location':'IOB0_D02P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 8  from bottom
+#                             {'location':'IOB0_D04P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 9  from bottom
 
 # Bank12 spare I/Os
-#                             {'location': 'IOB12_D10P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D05P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D07N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D08N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D11P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D06P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D10N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D05N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D07P', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D09N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D11N', 'standard': 'LVCMOS', 'drive':'2mA'}
-#                             {'location': 'IOB12_D06N', 'standard': 'LVCMOS', 'drive':'2mA'}
+#                             {'location':'IOB12_D10P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 2  from bottom
+#                             {'location':'IOB12_D05P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 3  from bottom
+#                             {'location':'IOB12_D07N', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 4  from bottom
+#                             {'location':'IOB12_D08N', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 5  from bottom
+#                             {'location':'IOB12_D11P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 6  from bottom
+#                             {'location':'IOB12_D06P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 7  from bottom
+#                             {'location':'IOB12_D10N', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 2  from bottom
+#                             {'location':'IOB12_D05N', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 3  from bottom
+#                             {'location':'IOB12_D07P', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 4  from bottom
+#                             {'location':'IOB12_D09N', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 5  from bottom
+#                             {'location':'IOB12_D11N', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 6  from bottom
+#                             {'location':'IOB12_D06N', 'standard': 'LVCMOS', 'drive':'2mA'} # 2 from left 7  from bottom
 
 # Banks definition
 p.addBank('IOB0'  ,{'voltage': '3.3'})
