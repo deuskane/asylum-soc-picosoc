@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-04-15
+-- Last update: 2025-04-30
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ entity OB8_GPIO_top is
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True 
+  --;DEBUG_ENABLE     : boolean  := True 
     );
   port
     (clk_i            : in  std_logic
@@ -53,6 +53,10 @@ entity OB8_GPIO_top is
     ;uart_rx_i        : in  std_logic
     
     ;inject_error_i   : in  std_logic_vector(        3-1 downto 0)
+
+    ;debug_mux_i      : in  std_logic_vector(        3-1 downto 0)
+    ;debug_o          : out std_logic_vector(        8-1 downto 0)
+     
     );
 end OB8_GPIO_top;
   
@@ -81,7 +85,6 @@ architecture rtl of OB8_GPIO_top is
   signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
-  signal   debug_en                     : std_logic;
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug                        : std_logic_vector(8-1 downto 0);
   signal   debug_user                   : OB8_GPIO_user_debug_t      ;
@@ -120,6 +123,7 @@ begin  -- architecture rtl
   ins_clock_divider : entity work.clock_divider(rtl)
     generic map
     (RATIO                => FSYS/FSYS_INT
+    ,ALGO                 => "pulse"
      )
     port map
     (clk_i                => clk_i            
@@ -207,9 +211,10 @@ begin  -- architecture rtl
 
   gen_supervisor_n: if SUPERVISOR = False
   generate
-    arst_b_user(0) <= arst_b_supervisor;
-  --led_supervisor <= (others => '0');
-    led_supervisor <= diff;
+    arst_b_user(0)   <= arst_b_supervisor;
+  --led_supervisor   <= (others => '0');
+    led_supervisor   <= diff;
+    debug_supervisor <= (others => '0');
   end generate gen_supervisor_n;
   
   -----------------------------------------------------------------------------
@@ -235,11 +240,14 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  debug_en       <= '0';
-  debug_mux      <= (others => '0');
-  debug          <= (0      => debug_user      .arst_b,
+  debug_mux      <= unsigned(debug_mux_i);
+  debug_o        <= led0_user                                      when debug_mux = 0 else
+                    std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
+                    (0      => debug_user      .arst_b,
                      1      => debug_supervisor.arst_b,
-                     others => '0') when debug_mux = 0 else
+                     others => '0')                                when debug_mux = 2 else
+                    debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
+                    debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
                     (others => '0');
   
 end architecture rtl;

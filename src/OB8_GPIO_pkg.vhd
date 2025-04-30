@@ -22,7 +22,9 @@ package OB8_GPIO_pkg is
 
 
   type OB8_GPIO_user_debug_t is record
-    arst_b : std_logic;
+    arst_b    : std_logic;
+    cpu_iaddr : std_logic_vector(10-1 downto 0);
+    cpu_idata : std_logic_vector(18-1 downto 0);
   end record OB8_GPIO_user_debug_t;
 
   type OB8_GPIO_supervisor_debug_t is record
