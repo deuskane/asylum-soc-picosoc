@@ -212,7 +212,6 @@ begin  -- architecture rtl
   gen_supervisor_n: if SUPERVISOR = False
   generate
     arst_b_user(0)   <= arst_b_supervisor;
-  --led_supervisor   <= (others => '0');
     led_supervisor   <= diff;
     debug_supervisor <= (others => '0');
   end generate gen_supervisor_n;
