@@ -38,6 +38,8 @@ extern char PBLAZEPORT[];
 
 #define UART_DATA           0x0
 #define UART_CTRL           0x1
+#define UART_CNT_LSB        0x2
+#define UART_CNT_MSB        0x3
 
 #define GPIO_DATA           0x0
 #define GPIO_DATA_OE        0x1
@@ -99,7 +101,9 @@ void main()
 
 #ifdef HAVE_UART
   PORT_WR(UART   +UART_CTRL   ,0x80); // RX Use Loopback
-  PORT_WR(UART   +UART_CTRL   ,0x91); // RX Use Loopback, Enable TX, Enable RX, 
+  PORT_WR(UART   +UART_CTRL   ,0x91); // RX Use Loopback, Enable TX, Enable RX,
+  PORT_WR(UART   +UART_CNT_LSB,((CLOCK_FREQ/BAUD_RATE)-1));
+  PORT_WR(UART   +UART_CNT_MSB,((CLOCK_FREQ/BAUD_RATE)-1)>>8);
 #endif
   
   PORT_WR(LED1,0);

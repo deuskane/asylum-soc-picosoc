@@ -80,7 +80,7 @@ generate:
       file   : soft/user.c
       type   : c
       entity : ROM_user
-      cflags : --verbose --all-callee-saves -DHAVE_UART
+      cflags : --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
 
   gen_supervisor_c :
     generator : pbcc_gen
@@ -378,7 +378,7 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=false
       - TB_WATCHDOG=50000
-      - BAUD_RATE=921600
+      - BAUD_RATE=115200
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
