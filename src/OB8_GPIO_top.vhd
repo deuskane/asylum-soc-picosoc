@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-04-30
+-- Last update: 2025-05-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -56,6 +56,7 @@ entity OB8_GPIO_top is
 
     ;debug_mux_i      : in  std_logic_vector(        3-1 downto 0)
     ;debug_o          : out std_logic_vector(        8-1 downto 0)
+    ;debug_uart_tx_o  : out std_logic
      
     );
 end OB8_GPIO_top;
@@ -85,6 +86,8 @@ architecture rtl of OB8_GPIO_top is
   signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
+  signal   uart_tx                      : std_logic;
+  
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug                        : std_logic_vector(8-1 downto 0);
   signal   debug_user                   : OB8_GPIO_user_debug_t      ;
@@ -178,13 +181,15 @@ begin  -- architecture rtl
     ,switch_i             => switch_i
     ,led0_o               => led0_user
     ,led1_o               => led1_user
-    ,uart_tx_o            => uart_tx_o
+    ,uart_tx_o            => uart_tx
     ,uart_rx_i            => uart_rx_i
     ,it_i                 => it_user_sync
     ,diff_o               => diff
     ,inject_error_i       => inject_error
     ,debug_o              => debug_user
     );
+
+  uart_tx_o <= uart_tx;
 
   -----------------------------------------------------------------------------
   -- SoC Supervisor
@@ -244,7 +249,7 @@ begin  -- architecture rtl
   gen_debug:
   if DEBUG_ENABLE = True
   generate
-    debug_mux      <= unsigned(debug_mux_i);
+    debug_mux      <= unsigned(switch_i(2 downto 0));
     debug_o        <= led0_user                                      when debug_mux = 0 else
                       std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
                       (0      => debug_user      .arst_b,
@@ -252,13 +257,21 @@ begin  -- architecture rtl
                        others => '0')                                when debug_mux = 2 else
                       debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
                       debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
+                      (7          => debug_user      .cpu_dcs,
+                       6          => debug_user      .cpu_dre,
+                       5          => debug_user      .cpu_dwe,
+                       4          => debug_user      .cpu_dbusy,
+                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
+                      
                       (others => '0');
+    debug_uart_tx_o<= uart_tx;
   end generate gen_debug;
 
   gen_debug_b:
   if DEBUG_ENABLE = False
   generate
     debug_o        <= (others => '0');
+    debug_uart_tx_o<= '0';
   end generate gen_debug_b;
     
 end architecture rtl;

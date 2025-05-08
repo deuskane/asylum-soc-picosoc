@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-30
+-- Last update: 2025-05-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -470,9 +470,14 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  debug_o.arst_b    <= arst_b;
-  debug_o.cpu_iaddr <= cpu_iaddr;
-  debug_o.cpu_idata <= cpu_idata;
+  debug_o.arst_b    <= arst_b          ;
+  debug_o.cpu_iaddr <= cpu_iaddr       ;
+  debug_o.cpu_idata <= cpu_idata       ;
+  debug_o.cpu_dcs   <= cpu_pbi_ini.cs  ;
+  debug_o.cpu_dre   <= cpu_pbi_ini.re  ;
+  debug_o.cpu_dwe   <= cpu_pbi_ini.we  ;
+  debug_o.cpu_daddr <= cpu_pbi_ini.addr;
+  debug_o.cpu_dbusy <= cpu_pbi_tgt.busy;
   
 end architecture rtl;
     
