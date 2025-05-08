@@ -256,7 +256,7 @@ targets:
     toplevel : OB8_GPIO_top
 
   #---------------------------------------
-  emu_ng_medium_lab5:
+  emu_ng_medium_soc1:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
@@ -269,13 +269,14 @@ targets:
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
+      - BAUD_RATE=115200
 
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
 
   #---------------------------------------
-  emu_ng_medium_lab6:
+  emu_ng_medium_soc2:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
@@ -288,13 +289,34 @@ targets:
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
+      - BAUD_RATE=115200
+
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=false
+
+  #---------------------------------------
+  emu_ng_medium_soc2_fault:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, With Fault Injection
+    generate : [gen_user_c_uart,gen_supervisor_c]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=25000000
+      - NB_SWITCH=6
+      - NB_LED=19
+      - RESET_POLARITY=low
+      - IT_USER_POLARITY=low
+      - FAULT_POLARITY=low
+      - BAUD_RATE=115200
 
       - SUPERVISOR=false
       - SAFETY=lock-step
       - FAULT_INJECTION=true
 
   #---------------------------------------
-  emu_ng_medium_lab7:
+  emu_ng_medium_soc3_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
@@ -307,13 +329,14 @@ targets:
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
+      - BAUD_RATE=115200
 
       - SUPERVISOR=true
       - SAFETY=lock-step
       - FAULT_INJECTION=true
 
   #---------------------------------------
-  emu_ng_medium_lab8:
+  emu_ng_medium_soc4_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
@@ -326,6 +349,7 @@ targets:
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
+      - BAUD_RATE=115200
 
       - SUPERVISOR=true
       - SAFETY=tmr
@@ -333,7 +357,7 @@ targets:
 
   # Next line is a pragma, don't modify
   #<TARGETS_BEGIN>
-  sim_asm_identity:
+  sim_soc1_asm_identity:
     << : *sim
     description  : Simulation of the test soft/identity.psm
     generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
@@ -342,7 +366,7 @@ targets:
       - SAFETY=none
       - FAULT_INJECTION=false
 
-  sim_c_identity:
+  sim_soc1_c_identity:
     << : *sim
     description  : Simulation of the test soft/identity.c
     generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
@@ -351,7 +375,47 @@ targets:
       - SAFETY=none
       - FAULT_INJECTION=false
 
-  sim_c_user:
+  sim_soc1_c_user:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+
+  sim_soc1_c_user_uart:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    generate     : [gen_user_c_uart,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
+      - BAUD_RATE=115200
+
+  sim_soc2_c_user:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    generate     : [gen_user_c,gen_supervisor_c]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=false
+
+  sim_soc2_c_user_uart:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    generate     : [gen_user_c_uart,gen_supervisor_c]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
+      - BAUD_RATE=115200
+
+  sim_soc3_fault_c_user:
     << : *sim
     description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
@@ -360,7 +424,7 @@ targets:
       - SAFETY=lock-step
       - FAULT_INJECTION=true
 
-  sim_c_user_tmr:
+  sim_soc4_fault_c_user:
     << : *sim
     description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_tmr]
@@ -369,7 +433,7 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=true
 
-  sim_c_user_tmr_uart:
+  sim_soc4_fault_c_user_uart:
     << : *sim
     description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
