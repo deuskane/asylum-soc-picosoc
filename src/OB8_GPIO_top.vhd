@@ -64,7 +64,7 @@ end OB8_GPIO_top;
 architecture rtl of OB8_GPIO_top is
 
   constant TARGET_ADDR_ENCODING         : string   := "one_hot";
-  constant ICN_ALGO_SEL                 : string   := "or";
+  constant ICN_ALGO_SEL                 : string   := "mux";
 
   constant NB_LED0_USER                 : positive := 8;
   constant NB_LED1_USER                 : positive := 8;
@@ -257,11 +257,28 @@ begin  -- architecture rtl
                        others => '0')                                when debug_mux = 2 else
                       debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
                       debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
-                      (7          => debug_user      .cpu_dcs,
-                       6          => debug_user      .cpu_dre,
-                       5          => debug_user      .cpu_dwe,
-                       4          => debug_user      .cpu_dbusy,
-                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
+--                      (7          => debug_user      .cpu_dcs,
+--                       6          => debug_user      .cpu_dre,
+--                       5          => debug_user      .cpu_dwe,
+--                       4          => debug_user      .cpu_dbusy,
+--                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
+
+                      debug_user      .cpu_dcs   &
+                      debug_user      .cpu_dre   &
+                      debug_user      .cpu_dwe   &
+                      debug_user      .cpu_dbusy &
+                      debug_user      .cpu_daddr(7 downto 4)         when debug_mux = 5 else
+
+                      debug_user      .cpu_daddr(7 downto 0)         when debug_mux = 6 else
+                      
+                      debug_user      .switch_cs   &
+                      debug_user      .switch_busy &
+                      debug_user      .led0_cs     &
+                      debug_user      .led0_busy   &
+                      debug_user      .led1_cs     &
+                      debug_user      .led1_busy   &
+                      debug_user      .uart_cs     &
+                      debug_user      .uart_busy                     when debug_mux = 7 else
                       
                       (others => '0');
     debug_uart_tx_o<= uart_tx;

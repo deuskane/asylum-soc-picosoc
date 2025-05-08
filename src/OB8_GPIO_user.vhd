@@ -470,14 +470,22 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  debug_o.arst_b    <= arst_b          ;
-  debug_o.cpu_iaddr <= cpu_iaddr       ;
-  debug_o.cpu_idata <= cpu_idata       ;
-  debug_o.cpu_dcs   <= cpu_pbi_ini.cs  ;
-  debug_o.cpu_dre   <= cpu_pbi_ini.re  ;
-  debug_o.cpu_dwe   <= cpu_pbi_ini.we  ;
-  debug_o.cpu_daddr <= cpu_pbi_ini.addr;
-  debug_o.cpu_dbusy <= cpu_pbi_tgt.busy;
+  debug_o.arst_b      <= arst_b                          ;
+  debug_o.cpu_iaddr   <= cpu_iaddr                       ;
+  debug_o.cpu_idata   <= cpu_idata                       ;
+  debug_o.cpu_dcs     <= cpu_pbi_ini.cs                  ;
+  debug_o.cpu_dre     <= cpu_pbi_ini.re                  ;
+  debug_o.cpu_dwe     <= cpu_pbi_ini.we                  ;
+  debug_o.cpu_daddr   <= cpu_pbi_ini.addr                ;
+  debug_o.cpu_dbusy   <= cpu_pbi_tgt.busy                ;
+  debug_o.switch_cs   <= icn_pbi_inis(TARGET_SWITCH).cs  ;
+  debug_o.switch_busy <= icn_pbi_tgts(TARGET_SWITCH).busy;
+  debug_o.led0_cs     <= icn_pbi_inis(TARGET_LED0  ).cs  ;
+  debug_o.led0_busy   <= icn_pbi_tgts(TARGET_LED0  ).busy;
+  debug_o.led1_cs     <= icn_pbi_inis(TARGET_LED1  ).cs  ;
+  debug_o.led1_busy   <= icn_pbi_tgts(TARGET_LED1  ).busy;
+  debug_o.uart_cs     <= icn_pbi_inis(TARGET_UART  ).cs  ;
+  debug_o.uart_busy   <= icn_pbi_tgts(TARGET_UART  ).busy;
   
 end architecture rtl;
     
