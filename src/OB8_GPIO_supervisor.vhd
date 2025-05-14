@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-04-15
+-- Last update: 2025-05-14
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -169,7 +169,6 @@ begin  -- architecture rtl
     generic map
     (NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(NB_LED0-1 downto 0)
-    ,DATA_OE_FORCE        => CST1(NB_LED0-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
@@ -192,7 +191,6 @@ begin  -- architecture rtl
     generic map
     (NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(NB_LED1-1 downto 0)
-    ,DATA_OE_FORCE        => CST1(NB_LED1-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
@@ -215,7 +213,6 @@ begin  -- architecture rtl
     generic map
     (NB_IO                => 3
     ,DATA_OE_INIT         => CST1(3-1 downto 0)
-    ,DATA_OE_FORCE        => CST1(3-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
@@ -238,7 +235,6 @@ begin  -- architecture rtl
     generic map
     (NB_IO                => 3
     ,DATA_OE_INIT         => CST0(3-1 downto 0)
-    ,DATA_OE_FORCE        => CST1(3-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
