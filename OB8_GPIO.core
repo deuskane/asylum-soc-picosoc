@@ -32,9 +32,10 @@ CAPI=2:
 # 2025-04-05  2.3.1    mrosiere Change AddressMap to be compliant with OneHot encoding
 # 2025-04-08  2.3.2    mrosiere Add parameters for ICN
 # 2025-04-14  2.3.3    mrosiere Add debug bus
+# 2025-05-14  2.4.0    mrosiere Change default BAUD TICK
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.3.3
+name        : asylum:soc:OB8_GPIO:2.4.0
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
@@ -393,7 +394,7 @@ targets:
       - SAFETY=none
       - FAULT_INJECTION=false
       - TB_WATCHDOG=50000
-      - BAUD_RATE=115200
+      - BAUD_RATE=460800
 
   sim_soc2_c_user:
     << : *sim
@@ -413,7 +414,7 @@ targets:
       - SAFETY=lock-step
       - FAULT_INJECTION=false
       - TB_WATCHDOG=50000
-      - BAUD_RATE=115200
+      - BAUD_RATE=460800
 
   sim_soc3_fault_c_user:
     << : *sim
@@ -442,7 +443,7 @@ targets:
       - SAFETY=tmr
       - FAULT_INJECTION=false
       - TB_WATCHDOG=50000
-      - BAUD_RATE=115200
+      - BAUD_RATE=460800
   #<TARGETS_END>
   # Previous line is a pragma, don't modify
 
