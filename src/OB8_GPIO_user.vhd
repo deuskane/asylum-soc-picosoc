@@ -263,7 +263,7 @@ begin  -- architecture rtl
   ins_pbi_switch : entity work.pbi_GPIO(rtl)
     generic map
     (NB_IO                => NB_SWITCH
-    ,DATA_OE_INIT         => CST0(NB_SWITCH-1 downto 0)
+    ,DATA_OE_INIT         => CST0(8-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
@@ -285,7 +285,7 @@ begin  -- architecture rtl
   ins_pbi_led0 : entity work.pbi_GPIO(rtl)
     generic map
     (NB_IO                => NB_LED0
-    ,DATA_OE_INIT         => CST1(NB_LED0-1 downto 0)
+    ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
@@ -307,7 +307,7 @@ begin  -- architecture rtl
   ins_pbi_led1 : entity work.pbi_GPIO(rtl)
     generic map
     (NB_IO                => NB_LED1
-    ,DATA_OE_INIT         => CST1(NB_LED1-1 downto 0)
+    ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
     port map
