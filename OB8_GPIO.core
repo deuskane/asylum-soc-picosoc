@@ -33,9 +33,10 @@ CAPI=2:
 # 2025-04-08  2.3.2    mrosiere Add parameters for ICN
 # 2025-04-14  2.3.3    mrosiere Add debug bus
 # 2025-05-14  2.4.0    mrosiere Change default BAUD TICK
+# 2025-06-16  2.5.0    mrosiere Add SPI
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:OB8_GPIO:2.4.0
+name        : asylum:soc:OB8_GPIO:2.5.0
 description : SoC with OpenBlaze8, switch, led and UART
 
 #=========================================
@@ -82,6 +83,14 @@ generate:
       type   : c
       entity : ROM_user
       cflags : --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
+
+  gen_user_c_uart_spi :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI
 
   gen_supervisor_c :
     generator : pbcc_gen
@@ -134,6 +143,7 @@ filesets:
       - ">=asylum:component:GPIO:1.0.0"
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
       - ">=asylum:communication:uart:1.0.0"
+      - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
 
   #---------------------------------------
@@ -389,6 +399,17 @@ targets:
     << : *sim
     description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
+      - BAUD_RATE=460800
+
+  sim_soc1_c_user_uart_spi:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    generate     : [gen_user_c_uart_spi,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
       - SAFETY=none

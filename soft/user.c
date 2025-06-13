@@ -35,6 +35,7 @@ extern char PBLAZEPORT[];
 #define LED0                0x20
 #define LED1                0x40
 #define UART                0x80
+#define SPI                 0x08
 
 #define UART_DATA           0x0
 #define UART_CTRL           0x1
@@ -45,6 +46,11 @@ extern char PBLAZEPORT[];
 #define GPIO_DATA_OE        0x1
 #define GPIO_DATA_IN        0x2
 #define GPIO_DATA_OUT       0x3
+
+#define SPI_DATA            0x0
+#define SPI_CMD             0x1
+#define SPI_CFG             0x2
+#define SPI_PRESCALER       0x3
 
 //--------------------------------------
 // putchar : send char into uart
@@ -89,6 +95,8 @@ void isr (void) __interrupt(1)
 // Arduino Style, Don't modify
 void main()
 {
+  uint8_t cpt = 0;
+
   //------------------------------------
   // Application Setup
   //------------------------------------
@@ -105,6 +113,21 @@ void main()
   PORT_WR(UART   +UART_CNT_LSB,((CLOCK_FREQ/BAUD_RATE)-1));
   PORT_WR(UART   +UART_CNT_MSB,((CLOCK_FREQ/BAUD_RATE)-1)>>8);
 #endif
+
+#ifdef HAVE_SPI
+  PORT_WR(SPI    +SPI_CFG     ,(0
+				| (1<<3) // Loopback
+				| (0<<2) // CPHA
+				| (0<<1) // CPOL
+				| (0<<0) // SPI Disable
+				));
+  PORT_WR(SPI    +SPI_CFG     ,(0
+				| (1<<3) // Loopback
+				| (0<<2) // CPHA
+				| (0<<1) // CPOL
+				| (1<<0) // SPI Enable
+				));
+#endif
   
   PORT_WR(LED1,0);
 
@@ -120,13 +143,26 @@ void main()
   while (1)
     {
       uint8_t sw = PORT_RD(SWITCH);
+      uint8_t spi_rx;
 
 #ifdef INVERT_SWITCH
       sw = ~sw;
 #endif
   
       PORT_WR(LED0, sw);
-  
+
+
+#ifdef HAVE_SPI
+      PORT_WR(SPI    +SPI_CMD ,(0
+				| (1<<7) // Enable TX
+				| (1<<6) // Enable RX
+				| (1<<5) // Last
+				| (0<<0) // 1 bytes
+				));
+      PORT_WR(SPI    +SPI_DATA,cpt);
+#endif       
+
+      
       putchar('H');
       putchar('e');
       putchar('l');
@@ -134,8 +170,20 @@ void main()
       putchar('o');
       putchar(' ');
       puthex (sw);
+      putchar(' ');
+
+#ifdef HAVE_SPI
+      spi_rx = PORT_RD(SPI    +SPI_DATA);
+      puthex (spi_rx);
+#else
+      puthex (sw);
+#endif       
+      
       putchar('\r');
       putchar('\n');
+
+      
+      cpt ++;
     }
  
 }

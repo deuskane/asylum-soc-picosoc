@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-05-08
+-- Last update: 2025-06-13
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -49,11 +49,20 @@ entity OB8_GPIO_top is
     ;led_o            : out std_logic_vector(NB_LED   -1 downto 0)
     ;it_user_i        : in  std_logic
 
+    -- UART Interface
     ;uart_tx_o        : out std_logic
     ;uart_rx_i        : in  std_logic
-    
+
+    -- SPI Interface
+    ;spi_sclk_o       : out std_logic
+    ;spi_cs_b_o       : out std_logic
+    ;spi_mosi_o       : out std_logic
+    ;spi_miso_i       : in  std_logic
+     
+    -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(        3-1 downto 0)
 
+    -- Debug Interface
     ;debug_mux_i      : in  std_logic_vector(        3-1 downto 0)
     ;debug_o          : out std_logic_vector(        8-1 downto 0)
     ;debug_uart_tx_o  : out std_logic
@@ -187,6 +196,10 @@ begin  -- architecture rtl
     ,diff_o               => diff
     ,inject_error_i       => inject_error
     ,debug_o              => debug_user
+    ,spi_sclk_o           => spi_sclk_o 
+    ,spi_cs_b_o           => spi_cs_b_o 
+    ,spi_mosi_o           => spi_mosi_o 
+    ,spi_miso_i           => spi_miso_i 
     );
 
   uart_tx_o <= uart_tx;

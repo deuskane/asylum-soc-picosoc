@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-05-14
+-- Last update: 2025-06-13
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,6 +32,7 @@ library work;
 use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
 use     work.UART_csr_pkg.all;
+use     work.SPI_csr_pkg.all;
 use     work.OB8_GPIO_pkg.all;
 
 entity OB8_GPIO_user is
@@ -54,10 +55,16 @@ entity OB8_GPIO_user is
     ;switch_i              : in  std_logic_vector(NB_SWITCH-1 downto 0)
     ;led0_o                : out std_logic_vector(NB_LED0  -1 downto 0)
     ;led1_o                : out std_logic_vector(NB_LED1  -1 downto 0)
-                          
+
+     -- UART Interface
     ;uart_tx_o             : out std_logic
     ;uart_rx_i             : in  std_logic
                           
+    -- SPI Interface
+    ;spi_sclk_o            : out std_logic
+    ;spi_cs_b_o            : out std_logic
+    ;spi_mosi_o            : out std_logic
+    ;spi_miso_i            : in  std_logic
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
@@ -81,25 +88,28 @@ architecture rtl of OB8_GPIO_user is
   constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
 
   -- ICN Configuration
-  constant NB_TARGET                  : positive := 4;
+  constant NB_TARGET                  : positive := 5;
 
   constant TARGET_SWITCH              : integer  := 0;
   constant TARGET_LED0                : integer  := 1;
   constant TARGET_LED1                : integer  := 2;
   constant TARGET_UART                : integer  := 3;
+  constant TARGET_SPI                 : integer  := 4;
   
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => "00010000",
-      TARGET_LED0                     => "00100000",
-      TARGET_LED1                     => "01000000",
-      TARGET_UART                     => "10000000" 
+    ( TARGET_SWITCH                   => "00010000"
+     ,TARGET_LED0                     => "00100000"
+     ,TARGET_LED1                     => "01000000"
+     ,TARGET_UART                     => "10000000"
+     ,TARGET_SPI                      => "00001000"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => GPIO_ADDR_WIDTH,
-      TARGET_LED0                     => GPIO_ADDR_WIDTH,
-      TARGET_LED1                     => GPIO_ADDR_WIDTH,
-      TARGET_UART                     => UART_ADDR_WIDTH
+    ( TARGET_SWITCH                   => GPIO_ADDR_WIDTH
+     ,TARGET_LED0                     => GPIO_ADDR_WIDTH
+     ,TARGET_LED1                     => GPIO_ADDR_WIDTH
+     ,TARGET_UART                     => UART_ADDR_WIDTH
+     ,TARGET_SPI                      => SPI_ADDR_WIDTH
       );
   
   -- Signals ICN
@@ -339,6 +349,28 @@ begin  -- architecture rtl
     ,uart_tx_o            => uart_tx_o     
     ,uart_rx_i            => uart_rx_i     
      );
+
+  -----------------------------------------------------------------------------
+  -- SPI
+  -----------------------------------------------------------------------------
+  ins_pbi_spi : entity work.pbi_spi(rtl)
+    generic map
+    (USER_DEFINE_PRESCALER=> true
+    ,PRESCALER_RATIO      => x"00"
+     )
+    port map
+    (clk_i                => clk           
+    ,arst_b_i             => arst_b        
+    ,pbi_ini_i            => icn_pbi_inis(TARGET_SPI)   
+    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_SPI)   
+    ,sclk_o               => spi_sclk_o   
+    ,sclk_oe_o            => open
+    ,cs_b_o               => spi_cs_b_o   
+    ,cs_b_oe_o            => open
+    ,mosi_o               => spi_mosi_o   
+    ,mosi_oe_o            => open
+    ,miso_i               => spi_miso_i   
+     );
   
   -----------------------------------------------------------------------------
   -- CPU 1
@@ -483,6 +515,8 @@ begin  -- architecture rtl
   debug_o.led1_busy   <= icn_pbi_tgts(TARGET_LED1  ).busy;
   debug_o.uart_cs     <= icn_pbi_inis(TARGET_UART  ).cs  ;
   debug_o.uart_busy   <= icn_pbi_tgts(TARGET_UART  ).busy;
+  debug_o.spi_cs      <= icn_pbi_inis(TARGET_SPI   ).cs  ;
+  debug_o.spi_busy    <= icn_pbi_tgts(TARGET_SPI   ).busy;
   
 end architecture rtl;
     

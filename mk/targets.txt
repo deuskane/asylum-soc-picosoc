@@ -11,6 +11,7 @@ sim_soc1_asm_identity      : Simulation of the test soft/identity.psm
 sim_soc1_c_identity        : Simulation of the test soft/identity.c
 sim_soc1_c_user            : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
 sim_soc1_c_user_uart       : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+sim_soc1_c_user_uart_spi   : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
 sim_soc2_c_user            : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_c_user_uart       : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc3_fault_c_user      : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection

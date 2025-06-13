@@ -40,6 +40,8 @@ package OB8_GPIO_pkg is
     led1_busy   : std_logic;
     uart_cs     : std_logic;
     uart_busy   : std_logic;
+    spi_cs      : std_logic;
+    spi_busy    : std_logic;
     
   end record OB8_GPIO_user_debug_t;
 
@@ -92,6 +94,10 @@ package OB8_GPIO_pkg is
       uart_tx_o             : out std_logic;
       uart_rx_i             : in  std_logic;
                             
+      spi_sclk_o            : out std_logic;
+      spi_cs_b_o            : out std_logic;
+      spi_mosi_o            : out std_logic;
+      spi_miso_i            : in  std_logic;
                             
       it_i                  : in  std_logic;
       inject_error_i        : in  std_logic_vector(        3-1 downto 0);
