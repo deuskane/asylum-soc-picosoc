@@ -14,7 +14,8 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2017-03-30  1.0      mrosiere Created
-// 2025-01-06  1.0      mrosiere Add comments
+// 2025-01-06  1.1      mrosiere Add comments
+// 2025-06-13  1.2      mrosiere Add SPI
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -122,7 +123,9 @@ void main()
 				| (0<<0) // SPI Disable
 				));
   PORT_WR(SPI    +SPI_CFG     ,(0
+#ifndef HAVE_SPI_MEMORY
 				| (1<<3) // Loopback
+#endif
 				| (0<<2) // CPHA
 				| (0<<1) // CPOL
 				| (1<<0) // SPI Enable
@@ -135,7 +138,23 @@ void main()
   __asm
     ENABLE INTERRUPT
   __endasm;
-    
+
+#ifdef HAVE_SPI
+  PORT_WR(SPI    +SPI_CMD ,(0
+			    | (1<<7) // Enable TX
+			    | (0<<6) // Enable RX
+			    | (0<<5) // Last
+			    | (3<<0) // 4 bytes
+			    ));
+  // Instruction
+  PORT_WR(SPI    +SPI_DATA,0x03);
+  // Address
+  PORT_WR(SPI    +SPI_DATA,0x00);
+  PORT_WR(SPI    +SPI_DATA,0x00);
+  PORT_WR(SPI    +SPI_DATA,0x00);
+#endif       
+
+  
   //------------------------------------
   // Application Run Loop
   //------------------------------------
@@ -153,6 +172,14 @@ void main()
 
 
 #ifdef HAVE_SPI
+#ifdef HAVE_SPI_MEMORY
+      PORT_WR(SPI    +SPI_CMD ,(0
+				| (0<<7) // Enable TX
+				| (1<<6) // Enable RX
+				| (0<<5) // Last
+				| (0<<0) // 1 bytes
+				));
+#else
       PORT_WR(SPI    +SPI_CMD ,(0
 				| (1<<7) // Enable TX
 				| (1<<6) // Enable RX
@@ -160,8 +187,8 @@ void main()
 				| (0<<0) // 1 bytes
 				));
       PORT_WR(SPI    +SPI_DATA,cpt);
+#endif
 #endif       
-
       
       putchar('H');
       putchar('e');
@@ -176,7 +203,7 @@ void main()
       spi_rx = PORT_RD(SPI    +SPI_DATA);
       puthex (spi_rx);
 #else
-      puthex (sw);
+      puthex (cpt);
 #endif       
       
       putchar('\r');

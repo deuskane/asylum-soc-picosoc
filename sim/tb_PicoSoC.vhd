@@ -32,7 +32,8 @@ entity tb_PicoSoC is
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION  : boolean  := True
     ;TB_WATCHDOG      : natural  := 10_000
-    ;BAUD_RATE        : integer  := 115200
+    ;BAUD_RATE       : integer  := 115200
+    ;HAVE_SPI_MEMORY  : boolean  := False
      );
   
 end entity tb_PicoSoC;
@@ -58,7 +59,17 @@ architecture tb of tb_PicoSoC is
   signal led_o                     : std_logic_vector(NB_LED   -1 downto 0);
   signal it_user_i                 : std_logic;
   signal inject_error_i            : std_logic_vector(        3-1 downto 0);
-                                   
+
+  signal  spi_sclk_o               : std_logic;
+  signal  spi_cs_b_o               : std_logic;
+  signal  spi_mosi_o               : std_logic;
+  signal  spi_miso_i               : std_logic;
+
+  signal  RSTNeg                   : std_logic;
+  signal  WPNeg                    : std_logic;
+  signal  HOLDNeg                  : std_logic;
+  signal  SNeg                     : std_logic;
+  
   alias  led_switch                : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
   alias  led_it                    : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
   alias  led_diff                  : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
@@ -131,10 +142,10 @@ begin  -- architecture tb
     ,inject_error_i   => inject_error_i
     ,uart_tx_o        => open
     ,uart_rx_i        => '1'
-    ,spi_sclk_o       => open 
-    ,spi_cs_b_o       => open 
-    ,spi_mosi_o       => open 
-    ,spi_miso_i       => '0'
+    ,spi_sclk_o       => spi_sclk_o 
+    ,spi_cs_b_o       => spi_cs_b_o 
+    ,spi_mosi_o       => spi_mosi_o 
+    ,spi_miso_i       => spi_miso_i
     ,debug_mux_i      => "000"
     ,debug_o          => open 
     );
@@ -144,6 +155,33 @@ begin  -- architecture tb
   -----------------------------------------------------
   clk_i <= not test_done and not clk_i after TB_PERIOD/2;
 
+  ------------------------------------------------
+  -- Memory Model
+  ------------------------------------------------
+  RSTNeg  <= '1';
+  WPNeg   <= '1';
+  HOLDNeg <= '1';
+  SNeg    <= spi_cs_b_o when HAVE_SPI_MEMORY = true else
+             '1';
+  
+  mem : entity work.m25p40(vhdl_behavioral)
+      generic map
+      (mem_file_name     => "memory.mem"
+      ,UserPreload       => True
+      ,DebugInfo         => True
+      ,TimingChecksOn    => True
+      ,MsgOn             => True
+      ,XOn               => True
+       )
+      port map
+      (D             => spi_mosi_o -- serial data input/IO0
+      ,Q             => spi_miso_i -- serial data output/IO1
+      ,C             => spi_sclk_o -- serial clock input
+      ,SNeg          => SNeg   -- chip select input
+      ,WNeg          => WPNeg  -- write protect input/IO2
+      ,HOLDNeg       => HOLDNeg-- hold input/IO3
+       );
+  
   -----------------------------------------------------------------------------
   -- Watchdog
   -----------------------------------------------------------------------------
@@ -171,6 +209,7 @@ begin  -- architecture tb
 
       report "[TESTBENCH] Reset Sequence"; 
       arst_b_i       <= '0';
+      wait for 300 us;
       run(1);
       arst_b_i       <= '1';
       

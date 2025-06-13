@@ -45,6 +45,14 @@ p.addPad('led_o[16]'         ,{'location':'USER_CS_N'   }) # USER_* have predefi
 p.addPad('led_o[17]'         ,{'location':'USER_WE_N'   }) # USER_* have predefined parameters
 p.addPad('led_o[18]'         ,{'location':'USER_DATA_OE'}) # USER_* have predefined parameters
 
+#------------------------------------------------------------------
+# SPI Flash
+#------------------------------------------------------------------
+p.addPad('spi_sclk_o'        ,{'location':'USER_D9'     }) # USER_* have predefined parameters
+p.addPad('spi_cs_b_o'        ,{'location':'USER_D8'     }) # USER_* have predefined parameters
+p.addPad('spi_mosi_o'        ,{'location':'USER_D11'    }) # USER_* have predefined parameters
+p.addPad('spi_miso_i'        ,{'location':'USER_D10'    }) # USER_* have predefined parameters
+
 # Bank5 spare I/Os
 p.addPad('debug_mux_i[0]'    ,{'location':'IOB5_D05P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 2 from left
 p.addPad('debug_mux_i[1]'    ,{'location':'IOB5_D05N',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 3 from left

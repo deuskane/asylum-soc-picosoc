@@ -517,6 +517,6 @@ begin  -- architecture rtl
   debug_o.uart_busy   <= icn_pbi_tgts(TARGET_UART  ).busy;
   debug_o.spi_cs      <= icn_pbi_inis(TARGET_SPI   ).cs  ;
   debug_o.spi_busy    <= icn_pbi_tgts(TARGET_SPI   ).busy;
-  
+    
 end architecture rtl;
     

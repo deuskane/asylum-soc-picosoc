@@ -92,6 +92,14 @@ generate:
       entity : ROM_user
       cflags : --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI
 
+  gen_user_c_uart_spi_mem :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+      cflags : --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
+
   gen_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -152,7 +160,8 @@ filesets:
     files:
       - sim/tb_PicoSoC.vhd
     file_type : vhdlSource
-#    depend :
+    depend :
+      - fmf:memory:flash_nor
 #      - ">=xilinx:primitive:unisim:11.1"
 
   #---------------------------------------
@@ -208,7 +217,7 @@ targets:
       - target_generic
     tools :
       ghdl :
-        analyze_options : ["-Wall","-fsynopsys"]
+        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
         run_options     : ["--vcd=dut.vcd","--ieee-asserts=disable"]
 
   #---------------------------------------
@@ -267,11 +276,22 @@ targets:
     toplevel : PicoSoC_top
 
   #---------------------------------------
+  toto:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+    generate : [gen_user_c_uart_spi_mem,gen_supervisor_c]
+    parameters   :
+    
+    toplevel : PicoSoC_user
+
+
+  #---------------------------------------
   emu_ng_medium_soc1:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_user_c_uart,gen_supervisor_c]
+    generate : [gen_user_c_uart_spi_mem,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
@@ -417,6 +437,18 @@ targets:
       - TB_WATCHDOG=50000
       - BAUD_RATE=460800
 
+  sim_soc1_c_user_uart_spi_mem:
+    << : *sim
+    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    generate     : [gen_user_c_uart_spi_mem,gen_supervisor_c_dummy]
+    parameters   :
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+      - TB_WATCHDOG=50000
+      - BAUD_RATE=460800
+      - HAVE_SPI_MEMORY=true
+
   sim_soc2_c_user:
     << : *sim
     description  : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
@@ -445,6 +477,7 @@ targets:
       - SUPERVISOR=true
       - SAFETY=lock-step
       - FAULT_INJECTION=true
+      - TB_WATCHDOG=50000
 
   sim_soc4_fault_c_user:
     << : *sim
@@ -454,6 +487,7 @@ targets:
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
+      - TB_WATCHDOG=50000
 
   sim_soc4_fault_c_user_uart:
     << : *sim
@@ -542,4 +576,10 @@ parameters :
     description : Testbench Watchdog
     datatype    : int
     default     : 10000
+    paramtype   : generic
+
+  HAVE_SPI_MEMORY :
+    description : The Testbench have an spi memory
+    datatype    : bool
+    default     : false
     paramtype   : generic
