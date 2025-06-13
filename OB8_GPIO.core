@@ -198,7 +198,7 @@ targets:
       - target_generic
     tools :
       ghdl :
-        analyze_options : ["-fsynopsys"]
+        analyze_options : ["-Wall","-fsynopsys"]
         run_options     : ["--vcd=dut.vcd","--ieee-asserts=disable"]
 
   #---------------------------------------
