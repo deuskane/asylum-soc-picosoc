@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : OB8_GPIO
+-- Title      : PicoSoC
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : OB8_GPIO.vhd
+-- File       : PicoSoC.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
@@ -33,9 +33,9 @@ use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
 use     work.UART_csr_pkg.all;
 use     work.SPI_csr_pkg.all;
-use     work.OB8_GPIO_pkg.all;
+use     work.PicoSoC_pkg.all;
 
-entity OB8_GPIO_user is
+entity PicoSoC_user is
   generic
     (CLOCK_FREQ            : integer  := 50000000
     ;BAUD_RATE             : integer  := 115200
@@ -72,11 +72,11 @@ entity OB8_GPIO_user is
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
                                  
-    ;debug_o               : out OB8_GPIO_user_debug_t
+    ;debug_o               : out PicoSoC_user_debug_t
     );
-end OB8_GPIO_user;
+end PicoSoC_user;
 
-architecture rtl of OB8_GPIO_user is
+architecture rtl of PicoSoC_user is
 
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');

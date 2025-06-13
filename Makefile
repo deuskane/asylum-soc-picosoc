@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------------
 # Title      : Makefile
-# Project    : OB8_GPIO
+# Project    : PicoSoC
 #-----------------------------------------------------------------------------
-# File       : OB8_GPIO.vhd
+# File       : PicoSoC.vhd
 # Author     : Mathieu Rosiere
 #-----------------------------------------------------------------------------
 # Description: Makefile to execute fusesoc

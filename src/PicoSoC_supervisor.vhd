@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : OB8_GPIO_supervisor
+-- Title      : PicoSoC_supervisor
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : OB8_GPIO_supervisor.vhd
+-- File       : PicoSoC_supervisor.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
@@ -26,9 +26,9 @@ use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
-use     work.OB8_GPIO_pkg.all;
+use     work.PicoSoC_pkg.all;
 
-entity OB8_GPIO_supervisor is
+entity PicoSoC_supervisor is
   generic
     (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
@@ -45,11 +45,11 @@ entity OB8_GPIO_supervisor is
                           
     ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
-    ;debug_o               : out OB8_GPIO_supervisor_debug_t
+    ;debug_o               : out PicoSoC_supervisor_debug_t
      );
-end OB8_GPIO_supervisor;
+end PicoSoC_supervisor;
 
-architecture rtl of OB8_GPIO_supervisor is
+architecture rtl of PicoSoC_supervisor is
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');

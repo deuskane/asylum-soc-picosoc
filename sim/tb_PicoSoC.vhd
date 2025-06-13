@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : tb_OB8_GPIO
+-- Title      : tb_PicoSoC
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : tb_OB8_GPIO.vhd
+-- File       : tb_PicoSoC.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
@@ -26,7 +26,7 @@ use     ieee.numeric_std.all;
 use     std.textio.all;
 library work;
 
-entity tb_OB8_GPIO is
+entity tb_PicoSoC is
   generic
     (SUPERVISOR       : boolean  := True
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
@@ -35,9 +35,9 @@ entity tb_OB8_GPIO is
     ;BAUD_RATE        : integer  := 115200
      );
   
-end entity tb_OB8_GPIO;
+end entity tb_PicoSoC;
 
-architecture tb of tb_OB8_GPIO is
+architecture tb of tb_PicoSoC is
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := 40 ns;
 --constant TB_WATCHDOG             : natural := 10000;
@@ -108,7 +108,7 @@ begin  -- architecture tb
   -----------------------------------------------------
   -- Design Under Test
   -----------------------------------------------------
-  dut : entity work.OB8_GPIO_top(rtl)
+  dut : entity work.PicoSoC_top(rtl)
     generic map
     (FSYS             => FSYS            
     ,FSYS_INT         => FSYS_INT        

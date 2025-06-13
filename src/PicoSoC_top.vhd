@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : OB8_GPIO
+-- Title      : PicoSoC
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : OB8_GPIO.vhd
+-- File       : PicoSoC.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
@@ -24,9 +24,9 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
-use     work.OB8_GPIO_pkg.all;
+use     work.PicoSoC_pkg.all;
 
-entity OB8_GPIO_top is
+entity PicoSoC_top is
   generic
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
@@ -68,9 +68,9 @@ entity OB8_GPIO_top is
     ;debug_uart_tx_o  : out std_logic
      
     );
-end OB8_GPIO_top;
+end PicoSoC_top;
   
-architecture rtl of OB8_GPIO_top is
+architecture rtl of PicoSoC_top is
 
   constant TARGET_ADDR_ENCODING         : string   := "one_hot";
   constant ICN_ALGO_SEL                 : string   := "mux";
@@ -99,8 +99,8 @@ architecture rtl of OB8_GPIO_top is
   
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug                        : std_logic_vector(8-1 downto 0);
-  signal   debug_user                   : OB8_GPIO_user_debug_t      ;
-  signal   debug_supervisor             : OB8_GPIO_supervisor_debug_t;
+  signal   debug_user                   : PicoSoC_user_debug_t      ;
+  signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
   
 begin  -- architecture rtl
 
@@ -172,7 +172,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
-  ins_soc_user : OB8_GPIO_user
+  ins_soc_user : PicoSoC_user
     generic map
     (CLOCK_FREQ           => FSYS_INT           
     ,BAUD_RATE            => BAUD_RATE          
@@ -209,7 +209,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_supervisor: if SUPERVISOR = True
   generate
-    ins_soc_supervisor : OB8_GPIO_supervisor
+    ins_soc_supervisor : PicoSoC_supervisor
       generic map
       (NB_LED0              => 1
       ,NB_LED1              => NB_LED_SUPERVISOR
