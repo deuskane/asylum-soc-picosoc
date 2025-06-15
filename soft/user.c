@@ -21,13 +21,10 @@
 #include <stdint.h>
 //#include <intr.h>
 
-//--------------------------------------
-// Port Macro
-//--------------------------------------
-extern char PBLAZEPORT[];
-
-#define PORT_WR(_ADDR_,_DATA_) PBLAZEPORT[_ADDR_] = _DATA_
-#define PORT_RD(_ADDR_)        PBLAZEPORT[_ADDR_]
+#include "picoblaze.h"
+#include "gpio.h"
+#include "uart.h"
+#include "spi.h"
 
 //--------------------------------------
 // Address Map
@@ -38,48 +35,10 @@ extern char PBLAZEPORT[];
 #define UART                0x80
 #define SPI                 0x08
 
-#define UART_DATA           0x0
-#define UART_CTRL           0x1
-#define UART_CNT_LSB        0x2
-#define UART_CNT_MSB        0x3
-
-#define GPIO_DATA           0x0
-#define GPIO_DATA_OE        0x1
-#define GPIO_DATA_IN        0x2
-#define GPIO_DATA_OUT       0x3
-
-#define SPI_DATA            0x0
-#define SPI_CMD             0x1
-#define SPI_CFG             0x2
-#define SPI_PRESCALER       0x3
-
-//--------------------------------------
-// putchar : send char into uart
-// puthex  : translate byte into ascii and send into uart
-//--------------------------------------
-#ifdef HAVE_UART
-#define putchar(c) PORT_WR(UART+UART_DATA, c)
-
-#define puthex(byte)           \
-do {			      \
-  uint8_t msb = byte >> 4;    \
-  uint8_t lsb = byte & 0x0F;  \
-			      \
-  if (msb>9)		      \
-    putchar('A'+msb-10);      \
-  else			      \
-    putchar('0'+msb);	      \
-			      \
-  if (lsb>9)		      \
-    putchar('A'+lsb-10);      \
-  else			      \
-    putchar('0'+lsb);         \
- } while (0)
+#ifdef HAVE_SPI_MEMORY
+#define SPI_LOOPBACK 0
 #else
-
-#define putchar(c)   do {} while (0)
-#define puthex(byte) do {} while (0)
-
+#define SPI_LOOPBACK 1
 #endif
 
 //--------------------------------------
@@ -87,7 +46,7 @@ do {			      \
 //--------------------------------------
 void isr (void) __interrupt(1)
 {
-  PORT_WR(LED1,PORT_RD(LED1)+1);
+  gpio_wr(LED1,gpio_rd(LED1)+1);
 }
 
 //--------------------------------------
@@ -104,56 +63,23 @@ void main()
   // Init counter
   // Send counter to led
   // Enable interuption
-  PORT_WR(SWITCH +GPIO_DATA_OE,0x00);
-  PORT_WR(LED0   +GPIO_DATA_OE,0xFF);
-  PORT_WR(LED1   +GPIO_DATA_OE,0xFF);
+  gpio_setup(SWITCH,INPUT);
+  gpio_setup(LED0  ,OUTPUT);
+  gpio_setup(LED1  ,OUTPUT);
 
-#ifdef HAVE_UART
-  PORT_WR(UART   +UART_CTRL   ,0x80); // RX Use Loopback
-  PORT_WR(UART   +UART_CTRL   ,0x91); // RX Use Loopback, Enable TX, Enable RX,
-  PORT_WR(UART   +UART_CNT_LSB,((CLOCK_FREQ/BAUD_RATE)-1));
-  PORT_WR(UART   +UART_CNT_MSB,((CLOCK_FREQ/BAUD_RATE)-1)>>8);
-#endif
+  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
 
-#ifdef HAVE_SPI
-  PORT_WR(SPI    +SPI_CFG     ,(0
-				| (1<<3) // Loopback
-				| (0<<2) // CPHA
-				| (0<<1) // CPOL
-				| (0<<0) // SPI Disable
-				));
-  PORT_WR(SPI    +SPI_CFG     ,(0
-#ifndef HAVE_SPI_MEMORY
-				| (1<<3) // Loopback
-#endif
-				| (0<<2) // CPHA
-				| (0<<1) // CPOL
-				| (1<<0) // SPI Enable
-				));
-#endif
-  
-  PORT_WR(LED1,0);
+  spi_setup(SPI,0,0,SPI_LOOPBACK);
+
+  // Init LED1 value
+  gpio_wr(LED1,0);
 
   //pbcc_enable_interrupt();
   __asm
     ENABLE INTERRUPT
   __endasm;
 
-#ifdef HAVE_SPI
-  PORT_WR(SPI    +SPI_CMD ,(0
-			    | (1<<7) // Enable TX
-			    | (0<<6) // Enable RX
-			    | (0<<5) // Last
-			    | (3<<0) // 4 bytes
-			    ));
-  // Instruction
-  PORT_WR(SPI    +SPI_DATA,0x03);
-  // Address
-  PORT_WR(SPI    +SPI_DATA,0x00);
-  PORT_WR(SPI    +SPI_DATA,0x00);
-  PORT_WR(SPI    +SPI_DATA,0x00);
-#endif       
-
+  spi_inst24(SPI,SINGLE_READ,0x000002);
   
   //------------------------------------
   // Application Run Loop
@@ -161,33 +87,20 @@ void main()
   // Read Switch and write to led
   while (1)
     {
-      uint8_t sw = PORT_RD(SWITCH);
-      uint8_t spi_rx;
+      uint8_t sw = gpio_rd(SWITCH);
+      uint8_t spi_byte;
 
 #ifdef INVERT_SWITCH
       sw = ~sw;
 #endif
   
-      PORT_WR(LED0, sw);
+      gpio_wr(LED0, sw);
 
-
-#ifdef HAVE_SPI
 #ifdef HAVE_SPI_MEMORY
-      PORT_WR(SPI    +SPI_CMD ,(0
-				| (0<<7) // Enable TX
-				| (1<<6) // Enable RX
-				| (0<<5) // Last
-				| (0<<0) // 1 bytes
-				));
+      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LOOPBACK_DISABLE,0);
 #else
-      PORT_WR(SPI    +SPI_CMD ,(0
-				| (1<<7) // Enable TX
-				| (1<<6) // Enable RX
-				| (1<<5) // Last
-				| (0<<0) // 1 bytes
-				));
-      PORT_WR(SPI    +SPI_DATA,cpt);
-#endif
+      spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LOOPBACK_ENABLE,0);
+      spi_tx (SPI,cpt);
 #endif       
       
       putchar('H');
@@ -196,15 +109,14 @@ void main()
       putchar('l');
       putchar('o');
       putchar(' ');
-      puthex (sw);
-      putchar(' ');
-
-#ifdef HAVE_SPI
-      spi_rx = PORT_RD(SPI    +SPI_DATA);
-      puthex (spi_rx);
-#else
       puthex (cpt);
-#endif       
+      putchar('-');
+      puthex (sw);
+      putchar('-');
+
+      spi_byte = spi_rx(SPI);
+      puthex (spi_byte);
+      //putchar(spi_byte);
       
       putchar('\r');
       putchar('\n');
