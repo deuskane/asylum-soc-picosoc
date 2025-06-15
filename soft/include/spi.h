@@ -22,8 +22,8 @@
 #define SPI_CFG                   0x2
 #define SPI_PRESCALER             0x3
 			          
-#define SINGLE_READ               0x03
-#define SFDP                      0x5A
+#define SPI_SINGLE_READ           0x03
+#define SPI_SFDP                  0x5A
 #define SPI_TX_ENABLE             1
 #define SPI_TX_DISABLE            0
 #define SPI_RX_ENABLE             1

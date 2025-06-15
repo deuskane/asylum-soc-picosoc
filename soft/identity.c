@@ -18,15 +18,8 @@
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
-#include <intr.h>
-
-//--------------------------------------
-// Port Macro
-//--------------------------------------
-extern char PBLAZEPORT[];
-
-#define PORT_WR(_ADDR_,_DATA_) PBLAZEPORT[_ADDR_] = _DATA_
-#define PORT_RD(_ADDR_)        PBLAZEPORT[_ADDR_]
+#include "picoblaze.h"
+#include "gpio.h"
 
 //--------------------------------------
 // Address Map
@@ -34,27 +27,22 @@ extern char PBLAZEPORT[];
 #define SWITCH              0x10
 #define LED0                0x20
 
-#define GPIO_DATA           0x0
-#define GPIO_DATA_OE        0x1
-#define GPIO_DATA_IN        0x2
-#define GPIO_DATA_OUT       0x3
-
 //--------------------------------------
 // Main
 //--------------------------------------
 void main()
 {
-  PORT_WR(SWITCH +GPIO_DATA_OE,0x00);
-  PORT_WR(LED0   +GPIO_DATA_OE,0xFF);
+  gpio_setup(SWITCH,INPUT);
+  gpio_setup(LED0  ,OUTPUT);
 
   while (1)
     {
-      uint8_t sw = PORT_RD(SWITCH);
+      uint8_t sw = gpio_rd(SWITCH);
 
 #ifdef INVERT_SWITCH
       sw = ~sw;
 #endif
   
-      PORT_WR(LED0, sw);
+      gpio_wr(LED0, sw);
     }
 }

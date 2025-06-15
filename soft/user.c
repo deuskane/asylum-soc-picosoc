@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
-//#include <intr.h>
+#include <intr.h>
 
 #include "picoblaze.h"
 #include "gpio.h"
@@ -49,6 +49,26 @@ void isr (void) __interrupt(1)
   gpio_wr(LED1,gpio_rd(LED1)+1);
 }
 
+
+//--------------------------------------
+// Application Setup
+//--------------------------------------
+void setup()
+{
+  gpio_setup(SWITCH,INPUT);
+  gpio_setup(LED0  ,OUTPUT);
+  gpio_setup(LED1  ,OUTPUT);
+  gpio_wr(LED0,0);
+  gpio_wr(LED1,0);
+
+  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
+
+  spi_setup(SPI,0,0,SPI_LOOPBACK);
+  spi_inst24(SPI,SPI_SINGLE_READ,0x000002);
+
+  pbcc_enable_interrupt();
+}
+
 //--------------------------------------
 // Main
 //--------------------------------------
@@ -57,29 +77,7 @@ void main()
 {
   uint8_t cpt = 0;
 
-  //------------------------------------
-  // Application Setup
-  //------------------------------------
-  // Init counter
-  // Send counter to led
-  // Enable interuption
-  gpio_setup(SWITCH,INPUT);
-  gpio_setup(LED0  ,OUTPUT);
-  gpio_setup(LED1  ,OUTPUT);
-
-  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
-
-  spi_setup(SPI,0,0,SPI_LOOPBACK);
-
-  // Init LED1 value
-  gpio_wr(LED1,0);
-
-  //pbcc_enable_interrupt();
-  __asm
-    ENABLE INTERRUPT
-  __endasm;
-
-  spi_inst24(SPI,SINGLE_READ,0x000002);
+  setup();
   
   //------------------------------------
   // Application Run Loop
