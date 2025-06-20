@@ -36,9 +36,9 @@
 #define SPI                 0x08
 
 #ifdef HAVE_SPI_MEMORY
-#define SPI_LOOPBACK 0
+#define SPI_LOOPBACK SPI_LOOPBACK_DISABLE
 #else
-#define SPI_LOOPBACK 1
+#define SPI_LOOPBACK SPI_LOOPBACK_ENABLE
 #endif
 
 //--------------------------------------
@@ -64,11 +64,109 @@ void setup()
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
 
   spi_setup(SPI,0,0,SPI_LOOPBACK);
-  spi_inst24(SPI,SPI_SINGLE_READ,0x000002);
 
   pbcc_enable_interrupt();
 }
 
+//--------------------------------------
+// Serial Flash Discoverable Parameters
+//--------------------------------------
+void spi_sfdp()
+{
+  uint8_t dummy;
+  
+  spi_inst24(SPI,SPI_SFDP,0x000000,SPI_CONTINUE);
+  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,4-1);
+
+  // SFDP_HEADER[0] : SFDP Signature
+  putchar(spi_rx(SPI)); // 7:0
+  putchar(spi_rx(SPI)); // 15:8
+  putchar(spi_rx(SPI)); // 23:16
+  putchar(spi_rx(SPI)); // 31:24
+  putchar('\r');
+  putchar('\n');
+}
+
+//--------------------------------------
+// SPI Write Value
+//--------------------------------------
+void spi_wait_device_ready()
+{
+  uint8_t byte;
+  
+
+  do
+    {
+      spi_inst  (SPI,SPI_READ_SR1,SPI_CONTINUE);
+      spi_cmd   (SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,1-1);
+      byte = spi_rx(SPI);     
+    }
+  while((byte&0x01)==0x01);
+  
+}
+
+//--------------------------------------
+// SPI Write Value
+//--------------------------------------
+void spi_write()
+{
+  uint8_t dummy;
+  
+  spi_inst  (SPI,SPI_WRITE_ENABLE,SPI_LAST);
+  spi_inst24(SPI,SPI_PAGE_PROGRAM,0x000000,SPI_CONTINUE);
+  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_DISABLE,SPI_LAST,14-1);
+  spi_tx (SPI,'H');
+  spi_tx (SPI,'e');
+  spi_tx (SPI,'l');
+  spi_tx (SPI,'l');
+  spi_tx (SPI,'o');
+  spi_tx (SPI,' ');
+  spi_tx (SPI,'P');
+  spi_tx (SPI,'i');
+  spi_tx (SPI,'c');
+  spi_tx (SPI,'o');
+  spi_tx (SPI,'S');
+  spi_tx (SPI,'o');
+  spi_tx (SPI,'C');
+  spi_tx (SPI,'\0');
+
+  spi_wait_device_ready();
+}
+
+//--------------------------------------
+// SPI Read Value
+//--------------------------------------
+void spi_read()
+{
+  uint8_t rx;
+  
+  spi_inst24(SPI,SPI_SINGLE_READ,0x000000,SPI_CONTINUE);
+
+  do
+    {
+      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,1-1);
+      rx = spi_rx(SPI);
+      putchar(rx);
+    }
+  while (rx != '\0');
+
+  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_DISABLE,SPI_LAST,1-1);
+      
+  
+  putchar('\r');
+  putchar('\n');
+}
+
+//--------------------------------------
+// SPI Write Value
+//--------------------------------------
+void spi_sector_erase()
+{
+  spi_inst  (SPI,SPI_WRITE_ENABLE,SPI_LAST);
+  spi_inst24(SPI,SPI_SECTOR_ERASE,0x000000,SPI_LAST);
+
+  spi_wait_device_ready();
+}
 //--------------------------------------
 // Main
 //--------------------------------------
@@ -78,11 +176,21 @@ void main()
   uint8_t cpt = 0;
 
   setup();
-  
+
+  //------------------------------------
+  // SPI Memory Validation
+  //------------------------------------
+#ifdef HAVE_SPI_MEMORY
+  spi_sector_erase();
+  spi_write();
+  spi_read ();
+#endif  
   //------------------------------------
   // Application Run Loop
   //------------------------------------
-  // Read Switch and write to led
+
+  spi_inst24(SPI,SPI_SINGLE_READ,0x000002,SPI_CONTINUE);
+
   while (1)
     {
       uint8_t sw = gpio_rd(SWITCH);
@@ -95,9 +203,9 @@ void main()
       gpio_wr(LED0, sw);
 
 #ifdef HAVE_SPI_MEMORY
-      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LOOPBACK_DISABLE,0);
+      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,0);
 #else
-      spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LOOPBACK_ENABLE,0);
+      spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
       spi_tx (SPI,cpt);
 #endif       
       

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-06-13
+-- Last update: 2025-06-20
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ entity tb_PicoSoC is
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION  : boolean  := True
     ;TB_WATCHDOG      : natural  := 10_000
-    ;BAUD_RATE       : integer  := 115200
+    ;BAUD_RATE        : integer  := 115200
     ;HAVE_SPI_MEMORY  : boolean  := False
      );
   
@@ -172,6 +172,7 @@ begin  -- architecture tb
       ,TimingChecksOn    => True
       ,MsgOn             => True
       ,XOn               => True
+      ,LongTimming       => False
        )
       port map
       (D             => spi_mosi_o -- serial data input/IO0
@@ -209,7 +210,12 @@ begin  -- architecture tb
 
       report "[TESTBENCH] Reset Sequence"; 
       arst_b_i       <= '0';
-      wait for 300 us;
+
+      if HAVE_SPI_MEMORY = true
+      then
+        wait for 10 ms;
+      end if;
+      
       run(1);
       arst_b_i       <= '1';
       

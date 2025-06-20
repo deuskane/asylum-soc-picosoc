@@ -218,7 +218,7 @@ targets:
     tools :
       ghdl :
         analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--vcd=dut.vcd","--ieee-asserts=disable"]
+        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   emu_basys_asm_identity:
@@ -274,17 +274,6 @@ targets:
         fpga    : NG-MEDIUM
         program : True
     toplevel : PicoSoC_top
-
-  #---------------------------------------
-  toto:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_user_c_uart_spi_mem,gen_supervisor_c]
-    parameters   :
-    
-    toplevel : PicoSoC_user
-
 
   #---------------------------------------
   emu_ng_medium_soc1:
@@ -445,7 +434,7 @@ targets:
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=500000
       - BAUD_RATE=460800
       - HAVE_SPI_MEMORY=true
 
