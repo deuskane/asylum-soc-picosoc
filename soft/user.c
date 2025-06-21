@@ -167,13 +167,24 @@ void spi_sector_erase()
 
   spi_wait_device_ready();
 }
+
+//--------------------------------------
+// Printf
+//--------------------------------------
+void printf(char * x)
+{
+  uint8_t i=0;
+  while (x[i] != '\0')
+    putchar(x[i++]);
+}
+
 //--------------------------------------
 // Main
 //--------------------------------------
 // Arduino Style, Don't modify
 void main()
 {
-  uint8_t cpt = 0;
+  uint32_t cpt = 0;
 
   setup();
 
@@ -209,12 +220,14 @@ void main()
       spi_tx (SPI,cpt);
 #endif       
       
-      putchar('H');
-      putchar('e');
-      putchar('l');
-      putchar('l');
+      putchar('L');
       putchar('o');
+      putchar('o');
+      putchar('p');
       putchar(' ');
+      puthex (cpt>>24);
+      puthex (cpt>>16);
+      puthex (cpt>> 8);
       puthex (cpt);
       putchar('-');
       puthex (sw);
