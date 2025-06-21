@@ -23,9 +23,7 @@
 //--------------------------------------
 extern char PBLAZEPORT[];
 
-#define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[_BA_+_OFFSET_] = _DATA_
-#define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[_BA_+_OFFSET_]
-
-
+#define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[(_BA_)+(_OFFSET_)] = (_DATA_)
+#define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[(_BA_)+(_OFFSET_)]
 
 #endif
