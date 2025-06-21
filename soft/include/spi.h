@@ -85,11 +85,11 @@
 
 #else
 
-#define spi_setup(_BA_,_CPOL_,_CPHA_,_LOOPBACK_) do {} while (0)
-#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_)	 do {} while (0)
-#define spi_inst(_BA_,_INSTRUCTION_,_LAST_)      do {} while (0)
-#define spi_inst24(_BA_,_INSTRUCTION_,_ADDR_,_LAST_)    do {} while (0)
-#define spi_tx(_BA_,_DATA_)	                 do {} while (0)
+#define spi_setup(_BA_,_CPOL_,_CPHA_,_LOOPBACK_)     do {} while (0)
+#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_)	     do {} while (0)
+#define spi_inst(_BA_,_INSTRUCTION_,_LAST_)          do {} while (0)
+#define spi_inst24(_BA_,_INSTRUCTION_,_ADDR_,_LAST_) do {} while (0)
+#define spi_tx(_BA_,_DATA_)	                     do {} while (0)
 #define spi_rx(_BA_) 0
 
 #endif
