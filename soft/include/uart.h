@@ -33,8 +33,8 @@
 do {			      \
   PORT_WR(_BA_  ,UART_CTRL   ,0x00 | (_LOOPBACK_)<<7); \
   PORT_WR(_BA_  ,UART_CTRL   ,0x11 | (_LOOPBACK_)<<7); \
-  PORT_WR(_BA_  ,UART_CNT_LSB,((_CLOCK_FREQ_/_BAUD_RATE_)-1)); \
-  PORT_WR(_BA_  ,UART_CNT_MSB,((_CLOCK_FREQ_/_BAUD_RATE_)-1)>>8); \
+  PORT_WR(_BA_  ,UART_CNT_LSB,(((_CLOCK_FREQ_)/(_BAUD_RATE_))1-1)); \
+  PORT_WR(_BA_  ,UART_CNT_MSB,(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1)>>8); \
  } while (0)
 
 
@@ -42,8 +42,8 @@ do {			      \
 
 #define puthex(_byte_)          \
 do {			      \
-  uint8_t msb = _byte_ >> 4;    \
-  uint8_t lsb = _byte_ & 0x0F;  \
+  uint8_t msb = (_byte_) >> 4;    \
+  uint8_t lsb = (_byte_) & 0x0F;  \
 			      \
   if (msb>9)		      \
     putchar('A'+msb-10);      \
