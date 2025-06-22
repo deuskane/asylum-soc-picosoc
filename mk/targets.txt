@@ -18,5 +18,4 @@ sim_soc2_c_user_uart         : Simulation of the test soft/user.c - Without Supe
 sim_soc3_fault_c_user        : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
 sim_soc4_fault_c_user        : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
 sim_soc4_fault_c_user_uart   : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
-toto                         : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
 

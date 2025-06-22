@@ -43,24 +43,24 @@
 #define spi_setup(_BA_,_CPOL_,_CPHA_,_LOOPBACK_) \
   do { \
   PORT_WR(_BA_   ,SPI_CFG     ,(0 \
-                             | (_LOOPBACK_<<3) \
-                             | (_CPHA_    <<2) \
-                             | (_CPOL_    <<1) \
-                             | (0         <<0))); \
+                             | ((_LOOPBACK_)<<3) \
+                             | ((_CPHA_    )<<2) \
+                             | ((_CPOL_    )<<1) \
+                             | (0           <<0))); \
   PORT_WR(_BA_  ,SPI_CFG     ,(0 \
-                             | (_LOOPBACK_<<3) \
-                             | (_CPHA_    <<2) \
-                             | (_CPOL_    <<1) \
-                             | (1         <<0))); \
+                             | ((_LOOPBACK_)<<3) \
+                             | ((_CPHA_    )<<2) \
+                             | ((_CPOL_    )<<1) \
+                             | (1           <<0))); \
   } while (0)
 
 #define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_)		\
   do { \
   PORT_WR(_BA_    ,SPI_CMD ,(0 \
-			    | (_TX_  <<7)\
-			    | (_RX_  <<6)\
-			    | (_LAST_<<5)\
-			    | (_LEN_ <<0)\
+			    | ((_TX_  )<<7)\
+			    | ((_RX_  )<<6)\
+			    | ((_LAST_)<<5)\
+			    | ((_LEN_ )<<0)\
 			    ));\
   } while (0)
 

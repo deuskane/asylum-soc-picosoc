@@ -192,21 +192,25 @@ void main()
   // SPI Memory Validation
   //------------------------------------
 #ifdef HAVE_SPI_MEMORY
+  /*
   spi_sector_erase();
   spi_write();
   spi_read ();
+
+  while(1);
+  */
 #endif  
   //------------------------------------
   // Application Run Loop
   //------------------------------------
 
-  spi_inst24(SPI,SPI_SINGLE_READ,0x000002,SPI_CONTINUE);
+  spi_inst24(SPI,SPI_SINGLE_READ,0x000000,SPI_CONTINUE);
 
   while (1)
     {
       uint8_t sw = gpio_rd(SWITCH);
       uint8_t spi_byte;
-
+      uint8_t cnt_byte3,cnt_byte2,cnt_byte1,cnt_byte0;
 #ifdef INVERT_SWITCH
       sw = ~sw;
 #endif
@@ -219,23 +223,33 @@ void main()
       spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
       spi_tx (SPI,cpt);
 #endif       
-      
+
+      // Print Msg
       putchar('L');
       putchar('o');
       putchar('o');
       putchar('p');
       putchar(' ');
-      puthex (cpt>>24);
-      puthex (cpt>>16);
-      puthex (cpt>> 8);
-      puthex (cpt);
+
+      // Print 32b counter
+      cnt_byte3 = (cpt>>24)&0xFF;
+      cnt_byte2 = (cpt>>16)&0xFF;
+      cnt_byte1 = (cpt>> 8)&0xFF;
+      cnt_byte0 = (cpt>> 0)&0xFF;
+      puthex (cnt_byte3);
+      puthex (cnt_byte2);
+      puthex (cnt_byte1);
+      puthex (cnt_byte0);
+
+      // Print 32b Switch
       putchar('-');
       puthex (sw);
+
+      // Print SPI Byte @ cpt
       putchar('-');
 
       spi_byte = spi_rx(SPI);
       puthex (spi_byte);
-      //putchar(spi_byte);
       
       putchar('\r');
       putchar('\n');

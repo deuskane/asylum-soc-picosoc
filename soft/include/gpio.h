@@ -26,7 +26,7 @@
 #define GPIO_INPUT          0x00
 
 #define gpio_setup(_BA_,_OE_) PORT_WR(_BA_,GPIO_DATA_OE,GPIO_##_OE_)
-#define gpio_rd(_BA_) PORT_RD(_BA_,GPIO_DATA)
-#define gpio_wr(_BA_,_DATA_) PORT_WR(_BA_,GPIO_DATA,_DATA_)
+#define gpio_rd(_BA_)         PORT_RD(_BA_,GPIO_DATA)
+#define gpio_wr(_BA_,_DATA_)  PORT_WR(_BA_,GPIO_DATA,_DATA_)
 
 #endif
