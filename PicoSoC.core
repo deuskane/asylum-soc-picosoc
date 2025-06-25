@@ -100,6 +100,14 @@ generate:
       entity : ROM_user
       cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
 
+  gen_user_c_uart_spi_mem_emu :
+    generator : pbcc_gen
+    parameters :
+      file   : soft/user.c
+      type   : c
+      entity : ROM_user
+      cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=115200 -DHAVE_SPI -DHAVE_SPI_MEMORY
+
   gen_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -280,7 +288,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_user_c_uart_spi_mem,gen_supervisor_c_dummy]
+    generate : [gen_user_c_uart_spi_mem_emu,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=25000000
