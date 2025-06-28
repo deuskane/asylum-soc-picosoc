@@ -47,7 +47,7 @@ generate:
   gen_user_asm_identity:
     generator : pbcc_gen
     parameters:
-      file   : soft/identity.psm
+      file   : soft/user_identity.psm
       type   : pblazeide
       entity : ROM_user
       cflags : -Isoft/include --verbose --all-callee-saves
@@ -55,7 +55,7 @@ generate:
   gen_user_c_identity_inverted:
     generator : pbcc_gen
     parameters:
-      file   : soft/identity.c
+      file   : soft/user_identity.c
       type   : c
       entity : ROM_user
       cflags : -Isoft/include --verbose --all-callee-saves -DINVERT_SWITCH
@@ -63,7 +63,7 @@ generate:
   gen_user_c_identity:
     generator : pbcc_gen
     parameters:
-      file   : soft/identity.c
+      file   : soft/user_identity.c
       type   : c
       entity : ROM_user
       cflags : -Isoft/include --verbose --all-callee-saves
@@ -231,7 +231,7 @@ targets:
   #---------------------------------------
   emu_basys_asm_identity:
   #---------------------------------------
-    description  : Synthesis for Digilent Basys board of the test soft/identity.psm
+    description  : Synthesis for Digilent Basys board of the test soft/user_identity.psm
     default_tool : ise
     filesets     :
       - files_hdl
@@ -387,7 +387,7 @@ targets:
   #<TARGETS_BEGIN>
   sim_soc1_asm_identity:
     << : *sim
-    description  : Simulation of the test soft/identity.psm
+    description  : Simulation of the test soft/user_identity.psm
     generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -396,7 +396,7 @@ targets:
 
   sim_soc1_c_identity:
     << : *sim
-    description  : Simulation of the test soft/identity.c
+    description  : Simulation of the test soft/user_identity.c
     generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false

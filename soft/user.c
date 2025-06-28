@@ -49,7 +49,6 @@ void isr (void) __interrupt(1)
   gpio_wr(LED1,gpio_rd(LED1)+1);
 }
 
-
 //--------------------------------------
 // Application Setup
 //--------------------------------------
