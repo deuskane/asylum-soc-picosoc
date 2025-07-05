@@ -34,10 +34,11 @@ CAPI=2:
 # 2025-04-14  2.3.3    mrosiere Add debug bus
 # 2025-05-14  2.4.0    mrosiere Change default BAUD TICK
 # 2025-06-16  2.5.0    mrosiere Add SPI
+# 2025-07-04  2.6.0    mrosiere Add GIC
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.5.0
-description : SoC with OpenBlaze8, switch, led and UART
+name        : asylum:soc:PicoSoC:2.6.0
+description : SoC with OpenBlaze8, switch, led, UART, SPI and GIC
 
 #=========================================
 generate:
@@ -152,7 +153,6 @@ filesets:
       - src/PicoSoC_top.vhd
       - src/PicoSoC_user.vhd
       - src/PicoSoC_supervisor.vhd
-      - src/it_ctrl.vhd
     file_type : vhdlSource
     depend :
       - ">=asylum:component:clock_divider:1.0.0"
@@ -161,7 +161,8 @@ filesets:
       - ">=asylum:communication:uart:1.0.0"
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
-
+      - ">=asylum:communication:GIC:1.0.0"
+      
   #---------------------------------------
   files_sim:
   #---------------------------------------
@@ -478,7 +479,7 @@ targets:
 
   sim_soc4_fault_c_user:
     << : *sim
-    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
       - SUPERVISOR=true
@@ -488,7 +489,7 @@ targets:
 
   sim_soc4_fault_c_user_uart:
     << : *sim
-    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    description  : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - SUPERVISOR=true

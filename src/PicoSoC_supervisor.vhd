@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-05-14
+-- Last update: 2025-07-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -18,6 +18,7 @@
 -- Date        Version  Author   Description
 -- 2025-01-01  1.0      mrosiere Created
 -- 2025-04-02  1.1      mrosiere Add ICN
+-- 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -26,6 +27,7 @@ use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
+use     work.GIC_csr_pkg.all;
 use     work.PicoSoC_pkg.all;
 
 entity PicoSoC_supervisor is
@@ -56,25 +58,22 @@ architecture rtl of PicoSoC_supervisor is
 
   -- ICN Configuration
 
-  constant NB_TARGET                  : positive := 4;
+  constant NB_TARGET                  : positive := 3;
 
   constant TARGET_LED0                : integer  := 0;
   constant TARGET_LED1                : integer  := 1;
-  constant TARGET_IT_VECTOR_MASK      : integer  := 2;
-  constant TARGET_IT_VECTOR           : integer  := 3;
+  constant TARGET_GIC                 : integer  := 2;
 
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => "00010000",
       TARGET_LED1                     => "00100000",
-      TARGET_IT_VECTOR_MASK           => "01000000",
-      TARGET_IT_VECTOR                => "10000000" 
+      TARGET_GIC                      => "10000000"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => GPIO_ADDR_WIDTH,
       TARGET_LED1                     => GPIO_ADDR_WIDTH,
-      TARGET_IT_VECTOR_MASK           => GPIO_ADDR_WIDTH,
-      TARGET_IT_VECTOR                => GPIO_ADDR_WIDTH
+      TARGET_GIC                      => GPIO_ADDR_WIDTH
       );
       
   -- Signals Clock/Reset
@@ -100,8 +99,6 @@ architecture rtl of PicoSoC_supervisor is
   
   signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
   signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
-
-  signal diff_mask                    : std_logic_vector(      3-1 downto 0);
   
 begin  -- architecture rtl
 
@@ -207,55 +204,17 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
-  -- GPIO 2 - Interruption Vector Mask
-  -----------------------------------------------------------------------------
-  ins_pbi_it_vector_mask : entity work.pbi_GPIO(rtl)
-    generic map
-    (NB_IO                => 3
-    ,DATA_OE_INIT         => CST1(8-1 downto 0)
-    ,IT_ENABLE            => false
-    )
-    port map
-    (clk_i                => clk         
-    ,cke_i                => '1'         
-    ,arstn_i              => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_IT_VECTOR_MASK)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_IT_VECTOR_MASK)
-    ,data_i               => CST0(3-1 downto 0)
-    ,data_o               => diff_mask   
-    ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
-    );
-
-  -----------------------------------------------------------------------------
   -- GPIO 3 - Interruption Vector
   -----------------------------------------------------------------------------
-  ins_pbi_it_vector : entity work.pbi_GPIO(rtl)
-    generic map
-    (NB_IO                => 3
-    ,DATA_OE_INIT         => CST0(8-1 downto 0)
-    ,IT_ENABLE            => false
-    )
+  ins_pbi_gic : entity work.pbi_GIC(rtl)
     port map
     (clk_i                => clk         
-    ,cke_i                => '1'         
-    ,arstn_i              => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_IT_VECTOR)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_IT_VECTOR)
-    ,data_i               => diff_i      
-    ,data_o               => open        
-    ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
+    ,arst_b_i             => arst_b      
+    ,pbi_ini_i            => icn_pbi_inis(TARGET_GIC)
+    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_GIC)
+    ,its_i                => diff_i      
+    ,itm_o                => cpu_it_val
     );
-
-  -----------------------------------------------------------------------------
-  -- CPU Interruption
-  -----------------------------------------------------------------------------
-  cpu_it_val <= ((diff_i(0) and diff_mask(0)) or
-                 (diff_i(1) and diff_mask(1)) or
-                 (diff_i(2) and diff_mask(2)));
   
   -----------------------------------------------------------------------------
   -- Output
