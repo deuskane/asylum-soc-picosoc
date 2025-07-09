@@ -35,9 +35,10 @@ CAPI=2:
 # 2025-05-14  2.4.0    mrosiere Change default BAUD TICK
 # 2025-06-16  2.5.0    mrosiere Add SPI
 # 2025-07-04  2.6.0    mrosiere Add GIC
+# 2025-07-09  2.6.1    mrosiere Configure UART and SPI FIFO
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.6.0
+name        : asylum:soc:PicoSoC:2.6.1
 description : SoC with OpenBlaze8, switch, led, UART, SPI and GIC
 
 #=========================================

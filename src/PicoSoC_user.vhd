@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-06-13
+-- Last update: 2025-07-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -22,6 +22,7 @@
 -- 2025-01-15  2.1      mrosiere Update diff detection
 -- 2025-01-21  2.2      mrosiere Add UART
 -- 2025-04-02  2.3      mrosiere Use ICN
+-- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
 -------------------------------------------------------------------------------
 
 
@@ -39,6 +40,11 @@ entity PicoSoC_user is
   generic
     (CLOCK_FREQ            : integer  := 50000000
     ;BAUD_RATE             : integer  := 115200
+    ;UART_DEPTH_TX         : natural  := 0
+    ;UART_DEPTH_RX         : natural  := 0
+    ;SPI_DEPTH_CMD         : natural  := 0
+    ;SPI_DEPTH_TX          : natural  := 0
+    ;SPI_DEPTH_RX          : natural  := 0
     ;NB_SWITCH             : positive := 8
     ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
@@ -340,6 +346,8 @@ begin  -- architecture rtl
     generic map
     (BAUD_RATE            => BAUD_RATE     
     ,CLOCK_FREQ           => CLOCK_FREQ
+    ,DEPTH_TX             => UART_DEPTH_TX 
+    ,DEPTH_RX             => UART_DEPTH_RX 
      )
     port map
     (clk_i                => clk           
@@ -357,6 +365,9 @@ begin  -- architecture rtl
     generic map
     (USER_DEFINE_PRESCALER=> true
     ,PRESCALER_RATIO      => x"00"
+    ,DEPTH_CMD            => SPI_DEPTH_CMD
+    ,DEPTH_TX             => SPI_DEPTH_TX 
+    ,DEPTH_RX             => SPI_DEPTH_RX 
      )
     port map
     (clk_i                => clk           

@@ -17,6 +17,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2025-01-15  1.0      mrosiere Created
+-- 2025-07-15  2.0      mrosiere Add FIFO depth for UART and SPI
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -31,6 +32,11 @@ entity PicoSoC_top is
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
     ;BAUD_RATE        : integer  := 115200
+    ;UART_DEPTH_TX    : natural  := 0
+    ;UART_DEPTH_RX    : natural  := 0
+    ;SPI_DEPTH_CMD    : natural  := 0
+    ;SPI_DEPTH_TX     : natural  := 0
+    ;SPI_DEPTH_RX     : natural  := 0
     ;NB_SWITCH        : positive := 8
     ;NB_LED           : positive := 19
     ;RESET_POLARITY   : string   := "low"       -- "high" / "low"
@@ -175,6 +181,11 @@ begin  -- architecture rtl
     generic map
     (CLOCK_FREQ           => FSYS_INT           
     ,BAUD_RATE            => BAUD_RATE          
+    ,UART_DEPTH_TX        => UART_DEPTH_TX 
+    ,UART_DEPTH_RX        => UART_DEPTH_RX 
+    ,SPI_DEPTH_CMD        => SPI_DEPTH_CMD
+    ,SPI_DEPTH_TX         => SPI_DEPTH_TX 
+    ,SPI_DEPTH_RX         => SPI_DEPTH_RX 
     ,NB_SWITCH            => NB_SWITCH          
     ,NB_LED0              => NB_LED0_USER       
     ,NB_LED1              => NB_LED1_USER       

@@ -75,6 +75,11 @@ package PicoSoC_pkg is
     generic (
       CLOCK_FREQ            : integer  ;
       BAUD_RATE             : integer  ;
+      UART_DEPTH_TX         : natural  ;
+      UART_DEPTH_RX         : natural  ;
+      SPI_DEPTH_CMD         : natural  ;
+      SPI_DEPTH_TX          : natural  ;
+      SPI_DEPTH_RX          : natural  ;
       NB_SWITCH             : positive ;
       NB_LED0               : positive ;
       NB_LED1               : positive ;
