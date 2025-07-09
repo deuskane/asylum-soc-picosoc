@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-06-20
+-- Last update: 2025-07-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -76,7 +76,6 @@ architecture tb of tb_PicoSoC is
 
   -- =====[ Test Signals ]========================
   signal test_done                 : std_logic := '0';
-  signal test_ok                   : std_logic := '0';
   
   -- =====[ Functions ]===========================
   
@@ -86,7 +85,7 @@ architecture tb of tb_PicoSoC is
   procedure xrun
     (constant n     : in positive;           -- nb cycle
      constant pol   : in string;
-     signal   clk_i : in std_logic
+     signal   clk   : in std_logic
      ) is
     
   begin
@@ -94,9 +93,9 @@ architecture tb of tb_PicoSoC is
     loop
       if (pol="pos")
       then
-        wait until rising_edge(clk_i);
+        wait until rising_edge(clk);
       else
-        wait until falling_edge(clk_i);
+        wait until falling_edge(clk);
       end if;
       
     end loop;  -- i
@@ -148,6 +147,7 @@ begin  -- architecture tb
     ,spi_miso_i       => spi_miso_i
     ,debug_mux_i      => "000"
     ,debug_o          => open 
+    ,debug_uart_tx_o  => open
     );
 
   -----------------------------------------------------

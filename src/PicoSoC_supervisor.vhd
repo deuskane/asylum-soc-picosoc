@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-05
+-- Last update: 2025-07-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ architecture rtl of PicoSoC_supervisor is
   signal cpu_pbi_tgt                  : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
 
   signal cpu_it_val                   : std_logic;
-  signal cpu_it_ack                   : std_logic;
+--signal cpu_it_ack                   : std_logic;
 
   -- Signals ICN
   signal icn_pbi_inis                 : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),

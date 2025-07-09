@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-06-13
+-- Last update: 2025-07-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -98,7 +98,6 @@ architecture rtl of PicoSoC_top is
   signal   uart_tx                      : std_logic;
   
   signal   debug_mux                    : unsigned        (3-1 downto 0);
-  signal   debug                        : std_logic_vector(8-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
   
