@@ -85,7 +85,7 @@ package PicoSoC_pkg is
       NB_LED1               : positive ;
       SAFETY                : string   ;
       FAULT_INJECTION       : boolean  ;
-      TARGET_ADDR_ENCODING  : string   ;
+    --TARGET_ADDR_ENCODING  : string   ;
       ICN_ALGO_SEL          : string   
       );
     port (

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-09
+-- Last update: 2025-07-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ use     work.pbi_pkg.all;
 use     work.GPIO_csr_pkg.all;
 use     work.UART_csr_pkg.all;
 use     work.SPI_csr_pkg.all;
+use     work.GIC_csr_pkg.all;
 use     work.PicoSoC_pkg.all;
 
 entity PicoSoC_user is
@@ -51,7 +52,6 @@ entity PicoSoC_user is
     ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION       : boolean  := False
     
-    ;TARGET_ADDR_ENCODING  : string := "one_hot"
     ;ICN_ALGO_SEL          : string := "or"
     );
   port
@@ -84,6 +84,9 @@ end PicoSoC_user;
 
 architecture rtl of PicoSoC_user is
 
+  -- Generic
+  constant TARGET_ADDR_ENCODING       : string := "binary";
+  
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
@@ -94,13 +97,14 @@ architecture rtl of PicoSoC_user is
   constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
 
   -- ICN Configuration
-  constant NB_TARGET                  : positive := 5;
+  constant NB_TARGET                  : positive := 6;
 
   constant TARGET_SWITCH              : integer  := 0;
   constant TARGET_LED0                : integer  := 1;
   constant TARGET_LED1                : integer  := 2;
   constant TARGET_UART                : integer  := 3;
   constant TARGET_SPI                 : integer  := 4;
+  constant TARGET_GIC                 : integer  := 5;
   
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => "00010000"
@@ -108,6 +112,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_LED1                     => "01000000"
      ,TARGET_UART                     => "10000000"
      ,TARGET_SPI                      => "00001000"
+     ,TARGET_GIC                      => "11110000"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
@@ -116,55 +121,67 @@ architecture rtl of PicoSoC_user is
      ,TARGET_LED1                     => GPIO_ADDR_WIDTH
      ,TARGET_UART                     => UART_ADDR_WIDTH
      ,TARGET_SPI                      => SPI_ADDR_WIDTH
+     ,TARGET_GIC                      => GIC_ADDR_WIDTH
       );
   
   -- Signals ICN
-  signal icn_pbi_inis                 : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
+  signal   icn_pbi_inis               : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                                          wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal icn_pbi_tgts                 : pbi_tgts_t(NB_TARGET-1 downto 0)(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   icn_pbi_tgts               : pbi_tgts_t(NB_TARGET-1 downto 0)(rdata(PBI_DATA_WIDTH-1 downto 0));
 
   -- Signals Clock/Reset
-  signal clk                          : std_logic;
-  signal arst_b                       : std_logic;
+  signal   clk                        : std_logic;
+  signal   arst_b                     : std_logic;
 
   -- Signals CPUs
-  signal cpu0_ics                     : std_logic;
-  signal cpu0_iaddr                   : std_logic_vector(10-1 downto 0);
-  signal cpu0_idata                   : std_logic_vector(18-1 downto 0);
-  signal cpu0_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+  signal   cpu0_ics                   : std_logic;
+  signal   cpu0_iaddr                 : std_logic_vector(10-1 downto 0);
+  signal   cpu0_idata                 : std_logic_vector(18-1 downto 0);
+  signal   cpu0_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu0_it_ack                  : std_logic;
+  signal   cpu0_it_ack                : std_logic;
   
-  signal cpu1_ics                     : std_logic;
-  signal cpu1_iaddr                   : std_logic_vector(10-1 downto 0);
-  signal cpu1_idata                   : std_logic_vector(18-1 downto 0);
-  signal cpu1_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+  signal   cpu1_ics                   : std_logic;
+  signal   cpu1_iaddr                 : std_logic_vector(10-1 downto 0);
+  signal   cpu1_idata                 : std_logic_vector(18-1 downto 0);
+  signal   cpu1_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu1_it_ack                  : std_logic;
+  signal   cpu1_it_ack                : std_logic;
 
-  signal cpu2_ics                     : std_logic;
-  signal cpu2_iaddr                   : std_logic_vector(10-1 downto 0);
-  signal cpu2_idata                   : std_logic_vector(18-1 downto 0);
-  signal cpu2_pbi_ini                 : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+  signal   cpu2_ics                   : std_logic;
+  signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
+  signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
+  signal   cpu2_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu2_it_ack                  : std_logic;
+  signal   cpu2_it_ack                : std_logic;
 
   -- Signals CPU (post lockstep / TMR)
-  signal cpu_ics                      : std_logic;
-  signal cpu_iaddr                    : std_logic_vector(10-1 downto 0);
-  signal cpu_idata                    : std_logic_vector(18-1 downto 0);
+  signal   cpu_ics                    : std_logic;
+  signal   cpu_iaddr                  : std_logic_vector(10-1 downto 0);
+  signal   cpu_idata                  : std_logic_vector(18-1 downto 0);
 
-  signal cpu_pbi_ini                  : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
+  signal   cpu_pbi_ini                : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu_pbi_tgt                  : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu_it_val                   : std_logic;
-  signal cpu_it_ack                   : std_logic;
+  signal   cpu_pbi_tgt                : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   cpu_it_val                 : std_logic;
+  signal   cpu_it_ack                 : std_logic;
 
+  -- UART
+  signal   uart_it                    : std_logic;
+  
+  -- Interruption Vector
+  constant GIC_WIDTH                  : positive := 2;
+
+  constant GIC_IT_USER                : natural  := 0;
+  constant GIC_UART                   : natural  := 1;
+
+  signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
+  
   -- Signals Safety
-  signal diff                         : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
+  signal   diff                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
-  signal diff_r                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
+  signal   diff_r                     : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
 
@@ -175,20 +192,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   clk    <= clk_i;
   arst_b <= arst_b_i;
-
-  -----------------------------------------------------------------------------
-  -- Interruption
-  --
-  -- From level to Val/Ack interruption
-  -----------------------------------------------------------------------------
-  ins_it_ctrl : entity work.it_ctrl(rtl)
-    port map
-    (clk_i                => clk          
-    ,arstn_i              => arst_b   
-    ,it_i                 => it_i         
-    ,it_val_o             => cpu_it_val   
-    ,it_ack_i             => cpu_it_ack
-    );
   
   -----------------------------------------------------------------------------
   -- CPU 0
@@ -355,7 +358,8 @@ begin  -- architecture rtl
     ,pbi_ini_i            => icn_pbi_inis(TARGET_UART)   
     ,pbi_tgt_o            => icn_pbi_tgts(TARGET_UART)   
     ,uart_tx_o            => uart_tx_o     
-    ,uart_rx_i            => uart_rx_i     
+    ,uart_rx_i            => uart_rx_i
+    ,it_o                 => uart_it 
      );
 
   -----------------------------------------------------------------------------
@@ -382,6 +386,37 @@ begin  -- architecture rtl
     ,mosi_oe_o            => open
     ,miso_i               => spi_miso_i   
      );
+
+  -----------------------------------------------------------------------------
+  -- GIC - Interruption Vector
+  -----------------------------------------------------------------------------
+  gic_it_vector(GIC_IT_USER) <= it_i   ;
+  gic_it_vector(GIC_UART   ) <= uart_it;
+
+  ins_pbi_gic : entity work.pbi_GIC(rtl)
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,pbi_ini_i            => icn_pbi_inis(TARGET_GIC)
+    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_GIC)
+    ,its_i                => gic_it_vector
+    ,itm_o                => cpu_it_val
+    );
+
+-------------------------------------------------------------------------------
+---- Interruption
+----
+---- From level to Val/Ack interruption
+-------------------------------------------------------------------------------
+--ins_it_ctrl : entity work.it_ctrl(rtl)
+--  port map
+--  (clk_i                => clk          
+--  ,arstn_i              => arst_b   
+--  ,it_i                 => it_i         
+--  ,it_val_o             => cpu_it_val   
+--  ,it_ack_i             => cpu_it_ack
+--  );
+
   
   -----------------------------------------------------------------------------
   -- CPU 1

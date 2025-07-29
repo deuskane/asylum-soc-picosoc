@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-07-09
+-- Last update: 2025-07-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,8 +32,8 @@ entity PicoSoC_top is
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
     ;BAUD_RATE        : integer  := 115200
-    ;UART_DEPTH_TX    : natural  := 0
-    ;UART_DEPTH_RX    : natural  := 0
+    ;UART_DEPTH_TX    : natural  := 4
+    ;UART_DEPTH_RX    : natural  := 4
     ;SPI_DEPTH_CMD    : natural  := 0
     ;SPI_DEPTH_TX     : natural  := 0
     ;SPI_DEPTH_RX     : natural  := 0
@@ -191,7 +191,7 @@ begin  -- architecture rtl
     ,NB_LED1              => NB_LED1_USER       
     ,SAFETY               => SAFETY             
     ,FAULT_INJECTION      => FAULT_INJECTION    
-    ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
+--  ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
     ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
     )
   port map

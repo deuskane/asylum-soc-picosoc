@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-09
+-- Last update: 2025-07-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -251,16 +251,28 @@ begin  -- architecture tb
         run(10);
         inject_error_i(0) <= '0';
 
-        wait until (led_switch /= switch_i) ;
-        wait until (led_switch  = switch_i) ;      
+        while (not (led_switch /= switch_i))
+        loop
+          run(1);
+        end loop;
+        while (not (led_switch  = switch_i))
+        loop
+          run(1);
+        end loop;
 
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
         run(10);
         inject_error_i(1) <= '0';
 
-        wait until (led_switch /= switch_i) ;
-        wait until (led_switch  = switch_i) ;      
+        while (not (led_switch /= switch_i))
+        loop
+          run(1);
+        end loop;
+        while (not (led_switch  = switch_i))
+        loop
+          run(1);
+        end loop;
 
         report "[TESTBENCH] Inject error in CPU0 in continue" ;
         inject_error_i(1) <= '1';
@@ -288,8 +300,14 @@ begin  -- architecture tb
         run(10);
         inject_error_i(1) <= '0';
 
-        wait until (led_switch /= switch_i) ;
-        wait until (led_switch  = switch_i) ;      
+        while (not (led_switch /= switch_i))
+        loop
+          run(1);
+        end loop;
+        while (not (led_switch  = switch_i))
+        loop
+          run(1);
+        end loop;
 
         assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
         assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
@@ -317,8 +335,14 @@ begin  -- architecture tb
         run(10);
         inject_error_i(1) <= '0';
 
-        wait until (led_switch /= switch_i) ;
-        wait until (led_switch  = switch_i) ;      
+        while (not (led_switch /= switch_i))
+        loop
+          run(1);
+        end loop;
+        while (not (led_switch  = switch_i))
+        loop
+          run(1);
+        end loop;
 
         assert led_diff    = "010"    report "Bad value of led_diff"   severity failure;
         

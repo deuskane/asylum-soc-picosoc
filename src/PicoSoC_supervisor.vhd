@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-09
+-- Last update: 2025-07-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
-  -- GPIO 3 - Interruption Vector
+  -- GIC - Interruption Vector
   -----------------------------------------------------------------------------
   ins_pbi_gic : entity work.pbi_GIC(rtl)
     port map

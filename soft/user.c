@@ -25,6 +25,7 @@
 #include "gpio.h"
 #include "uart.h"
 #include "spi.h"
+#include "gic.h"
 
 //--------------------------------------
 // Address Map
@@ -34,6 +35,12 @@
 #define LED1                0x40
 #define UART                0x80
 #define SPI                 0x08
+#define GIC                 0xF0
+
+#define GIC_IT_USER         0
+#define GIC_UART            1
+#define GIC_IT_USER_MSK     0x01
+#define GIC_UART_MSK        0x02
 
 #ifdef HAVE_SPI_MEMORY
 #define SPI_LOOPBACK SPI_LOOPBACK_DISABLE
@@ -46,7 +53,12 @@
 //--------------------------------------
 void isr (void) __interrupt(1)
 {
-  gpio_wr(LED1,gpio_rd(LED1)+1);
+  uint8_t gic_isr = gic_isr(GIC);
+  if (gic_isr & GIC_IT_USER)
+    {
+      gpio_wr(LED1,gpio_rd(LED1)+1);
+      gic_isr_clr(GIC,GIC_IT_USER);
+    }
 }
 
 //--------------------------------------
@@ -64,6 +76,8 @@ void setup()
 
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
+  gic_it_enable(GIC,GIC_IT_USER_MSK);
+  
   pbcc_enable_interrupt();
 }
 
@@ -92,7 +106,6 @@ void spi_sfdp()
 void spi_wait_device_ready()
 {
   uint8_t byte;
-  
 
   do
     {
