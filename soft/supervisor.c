@@ -41,7 +41,7 @@ void isr (void) __interrupt(1)
 
   it_vector = gic_get(GIC);
   
-  if (gic_ism(GIC) == VECTOR_MASK_DEFAULT)
+  if (gic_imr(GIC) == VECTOR_MASK_DEFAULT)
     {
       // First error
       gic_it_disable(GIC,it_vector);

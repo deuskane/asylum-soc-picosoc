@@ -37,8 +37,6 @@
 #define SPI                 0x08
 #define GIC                 0xF0
 
-#define GIC_IT_USER         0
-#define GIC_UART            1
 #define GIC_IT_USER_MSK     0x01
 #define GIC_UART_MSK        0x02
 
@@ -53,12 +51,13 @@
 //--------------------------------------
 void isr (void) __interrupt(1)
 {
-  uint8_t gic_isr = gic_isr(GIC);
-  if (gic_isr & GIC_IT_USER)
+  uint8_t gic_it_vector = gic_isr(GIC);
+  if (gic_it_vector & GIC_IT_USER_MSK)
     {
       gpio_wr(LED1,gpio_rd(LED1)+1);
-      gic_isr_clr(GIC,GIC_IT_USER);
+      gic_clr(GIC,GIC_IT_USER_MSK);
     }
+  
 }
 
 //--------------------------------------
@@ -73,7 +72,8 @@ void setup()
   gpio_wr(LED1,0);
 
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
-
+  gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
+  
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
   gic_it_enable(GIC,GIC_IT_USER_MSK);

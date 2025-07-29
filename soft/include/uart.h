@@ -18,12 +18,22 @@
 #define _uart_h_
 
 
-#define UART_ISR            0x0
-#define UART_IMR            0x1
-#define UART_CTRL           0x2
-#define UART_DATA           0x3
-#define UART_CNT_LSB        0x4
-#define UART_CNT_MSB        0x5
+#define UART_ISR                0x0
+#define UART_IMR                0x1
+#define UART_CTRL               0x2
+#define UART_DATA               0x3
+#define UART_CNT_LSB            0x4
+#define UART_CNT_MSB            0x5
+			        
+#define UART_IT_RX_FULL         3
+#define UART_IT_RX_EMPTY_B      2
+#define UART_IT_TX_FULL         1
+#define UART_IT_TX_EMPTY_B      0
+
+#define UART_IT_RX_FULL_MSK     0x08
+#define UART_IT_RX_EMPTY_B_MSK  0x04
+#define UART_IT_TX_FULL_MSK     0x02
+#define UART_IT_TX_EMPTY_B_MSK  0x01
 
 //--------------------------------------
 // putchar : send char into uart
