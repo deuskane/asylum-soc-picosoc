@@ -52,6 +52,7 @@ do {			      \
 
 
 #define putchar(_byte_) PORT_WR(UART,UART_DATA, _byte_)
+#define getchar() PORT_RD(UART,UART_DATA)
 
 #define puthex(_byte_)          \
 do {			      \
@@ -72,6 +73,7 @@ do {			      \
 #else
 
 #define uart_setup(_BA_,_CLOCK_FREQ_,_BAUD_RATE_,_LOOPBACK_) do {} while (0)
+#define getchar() 0
 #define putchar(_byte_) do {} while (0)
 #define puthex(_byte_)  do {} while (0)
 
