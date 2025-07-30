@@ -52,12 +52,22 @@
 void isr (void) __interrupt(1)
 {
   uint8_t gic_it_vector = gic_isr(GIC);
+
+  // Check if IT User is active
   if (gic_it_vector & GIC_IT_USER_MSK)
     {
       gpio_wr(LED1,gpio_rd(LED1)+1);
       gic_clr(GIC,GIC_IT_USER_MSK);
     }
-  
+
+  // Check if UART RX is not empty
+  if (gic_it_vector & GIC_UART_MSK)
+    {
+      uint8_t uart_rx = getchar();
+      gpio_wr(SWITCH,uart_rx); // Dummy access
+      gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+      gic_clr(GIC,GIC_UART_MSK);
+    }
 }
 
 //--------------------------------------
@@ -77,6 +87,7 @@ void setup()
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
   gic_it_enable(GIC,GIC_IT_USER_MSK);
+  gic_it_enable(GIC,GIC_UART_MSK);
   
   pbcc_enable_interrupt();
 }
