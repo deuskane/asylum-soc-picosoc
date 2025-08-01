@@ -50,90 +50,98 @@ generate:
   gen_user_asm_identity:
     generator : pbcc_gen
     parameters:
-      file   : soft/user_identity.psm
+      file   : esw/user_identity.psm
       type   : pblazeide
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves
+      cflags : -Iesw/include --verbose --all-callee-saves
 
   gen_user_c_identity_inverted:
     generator : pbcc_gen
     parameters:
-      file   : soft/user_identity.c
+      file   : esw/user_identity.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves -DINVERT_SWITCH
+      cflags : -Iesw/include --verbose --all-callee-saves -DINVERT_SWITCH
 
   gen_user_c_identity:
     generator : pbcc_gen
     parameters:
-      file   : soft/user_identity.c
+      file   : esw/user_identity.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves
+      cflags : -Iesw/include --verbose --all-callee-saves
 
   gen_user_c :
     generator : pbcc_gen
     parameters :
-      file   : soft/user.c
+      file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves
+      cflags : -Iesw/include --verbose --all-callee-saves
 
   gen_user_c_uart :
     generator : pbcc_gen
     parameters :
-      file   : soft/user.c
+      file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
 
   gen_user_c_uart_spi :
     generator : pbcc_gen
     parameters :
-      file   : soft/user.c
+      file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI
 
   gen_user_c_uart_spi_mem :
     generator : pbcc_gen
     parameters :
-      file   : soft/user.c
+      file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
 
   gen_user_c_uart_spi_mem_emu :
     generator : pbcc_gen
     parameters :
-      file   : soft/user.c
+      file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Isoft/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=115200 -DHAVE_SPI -DHAVE_SPI_MEMORY
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=115200 -DHAVE_SPI -DHAVE_SPI_MEMORY
+
+  gen_user_xmodem_c :
+    generator : pbcc_gen
+    parameters :
+      file   : esw/user_xmodem.c
+      type   : c
+      entity : ROM_user_xmodem
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
 
   gen_supervisor_c :
     generator : pbcc_gen
     parameters :
-      file   : soft/supervisor.c
+      file   : esw/supervisor.c
       type   : c
       entity : ROM_supervisor
-      cflags : -Isoft/include --verbose --all-callee-saves
+      cflags : -Iesw/include --verbose --all-callee-saves
 
   gen_supervisor_c_tmr :
     generator : pbcc_gen
     parameters :
-      file   : soft/supervisor.c
+      file   : esw/supervisor.c
       type   : c
       entity : ROM_supervisor
-      cflags : -Isoft/include --verbose --all-callee-saves -DSAFETY_TMR
+      cflags : -Iesw/include --verbose --all-callee-saves -DSAFETY_TMR
 
   gen_supervisor_c_dummy :
     generator  : pbcc_gen
     parameters :
-      file   : soft/dummy.c
+      file   : esw/dummy.c
       type   : c
       entity : ROM_supervisor
-      cflags : -Isoft/include --verbose --all-callee-saves
+      cflags : -Iesw/include --verbose --all-callee-saves
 
   #<GENERATE_END>
   # Previous line is a pragma, don't modify
@@ -151,10 +159,10 @@ filesets:
   files_hdl:
   #---------------------------------------
     files:
-      - src/PicoSoC_pkg.vhd
-      - src/PicoSoC_top.vhd
-      - src/PicoSoC_user.vhd
-      - src/PicoSoC_supervisor.vhd
+      - hdl/PicoSoC_pkg.vhd
+      - hdl/PicoSoC_top.vhd
+      - hdl/PicoSoC_user.vhd
+      - hdl/PicoSoC_supervisor.vhd
     file_type : vhdlSource
     depend :
       - ">=asylum:component:clock_divider:1.0.0"
@@ -235,7 +243,7 @@ targets:
   #---------------------------------------
   emu_basys_asm_identity:
   #---------------------------------------
-    description  : Synthesis for Digilent Basys board of the test soft/user_identity.psm
+    description  : Synthesis for Digilent Basys board of the test esw/user_identity.psm
     default_tool : ise
     filesets     :
       - files_hdl
@@ -260,7 +268,7 @@ targets:
   #---------------------------------------
   emu_ng_medium_c_user: &emu_ng_medium_default
   #---------------------------------------
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - Supervisor, Safety TMR, Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - Supervisor, Safety TMR, Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
@@ -291,7 +299,7 @@ targets:
   emu_ng_medium_soc1:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, No Safety, No Fault Injection
     generate : [gen_user_c_uart_spi_mem_emu,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
@@ -311,7 +319,7 @@ targets:
   emu_ng_medium_soc2:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, No Fault Injection
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
@@ -331,7 +339,7 @@ targets:
   emu_ng_medium_soc2_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, With Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, With Fault Injection
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
@@ -351,7 +359,7 @@ targets:
   emu_ng_medium_soc3_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
@@ -371,7 +379,7 @@ targets:
   emu_ng_medium_soc4_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description  : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
@@ -391,7 +399,7 @@ targets:
   #<TARGETS_BEGIN>
   sim_soc1_asm_identity:
     << : *sim
-    description  : Simulation of the test soft/user_identity.psm
+    description  : Simulation of the test esw/user_identity.psm
     generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -400,7 +408,7 @@ targets:
 
   sim_soc1_c_identity:
     << : *sim
-    description  : Simulation of the test soft/user_identity.c
+    description  : Simulation of the test esw/user_identity.c
     generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -409,7 +417,7 @@ targets:
 
   sim_soc1_c_user:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -418,7 +426,7 @@ targets:
 
   sim_soc1_c_user_uart:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -429,7 +437,7 @@ targets:
 
   sim_soc1_c_user_uart_spi:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart_spi,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -440,7 +448,7 @@ targets:
 
   sim_soc1_c_user_uart_spi_mem:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - SUPERVISOR=false
@@ -452,7 +460,7 @@ targets:
 
   sim_soc2_c_user:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
       - SUPERVISOR=false
@@ -461,7 +469,7 @@ targets:
 
   sim_soc2_c_user_uart:
     << : *sim
-    description  : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - SUPERVISOR=false
@@ -472,7 +480,7 @@ targets:
 
   sim_soc3_fault_c_user:
     << : *sim
-    description  : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+    description  : Simulation of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
       - SUPERVISOR=true
@@ -482,7 +490,7 @@ targets:
 
   sim_soc4_fault_c_user:
     << : *sim
-    description  : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+    description  : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
       - SUPERVISOR=true
@@ -492,7 +500,7 @@ targets:
 
   sim_soc4_fault_c_user_uart:
     << : *sim
-    description  : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+    description  : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - SUPERVISOR=true

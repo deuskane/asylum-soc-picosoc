@@ -1,21 +1,21 @@
 default                      : Default Target (DON'T RUN)
-emu_basys_asm_identity       : Synthesis for Digilent Basys board of the test soft/user_identity.psm
-emu_ng_medium_c_user         : NanoXplore NG_MEDIUM Board of the test soft/user.c - Supervisor, Safety TMR, Fault Injection
-emu_ng_medium_soc1           : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, No Safety, No Fault Injection
-emu_ng_medium_soc2           : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, No Fault Injection
-emu_ng_medium_soc2_fault     : NanoXplore NG_MEDIUM Board of the test soft/user.c - No Supervisor, Safety Lock Step, With Fault Injection
-emu_ng_medium_soc3_fault     : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
-emu_ng_medium_soc4_fault     : NanoXplore NG_MEDIUM Board of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+emu_basys_asm_identity       : Synthesis for Digilent Basys board of the test esw/user_identity.psm
+emu_ng_medium_c_user         : NanoXplore NG_MEDIUM Board of the test esw/user.c - Supervisor, Safety TMR, Fault Injection
+emu_ng_medium_soc1           : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, No Safety, No Fault Injection
+emu_ng_medium_soc2           : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, No Fault Injection
+emu_ng_medium_soc2_fault     : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, With Fault Injection
+emu_ng_medium_soc3_fault     : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+emu_ng_medium_soc4_fault     : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
 sim                          : default rule to sim (DON'T RUN)
-sim_soc1_asm_identity        : Simulation of the test soft/user_identity.psm
-sim_soc1_c_identity          : Simulation of the test soft/user_identity.c
-sim_soc1_c_user              : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
-sim_soc1_c_user_uart         : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
-sim_soc1_c_user_uart_spi     : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
-sim_soc1_c_user_uart_spi_mem : Simulation of the test soft/user.c - Without Supervisor, Safety None, Without Fault Injection
-sim_soc2_c_user              : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-sim_soc2_c_user_uart         : Simulation of the test soft/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-sim_soc3_fault_c_user        : Simulation of the test soft/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
-sim_soc4_fault_c_user        : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
-sim_soc4_fault_c_user_uart   : Simulation of the test soft/user.c - With Supervisor, Safety TMR, With Fault Injection
+sim_soc1_asm_identity        : Simulation of the test esw/user_identity.psm
+sim_soc1_c_identity          : Simulation of the test esw/user_identity.c
+sim_soc1_c_user              : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
+sim_soc1_c_user_uart         : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
+sim_soc1_c_user_uart_spi     : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
+sim_soc1_c_user_uart_spi_mem : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
+sim_soc2_c_user              : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+sim_soc2_c_user_uart         : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+sim_soc3_fault_c_user        : Simulation of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
+sim_soc4_fault_c_user        : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
+sim_soc4_fault_c_user_uart   : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
 

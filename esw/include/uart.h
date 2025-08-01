@@ -50,9 +50,11 @@ do {			      \
   PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF); \
  } while (0)
 
+#define uart_wr(_BA_,_DATA_) PORT_WR(_BA_,UART_DATA,_DATA_)
+#define uart_rd(_BA_)        PORT_RD(_BA_,UART_DATA)
 
-#define putchar(_byte_) PORT_WR(UART,UART_DATA, _byte_)
-#define getchar() PORT_RD(UART,UART_DATA)
+#define putchar(_byte_)      uart_wr(UART, _byte_)
+#define getchar()            uart_rd(UART)
 
 #define puthex(_byte_)          \
 do {			      \
@@ -73,9 +75,11 @@ do {			      \
 #else
 
 #define uart_setup(_BA_,_CLOCK_FREQ_,_BAUD_RATE_,_LOOPBACK_) do {} while (0)
-#define getchar() 0
-#define putchar(_byte_) do {} while (0)
-#define puthex(_byte_)  do {} while (0)
+#define getchar()            0
+#define putchar(_byte_)      do {} while (0)
+#define puthex(_byte_)       do {} while (0)
+#define uart_wr(_BA_,_DATA_) do {} while (0)
+#define uart_rd(_BA_)        0
 
 #endif
 

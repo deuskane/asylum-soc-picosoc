@@ -20,26 +20,11 @@
 
 #include <stdint.h>
 #include <intr.h>
-
-#include "picoblaze.h"
-#include "gpio.h"
-#include "uart.h"
-#include "spi.h"
-#include "gic.h"
+#include "addrmap_user.h"
 
 //--------------------------------------
-// Address Map
+// Constant
 //--------------------------------------
-#define SWITCH              0x10
-#define LED0                0x20
-#define LED1                0x40
-#define UART                0x80
-#define SPI                 0x08
-#define GIC                 0xF0
-
-#define GIC_IT_USER_MSK     0x01
-#define GIC_UART_MSK        0x02
-
 #ifdef HAVE_SPI_MEMORY
 #define SPI_LOOPBACK SPI_LOOPBACK_DISABLE
 #else

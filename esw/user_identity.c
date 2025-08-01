@@ -14,18 +14,11 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2017-03-30  1.0      mrosiere Created
-// 2025-01-06  1.0      mrosiere Add comments
+// 2025-01-06  1.1      mrosiere Add comments
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
-#include "picoblaze.h"
-#include "gpio.h"
-
-//--------------------------------------
-// Address Map
-//--------------------------------------
-#define SWITCH              0x10
-#define LED0                0x20
+#include "addrmap_user.h"
 
 //--------------------------------------
 // Main

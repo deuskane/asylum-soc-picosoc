@@ -18,17 +18,11 @@
 // 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 //-----------------------------------------------------------------------------
 #include <stdint.h>
-#include "picoblaze.h"
-#include "gpio.h"
-#include "gic.h"
+#include "addrmap_supervisor.h"
 
 //--------------------------------------
-// Address Map
+// Constant
 //--------------------------------------
-#define RST                 0x10
-#define LED                 0x20
-#define GIC                 0x80
-
 #define VECTOR_MASK_DEFAULT 0x7
 
 //--------------------------------------
