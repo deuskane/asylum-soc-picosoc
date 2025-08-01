@@ -284,10 +284,12 @@ targets:
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-
+      
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
+
+      - DEBUG_ENABLE=false
     tools:
       nxmap:
         board   : 
@@ -579,6 +581,12 @@ parameters :
     description : Polarity of inject_err_r_i signal (low / high)
     datatype    : str
     default     : low
+    paramtype   : generic
+
+  DEBUG_ENABLE :
+    description : Enable the Debug Buss
+    datatype    : bool
+    default     : false
     paramtype   : generic
 
   TB_WATCHDOG :

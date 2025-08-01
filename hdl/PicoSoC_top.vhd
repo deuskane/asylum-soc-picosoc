@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-07-29
+-- Last update: 2025-08-01
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,8 +32,8 @@ entity PicoSoC_top is
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
     ;BAUD_RATE        : integer  := 115200
-    ;UART_DEPTH_TX    : natural  := 4
-    ;UART_DEPTH_RX    : natural  := 4
+    ;UART_DEPTH_TX    : natural  := 0
+    ;UART_DEPTH_RX    : natural  := 0
     ;SPI_DEPTH_CMD    : natural  := 0
     ;SPI_DEPTH_TX     : natural  := 0
     ;SPI_DEPTH_RX     : natural  := 0
