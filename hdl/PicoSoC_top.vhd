@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-01
+-- Last update: 2025-08-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -58,6 +58,8 @@ entity PicoSoC_top is
     -- UART Interface
     ;uart_tx_o        : out std_logic
     ;uart_rx_i        : in  std_logic
+    ;uart_cts_b_i     : in  std_logic -- Clear   To Send (Active low)
+    ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
 
     -- SPI Interface
     ;spi_sclk_o       : out std_logic
@@ -202,6 +204,8 @@ begin  -- architecture rtl
     ,led1_o               => led1_user
     ,uart_tx_o            => uart_tx
     ,uart_rx_i            => uart_rx_i
+    ,uart_cts_b_i         => uart_cts_b_i
+    ,uart_rts_b_o         => uart_rts_b_o
     ,it_i                 => it_user_sync
     ,diff_o               => diff
     ,inject_error_i       => inject_error

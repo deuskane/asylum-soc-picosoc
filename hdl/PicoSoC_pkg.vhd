@@ -98,6 +98,8 @@ package PicoSoC_pkg is
                             
       uart_tx_o             : out std_logic;
       uart_rx_i             : in  std_logic;
+      uart_cts_b_i          : in  std_logic; -- Clear   To Send (Active low)
+      uart_rts_b_o          : out std_logic; -- Request To Send (Active low)
                             
       spi_sclk_o            : out std_logic;
       spi_cs_b_o            : out std_logic;

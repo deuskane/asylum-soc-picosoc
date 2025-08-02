@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-29
+-- Last update: 2025-08-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -141,6 +141,8 @@ begin  -- architecture tb
     ,inject_error_i   => inject_error_i
     ,uart_tx_o        => open
     ,uart_rx_i        => '1'
+    ,uart_cts_b_i     => '0'
+    ,uart_rts_b_o     => open
     ,spi_sclk_o       => spi_sclk_o 
     ,spi_cs_b_o       => spi_cs_b_o 
     ,spi_mosi_o       => spi_mosi_o 
