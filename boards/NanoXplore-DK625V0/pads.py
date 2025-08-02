@@ -54,13 +54,13 @@ p.addPad('spi_mosi_o'        ,{'location':'USER_D11'    }) # USER_* have predefi
 p.addPad('spi_miso_i'        ,{'location':'USER_D10'    }) # USER_* have predefined parameters
 
 # Bank5 spare I/Os
-p.addPad('debug_mux_i[0]'    ,{'location':'IOB5_D05P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 2 from left
-p.addPad('debug_mux_i[1]'    ,{'location':'IOB5_D05N',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 3 from left
-p.addPad('debug_mux_i[2]'    ,{'location':'IOB5_D01P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 4 from left
-p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D01N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 5 from left
+p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D05P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left
+#                             {'location':'IOB5_D05N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 3 from left
+p.addPad('uart_cts_b_i'      ,{'location':'IOB5_D01P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullDown'}) # 4 from left
+p.addPad('uart_rts_b_o'      ,{'location':'IOB5_D01N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 5 from left
 p.addPad('uart_rx_i'         ,{'location':'IOB5_D03P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 6 from left
 p.addPad('uart_tx_o'         ,{'location':'IOB5_D03N',  'standard': 'LVCMOS', 'drive':'2mA'}) # 7 from left
-                                                        
+
 # Bank0 spare I/Os                                      
 p.addPad('debug_o[0]'        ,{'location':'IOB0_D06P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 2  from bottom
 p.addPad('debug_o[1]'        ,{'location':'IOB0_D07P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 1 from left 3  from bottom
@@ -81,9 +81,9 @@ p.addPad('debug_o[7]'        ,{'location':'IOB0_D09N',  'standard': 'LVCMOS', 'd
 #                             {'location':'IOB0_D04P',  'standard': 'LVCMOS', 'drive':'2mA'}) # 2 from left 9  from bottom
 
 # Bank12 spare I/Os
-#                             {'location':'IOB12_D10P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 2  from bottom
-#                             {'location':'IOB12_D05P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 3  from bottom
-#                             {'location':'IOB12_D07N', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 4  from bottom
+p.addPad('debug_mux_i[0]'    ,{'location':'IOB12_D10P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 1 from left 2  from bottom
+p.addPad('debug_mux_i[1]'    ,{'location':'IOB12_D05P',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 1 from left 3  from bottom
+p.addPad('debug_mux_i[2]'    ,{'location':'IOB12_D07N',  'standard': 'LVCMOS', 'drive':'2mA', 'weakTermination': 'PullUp'}) # 1 from left 4  from bottom
 #                             {'location':'IOB12_D08N', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 5  from bottom
 #                             {'location':'IOB12_D11P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 6  from bottom
 #                             {'location':'IOB12_D06P', 'standard': 'LVCMOS', 'drive':'2mA'} # 1 from left 7  from bottom

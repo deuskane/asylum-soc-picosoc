@@ -37,9 +37,10 @@ CAPI=2:
 # 2025-07-04  2.6.0    mrosiere Add GIC (Supervisor)
 # 2025-07-09  2.6.1    mrosiere Configure UART and SPI FIFO
 # 2025-07-29  2.7.0    mrosiere Add GIC (User)
+# 2025-08-02  2.7.1    mrosiere Add Uart CTS/RTS
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.7.0
+name        : asylum:soc:PicoSoC:2.7.1
 description : SoC with OpenBlaze8, switch, led, UART, SPI and GIC
 
 #=========================================
