@@ -20,10 +20,11 @@
 
 #define UART_ISR                0x0
 #define UART_IMR                0x1
-#define UART_CTRL               0x2
-#define UART_DATA               0x3
-#define UART_CNT_LSB            0x4
-#define UART_CNT_MSB            0x5
+#define UART_DATA               0x2
+#define UART_CTRL_TX            0x4
+#define UART_CTRL_RX            0x5
+#define UART_CNT_LSB            0x6
+#define UART_CNT_MSB            0x7
 			        
 #define UART_IT_RX_FULL         3
 #define UART_IT_RX_EMPTY_B      2
@@ -44,8 +45,8 @@
 #define uart_setup(_BA_,_CLOCK_FREQ_,_BAUD_RATE_,_LOOPBACK_) \
 do {			      \
  uint16_t cnt=(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1);\
-  PORT_WR(_BA_  ,UART_CTRL   ,0x00 | (_LOOPBACK_)<<7); \
-  PORT_WR(_BA_  ,UART_CTRL   ,0x11 | (_LOOPBACK_)<<7); \
+  PORT_WR(_BA_  ,UART_CTRL_TX   ,0x11 ); \
+  PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<4); \
   PORT_WR(_BA_  ,UART_CNT_LSB,cnt&0xFF); \
   PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF); \
  } while (0)
