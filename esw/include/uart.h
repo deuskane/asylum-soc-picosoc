@@ -46,7 +46,7 @@
 do {			      \
  uint16_t cnt=(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1);\
   PORT_WR(_BA_  ,UART_CTRL_TX   ,0x11 ); \
-  PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<4); \
+  PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<3); \
   PORT_WR(_BA_  ,UART_CNT_LSB,cnt&0xFF); \
   PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF); \
  } while (0)
