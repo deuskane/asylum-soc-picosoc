@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-02
+-- Last update: 2025-08-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -104,6 +104,7 @@ architecture rtl of PicoSoC_top is
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
   signal   uart_tx                      : std_logic;
+  signal   uart_cts_b                   : std_logic;
   
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
@@ -204,7 +205,7 @@ begin  -- architecture rtl
     ,led1_o               => led1_user
     ,uart_tx_o            => uart_tx
     ,uart_rx_i            => uart_rx_i
-    ,uart_cts_b_i         => uart_cts_b_i
+    ,uart_cts_b_i         => uart_cts_b
     ,uart_rts_b_o         => uart_rts_b_o
     ,it_i                 => it_user_sync
     ,diff_o               => diff
@@ -217,7 +218,15 @@ begin  -- architecture rtl
     );
 
   uart_tx_o <= uart_tx;
-
+  
+  ins_uart_cts_b : entity work.sync2dffrn(rtl)
+    port map
+    (clk_i                => clk_i     
+    ,arst_b_i             => arst_b    
+    ,d_i                  => uart_cts_b_i
+    ,q_o                  => uart_cts_b
+    );
+  
   -----------------------------------------------------------------------------
   -- SoC Supervisor
   -----------------------------------------------------------------------------
