@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-06
+-- Last update: 2025-08-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ begin  -- architecture rtl
   ins_clock_divider : entity work.clock_divider(rtl)
     generic map
     (RATIO                => FSYS/FSYS_INT
-    ,ALGO                 => "pulse"
+    ,ALGO                 => "50%"
      )
     port map
     (clk_i                => clk_i            

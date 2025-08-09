@@ -31,6 +31,8 @@
 #define SPI_LOOPBACK SPI_LOOPBACK_ENABLE
 #endif
 
+#define UART_RX_LOOPBACK 0
+
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
@@ -66,13 +68,13 @@ void setup()
   gpio_wr(LED0,0);
   gpio_wr(LED1,0);
 
-  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
+  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
   gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
   
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
   gic_it_enable(GIC,GIC_IT_USER_MSK);
-  gic_it_enable(GIC,GIC_UART_MSK);
+//gic_it_enable(GIC,GIC_UART_MSK);
   
   pbcc_enable_interrupt();
 }
@@ -218,7 +220,13 @@ void main()
     {
       uint8_t sw = gpio_rd(SWITCH);
       uint8_t spi_byte;
-      uint8_t cnt_byte3,cnt_byte2,cnt_byte1,cnt_byte0;
+      uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
+
+      cpt_byte3 = (cpt>>24)&0xFF;
+      cpt_byte2 = (cpt>>16)&0xFF;
+      cpt_byte1 = (cpt>> 8)&0xFF;
+      cpt_byte0 = (cpt>> 0)&0xFF;
+
 #ifdef INVERT_SWITCH
       sw = ~sw;
 #endif
@@ -229,7 +237,7 @@ void main()
       spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,0);
 #else
       spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
-      spi_tx (SPI,cpt);
+      spi_tx (SPI,cpt_byte0);
 #endif       
 
       // Print Msg
@@ -240,14 +248,10 @@ void main()
       putchar(' ');
 
       // Print 32b counter
-      cnt_byte3 = (cpt>>24)&0xFF;
-      cnt_byte2 = (cpt>>16)&0xFF;
-      cnt_byte1 = (cpt>> 8)&0xFF;
-      cnt_byte0 = (cpt>> 0)&0xFF;
-      puthex (cnt_byte3);
-      puthex (cnt_byte2);
-      puthex (cnt_byte1);
-      puthex (cnt_byte0);
+      puthex (cpt_byte3);
+      puthex (cpt_byte2);
+      puthex (cpt_byte1);
+      puthex (cpt_byte0);
 
       // Print 32b Switch
       putchar('-');

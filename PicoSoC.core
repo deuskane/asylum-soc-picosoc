@@ -86,7 +86,15 @@ generate:
       file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+
+  gen_user_c_uart_emu :
+    generator : pbcc_gen
+    parameters :
+      file   : esw/user.c
+      type   : c
+      entity : ROM_user
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
 
   gen_user_c_uart_spi :
     generator : pbcc_gen
@@ -94,7 +102,7 @@ generate:
       file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
 
   gen_user_c_uart_spi_mem :
     generator : pbcc_gen
@@ -102,7 +110,7 @@ generate:
       file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
 
   gen_user_c_uart_spi_mem_emu :
     generator : pbcc_gen
@@ -110,7 +118,7 @@ generate:
       file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=115200 -DHAVE_SPI -DHAVE_SPI_MEMORY
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
 
   gen_user_xmodem_c :
     generator : pbcc_gen
@@ -118,7 +126,7 @@ generate:
       file   : esw/user_xmodem.c
       type   : c
       entity : ROM_user_xmodem
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=25000000 -DBAUD_RATE=921600
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
 
   gen_supervisor_c :
     generator : pbcc_gen
@@ -232,6 +240,9 @@ targets:
     description     : default rule to sim (DON'T RUN)
     default_tool    : ghdl
     toplevel        : tb_PicoSoC
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
     filesets_append :
       - files_sim
       - pbcc_dep
@@ -276,20 +287,25 @@ targets:
       - files_ng_medium 
       - pbcc_dep
       - target_generic
-    generate : [gen_user_c_uart,gen_supervisor_c_tmr]
+    generate : [gen_user_c_uart_emu,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
+
+      # SoC User Configuration
+      - BAUD_RATE=9600
       
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
 
+      # Debug
       - DEBUG_ENABLE=false
     tools:
       nxmap:
@@ -306,17 +322,23 @@ targets:
     generate : [gen_user_c_uart_spi_mem_emu,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-      - BAUD_RATE=115200
 
+      # SoC User Configuration
+      - BAUD_RATE=9600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
 
   #---------------------------------------
   emu_ng_medium_soc2:
@@ -326,17 +348,23 @@ targets:
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-      - BAUD_RATE=115200
 
+      # SoC User Configuration
+      - BAUD_RATE=9600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=lock-step
       - FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
 
   #---------------------------------------
   emu_ng_medium_soc2_fault:
@@ -346,17 +374,23 @@ targets:
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-      - BAUD_RATE=115200
 
+      # SoC User Configuration
+      - BAUD_RATE=9600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=lock-step
       - FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=false
 
   #---------------------------------------
   emu_ng_medium_soc3_fault:
@@ -366,17 +400,23 @@ targets:
     generate : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-      - BAUD_RATE=115200
 
+      # SoC User Configuration
+      - BAUD_RATE=9600
+      
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=lock-step
       - FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=false
 
   #---------------------------------------
   emu_ng_medium_soc4_fault:
@@ -386,133 +426,298 @@ targets:
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
-      - FSYS_INT=25000000
+      - FSYS_INT=12500000
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
       - IT_USER_POLARITY=low
       - FAULT_POLARITY=low
-      - BAUD_RATE=115200
 
+      # SoC User Configuration
+      - BAUD_RATE=9600
+      
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
 
-  # Next line is a pragma, don't modify
-  #<TARGETS_BEGIN>
+      # Debug
+      - DEBUG_ENABLE=false
+
+  #---------------------------------------
   sim_soc1_asm_identity:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_identity.psm
     generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=10000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1_c_identity:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_identity.c
     generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=10000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1_c_user:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=10000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1_c_user_uart:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
-      - TB_WATCHDOG=50000
-      - BAUD_RATE=460800
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1_c_user_uart_spi:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart_spi,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
-      - TB_WATCHDOG=50000
-      - BAUD_RATE=460800
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1_c_user_uart_spi_mem:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart_spi_mem,gen_supervisor_c_dummy]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=none
       - FAULT_INJECTION=false
-      - TB_WATCHDOG=500000
-      - BAUD_RATE=460800
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
       - HAVE_SPI_MEMORY=true
 
+  #---------------------------------------
   sim_soc2_c_user:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=lock-step
       - FAULT_INJECTION=false
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=false
+
+  #---------------------------------------
   sim_soc2_c_user_uart:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=false
       - SAFETY=lock-step
       - FAULT_INJECTION=false
-      - TB_WATCHDOG=50000
-      - BAUD_RATE=460800
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=false
+
+  #---------------------------------------
   sim_soc3_fault_c_user:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=lock-step
       - FAULT_INJECTION=true
-      - TB_WATCHDOG=50000
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=false
+
+  #---------------------------------------
   sim_soc4_fault_c_user:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=true
-      - TB_WATCHDOG=50000
 
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=false
+
+  #---------------------------------------
   sim_soc4_fault_c_user_uart:
+  #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
     generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
     parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
       - SUPERVISOR=true
       - SAFETY=tmr
       - FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
       - TB_WATCHDOG=50000
-      - BAUD_RATE=460800
-  #<TARGETS_END>
-  # Previous line is a pragma, don't modify
+      - HAVE_SPI_MEMORY=false
 
 #=========================================
 parameters :

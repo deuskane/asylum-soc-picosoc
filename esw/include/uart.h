@@ -25,7 +25,7 @@
 #define UART_CTRL_RX            0x5
 #define UART_CNT_LSB            0x6
 #define UART_CNT_MSB            0x7
-			        
+
 #define UART_IT_RX_FULL         3
 #define UART_IT_RX_EMPTY_B      2
 #define UART_IT_TX_FULL         1
@@ -43,12 +43,12 @@
 #ifdef HAVE_UART
 
 #define uart_setup(_BA_,_CLOCK_FREQ_,_BAUD_RATE_,_LOOPBACK_) \
-do {			      \
- uint16_t cnt=(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1);\
-  PORT_WR(_BA_  ,UART_CTRL_TX   ,0x11 ); \
-  PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<3); \
-  PORT_WR(_BA_  ,UART_CNT_LSB,cnt&0xFF); \
-  PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF); \
+do {                                                         \
+ uint16_t cnt=(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1);            \
+  PORT_WR(_BA_  ,UART_CTRL_TX   ,0x11 );                     \
+  PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<3);    \
+  PORT_WR(_BA_  ,UART_CNT_LSB,cnt&0xFF);                     \
+  PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF);                \
  } while (0)
 
 #define uart_wr(_BA_,_DATA_) PORT_WR(_BA_,UART_DATA,_DATA_)
@@ -57,20 +57,20 @@ do {			      \
 #define putchar(_byte_)      uart_wr(UART, _byte_)
 #define getchar()            uart_rd(UART)
 
-#define puthex(_byte_)          \
-do {			      \
+#define puthex(_byte_)            \
+do {                              \
   uint8_t msb = (_byte_) >> 4;    \
   uint8_t lsb = (_byte_) & 0x0F;  \
-			      \
-  if (msb>9)		      \
-    putchar('A'+msb-10);      \
-  else			      \
-    putchar('0'+msb);	      \
-			      \
-  if (lsb>9)		      \
-    putchar('A'+lsb-10);      \
-  else			      \
-    putchar('0'+lsb);         \
+                                  \
+  if (msb>9)                      \
+    putchar('A'+msb-10);          \
+  else                            \
+    putchar('0'+msb);             \
+                                  \
+  if (lsb>9)                      \
+    putchar('A'+lsb-10);          \
+  else                            \
+    putchar('0'+lsb);             \
  } while (0)
 
 #else

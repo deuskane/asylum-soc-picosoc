@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-02
+-- Last update: 2025-08-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -28,11 +28,26 @@ library work;
 
 entity tb_PicoSoC is
   generic
-    (SUPERVISOR       : boolean  := True
-    ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;FAULT_INJECTION  : boolean  := True
-    ;TB_WATCHDOG      : natural  := 10_000
+    (FSYS             : positive := 50_000_000
+    ;FSYS_INT         : positive := 50_000_000
     ;BAUD_RATE        : integer  := 115200
+  --;UART_DEPTH_TX    : natural  := 0
+  --;UART_DEPTH_RX    : natural  := 0
+  --;SPI_DEPTH_CMD    : natural  := 0
+  --;SPI_DEPTH_TX     : natural  := 0
+  --;SPI_DEPTH_RX     : natural  := 0
+  --;NB_SWITCH        : positive := 8
+  --;NB_LED           : positive := 19
+  --;RESET_POLARITY   : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR       : boolean  := True 
+    ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;FAULT_INJECTION  : boolean  := True  
+  --;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
+  --;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE     : boolean  := True 
+
+    -- TB Parameters
+    ;TB_WATCHDOG      : natural  := 10_000
     ;HAVE_SPI_MEMORY  : boolean  := False
      );
   
@@ -40,11 +55,9 @@ end entity tb_PicoSoC;
 
 architecture tb of tb_PicoSoC is
   -- =====[ Parameters ]==========================
-  constant TB_PERIOD               : time    := 40 ns;
---constant TB_WATCHDOG             : natural := 10000;
+  constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
+  constant TB_WATCHDOG_TIME        : time    := TB_WATCHDOG * TB_PERIOD;
 
-  constant FSYS                    : positive := 25_000_000;
-  constant FSYS_INT                : positive := 25_000_000;
   constant NB_SWITCH               : positive :=  8;
   constant NB_LED                  : positive := 19;
 
@@ -190,8 +203,8 @@ begin  -- architecture tb
   -----------------------------------------------------------------------------
   p_watchdog: process is
   begin
-    run(TB_WATCHDOG);
-
+    wait for TB_WATCHDOG_TIME;
+    
     assert (test_done = '1') report "[TESTBENCH] Test KO : Maximum cycle is reached" severity failure;
 
     -- end of process
