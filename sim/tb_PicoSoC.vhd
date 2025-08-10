@@ -204,7 +204,6 @@ begin  -- architecture tb
   -----------------------------------------------------------------------------
   p_watchdog: process is
   begin
-
     while (test_begin = '0')
     loop
       run(1);
@@ -239,7 +238,7 @@ begin  -- architecture tb
       end if;
       
       run(1);
-      
+
       test_begin     <= '1';
       arst_b_i       <= '1';
       
@@ -312,7 +311,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU0" ;
         inject_error_i(0) <= '1';
-        run(10);
+        run(20);
         inject_error_i(0) <= '0';
 
         run(100);
@@ -321,7 +320,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(10);
+        run(20);
         inject_error_i(1) <= '0';
 
         while (not (led_switch /= switch_i))
@@ -338,7 +337,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU2" ;
         inject_error_i(2) <= '1';
-        run(10);
+        run(20);
         inject_error_i(2) <= '0';
 
         run(100);
@@ -347,7 +346,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU2" ;
         inject_error_i(2) <= '1';
-        run(10);
+        run(20);
         inject_error_i(2) <= '0';
 
         run(100);
@@ -356,7 +355,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(10);
+        run(20);
         inject_error_i(1) <= '0';
 
         while (not (led_switch /= switch_i))
