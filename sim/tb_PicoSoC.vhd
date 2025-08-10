@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-09
+-- Last update: 2025-08-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -88,6 +88,7 @@ architecture tb of tb_PicoSoC is
   alias  led_diff                  : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
 
   -- =====[ Test Signals ]========================
+  signal test_begin                : std_logic := '0';
   signal test_done                 : std_logic := '0';
   
   -- =====[ Functions ]===========================
@@ -203,6 +204,12 @@ begin  -- architecture tb
   -----------------------------------------------------------------------------
   p_watchdog: process is
   begin
+
+    while (test_begin = '0')
+    loop
+      run(1);
+    end loop;
+
     wait for TB_WATCHDOG_TIME;
     
     assert (test_done = '1') report "[TESTBENCH] Test KO : Maximum cycle is reached" severity failure;
@@ -232,6 +239,8 @@ begin  -- architecture tb
       end if;
       
       run(1);
+      
+      test_begin     <= '1';
       arst_b_i       <= '1';
       
       report "[TESTBENCH] Change Switch" ;
