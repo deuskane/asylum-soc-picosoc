@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-09
+-- Last update: 2025-08-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -89,11 +89,13 @@ architecture rtl of PicoSoC_top is
   
   signal   clk                          : std_logic;
   signal   arst_b                       : std_logic;
-  signal   arst_b_sync                  : std_logic;
+  signal   arst_b_sync1                 : std_logic;
+  signal   arst_b_sync2                 : std_logic;
   signal   led0_user                    : std_logic_vector(NB_LED0_USER     -1 downto 0);
   signal   led1_user                    : std_logic_vector(NB_LED1_USER     -1 downto 0);
   signal   led_supervisor               : std_logic_vector(NB_LED_SUPERVISOR-1 downto 0);
            
+  signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
            
@@ -127,15 +129,24 @@ begin  -- architecture rtl
     arst_b <= not arst_i;
   end generate gen_arst;
 
-  ins_reset_resynchronizer : entity work.sync2dffrn(rtl)
+  ins_reset_resynchronizer1 : entity work.sync2dffrn(rtl)
     port map
     (clk_i                => clk_i     
     ,arst_b_i             => arst_b    
     ,d_i                  => '1'       
-    ,q_o                  => arst_b_sync
+    ,q_o                  => arst_b_sync1
     );
 
-  arst_b_supervisor <= arst_b_sync;
+  ins_reset_resynchronizer2 : entity work.sync2dffrn(rtl)
+    port map
+    (clk_i                => clk     
+    ,arst_b_i             => arst_b_sync1
+    ,d_i                  => '1'       
+    ,q_o                  => arst_b_sync2
+    );
+
+  arst_b_top        <= arst_b_sync1;
+  arst_b_supervisor <= arst_b_sync2;
 
   -----------------------------------------------------------------------------
   -- Clock Management
@@ -147,7 +158,7 @@ begin  -- architecture rtl
      )
     port map
     (clk_i                => clk_i            
-    ,arstn_i              => arst_b_supervisor
+    ,arstn_i              => arst_b_top
     ,cke_i                => '1'              
     ,clk_div_o            => clk
      );
@@ -221,8 +232,8 @@ begin  -- architecture rtl
   
   ins_uart_cts_b : entity work.sync2dffrn(rtl)
     port map
-    (clk_i                => clk_i     
-    ,arst_b_i             => arst_b    
+    (clk_i                => clk     
+    ,arst_b_i             => arst_b_user(0)
     ,d_i                  => uart_cts_b_i
     ,q_o                  => uart_cts_b
     );
