@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-07-29
+-- Last update: 2025-08-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -65,9 +65,9 @@ architecture rtl of PicoSoC_supervisor is
   constant TARGET_GIC                 : integer  := 2;
 
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => "00010000",
-      TARGET_LED1                     => "00100000",
-      TARGET_GIC                      => "10000000"
+    ( TARGET_LED0                     => X"10",
+      TARGET_LED1                     => X"20",
+      TARGET_GIC                      => X"80"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
