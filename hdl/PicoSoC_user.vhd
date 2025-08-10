@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-02
+-- Last update: 2025-08-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -109,12 +109,12 @@ architecture rtl of PicoSoC_user is
   constant TARGET_GIC                 : integer  := 5;
   
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => "00010000"
-     ,TARGET_LED0                     => "00100000"
-     ,TARGET_LED1                     => "01000000"
-     ,TARGET_UART                     => "10000000"
-     ,TARGET_SPI                      => "00001000"
-     ,TARGET_GIC                      => "11110000"
+    ( TARGET_SWITCH                   => X"10"
+     ,TARGET_LED0                     => X"20"
+     ,TARGET_LED1                     => X"40"
+     ,TARGET_UART                     => X"80"
+     ,TARGET_SPI                      => X"08"
+     ,TARGET_GIC                      => X"F0"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
