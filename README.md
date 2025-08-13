@@ -3,9 +3,12 @@ This repository incluses the top level of minimal SoC :
   - 3 controllers GPIO (1 for switch and two for LEDs)
   - 1 UART
   - 1 SPI Master
-  - 1 MCU based on Xilinx Picoblaze include the ROM instructions and dedication RAM 
+  - 1 MCU based on Xilinx Picoblaze include the ROM instructions and dedication RAM
+  - 1 GIC to manages all interrupts for MCU
+  - 1 ICN to connect all slaves with MCU
   - SoC User includes safety features : Lock-Step or TMR.
 - SoC Supervisor composed of :
   - 2 controllers GPIO (1 to reset the SoC User, 1 for LEDs)
   - 1 GIC to manages receive errors from SoC User
     - When an error is detected, the SoC Supervisor reset the SoC User.
+  - 1 ICN to connect all slaves with MCU
