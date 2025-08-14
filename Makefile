@@ -18,25 +18,25 @@
 #=============================================================================
 # Variables
 #=============================================================================
-SHELL    	 = /bin/bash
+SHELL            = /bin/bash
 
 include mk/defs.mk
 
-FILE_TARGETS        = mk/targets.txt
+FILE_TARGETS     = mk/targets.txt
 
 CORE_NAME       := $(shell grep ^name $(FILE_CORE) | head -n1 | tr -d ' ')
 
-IP_VENDOR	 = $(shell echo $(CORE_NAME) | cut -d':' -f2)
-IP_LIBRARY 	 = $(shell echo $(CORE_NAME) | cut -d':' -f3)
-IP_NAME		 = $(shell echo $(CORE_NAME) | cut -d':' -f4)
-IP_VERSION	 = $(shell echo $(CORE_NAME) | cut -d':' -f5)
-VLNV		 = $(IP_VENDOR):$(IP_LIBRARY):$(IP_NAME):$(IP_VERSION)
+IP_VENDOR        = $(shell echo $(CORE_NAME) | cut -d':' -f2)
+IP_LIBRARY       = $(shell echo $(CORE_NAME) | cut -d':' -f3)
+IP_NAME          = $(shell echo $(CORE_NAME) | cut -d':' -f4)
+IP_VERSION       = $(shell echo $(CORE_NAME) | cut -d':' -f5)
+VLNV             = $(IP_VENDOR):$(IP_LIBRARY):$(IP_NAME):$(IP_VERSION)
 
-TARGETS_SIM	:= $(shell cat $(FILE_TARGETS) | grep sim_   | cut -d ':' -f1 | tr -d ' ')
-TARGETS_EMU	:= $(shell cat $(FILE_TARGETS) | grep emu_   | cut -d ':' -f1 | tr -d ' ')
-TARGETS_LINT	:= $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | tr -d ' ')
+TARGETS_SIM     := $(shell cat $(FILE_TARGETS) | grep sim_   | cut -d ':' -f1 | tr -d ' ')
+TARGETS_EMU     := $(shell cat $(FILE_TARGETS) | grep emu_   | cut -d ':' -f1 | tr -d ' ')
+TARGETS_LINT    := $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | tr -d ' ')
 
-PATH_BUILD	?= $(CURDIR)/build
+PATH_BUILD      ?= $(CURDIR)/build
 
 FUSESOC_OPT     += --build-root $(PATH_BUILD)
 FUSESOC_OPT     += --no-export
@@ -62,11 +62,17 @@ help : $(FILE_TARGETS)
 	@echo "TOOL          : Specific Tool for Fusesoc"
 	@echo "                $(TOOL)"
 	@echo "TARGETS_SIM   : All simulation targets"
-	@echo "                $(TARGETS_SIM)"
+	@for target in $(TARGETS_SIM); do \
+	 echo "                * $${target}"; \
+	 done
 	@echo "TARGETS_EMU   : All emulation targets"
-	@echo "                $(TARGETS_EMU)"
+	@for target in $(TARGETS_EMU); do \
+	 echo "                * $${target}"; \
+	 done
 	@echo "TARGETS_LINT  : All lint & static checks targets"
-	@echo "                $(TARGETS_LINT)"
+	@for target in $(TARGETS_LINT); do \
+	 echo "                * $${target}"; \
+	 done
 	@echo "NONREG        : Non Regression Type (SIM/EMU/LINT)"
 	@echo "                $(NONREG)"
 	@echo "PATH_BUILD    : Path to build directory"

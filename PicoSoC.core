@@ -38,9 +38,10 @@ CAPI=2:
 # 2025-07-09  2.6.1    mrosiere Configure UART and SPI FIFO
 # 2025-07-29  2.7.0    mrosiere Add GIC (User)
 # 2025-08-02  2.7.1    mrosiere Add Uart CTS/RTS
+# 2025-08-11  2.7.2    mrosiere Use Target Techmap
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.7.1
+name        : asylum:soc:PicoSoC:2.7.2
 description : SoC with OpenBlaze8, switch, led, UART, SPI and GIC
 
 #=========================================
@@ -174,6 +175,7 @@ filesets:
       - hdl/PicoSoC_supervisor.vhd
     file_type : vhdlSource
     depend :
+      - ">=asylum:target:techmap:1.0.0"
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
       - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
@@ -209,12 +211,6 @@ filesets:
       - boards/NanoXplore-DK625V0/features.py: {file_type : nx_features}
     file_type : vhdlSource
 
-  #---------------------------------------
-  target_generic:
-  #---------------------------------------
-    depend :
-      - ">=asylum:target:generic:1.0.0"
-
   # Next line is a pragma, don't modify
   #<FILESETS_BEGIN>
   #<FILESETS_END>
@@ -246,7 +242,6 @@ targets:
     filesets_append :
       - files_sim
       - pbcc_dep
-      - target_generic
     tools :
       ghdl :
         analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
@@ -261,7 +256,6 @@ targets:
       - files_hdl
       - files_basys 
       - pbcc_dep
-      - target_generic
     generate : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=50000000
@@ -269,6 +263,8 @@ targets:
       - NB_SWITCH=8
       - NB_LED=8
       - RESET_POLARITY=high
+    flags:
+      TARGET  : XILINX_UNISIM
     tools:
       ise:
         family  : Spartan3E
@@ -286,7 +282,6 @@ targets:
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
-      - target_generic
     generate : [gen_user_c_uart_emu,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
@@ -307,11 +302,12 @@ targets:
 
       # Debug
       - DEBUG_ENABLE=false
+    flags :
+      TARGET  : NANOXPLORE_NG_MEDIUM
     tools:
       nxmap:
-        board   : 
         fpga    : NG-MEDIUM
-        program : True
+       #program : True
     toplevel : PicoSoC_top
 
   #---------------------------------------
@@ -738,7 +734,7 @@ parameters :
   BAUD_RATE :
     description : Baud Rate
     datatype    : int
-    default     : 115200
+    default     : 9600
     paramtype   : generic
 
   NB_SWITCH :
