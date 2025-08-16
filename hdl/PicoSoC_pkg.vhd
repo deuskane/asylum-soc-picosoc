@@ -20,6 +20,11 @@ use     ieee.numeric_std.all;
 
 package PicoSoC_pkg is
 
+  -----------------------------------------------------------------------------
+  -- PicoSoC_user_debug_t
+  --
+  -- Struct with internal signal of SoC User
+  -----------------------------------------------------------------------------
 
   type PicoSoC_user_debug_t is record
     arst_b      : std_logic;
@@ -45,6 +50,11 @@ package PicoSoC_pkg is
     
   end record PicoSoC_user_debug_t;
 
+  -----------------------------------------------------------------------------
+  -- PicoSoC_supervisor_debug_t
+  --
+  -- Struct with internal signal of SoC Supervisor
+  -----------------------------------------------------------------------------
   type PicoSoC_supervisor_debug_t is record
     arst_b : std_logic;
   end record PicoSoC_supervisor_debug_t;
@@ -69,7 +79,6 @@ package PicoSoC_pkg is
       debug_o               : out PicoSoC_supervisor_debug_t
       );
   end component;
-
 
   component PicoSoC_user
     generic (

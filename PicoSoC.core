@@ -307,7 +307,7 @@ targets:
     tools:
       nxmap:
         fpga    : NG-MEDIUM
-       #program : True
+        program : True
     toplevel : PicoSoC_top
 
   #---------------------------------------
