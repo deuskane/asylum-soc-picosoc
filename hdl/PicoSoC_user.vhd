@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-10
+-- Last update: 2025-08-15
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ architecture rtl of PicoSoC_user is
   signal   cpu1_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(PBI_DATA_WIDTH-1 downto 0));
   signal   cpu1_it_ack                : std_logic;
-
+  
   signal   cpu2_ics                   : std_logic;
   signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
@@ -528,15 +528,15 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_inject_error:   if FAULT_INJECTION = true
   generate
-    cpu0_idata(17 downto 1) <= cpu_idata(17 downto 1);
-    cpu0_idata(0)           <= cpu_idata(0)  xor inject_error_i(0);
+    cpu0_idata(17)          <= cpu_idata(17) xor inject_error_i(0);
+    cpu0_idata(16 downto 0) <= cpu_idata(16 downto 0);
 
-    cpu1_idata(17 downto 1) <= cpu_idata(17 downto 1);
-    cpu1_idata(0)           <= cpu_idata(0)  xor inject_error_i(1);
+    cpu1_idata(17)          <= cpu_idata(17) xor inject_error_i(1);
+    cpu1_idata(16 downto 0) <= cpu_idata(16 downto 0);
 
-    cpu2_idata(17 downto 1) <= cpu_idata(17 downto 1);
-    cpu2_idata(0)           <= cpu_idata(0)  xor inject_error_i(2);
-    
+    cpu2_idata(17)          <= cpu_idata(17) xor inject_error_i(2);
+    cpu2_idata(16 downto 0) <= cpu_idata(16 downto 0);
+        
   end generate gen_inject_error;
 
   gen_inject_error_n: if FAULT_INJECTION = false
