@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-10
+-- Last update: 2025-08-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -35,7 +35,6 @@ entity PicoSoC_supervisor is
     (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
 
-    ;TARGET_ADDR_ENCODING  : string := "one_hot"
     ;ICN_ALGO_SEL          : string := "or"
     );
   port
@@ -57,6 +56,7 @@ architecture rtl of PicoSoC_supervisor is
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
 
   -- ICN Configuration
+  constant TARGET_ADDR_ENCODING       : string   := "one_hot";
 
   constant NB_TARGET                  : positive := 3;
 

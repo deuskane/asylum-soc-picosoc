@@ -81,12 +81,14 @@ help : $(FILE_TARGETS)
 	@echo "==============| Rules"
 	@echo "help          : Print this message"
 	@echo "info          : Display library list and cores list"
-	@echo "nonreg        : Run all simulation targets"
-	@echo "setup         : Execute Setup stage of fusesoc flow for specific target and tool"
-	@echo "build         : Execute Build stage of fusesoc flow for specific target and tool"
-	@echo "run           : Execute Run   stage of fusesoc flow for specific target and tool"
-	@echo "*             : Run target with default tool"
 	@echo "clean         : delete build directory"
+	@echo "nonreg        : Run all simulation targets"
+	@echo ""
+	@echo "target        : Execute all   stages of fusesoc flow for specific target and tool"
+	@echo "setup         : Execute Setup stage  of fusesoc flow for specific target and tool"
+	@echo "build         : Execute Build stage  of fusesoc flow for specific target and tool"
+	@echo "run           : Execute Run   stage  of fusesoc flow for specific target and tool"
+	@echo "*             : Run target with default tool"
 	@echo ""
 	@echo "==============| Targets"
 	@echo ""
@@ -100,7 +102,6 @@ $(FILE_TARGETS) : $(FILE_CORE)
 #--------------------------------------------------------
 	@fusesoc core show $(VLNV) | awk '/Targets:/{flag=1; next} flag' > $(FILE_TARGETS)
 
-
 #--------------------------------------------------------
 # Display library list and cores list
 info :
@@ -110,6 +111,13 @@ info :
 	@fusesoc core    list
 
 .PHONY : info
+
+#--------------------------------------------------------
+target :
+#--------------------------------------------------------
+	fusesoc run $(FUSESOC_OPT) --target $(TARGET) --tool $(TOOL) $(VLNV)
+
+.PHONY : target
 
 #--------------------------------------------------------
 setup build run :

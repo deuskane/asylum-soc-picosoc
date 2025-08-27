@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-10
+-- Last update: 2025-08-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -80,7 +80,6 @@ end PicoSoC_top;
   
 architecture rtl of PicoSoC_top is
 
-  constant TARGET_ADDR_ENCODING         : string   := "one_hot";
   constant ICN_ALGO_SEL                 : string   := "mux";
 
   constant NB_LED0_USER                 : positive := 8;
@@ -205,7 +204,6 @@ begin  -- architecture rtl
     ,NB_LED1              => NB_LED1_USER       
     ,SAFETY               => SAFETY             
     ,FAULT_INJECTION      => FAULT_INJECTION    
---  ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
     ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
     )
   port map
@@ -247,7 +245,6 @@ begin  -- architecture rtl
       generic map
       (NB_LED0              => 1
       ,NB_LED1              => NB_LED_SUPERVISOR
-      ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
       ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
        )
       port map

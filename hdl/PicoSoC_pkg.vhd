@@ -59,12 +59,14 @@ package PicoSoC_pkg is
     arst_b : std_logic;
   end record PicoSoC_supervisor_debug_t;
   
+  -----------------------------------------------------------------------------
+  -- Component
+  -----------------------------------------------------------------------------
   component PicoSoC_supervisor 
     generic (
       NB_LED0               : positive;
       NB_LED1               : positive;
 
-      TARGET_ADDR_ENCODING  : string  ;
       ICN_ALGO_SEL          : string
       );
     port (
@@ -94,7 +96,6 @@ package PicoSoC_pkg is
       NB_LED1               : positive ;
       SAFETY                : string   ;
       FAULT_INJECTION       : boolean  ;
-    --TARGET_ADDR_ENCODING  : string   ;
       ICN_ALGO_SEL          : string   
       );
     port (

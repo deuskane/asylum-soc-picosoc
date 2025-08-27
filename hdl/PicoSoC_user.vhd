@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-15
+-- Last update: 2025-08-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -86,9 +86,6 @@ end PicoSoC_user;
 
 architecture rtl of PicoSoC_user is
 
-  -- Generic
-  constant TARGET_ADDR_ENCODING       : string := "binary";
-  
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
@@ -99,6 +96,8 @@ architecture rtl of PicoSoC_user is
   constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
 
   -- ICN Configuration
+  constant TARGET_ADDR_ENCODING       : string := "binary";
+  
   constant NB_TARGET                  : positive := 6;
 
   constant TARGET_SWITCH              : integer  := 0;
