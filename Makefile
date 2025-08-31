@@ -38,6 +38,7 @@ TARGETS_LINT    := $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | 
 
 PATH_BUILD      ?= $(CURDIR)/build
 
+FUSESOC_CACHE    = ~/.cache/fusesoc
 FUSESOC_OPT     += --build-root $(PATH_BUILD)
 FUSESOC_OPT     += --no-export
 
@@ -141,6 +142,7 @@ nonreg : $(TARGETS_$(NONREG))
 #--------------------------------------------------------
 clean :
 #--------------------------------------------------------
+	rm -fr $(FUSESOC_CACHE)/generator_cache
 	rm -fr $(PATH_BUILD)
 
 .PHONY : clean
