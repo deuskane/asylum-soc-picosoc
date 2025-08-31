@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-10
+-- Last update: 2025-08-31
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -66,12 +66,12 @@ architecture tb of tb_PicoSoC is
   constant FAULT_POLARITY          : string   := "high"; -- "high" / "low"
   
   -- =====[ Dut Signals ]=========================
-  signal clk_i                     : std_logic := '0';
-  signal arst_b_i                  : std_logic;
-  signal switch_i                  : std_logic_vector(NB_SWITCH-1 downto 0);
-  signal led_o                     : std_logic_vector(NB_LED   -1 downto 0);
-  signal it_user_i                 : std_logic;
-  signal inject_error_i            : std_logic_vector(        3-1 downto 0);
+  signal  clk_i                    : std_logic := '0';
+  signal  arst_b_i                 : std_logic;
+  signal  switch_i                 : std_logic_vector(NB_SWITCH-1 downto 0);
+  signal  led_o                    : std_logic_vector(NB_LED   -1 downto 0);
+  signal  it_user_i                : std_logic;
+  signal  inject_error_i           : std_logic_vector(        3-1 downto 0);
 
   signal  spi_sclk_o               : std_logic;
   signal  spi_cs_b_o               : std_logic;
@@ -83,13 +83,13 @@ architecture tb of tb_PicoSoC is
   signal  HOLDNeg                  : std_logic;
   signal  SNeg                     : std_logic;
   
-  alias  led_switch                : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
-  alias  led_it                    : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
-  alias  led_diff                  : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
+  alias   led_switch               : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
+  alias   led_it                   : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
+  alias   led_diff                 : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
 
   -- =====[ Test Signals ]========================
-  signal test_begin                : std_logic := '0';
-  signal test_done                 : std_logic := '0';
+  signal  test_begin               : std_logic := '0';
+  signal  test_done                : std_logic := '0';
   
   -- =====[ Functions ]===========================
   
@@ -243,8 +243,8 @@ begin  -- architecture tb
       arst_b_i       <= '1';
       
       report "[TESTBENCH] Change Switch" ;
-      for i in 0 to NB_SWITCH-1 loop
-        switch_i       <= (others => '0');
+      switch_i       <= (others => '0');
+      for i in NB_SWITCH-1 downto 0 loop
         switch_i(i)    <= '1';
         wait until (led_switch = switch_i) ;
         
@@ -271,7 +271,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU0" ;
         inject_error_i(0) <= '1';
-        run(10);
+        run(100);
         inject_error_i(0) <= '0';
 
         while (not (led_switch /= switch_i))
@@ -285,7 +285,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(10);
+        run(100);
         inject_error_i(1) <= '0';
 
         while (not (led_switch /= switch_i))
@@ -299,7 +299,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU0 in continue" ;
         inject_error_i(1) <= '1';
-        run(1000);
+        run(100);
         inject_error_i(1) <= '0';
 
       end if;
@@ -311,7 +311,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU0" ;
         inject_error_i(0) <= '1';
-        run(20);
+        run(100);
         inject_error_i(0) <= '0';
 
         run(100);
@@ -320,7 +320,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(20);
+        run(100);
         inject_error_i(1) <= '0';
 
         while (not (led_switch /= switch_i))
@@ -337,7 +337,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU2" ;
         inject_error_i(2) <= '1';
-        run(20);
+        run(100);
         inject_error_i(2) <= '0';
 
         run(100);
@@ -346,7 +346,7 @@ begin  -- architecture tb
 
         report "[TESTBENCH] Inject error in CPU2" ;
         inject_error_i(2) <= '1';
-        run(20);
+        run(100);
         inject_error_i(2) <= '0';
 
         run(100);
@@ -355,7 +355,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU1" ;
         inject_error_i(1) <= '1';
-        run(20);
+        run(100);
         inject_error_i(1) <= '0';
 
         while (not (led_switch /= switch_i))
@@ -371,7 +371,7 @@ begin  -- architecture tb
         
         report "[TESTBENCH] Inject error in CPU0 in continue" ;
         inject_error_i(1) <= '1';
-        run(1000);
+        run(100);
         inject_error_i(1) <= '0';
 
         assert led_switch  = switch_i report "Bad value of led_switch" severity failure;

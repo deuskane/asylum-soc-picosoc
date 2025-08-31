@@ -39,6 +39,7 @@ CAPI=2:
 # 2025-07-29  2.7.0    mrosiere Add GIC (User)
 # 2025-08-02  2.7.1    mrosiere Add Uart CTS/RTS
 # 2025-08-11  2.7.2    mrosiere Use Target Techmap
+# 2025-08-31  2.7.3    mrosiere Cosmetics : rename generate and esw
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:2.7.2
@@ -81,7 +82,7 @@ generate:
       entity : ROM_user
       cflags : -Iesw/include --verbose --all-callee-saves
 
-  gen_user_c_uart :
+  gen_user_c_uart_921600 :
     generator : pbcc_gen
     parameters :
       file   : esw/user.c
@@ -89,15 +90,15 @@ generate:
       entity : ROM_user
       cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
 
-  gen_user_c_uart_emu :
+  gen_user_c_uart_9600_spi :
     generator : pbcc_gen
     parameters :
       file   : esw/user.c
       type   : c
       entity : ROM_user
-      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
+      cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
 
-  gen_user_c_uart_spi :
+  gen_user_c_uart_921600_spi :
     generator : pbcc_gen
     parameters :
       file   : esw/user.c
@@ -105,7 +106,7 @@ generate:
       entity : ROM_user
       cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
 
-  gen_user_c_uart_spi_mem :
+  gen_user_c_uart_921600_spi_mem :
     generator : pbcc_gen
     parameters :
       file   : esw/user.c
@@ -113,7 +114,7 @@ generate:
       entity : ROM_user
       cflags : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
 
-  gen_user_c_uart_spi_mem_emu :
+  gen_user_c_uart_9600_spi_mem :
     generator : pbcc_gen
     parameters :
       file   : esw/user.c
@@ -282,7 +283,7 @@ targets:
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
-    generate : [gen_user_c_uart_emu,gen_supervisor_c_tmr]
+    generate : [gen_user_c_uart_9600_spi,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -315,7 +316,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, No Safety, No Fault Injection
-    generate : [gen_user_c_uart_spi_mem_emu,gen_supervisor_c_dummy]
+    generate : [gen_user_c_uart_9600_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -341,7 +342,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, No Fault Injection
-    generate : [gen_user_c_uart,gen_supervisor_c]
+    generate : [gen_user_c_uart_9600,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -367,7 +368,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - No Supervisor, Safety Lock Step, With Fault Injection
-    generate : [gen_user_c_uart,gen_supervisor_c]
+    generate : [gen_user_c_uart_9600,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -393,7 +394,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety Lock-Step, With Fault Injection
-    generate : [gen_user_c_uart,gen_supervisor_c]
+    generate : [gen_user_c_uart_9600,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -419,7 +420,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
-    generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
+    generate     : [gen_user_c_uart_9600,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -520,7 +521,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
-    generate     : [gen_user_c_uart,gen_supervisor_c_dummy]
+    generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -545,7 +546,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
-    generate     : [gen_user_c_uart_spi,gen_supervisor_c_dummy]
+    generate     : [gen_user_c_uart_921600_spi,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -562,7 +563,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=100000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -570,7 +571,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
-    generate     : [gen_user_c_uart_spi_mem,gen_supervisor_c_dummy]
+    generate     : [gen_user_c_uart_921600_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -620,7 +621,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c_uart,gen_supervisor_c]
+    generate     : [gen_user_c_uart_921600,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -695,7 +696,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - With Supervisor, Safety TMR, With Fault Injection
-    generate     : [gen_user_c_uart,gen_supervisor_c_tmr]
+    generate     : [gen_user_c_uart_921600,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000

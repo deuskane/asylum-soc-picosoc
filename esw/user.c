@@ -280,16 +280,6 @@ void main()
     {
       // Read Switch
       uint8_t sw   = gpio_rd(SWITCH);
-      uint8_t led0; 
-
-      // Send Switch value into LEDO0
-#ifdef INVERT_SWITCH
-      led0 = ~sw;
-#else
-      led0 =  sw;
-#endif
-
-      gpio_wr(LED0, led0);
 
       // Get switch[5]
       if (sw&0x20)
@@ -341,5 +331,16 @@ void main()
 	  // Increase loop counter
 	  cpt ++;
 	}
-    } 
+
+      
+      // Send Switch value into LEDO0
+#ifdef INVERT_SWITCH
+      sw = ~sw;
+#endif
+
+      gpio_wr(LED0, sw);
+      
+    }
+
+  
 }
