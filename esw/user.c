@@ -26,6 +26,7 @@
 // Constant
 //--------------------------------------
 #ifdef HAVE_SPI_MEMORY
+// Disable SPI loobpack to communicate with the SPI Memory
 #define SPI_LOOPBACK SPI_LOOPBACK_DISABLE
 #else
 #define SPI_LOOPBACK SPI_LOOPBACK_ENABLE
@@ -38,23 +39,34 @@
 //--------------------------------------
 void isr (void) __interrupt(1)
 {
+  // GIC : Get interruption status
   uint8_t gic_it_vector = gic_isr(GIC);
 
-  // Check if IT User is active
+  // ... Check if IT User is active
   if (gic_it_vector & GIC_IT_USER_MSK)
     {
+      // Increase the LED1 counter
       gpio_wr(LED1,gpio_rd(LED1)+1);
+
+      // Ack the interruption
       gic_clr(GIC,GIC_IT_USER_MSK);
     }
 
-  // Check if UART RX is not empty
+  // ... Check if UART RX is not empty
   if (gic_it_vector & GIC_UART_MSK)
     {
+      // Get UART RX and echo 
       uint8_t uart_rx = getchar();
-      gpio_wr(SWITCH,uart_rx); // Dummy access
+      putchar(uart_rx);
+      
+      //gpio_wr(SWITCH,uart_rx); // Dummy access
+
+      // Ack the interruption (in UART and in GIC)
       gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
       gic_clr(GIC,GIC_UART_MSK);
     }
+
+  // All done
 }
 
 //--------------------------------------
@@ -62,20 +74,34 @@ void isr (void) __interrupt(1)
 //--------------------------------------
 void setup()
 {
+  // GPIO Setup
+  // * SWITCH is Input
+  // * LED    are Output and init to 0
   gpio_setup(SWITCH,INPUT);
   gpio_setup(LED0  ,OUTPUT);
   gpio_setup(LED1  ,OUTPUT);
   gpio_wr(LED0,0);
   gpio_wr(LED1,0);
 
+  // UART
+  // * Setup the clock frequency and the target Baud Rate
+  // * Configurae the Uart RX Loopback
+  // * Enable the Interruption UART RX Empty interuption
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
   gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
-  
+
+  // SPI
+  // * Configure CPOL / CPHA
+  // * Configure SPI Loopback
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
+  // GIC
+  // * Enable the interruption User
+  // * Enable Interruption from UART
   gic_it_enable(GIC,GIC_IT_USER_MSK);
-//gic_it_enable(GIC,GIC_UART_MSK);
-  
+  gic_it_enable(GIC,GIC_UART_MSK);
+
+  // Enable Interrtuption in the CPU
   pbcc_enable_interrupt();
 }
 
@@ -85,7 +111,8 @@ void setup()
 void spi_sfdp()
 {
   uint8_t dummy;
-  
+
+  // Execute instruction SFDP with @0 and get 4 bytes
   spi_inst24(SPI,SPI_SFDP,0x000000,SPI_CONTINUE);
   spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,4-1);
 
@@ -105,6 +132,7 @@ void spi_wait_device_ready()
 {
   uint8_t byte;
 
+  // Read the Status register 1 in continue and check the bit 1 (WIP)
   do
     {
       spi_inst  (SPI,SPI_READ_SR1,SPI_CONTINUE);
@@ -117,11 +145,13 @@ void spi_wait_device_ready()
 
 //--------------------------------------
 // SPI Write Value
+//
+// Write String in @0 of the flash
 //--------------------------------------
 void spi_write()
 {
   uint8_t dummy;
-  
+
   spi_inst  (SPI,SPI_WRITE_ENABLE,SPI_LAST);
   spi_inst24(SPI,SPI_PAGE_PROGRAM,0x000000,SPI_CONTINUE);
   spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_DISABLE,SPI_LAST,14-1);
@@ -145,6 +175,8 @@ void spi_write()
 
 //--------------------------------------
 // SPI Read Value
+//
+// Read spi memory @0 and display character until first '\0'
 //--------------------------------------
 void spi_read()
 {
@@ -161,14 +193,15 @@ void spi_read()
   while (rx != '\0');
 
   spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_DISABLE,SPI_LAST,1-1);
-      
-  
+        
   putchar('\r');
   putchar('\n');
 }
 
 //--------------------------------------
-// SPI Write Value
+// SPI Sector Erase
+//
+// Send Sector erase command at the first sector
 //--------------------------------------
 void spi_sector_erase()
 {
@@ -214,60 +247,99 @@ void main()
   // Application Run Loop
   //------------------------------------
 
+#ifdef HAVE_SPI_MEMORY
   spi_inst24(SPI,SPI_SINGLE_READ,0x000000,SPI_CONTINUE);
+#endif  
+
+  putchar('W');
+  putchar('e');
+  putchar('l');
+  putchar('c');
+  putchar('o');
+  putchar('m');
+  putchar('e');
+  putchar(' ');
+  putchar('B');
+  putchar('a');
+  putchar('c');
+  putchar('k');
+  putchar(',');
+  putchar(' ');
+  putchar('C');
+  putchar('o');
+  putchar('m');
+  putchar('m');
+  putchar('a');
+  putchar('n');
+  putchar('d');
+  putchar('e');
+  putchar('r');
+  putchar('\n');
 
   while (1)
     {
-      uint8_t sw = gpio_rd(SWITCH);
-      uint8_t spi_byte;
-      uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
+      // Read Switch
+      uint8_t sw   = gpio_rd(SWITCH);
+      uint8_t led0; 
 
-      cpt_byte3 = (cpt>>24)&0xFF;
-      cpt_byte2 = (cpt>>16)&0xFF;
-      cpt_byte1 = (cpt>> 8)&0xFF;
-      cpt_byte0 = (cpt>> 0)&0xFF;
-
+      // Send Switch value into LEDO0
 #ifdef INVERT_SWITCH
-      sw = ~sw;
-#endif
-  
-      gpio_wr(LED0, sw);
-
-#ifdef HAVE_SPI_MEMORY
-      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,0);
+      led0 = ~sw;
 #else
-      spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
-      spi_tx (SPI,cpt_byte0);
+      led0 =  sw;
+#endif
+
+      gpio_wr(LED0, led0);
+
+      // Get switch[5]
+      if (sw&0x20)
+	{
+	  uint8_t spi_byte;
+	  uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
+
+	  // Split 32b counter into 4 bytes
+	  cpt_byte3 = (cpt>>24)&0xFF;
+	  cpt_byte2 = (cpt>>16)&0xFF;
+	  cpt_byte1 = (cpt>> 8)&0xFF;
+	  cpt_byte0 = (cpt>> 0)&0xFF;
+
+	  // SPI : Read 1 byte
+	  // ... if spi memory, read 1 byte from memory
+	  // ... if no spi memory, write cpt_byte0 and read with spi loopback
+#ifdef HAVE_SPI_MEMORY
+	  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,0);
+#else
+	  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
+	  spi_tx (SPI,cpt_byte0);
 #endif       
 
-      // Print Msg
-      putchar('L');
-      putchar('o');
-      putchar('o');
-      putchar('p');
-      putchar(' ');
+	  // Print Message
+	  putchar('L');
+	  putchar('o');
+	  putchar('o');
+	  putchar('p');
+	  putchar(' ');
 
-      // Print 32b counter
-      puthex (cpt_byte3);
-      puthex (cpt_byte2);
-      puthex (cpt_byte1);
-      puthex (cpt_byte0);
+	  // Print 32b counter
+	  puthex (cpt_byte3);
+	  puthex (cpt_byte2);
+	  puthex (cpt_byte1);
+	  puthex (cpt_byte0);
 
-      // Print 32b Switch
-      putchar('-');
-      puthex (sw);
+	  // Print 8b Switch
+	  putchar('-');
+	  puthex (sw);
 
-      // Print SPI Byte @ cpt
-      putchar('-');
-
-      spi_byte = spi_rx(SPI);
-      puthex (spi_byte);
+	  // Print SPI Byte @ cpt
+	  putchar('-');
+	  spi_byte = spi_rx(SPI);
+	  puthex (spi_byte);
       
-      putchar('\r');
-      putchar('\n');
+	  putchar('\r');
+	  putchar('\n');
 
-      
-      cpt ++;
-    }
- 
+	  // Increase loop counter
+	  cpt ++;
+	}
+    } 
 }
