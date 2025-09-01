@@ -274,6 +274,7 @@ void main()
   putchar('d');
   putchar('e');
   putchar('r');
+  putchar('\r');
   putchar('\n');
 
   while (1)
