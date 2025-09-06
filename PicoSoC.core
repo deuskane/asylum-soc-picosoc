@@ -42,7 +42,7 @@ CAPI=2:
 # 2025-08-31  2.7.3    mrosiere Cosmetics : rename generate and esw
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.7.2
+name        : asylum:soc:PicoSoC:2.7.3
 description : SoC with OpenBlaze8, switch, led, UART, SPI and GIC
 
 #=========================================
