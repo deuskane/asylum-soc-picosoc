@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-08-17
+-- Last update: 2025-09-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -26,6 +26,8 @@ use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
 use     work.PicoSoC_pkg.all;
+use     work.techmap_pkg.all;
+use     work.clock_divider_pkg.all;
 
 entity PicoSoC_top is
   generic
@@ -128,7 +130,7 @@ begin  -- architecture rtl
     arst_b <= not arst_i;
   end generate gen_arst;
 
-  ins_reset_resynchronizer1 : entity work.sync2dffrn(rtl)
+  ins_reset_resynchronizer1 : sync2dffrn
     port map
     (clk_i                => clk_i     
     ,arst_b_i             => arst_b    
@@ -136,7 +138,7 @@ begin  -- architecture rtl
     ,q_o                  => arst_b_sync1
     );
 
-  ins_reset_resynchronizer2 : entity work.sync2dffrn(rtl)
+  ins_reset_resynchronizer2 : sync2dffrn
     port map
     (clk_i                => clk     
     ,arst_b_i             => arst_b_sync1
@@ -150,7 +152,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Clock Management
   -----------------------------------------------------------------------------
-  ins_clock_divider : entity work.clock_divider(rtl)
+  ins_clock_divider : clock_divider
     generic map
     (RATIO                => FSYS/FSYS_INT
     ,ALGO                 => "50%"
@@ -180,7 +182,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Input synchronization
   -----------------------------------------------------------------------------
-  ins_it_user : entity work.sync2dff(rtl)
+  ins_it_user : sync2dff
     port map
     (clk_i                => clk
     ,d_i                  => it_user
@@ -228,7 +230,7 @@ begin  -- architecture rtl
 
   uart_tx_o <= uart_tx;
   
-  ins_uart_cts_b : entity work.sync2dffrn(rtl)
+  ins_uart_cts_b : sync2dffrn
     port map
     (clk_i                => clk     
     ,arst_b_i             => arst_b_user(0)

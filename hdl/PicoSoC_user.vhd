@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-17
+-- Last update: 2025-09-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -36,6 +36,12 @@ use     work.UART_csr_pkg.all;
 use     work.SPI_csr_pkg.all;
 use     work.GIC_csr_pkg.all;
 use     work.PicoSoC_pkg.all;
+use     work.pbi_OpenBlaze8_pkg.all;
+use     work.gpio_pkg.all;
+use     work.uart_pkg.all;
+use     work.spi_pkg.all;
+use     work.gic_pkg.all;
+use     work.icn_pkg.all;
 
 entity PicoSoC_user is
   generic
@@ -197,7 +203,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_0 : entity work.pbi_OpenBlaze8(rtl)
+  ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
@@ -259,7 +265,7 @@ begin  -- architecture rtl
   -- Interconnect
   -- From 1 Initiator to N Target
   -----------------------------------------------------------------------------
-  ins_pbi_icn : entity work.pbi_icn(rtl)
+  ins_pbi_icn : pbi_icn
     generic map
     (NB_TARGET            => NB_TARGET
     ,TARGET_ID            => TARGET_ID
@@ -280,7 +286,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 0 - Switch
   -----------------------------------------------------------------------------
-  ins_pbi_switch : entity work.pbi_GPIO(rtl)
+  ins_pbi_switch : pbi_GPIO
     generic map
     (NB_IO                => NB_SWITCH
     ,DATA_OE_INIT         => CST0(8-1 downto 0)
@@ -302,7 +308,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 1 - LED
   -----------------------------------------------------------------------------
-  ins_pbi_led0 : entity work.pbi_GPIO(rtl)
+  ins_pbi_led0 : pbi_GPIO
     generic map
     (NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -324,7 +330,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 2 - LED
   -----------------------------------------------------------------------------
-  ins_pbi_led1 : entity work.pbi_GPIO(rtl)
+  ins_pbi_led1 : pbi_GPIO
     generic map
     (NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -346,7 +352,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- UART
   -----------------------------------------------------------------------------
-  ins_pbi_uart : entity work.pbi_uart(rtl)
+  ins_pbi_uart : pbi_uart
     generic map
     (BAUD_RATE            => BAUD_RATE     
     ,CLOCK_FREQ           => CLOCK_FREQ
@@ -368,7 +374,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SPI
   -----------------------------------------------------------------------------
-  ins_pbi_spi : entity work.pbi_spi(rtl)
+  ins_pbi_spi : pbi_spi
     generic map
     (USER_DEFINE_PRESCALER=> true
     ,PRESCALER_RATIO      => x"00"
@@ -396,7 +402,7 @@ begin  -- architecture rtl
   gic_it_vector(GIC_IT_USER) <= it_i   ;
   gic_it_vector(GIC_UART   ) <= uart_it;
 
-  ins_pbi_gic : entity work.pbi_GIC(rtl)
+  ins_pbi_gic : pbi_GIC
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
@@ -411,7 +417,7 @@ begin  -- architecture rtl
 ----
 ---- From level to Val/Ack interruption
 -------------------------------------------------------------------------------
---ins_it_ctrl : entity work.it_ctrl(rtl)
+--ins_it_ctrl : it_ctrl
 --  port map
 --  (clk_i                => clk          
 --  ,arstn_i              => arst_b   
@@ -428,7 +434,7 @@ begin  -- architecture rtl
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
     -- Lock Step
-    ins_pbi_OpenBlaze8_1 : entity work.pbi_OpenBlaze8(rtl)
+    ins_pbi_OpenBlaze8_1 : pbi_OpenBlaze8
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
@@ -475,7 +481,7 @@ begin  -- architecture rtl
   gen_cpu2_enable: if CPU2_ENABLE = true
   generate
     -- TMR
-    ins_pbi_OpenBlaze8_2 : entity work.pbi_OpenBlaze8(rtl)
+    ins_pbi_OpenBlaze8_2 : pbi_OpenBlaze8
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     

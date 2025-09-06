@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-08-31
+-- Last update: 2025-09-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -25,7 +25,8 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 use     std.textio.all;
 library work;
-
+use     work.PicoSoC_pkg.all;
+  
 entity tb_PicoSoC is
   generic
     (FSYS             : positive := 50_000_000
@@ -132,7 +133,7 @@ begin  -- architecture tb
   -----------------------------------------------------
   -- Design Under Test
   -----------------------------------------------------
-  dut : entity work.PicoSoC_top(rtl)
+  dut : PicoSoC_top
     generic map
     (FSYS             => FSYS            
     ,FSYS_INT         => FSYS_INT        
