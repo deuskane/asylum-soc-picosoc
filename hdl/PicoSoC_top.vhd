@@ -23,11 +23,11 @@
 library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
-library work;
-use     work.pbi_pkg.all;
-use     work.PicoSoC_pkg.all;
-use     work.techmap_pkg.all;
-use     work.clock_divider_pkg.all;
+library asylum;
+use     asylum.pbi_pkg.all;
+use     asylum.PicoSoC_pkg.all;
+use     asylum.techmap_pkg.all;
+use     asylum.clock_divider_pkg.all;
 
 entity PicoSoC_top is
   generic

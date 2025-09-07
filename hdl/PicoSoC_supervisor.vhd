@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-09-06
+-- Last update: 2025-09-07
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,15 +24,15 @@
 library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
-library work;
-use     work.pbi_pkg.all;
-use     work.GPIO_csr_pkg.all;
-use     work.GIC_csr_pkg.all;
-use     work.PicoSoC_pkg.all;
-use     work.pbi_OpenBlaze8_pkg.all;
-use     work.gpio_pkg.all;
-use     work.gic_pkg.all;
-use     work.icn_pkg.all;
+library asylum;
+use     asylum.pbi_pkg.all;
+use     asylum.GPIO_csr_pkg.all;
+use     asylum.GIC_csr_pkg.all;
+use     asylum.PicoSoC_pkg.all;
+use     asylum.pbi_OpenBlaze8_pkg.all;
+use     asylum.gpio_pkg.all;
+use     asylum.gic_pkg.all;
+use     asylum.icn_pkg.all;
 
 entity PicoSoC_supervisor is
   generic
@@ -132,7 +132,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_ROM : entity work.ROM_supervisor(rom)
+  ins_pbi_OpenBlaze8_ROM : entity asylum.ROM_supervisor(rom)
     port map
     (clk_i                => clk      
     ,cke_i                => cpu_ics

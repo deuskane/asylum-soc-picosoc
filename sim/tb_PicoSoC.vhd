@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-09-06
+-- Last update: 2025-09-07
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,8 +24,9 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 use     std.textio.all;
+library asylum;
+use     asylum.PicoSoC_pkg.all;
 library work;
-use     work.PicoSoC_pkg.all;
   
 entity tb_PicoSoC is
   generic
