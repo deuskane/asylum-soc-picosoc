@@ -286,7 +286,7 @@ targets:
         device  : xc3s100e
         package : tq144
         speed   : -5
-    toplevel : PicoSoC_top
+    toplevel : asylum.PicoSoC_top
 
   #---------------------------------------
   emu_ng_medium_c_user: &emu_ng_medium_default
@@ -321,8 +321,9 @@ targets:
       TARGET  : NANOXPLORE_NG_MEDIUM
     tools:
       nxmap:
-        fpga    : NG-MEDIUM
-        program : True
+        fpga         : NG-MEDIUM
+        program      : True
+        logical_name : asylum
     toplevel : PicoSoC_top
 
   #---------------------------------------
