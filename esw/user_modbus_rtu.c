@@ -18,6 +18,11 @@
 #include "addrmap_user.h"
 #include "modbus_rtu.h"
 
+//--------------------------------------
+// Constant
+//--------------------------------------
+#define UART_RX_LOOPBACK 0
+
 // CRC calculation
 static uint16_t crc16_init()
 {
@@ -64,17 +69,15 @@ void modbus_response_crc (uint16_t crc)
   putchar(byte);
 }
 
-void modbus_request(uint8_t *request, uint16_t length)
+void modbus_request()
 {
-  if (length < 8) return;
-  
-  uint8_t  slave_id      = request[0];
-  uint8_t  function_code = request[1];
+  uint8_t  slave_id      = getchar();
+  uint8_t  function_code = getchar();
 
   // Check Slave ID
   if (slave_id != MODBUS_ADDRESS) return;
 
-  uint16_t crc       = crc16_init();
+  uint16_t crc           = crc16_init();
 
   switch (function_code)
     {
@@ -86,10 +89,12 @@ void modbus_request(uint8_t *request, uint16_t length)
       // Modbus uses 16b address and 16b data
       // here -> ignore MSB
 
-      //uint16_t read_addr = (request[2] << 8) | request[3];
-      //uint16_t read_len  = (request[4] << 8) | request[5];
-      uint8_t  read_addr = request[3]; // ignore MSB : request[2]
-      uint8_t  read_len  = request[5]; // ignore MSB : request[4]
+      uint8_t  read_addr_msb = getchar();
+      uint8_t  read_addr_lsb = getchar();
+      uint8_t  read_addr     = read_addr_lsb; // ignore MSB
+      uint8_t  read_len_msb  = getchar();
+      uint8_t  read_len_lsb  = getchar();
+      uint8_t  read_len      = read_len_lsb; // ignore MSB
 
       // Response :
       // Byte 0 : Slave ID
@@ -120,8 +125,12 @@ void modbus_request(uint8_t *request, uint16_t length)
 
       // Modbus uses 16b address and 16b data
       // here -> ignore MSB
-      uint8_t  write_addr = request[3]; // ignore MSB : request[2]
-      uint8_t  write_data = request[5]; // ignore MSB : request[4]
+      uint8_t  write_addr_msb = getchar();
+      uint8_t  write_addr_lsb = getchar();
+      uint8_t  write_addr     = write_addr_lsb; // ignore MSB
+      uint8_t  write_data_msb = getchar();
+      uint8_t  write_data_lsb = getchar();
+      uint8_t  write_data     = write_data_lsb; // ignore MSB
 
       PORT_WR(0,write_addr,write_data);
       
@@ -141,4 +150,60 @@ void modbus_request(uint8_t *request, uint16_t length)
 
   modbus_response_crc(crc);
 
+}
+
+//--------------------------------------
+// Interrupt Sub Routine
+//--------------------------------------
+void isr (void) __interrupt(1)
+{
+  // Nothing
+
+  // All done
+}
+
+//--------------------------------------
+// Application Setup
+//--------------------------------------
+void setup()
+{
+  // GPIO Setup
+  // * SWITCH is Input
+  // * LED    are Output and init to 0
+  gpio_setup(SWITCH,INPUT);
+  gpio_setup(LED0  ,OUTPUT);
+  gpio_setup(LED1  ,OUTPUT);
+  gpio_wr(LED0,0);
+  gpio_wr(LED1,0);
+
+  // UART
+  // * Setup the clock frequency and the target Baud Rate
+  // * Configurae the Uart RX Loopback
+  // * No enable interruption
+  uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
+
+
+  // Enable Interrtuption in the CPU
+  //pbcc_enable_interrupt();
+}
+
+
+//--------------------------------------
+// Main
+//--------------------------------------
+// Arduino Style, Don't modify
+void main()
+{
+  uint32_t cpt = 0;
+
+  setup();
+
+  //------------------------------------
+  // Application Run Loop
+  //------------------------------------
+
+  while (1)
+    {
+      modbus_request();
+    }
 }
