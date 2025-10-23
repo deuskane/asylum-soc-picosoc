@@ -72,18 +72,19 @@ architecture tb of tb_PicoSoC_uart is
   constant FAULT_POLARITY          : string   := "high"; -- "high" / "low"
 
   -- =====[ Dut Signals ]=========================
-  signal  clk_i                    : std_logic := '0';
-  signal  arst_b_i                 : std_logic := '1';
-  signal  switch_i                 : std_logic_vector(NB_SWITCH-1 downto 0);
-  signal  led_o                    : std_logic_vector(NB_LED   -1 downto 0);
-  signal  it_user_i                : std_logic;
-  signal  inject_error_i           : std_logic_vector(        3-1 downto 0);
-
-  signal  cke                      : boolean   := false;
+  signal   clk_i                   : std_logic := '0';
+  signal   arst_b_i                : std_logic := '1';
+  signal   switch_i                : std_logic_vector(NB_SWITCH-1 downto 0);
+  signal   led_o                   : std_logic_vector(NB_LED   -1 downto 0);
+  signal   it_user_i               : std_logic;
+  signal   inject_error_i          : std_logic_vector(        3-1 downto 0);
+  signal   uart_tx_o               : std_logic;
+  signal   uart_rx_i               : std_logic := '1';
+           
+  signal   cke                     : boolean   := false;
 
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
   constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
-
 
   constant C_UART_BFM_CONFIG : t_uart_bfm_config := (
     bit_time                              => C_UART_BIT_TIME,
@@ -129,8 +130,8 @@ begin  -- architecture tb
     ,led_o            => led_o           
     ,it_user_i        => it_user_i     
     ,inject_error_i   => inject_error_i
-    ,uart_tx_o        => open
-    ,uart_rx_i        => '1'
+    ,uart_tx_o        => uart_tx_o
+    ,uart_rx_i        => uart_rx_i
     ,uart_cts_b_i     => '0'
     ,uart_rts_b_o     => open
     ,spi_sclk_o       => open
