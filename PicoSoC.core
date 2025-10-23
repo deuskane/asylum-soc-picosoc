@@ -140,6 +140,15 @@ generate:
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_user_modbus_rtu_921600 :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/user_modbus_rtu.c
+      type         : c
+      entity       : ROM_user_modbus_rtu
+      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -205,6 +214,7 @@ filesets:
   #---------------------------------------
     files:
       - sim/tb_PicoSoC.vhd
+      - sim/tb_PicoSoC_uart.vhd
     file_type : vhdlSource
     depend :
       - fmf:memory:flash_nor
@@ -588,6 +598,32 @@ targets:
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_c_uart_921600_spi_mem,gen_supervisor_c_dummy]
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - SAFETY=none
+      - FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
+      - HAVE_SPI_MEMORY=true
+
+  #---------------------------------------
+  sim_soc1_c_user_modbus_rtu:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
+    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
+    toplevel     : tb_PicoSoC_uart
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
