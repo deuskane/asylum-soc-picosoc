@@ -70,6 +70,11 @@ void modbus_response_crc (uint16_t crc)
   putchar(byte);
 }
 
+uint8_t _getchar()
+{
+  return getchar();
+}
+
 void modbus_request()
 {
   uint8_t  slave_id     ;
@@ -77,13 +82,13 @@ void modbus_request()
   uint16_t crc;
   uint8_t  i;
   
-  slave_id      = getchar();
-  function_code = getchar();
+  slave_id      = _getchar();
 
   // Check Slave ID
-  if (slave_id != MODBUS_ADDRESS) return;
+  //if (slave_id != MODBUS_ADDRESS) return;
 
   crc           = crc16_init();
+  function_code = _getchar();
 
   switch (function_code)
     {
@@ -96,11 +101,11 @@ void modbus_request()
 	// Modbus uses 16b address and 16b data
 	// here -> ignore MSB
 
-	uint8_t  read_addr_msb = getchar();
-	uint8_t  read_addr_lsb = getchar();
+	uint8_t  read_addr_msb = _getchar();
+	uint8_t  read_addr_lsb = _getchar();
 	uint8_t  read_addr     = read_addr_lsb; // ignore MSB
-	uint8_t  read_len_msb  = getchar();
-	uint8_t  read_len_lsb  = getchar();
+	uint8_t  read_len_msb  = _getchar();
+	uint8_t  read_len_lsb  = _getchar();
 	uint8_t  read_len      = read_len_lsb; // ignore MSB
 
 	// Response :
@@ -133,11 +138,11 @@ void modbus_request()
 
 	// Modbus uses 16b address and 16b data
 	// here -> ignore MSB
-	uint8_t  write_addr_msb = getchar();
-	uint8_t  write_addr_lsb = getchar();
+	uint8_t  write_addr_msb = _getchar();
+	uint8_t  write_addr_lsb = _getchar();
 	uint8_t  write_addr     = write_addr_lsb; // ignore MSB
-	uint8_t  write_data_msb = getchar();
-	uint8_t  write_data_lsb = getchar();
+	uint8_t  write_data_msb = _getchar();
+	uint8_t  write_data_lsb = _getchar();
 	uint8_t  write_data     = write_data_lsb; // ignore MSB
 
 	PORT_WR(0,write_addr,write_data);

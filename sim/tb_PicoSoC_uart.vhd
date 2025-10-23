@@ -85,13 +85,13 @@ architecture tb of tb_PicoSoC_uart is
 
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
   constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
-
-  constant C_UART_BFM_CONFIG : t_uart_bfm_config := (
+  
+  constant C_UART_BFM_CONFIG       : t_uart_bfm_config := (
     bit_time                              => C_UART_BIT_TIME,
     num_data_bits                         => 8,
     idle_state                            => '1',
     num_stop_bits                         => STOP_BITS_ONE,
-    parity                                => PARITY_ODD,
+    parity                                => PARITY_NONE,
     timeout                               => 0 ns, -- will default never time out
     timeout_severity                      => error,
     num_bytes_to_log_before_expected_data => 10,
@@ -103,7 +103,11 @@ architecture tb of tb_PicoSoC_uart is
     error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
     );
 
-  
+  constant C_MODBUS_SLAVE_ID       : std_logic_vector(8-1 downto 0) := x"01";
+  constant C_MODBUS_READ           : std_logic_vector(8-1 downto 0) := x"03";
+  constant C_MODBUS_WRITE          : std_logic_vector(8-1 downto 0) := x"06";
+
+  constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := x"20";
 begin  -- architecture tb
 
   -----------------------------------------------------
@@ -205,6 +209,17 @@ begin  -- architecture tb
 
     gen_pulse(arst_b_i, '0', 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
 
+    log(ID_LOG_HDR, "wait 100 cycles to finish init", C_SCOPE);
+    wait for 100*C_CLK_PERIOD;
+
+
+    uart_transmit(C_MODBUS_SLAVE_ID,"MODBUS Slave ID"             ,uart_rx_i,C_UART_BFM_CONFIG);
+    uart_transmit(C_MODBUS_WRITE,   "MODBUS Write"                ,uart_rx_i,C_UART_BFM_CONFIG);
+    uart_transmit(x"00",            "MODBUS Addr MSB (Ignored)"   ,uart_rx_i,C_UART_BFM_CONFIG);
+    uart_transmit(C_LED0_BA,        "MODBUS Addr LSB (LED)"       ,uart_rx_i,C_UART_BFM_CONFIG);
+    uart_transmit(x"00",            "MODBUS Data MSB (Ignored)"   ,uart_rx_i,C_UART_BFM_CONFIG);
+    uart_transmit(x"01",            "MODBUS Data LSB (0x01)"      ,uart_rx_i,C_UART_BFM_CONFIG);
+    
 
     --==================================================================================================
     -- Ending the simulation
