@@ -32,9 +32,10 @@ static uint16_t crc16_init()
 static uint16_t crc16_next(uint16_t crc,
 			   uint8_t  data)
 {
+  uint8_t  i;
   crc = crc ^ data;
 
-  for (uint8_t i = 8; i != 0; i--)
+  for (i = 8; i != 0; i--)
     {
       if ((crc & 0x0001) != 0)
 	{
@@ -65,85 +66,93 @@ void modbus_response_crc (uint16_t crc)
   byte = crc & 0xFF;
   putchar(byte); // CRC : send LSB first
 
-  byte = (crc >> 16)&0xFF;
+  byte = (crc >> 8)&0xFF;
   putchar(byte);
 }
 
 void modbus_request()
 {
-  uint8_t  slave_id      = getchar();
-  uint8_t  function_code = getchar();
+  uint8_t  slave_id     ;
+  uint8_t  function_code;
+  uint16_t crc;
+  uint8_t  i;
+  
+  slave_id      = getchar();
+  function_code = getchar();
 
   // Check Slave ID
   if (slave_id != MODBUS_ADDRESS) return;
 
-  uint16_t crc           = crc16_init();
+  crc           = crc16_init();
 
   switch (function_code)
     {
     case MODBUS_FC_READ_HOLDING_REGISTERS:
-      // Read Holding Registers
-      // Request must be 8 bytes
-      // Respons must be 5+2*N bytes
+      {
+	// Read Holding Registers
+	// Request must be 8 bytes
+	// Respons must be 5+2*N bytes
       
-      // Modbus uses 16b address and 16b data
-      // here -> ignore MSB
+	// Modbus uses 16b address and 16b data
+	// here -> ignore MSB
 
-      uint8_t  read_addr_msb = getchar();
-      uint8_t  read_addr_lsb = getchar();
-      uint8_t  read_addr     = read_addr_lsb; // ignore MSB
-      uint8_t  read_len_msb  = getchar();
-      uint8_t  read_len_lsb  = getchar();
-      uint8_t  read_len      = read_len_lsb; // ignore MSB
+	uint8_t  read_addr_msb = getchar();
+	uint8_t  read_addr_lsb = getchar();
+	uint8_t  read_addr     = read_addr_lsb; // ignore MSB
+	uint8_t  read_len_msb  = getchar();
+	uint8_t  read_len_lsb  = getchar();
+	uint8_t  read_len      = read_len_lsb; // ignore MSB
 
-      // Response :
-      // Byte 0 : Slave ID
-      // Byte 1 : Function Code
-      // Byte 2 : Number of read bytes
-      crc = modbus_response(crc,slave_id     );
-      crc = modbus_response(crc,function_code);
-      crc = modbus_response(crc,read_len << 1); // read_len is in read word so 16b
+	// Response :
+	// Byte 0 : Slave ID
+	// Byte 1 : Function Code
+	// Byte 2 : Number of read bytes
+	crc = modbus_response(crc,slave_id     );
+	crc = modbus_response(crc,function_code);
+	crc = modbus_response(crc,read_len << 1); // read_len is in read word so 16b
 
-      // Byte 3 : read data MSB
-      // Byte 4 : read data LSB
-      for (int i = 0; i < read_len; i++)
-	{
-	  //uint16_t read_data = holding_registers[read_addr + i];
-	  //crc = modbus_response(crc,(read_data >> 8  ));
-	  //crc = modbus_response(crc,(read_data & 0xFF));
+	// Byte 3 : read data MSB
+	// Byte 4 : read data LSB
+	for (i = 0; i < read_len; i++)
+	  {
+	    //uint16_t read_data = holding_registers[read_addr + i];
+	    //crc = modbus_response(crc,(read_data >> 8  ));
+	    //crc = modbus_response(crc,(read_data & 0xFF));
 
-	  uint8_t read_data = PORT_RD(0,read_addr);
-	  crc = modbus_response(crc,0x00);
-	  crc = modbus_response(crc,read_data);
-	  read_addr ++;
-	}
+	    uint8_t read_data = PORT_RD(0,read_addr);
+	    crc = modbus_response(crc,0x00);
+	    crc = modbus_response(crc,read_data);
+	    read_addr ++;
+	  }
       
-      break;
-      
+	break;
+      }
     case MODBUS_FC_WRITE_SINGLE_REGISTER:
-      // Write Single Register
+      {
+	// Write Single Register
 
-      // Modbus uses 16b address and 16b data
-      // here -> ignore MSB
-      uint8_t  write_addr_msb = getchar();
-      uint8_t  write_addr_lsb = getchar();
-      uint8_t  write_addr     = write_addr_lsb; // ignore MSB
-      uint8_t  write_data_msb = getchar();
-      uint8_t  write_data_lsb = getchar();
-      uint8_t  write_data     = write_data_lsb; // ignore MSB
+	// Modbus uses 16b address and 16b data
+	// here -> ignore MSB
+	uint8_t  write_addr_msb = getchar();
+	uint8_t  write_addr_lsb = getchar();
+	uint8_t  write_addr     = write_addr_lsb; // ignore MSB
+	uint8_t  write_data_msb = getchar();
+	uint8_t  write_data_lsb = getchar();
+	uint8_t  write_data     = write_data_lsb; // ignore MSB
 
-      PORT_WR(0,write_addr,write_data);
+	PORT_WR(0,write_addr,write_data);
       
-      // Respons is the same like request
-      crc = modbus_response(crc,slave_id     );
-      crc = modbus_response(crc,function_code);
-      crc = modbus_response(crc,0x00         );
-      crc = modbus_response(crc,write_addr   );
-      crc = modbus_response(crc,0x00         );
-      crc = modbus_response(crc,write_data   );
+	// Respons is the same like request
+	crc = modbus_response(crc,slave_id     );
+	crc = modbus_response(crc,function_code);
+	crc = modbus_response(crc,0x00         );
+	crc = modbus_response(crc,write_addr   );
+	crc = modbus_response(crc,0x00         );
+	crc = modbus_response(crc,write_data   );
 
-      break;
-
+	break;
+      }
+      
     default:
             return;
     }
