@@ -136,7 +136,7 @@ generate:
     parameters :
       file         : esw/user_xmodem.c
       type         : c
-      entity       : ROM_user_xmodem
+      entity       : ROM_user
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
@@ -145,7 +145,7 @@ generate:
     parameters :
       file         : esw/user_modbus_rtu.c
       type         : c
-      entity       : ROM_user_modbus_rtu
+      entity       : ROM_user
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 

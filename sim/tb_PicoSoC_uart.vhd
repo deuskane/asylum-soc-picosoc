@@ -29,7 +29,8 @@ library work;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
-  
+use     uvvm_util.uart_bfm_pkg.all;
+
 entity tb_PicoSoC_uart is
   generic
     (FSYS             : positive := 50_000_000
@@ -59,20 +60,93 @@ end entity tb_PicoSoC_uart;
 
 architecture tb of tb_PicoSoC_uart is
 
+  -- =====[ Parameters ]==========================
+  constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
+  constant TB_WATCHDOG_TIME        : time    := TB_WATCHDOG * TB_PERIOD;
+
+  constant NB_SWITCH               : positive :=  8;
+  constant NB_LED                  : positive := 19;
+
+  constant RESET_POLARITY          : string   := "low";  -- "high" / "low"
+  constant IT_USER_POLARITY        : string   := "high"; -- "high" / "low"
+  constant FAULT_POLARITY          : string   := "high"; -- "high" / "low"
+
+  -- =====[ Dut Signals ]=========================
+  signal  clk_i                    : std_logic := '0';
+  signal  arst_b_i                 : std_logic := '1';
+  signal  switch_i                 : std_logic_vector(NB_SWITCH-1 downto 0);
+  signal  led_o                    : std_logic_vector(NB_LED   -1 downto 0);
+  signal  it_user_i                : std_logic;
+  signal  inject_error_i           : std_logic_vector(        3-1 downto 0);
+
+  signal  cke                      : boolean   := false;
+
+  constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
+  constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
 
 
-  signal   clk          : std_logic;
-  signal   arst         : std_logic;
-  signal   cke          : boolean   := false;
+  constant C_UART_BFM_CONFIG : t_uart_bfm_config := (
+    bit_time                              => C_UART_BIT_TIME,
+    num_data_bits                         => 8,
+    idle_state                            => '1',
+    num_stop_bits                         => STOP_BITS_ONE,
+    parity                                => PARITY_ODD,
+    timeout                               => 0 ns, -- will default never time out
+    timeout_severity                      => error,
+    num_bytes_to_log_before_expected_data => 10,
+    match_strictness                      => MATCH_EXACT,
+    id_for_bfm                            => ID_BFM,
+    id_for_bfm_wait                       => ID_BFM_WAIT,
+    id_for_bfm_poll                       => ID_BFM_POLL,
+    id_for_bfm_poll_summary               => ID_BFM_POLL_SUMMARY,
+    error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
+    );
 
-  constant C_CLK_PERIOD : time      := 1000 ms / FSYS;
   
 begin  -- architecture tb
 
+  -----------------------------------------------------
+  -- Design Under Test
+  -----------------------------------------------------
+  dut : PicoSoC_top
+    generic map
+    (FSYS             => FSYS            
+    ,FSYS_INT         => FSYS_INT        
+    ,BAUD_RATE        => BAUD_RATE
+    ,NB_SWITCH        => NB_SWITCH       
+    ,NB_LED           => NB_LED          
+    ,RESET_POLARITY   => RESET_POLARITY  
+    ,SUPERVISOR       => SUPERVISOR      
+    ,SAFETY           => SAFETY          
+    ,FAULT_INJECTION  => FAULT_INJECTION 
+    ,IT_USER_POLARITY => IT_USER_POLARITY
+    ,FAULT_POLARITY   => FAULT_POLARITY  
+     )  
+    port map
+    (clk_i            => clk_i           
+    ,arst_i           => arst_b_i        
+    ,switch_i         => switch_i        
+    ,led_o            => led_o           
+    ,it_user_i        => it_user_i     
+    ,inject_error_i   => inject_error_i
+    ,uart_tx_o        => open
+    ,uart_rx_i        => '1'
+    ,uart_cts_b_i     => '0'
+    ,uart_rts_b_o     => open
+    ,spi_sclk_o       => open
+    ,spi_cs_b_o       => open
+    ,spi_mosi_o       => open
+    ,spi_miso_i       => '0'
+    ,debug_mux_i      => "000"
+    ,debug_o          => open 
+    ,debug_uart_tx_o  => open
+    );
+
+  
   -----------------------------------------------------------------------------
   -- Clock Generator
   -----------------------------------------------------------------------------
-  clock_generator(clk, cke, C_CLK_PERIOD, "TB Clock", 50);
+  clock_generator(clk_i, cke, C_CLK_PERIOD, "TB Clock", 50);
 
   ------------------------------------------------
   -- PROCESS: p_main
@@ -103,13 +177,11 @@ begin  -- architecture tb
     procedure set_inputs_passive(
       dummy   : t_void) is
     begin
-      --sbi_if.cs             <= '0';
-      --sbi_if.addr           <= (others => '0');
-      --sbi_if.wena           <= '0';
-      --sbi_if.rena           <= '0';
-      --sbi_if.wdata          <= (others => '0');
-      --irq_source            <= (others => '0');
-      --irq2cpu_ack            <= '0';
+
+      switch_i        <= (others => '0');
+      it_user_i       <= '0';
+      inject_error_i  <= (others => '0');
+
       log(ID_SEQUENCER_SUB, "All inputs set passive", C_SCOPE);
     end;
 
@@ -130,14 +202,14 @@ begin  -- architecture tb
 
     cke <= true; -- to start clock generator
 
-    gen_pulse(arst, 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
+    gen_pulse(arst_b_i, '0', 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
 
 
     --==================================================================================================
     -- Ending the simulation
     --------------------------------------------------------------------------------------
-    wait for 1000 ns;             -- to allow some time for completion
-    report_alert_counters(FINAL); -- Report final counters and print conclusion for simulation (Success/Fail)
+    wait for TB_WATCHDOG*C_CLK_PERIOD; -- to allow some time for completion
+    report_alert_counters(FINAL);      -- Report final counters and print conclusion for simulation (Success/Fail)
     log(ID_LOG_HDR, "SIMULATION COMPLETED", C_SCOPE);
 
     -- Finish the simulation
