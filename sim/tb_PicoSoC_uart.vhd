@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-23
+-- Last update: 2025-10-24
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -36,8 +36,8 @@ entity tb_PicoSoC_uart is
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
     ;BAUD_RATE        : integer  := 115200
-  --;UART_DEPTH_TX    : natural  := 0
-  --;UART_DEPTH_RX    : natural  := 0
+    ;UART_DEPTH_TX    : natural  := 8
+    ;UART_DEPTH_RX    : natural  := 8
   --;SPI_DEPTH_CMD    : natural  := 0
   --;SPI_DEPTH_TX     : natural  := 0
   --;SPI_DEPTH_RX     : natural  := 0
@@ -108,6 +108,35 @@ architecture tb of tb_PicoSoC_uart is
   constant C_MODBUS_WRITE          : std_logic_vector(8-1 downto 0) := x"06";
 
   constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := x"20";
+
+  signal   debug_crc               : std_logic_vector(16-1 downto 0);
+  
+
+  -- Fonction CRC16 (Modbus, polynôme 0xA001)
+  function crc16_next(
+    crc  : std_logic_vector(16-1 downto 0);
+    data : std_logic_vector(8-1 downto 0)
+    ) return std_logic_vector is
+    variable crc_var  : std_logic_vector(16-1 downto 0) := crc;
+    variable d        : std_logic_vector(8-1 downto 0) := data;
+    variable i        : integer;
+  begin
+    crc_var := crc xor ("00000000" & d);  -- concatène 8 bits de 0 avec data
+
+    
+    for i in 0 to 8-1 loop
+      report "CRC : " & to_hstring(crc_var);
+      if crc_var(0) = '1' then
+        crc_var := ('0' & crc_var(16-1 downto 1)) xor x"A001";
+      else
+        crc_var := '0' & crc_var(16-1 downto 1);
+      end if;
+    end loop;
+    report "CRC : " & to_hstring(crc_var);
+
+    return crc_var;
+  end function;
+  
 begin  -- architecture tb
 
   -----------------------------------------------------
@@ -126,6 +155,8 @@ begin  -- architecture tb
     ,FAULT_INJECTION  => FAULT_INJECTION 
     ,IT_USER_POLARITY => IT_USER_POLARITY
     ,FAULT_POLARITY   => FAULT_POLARITY  
+    ,UART_DEPTH_TX    => UART_DEPTH_TX
+    ,UART_DEPTH_RX    => UART_DEPTH_RX
      )  
     port map
     (clk_i            => clk_i           
@@ -159,26 +190,52 @@ begin  -- architecture tb
   p_main: process
     constant C_SCOPE     : string  := C_TB_SCOPE_DEFAULT;
 
---    -- Overloads for PIF BFMs for SBI (Simple Bus Interface)
---    procedure write(
---      constant addr_value   : in natural;
---      constant data_value   : in std_logic_vector;
---      constant msg          : in string) is
---    begin
---      sbi_write(to_unsigned(addr_value, sbi_if.addr'length), data_value, msg,
---                clk, sbi_if, C_SCOPE);
---    end;
---
---    procedure check(
---      constant addr_value   : in natural;
---      constant data_exp     : in std_logic_vector;
---      constant alert_level  : in t_alert_level;
---      constant msg          : in string) is
---    begin
---      sbi_check(to_unsigned(addr_value, sbi_if.addr'length), data_exp, msg,
---                clk, sbi_if, alert_level, C_SCOPE);
---    end;
+    variable modbus_crc : std_logic_vector(16-1 downto 0);
+    procedure modbus_transmit_begin(
+      constant msg          : in string
+      ) is
+    begin
+      log(ID_LOG_HDR, msg, C_SCOPE);
 
+      modbus_crc         := (others => '1');
+      debug_crc <= modbus_crc;
+    end;
+    
+    procedure modbus_transmit(
+      constant data_value   : in std_logic_vector;
+      constant msg          : in string
+      ) is
+    begin
+      uart_transmit(data_value,msg,uart_rx_i,C_UART_BFM_CONFIG);
+      modbus_crc := crc16_next(modbus_crc,data_value);
+      debug_crc <= modbus_crc;
+
+    end;
+
+    procedure modbus_transmit_end(
+      constant msg          : in string
+      ) is
+    begin
+      uart_transmit(modbus_crc( 7 downto 0),msg,uart_rx_i,C_UART_BFM_CONFIG);
+      uart_transmit(modbus_crc(15 downto 8),msg,uart_rx_i,C_UART_BFM_CONFIG);
+    end;
+
+    procedure modbus_write(
+      constant addr : in std_logic_vector;
+      constant data : in std_logic_vector;
+      constant msg  : in string
+      ) is
+      begin
+        modbus_transmit_begin(msg);    
+        modbus_transmit      (C_MODBUS_SLAVE_ID,"MODBUS Slave ID"             );
+        modbus_transmit      (C_MODBUS_WRITE,   "MODBUS Write"                );
+        modbus_transmit      (x"00",            "MODBUS Addr MSB (Ignored)"   );
+        modbus_transmit      (addr,             "MODBUS Addr LSB"             );
+        modbus_transmit      (x"00",            "MODBUS Data MSB (Ignored)"   );
+        modbus_transmit      (data,             "MODBUS Data LSB"             );
+        modbus_transmit_end  (                  "MODBUS CRC"                  );    
+      end;
+    
     procedure set_inputs_passive(
       dummy   : t_void) is
     begin
@@ -212,13 +269,7 @@ begin  -- architecture tb
     log(ID_LOG_HDR, "wait 100 cycles to finish init", C_SCOPE);
     wait for 100*C_CLK_PERIOD;
 
-
-    uart_transmit(C_MODBUS_SLAVE_ID,"MODBUS Slave ID"             ,uart_rx_i,C_UART_BFM_CONFIG);
-    uart_transmit(C_MODBUS_WRITE,   "MODBUS Write"                ,uart_rx_i,C_UART_BFM_CONFIG);
-    uart_transmit(x"00",            "MODBUS Addr MSB (Ignored)"   ,uart_rx_i,C_UART_BFM_CONFIG);
-    uart_transmit(C_LED0_BA,        "MODBUS Addr LSB (LED)"       ,uart_rx_i,C_UART_BFM_CONFIG);
-    uart_transmit(x"00",            "MODBUS Data MSB (Ignored)"   ,uart_rx_i,C_UART_BFM_CONFIG);
-    uart_transmit(x"01",            "MODBUS Data LSB (0x01)"      ,uart_rx_i,C_UART_BFM_CONFIG);
+    modbus_write(C_LED0_BA,x"01", "LED0 <= 0x01");
     
 
     --==================================================================================================
