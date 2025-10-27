@@ -24,37 +24,28 @@
 #define UART_RX_LOOPBACK 0
 
 //--------------------------------------
-// crc16_init
-// Return the initial value of the crc
+// crc16_next
+// Compute one loop of CRC16
 //--------------------------------------
-uint16_t crc16_init()
-{
-  return 0xFFFF;
-}
-
 uint16_t crc16_next(uint16_t crc,
 		    uint8_t  data)
 {
-  uint8_t  i;
-
   crc = crc ^ data;
 
-  for (i = 8; i != 0; i--)
-    {
-      if ((crc & 0x0001) != 0)
-	{
-	  crc >>= 1;
-	  crc ^= 0xA001;
-	}
-      else
-	{
-	  crc >>= 1;
-	}
-    }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+  if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
 
   return crc;
 }
 
+//--------------------------------------
+//--------------------------------------
 uint16_t modbus_response (uint16_t crc,
 			  uint8_t  byte
 			  )
@@ -63,6 +54,8 @@ uint16_t modbus_response (uint16_t crc,
   return crc16_next(crc,byte);
 }
 
+//--------------------------------------
+//--------------------------------------
 void modbus_response_crc (uint16_t crc)
 {
   uint8_t byte;
@@ -74,6 +67,8 @@ void modbus_response_crc (uint16_t crc)
   putchar(byte);
 }
 
+//--------------------------------------
+//--------------------------------------
 uint8_t _getchar()
 {
   return getchar();
@@ -167,7 +162,7 @@ void main()
 	    // Byte 0 : Slave ID
 	    // Byte 1 : Function Code
 	    // Byte 2 : Number of read bytes
-	    crc = crc16_init();
+	    crc = 0xFFFF;
 	    crc = modbus_response(crc,slave_id     );
 	    crc = modbus_response(crc,function_code);
 	    crc = modbus_response(crc,read_len << 1); // read_len is in read word so 16b
@@ -229,14 +224,14 @@ void main()
       
 	    // Respons is the same like request
 	    crc = 0XFFFF;
-	    crc = modbus_response(crc,slave_id      );
-	    crc = modbus_response(crc,function_code );
-	    crc = modbus_response(crc,0x00          );
-	    crc = modbus_response(crc,write_addr_lsb);
-	    crc = modbus_response(crc,0x00          );
-	    crc = modbus_response(crc,write_data_lsb);
+	    crc = modbus_response(crc,slave_id      ); 
+	    crc = modbus_response(crc,function_code ); 
+	    crc = modbus_response(crc,0x00          ); 
+	    crc = modbus_response(crc,write_addr_lsb); 
+	    crc = modbus_response(crc,0x00          ); 
+	    crc = modbus_response(crc,write_data_lsb); 
 	    modbus_response_crc(crc);
-
+	    
 	    break;
 	  }
       

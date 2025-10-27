@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-09-07
+-- Last update: 2025-10-25
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -204,6 +204,9 @@ begin  -- architecture rtl
   -- CPU 0
   -----------------------------------------------------------------------------
   ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
+    generic map
+    (RAM_DEPTH            => 256
+     )
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
@@ -435,6 +438,9 @@ begin  -- architecture rtl
   generate
     -- Lock Step
     ins_pbi_OpenBlaze8_1 : pbi_OpenBlaze8
+      generic map
+      (RAM_DEPTH            => 256
+       )
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
@@ -482,6 +488,9 @@ begin  -- architecture rtl
   generate
     -- TMR
     ins_pbi_OpenBlaze8_2 : pbi_OpenBlaze8
+      generic map
+      (RAM_DEPTH            => 256
+       )
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     

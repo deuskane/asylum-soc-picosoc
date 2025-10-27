@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-24
+-- Last update: 2025-10-27
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -109,6 +109,7 @@ architecture tb of tb_PicoSoC_uart is
 
   constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := x"20";
 
+  signal   uart_terminate_loop     : std_logic := '0';
   signal   debug_crc               : std_logic_vector(16-1 downto 0);
   
 
@@ -191,28 +192,28 @@ begin  -- architecture tb
     constant C_SCOPE     : string  := C_TB_SCOPE_DEFAULT;
 
     variable modbus_crc : std_logic_vector(16-1 downto 0);
-    procedure modbus_transmit_begin(
+
+    procedure modbus_tx_begin(
       constant msg          : in string
       ) is
     begin
       log(ID_LOG_HDR, msg, C_SCOPE);
 
       modbus_crc         := (others => '1');
-      debug_crc <= modbus_crc;
+      debug_crc          <= modbus_crc;
     end;
     
-    procedure modbus_transmit(
+    procedure modbus_tx(
       constant data_value   : in std_logic_vector;
       constant msg          : in string
       ) is
     begin
       uart_transmit(data_value,msg,uart_rx_i,C_UART_BFM_CONFIG);
       modbus_crc := crc16_next(modbus_crc,data_value);
-      debug_crc <= modbus_crc;
-
+      debug_crc  <= modbus_crc;
     end;
 
-    procedure modbus_transmit_end(
+    procedure modbus_tx_end(
       constant msg          : in string
       ) is
     begin
@@ -220,20 +221,59 @@ begin  -- architecture tb
       uart_transmit(modbus_crc(15 downto 8),msg,uart_rx_i,C_UART_BFM_CONFIG);
     end;
 
+    procedure modbus_rx_begin(
+      constant msg          : in string
+      ) is
+    begin
+      log(ID_LOG_HDR, msg, C_SCOPE);
+
+      modbus_crc         := (others => '1');
+      debug_crc          <= modbus_crc;
+    end;
+    
+    procedure modbus_rx(
+      constant data_exp     : in std_logic_vector;
+      constant msg          : in string
+      ) is
+    begin
+      uart_expect(data_exp,msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
+      modbus_crc := crc16_next(modbus_crc,data_exp);
+      debug_crc  <= modbus_crc;
+    end;
+
+    procedure modbus_rx_end(
+      constant msg          : in string
+      ) is
+    begin
+      uart_expect(modbus_crc( 7 downto 0),msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
+      uart_expect(modbus_crc(15 downto 8),msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
+    end;
+
+    
     procedure modbus_write(
       constant addr : in std_logic_vector;
       constant data : in std_logic_vector;
       constant msg  : in string
       ) is
       begin
-        modbus_transmit_begin(msg);    
-        modbus_transmit      (C_MODBUS_SLAVE_ID,"MODBUS Slave ID"             );
-        modbus_transmit      (C_MODBUS_WRITE,   "MODBUS Write"                );
-        modbus_transmit      (x"00",            "MODBUS Addr MSB (Ignored)"   );
-        modbus_transmit      (addr,             "MODBUS Addr LSB"             );
-        modbus_transmit      (x"00",            "MODBUS Data MSB (Ignored)"   );
-        modbus_transmit      (data,             "MODBUS Data LSB"             );
-        modbus_transmit_end  (                  "MODBUS CRC"                  );    
+        modbus_tx_begin(msg);    
+        modbus_tx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
+        modbus_tx      (C_MODBUS_WRITE,   "MODBUS TX Write"                );
+        modbus_tx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
+        modbus_tx      (addr,             "MODBUS TX Addr LSB"             );
+        modbus_tx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
+        modbus_tx      (data,             "MODBUS TX Data LSB"             );
+        modbus_tx_end  (                  "MODBUS TX CRC"                  );    
+
+        modbus_rx_begin(msg);    
+        modbus_rx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
+        modbus_rx      (C_MODBUS_WRITE,   "MODBUS TX Write"                );
+        modbus_rx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
+        modbus_rx      (addr,             "MODBUS TX Addr LSB"             );
+        modbus_rx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
+        modbus_rx      (data,             "MODBUS TX Data LSB"             );
+        modbus_rx_end  (                  "MODBUS TX CRC"                  );    
+
       end;
     
     procedure set_inputs_passive(
