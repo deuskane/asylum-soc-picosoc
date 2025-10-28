@@ -129,8 +129,9 @@ void main()
       uint8_t  slave_id     ;
       uint8_t  function_code;
       uint16_t crc          ;
-      uint8_t  i;
-  
+      uint8_t  errcode      ;
+
+      errcode       = 0;
       slave_id      = _getchar();
 
       // Check Slave ID
@@ -157,6 +158,7 @@ void main()
 	    uint8_t  read_len      = read_len_lsb; // ignore MSB
 	    uint8_t  crc_lsb       = _getchar();
 	    uint8_t  crc_msb       = _getchar();
+	    uint8_t  i            ;
 
 	    // Response :
 	    // Byte 0 : Slave ID
@@ -191,8 +193,9 @@ void main()
 	    uint8_t  write_addr_lsb ;
 	    uint8_t  write_data_msb ;
 	    uint8_t  write_data_lsb ;
-	    uint8_t  crc_lsb        ;
-	    uint8_t  crc_msb        ;
+	    uint8_t  crc_rx_lsb     ;
+	    uint8_t  crc_rx_msb     ;
+	    uint16_t crc_rx         ;
 
 	    // Modbus uses 16b address and 16b data
 	    // here -> ignore MSB
@@ -201,24 +204,33 @@ void main()
 	    write_addr_lsb = _getchar();
 	    write_data_msb = _getchar();
 	    write_data_lsb = _getchar();
-
-	    /*
+	    crc_rx_lsb     = _getchar();
+	    crc_rx_msb     = _getchar();
+	    crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
+	    
 	    // crc after address = 1 and write
-	    crc = 0x2280;
+	    crc = 0xFFFF;
+	    crc = crc16_next(crc,slave_id      );
+	    crc = crc16_next(crc,function_code );
 	    crc = crc16_next(crc,write_addr_msb);
 	    crc = crc16_next(crc,write_addr_lsb);
 	    crc = crc16_next(crc,write_data_msb);
 	    crc = crc16_next(crc,write_data_lsb);
-	    */
-	    crc_lsb        = _getchar();
-	    crc_msb        = _getchar();
 
-	    /*
-	    if (crc_lsb != (crc&0xFF))
+	    // If CRC is different, just ignore
+	    if (crc_rx != crc)
 	      break;
-	    if (crc_msb != (crc>>8))
-	      break;
-	    */
+
+	    if (write_addr_msb != 0x00)
+	      {
+		errcode = MODBUS_ERR_INVALID_ADDR;
+		break;
+	      }
+	    if (write_data_msb != 0x00)
+	      {
+		errcode = MODBUS_ERR_INVALID_DATA;
+		break;
+	      }
 	    
 	    PORT_WR(0,write_addr_lsb,write_data_lsb);
       
@@ -234,11 +246,24 @@ void main()
 	    
 	    break;
 	  }
-      
+	  
+	  // Unsupported Function
 	default:
-	  return;
+	  {
+	    errcode = MODBUS_ERR_INVALID_FUNC;
+	    break;
+	  }
+	  
 	}
 
-
+      // Have Error ?
+      if (errcode != 0)
+	{
+	  crc = 0XFFFF;
+	  crc = modbus_response(crc,slave_id      ); 
+	  crc = modbus_response(crc,(function_code|0x80)); 
+	  crc = modbus_response(crc,errcode       ); 
+	  modbus_response_crc(crc);
+	}
     }
 }

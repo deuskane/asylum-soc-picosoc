@@ -22,11 +22,19 @@
 #define MODBUS_ADDRESS                  0x01
 
 // Modbus function codes
-typedef enum {
-    MODBUS_FC_READ_HOLDING_REGISTERS    = 0x03,
-    MODBUS_FC_WRITE_SINGLE_REGISTER     = 0x06
-} ModbusFunctionCode;
+typedef enum
+  {
+   MODBUS_FC_READ_HOLDING_REGISTERS    = 0x03,
+   MODBUS_FC_WRITE_SINGLE_REGISTER     = 0x06
+  } ModbusFunctionCode;
 
+// Modbus Error codes
+typedef enum
+  {
+   MODBUS_ERR_INVALID_FUNC = 0x01,
+   MODBUS_ERR_INVALID_ADDR = 0x02,
+   MODBUS_ERR_INVALID_DATA = 0x03
+  } ModbusErrorCode;
 
 #endif // MODBUS_H
 
