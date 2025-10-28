@@ -45,6 +45,8 @@ uint16_t crc16_next(uint16_t crc,
 }
 
 //--------------------------------------
+// modbus_response
+// send byte to uart and accumulate into crc
 //--------------------------------------
 uint16_t modbus_response (uint16_t crc,
 			  uint8_t  byte
@@ -55,6 +57,8 @@ uint16_t modbus_response (uint16_t crc,
 }
 
 //--------------------------------------
+// modbus_response_crc
+// send the crc to uart (LSB first)
 //--------------------------------------
 void modbus_response_crc (uint16_t crc)
 {
@@ -68,6 +72,8 @@ void modbus_response_crc (uint16_t crc)
 }
 
 //--------------------------------------
+// _getchar
+// fonction to wrap macro getchar
 //--------------------------------------
 uint8_t _getchar()
 {
@@ -131,7 +137,7 @@ void main()
       uint16_t crc          ;
       uint8_t  errcode      ;
 
-      errcode       = 0;
+      errcode       = 0; // not yet error
       slave_id      = _getchar();
 
       // Check Slave ID
