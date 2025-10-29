@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-28
+-- Last update: 2025-10-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -275,6 +275,31 @@ begin  -- architecture tb
         modbus_rx_end  (                  "MODBUS TX CRC"                  );    
 
       end;
+
+    procedure modbus_read(
+      constant addr : in std_logic_vector;
+      constant data : in std_logic_vector;
+      constant msg  : in string
+      ) is
+      begin
+        modbus_tx_begin(msg);    
+        modbus_tx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
+        modbus_tx      (C_MODBUS_READ,    "MODBUS TX Read"                 );
+        modbus_tx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
+        modbus_tx      (addr,             "MODBUS TX Addr LSB"             );
+        modbus_tx      (x"00",            "MODBUS TX Len  MSB (Ignored)"   );
+        modbus_tx      (x"01",            "MODBUS TX Len  LSB"             );
+        modbus_tx_end  (                  "MODBUS TX CRC"                  );    
+
+        modbus_rx_begin(msg);    
+        modbus_rx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
+        modbus_rx      (C_MODBUS_READ,    "MODBUS TX Read"                 );
+        modbus_rx      (x"02",            "MODBUS TX Byte"                 );
+        modbus_rx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
+        modbus_rx      (data,             "MODBUS TX Data LSB"             );
+        modbus_rx_end  (                  "MODBUS TX CRC"                  );    
+
+      end;
     
     procedure set_inputs_passive(
       dummy   : t_void) is
@@ -310,6 +335,7 @@ begin  -- architecture tb
     wait for 100*C_CLK_PERIOD;
 
     modbus_write(C_LED0_BA,x"01", "LED0 <= 0x01");
+    modbus_read (C_LED0_BA,x"01", "LED0");
     
 
     --==================================================================================================
