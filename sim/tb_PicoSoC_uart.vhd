@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-29
+-- Last update: 2025-10-30
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -126,14 +126,14 @@ architecture tb of tb_PicoSoC_uart is
 
     
     for i in 0 to 8-1 loop
-      report "CRC : " & to_hstring(crc_var);
+      --report "CRC : " & to_hstring(crc_var);
       if crc_var(0) = '1' then
         crc_var := ('0' & crc_var(16-1 downto 1)) xor x"A001";
       else
         crc_var := '0' & crc_var(16-1 downto 1);
       end if;
     end loop;
-    report "CRC : " & to_hstring(crc_var);
+    --report "CRC : " & to_hstring(crc_var);
 
     return crc_var;
   end function;
@@ -276,31 +276,38 @@ begin  -- architecture tb
 
       end;
 
+    type t_data_array is array (natural range <>) of std_logic_vector(7 downto 0);
+      
     procedure modbus_read(
-      constant addr : in std_logic_vector;
-      constant data : in std_logic_vector;
-      constant msg  : in string
+      constant addr       : in std_logic_vector;
+      constant data_array : in t_data_array;
+      constant msg        : in string
       ) is
-      begin
-        modbus_tx_begin(msg);    
-        modbus_tx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
-        modbus_tx      (C_MODBUS_READ,    "MODBUS TX Read"                 );
-        modbus_tx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
-        modbus_tx      (addr,             "MODBUS TX Addr LSB"             );
-        modbus_tx      (x"00",            "MODBUS TX Len  MSB (Ignored)"   );
-        modbus_tx      (x"01",            "MODBUS TX Len  LSB"             );
-        modbus_tx_end  (                  "MODBUS TX CRC"                  );    
 
-        modbus_rx_begin(msg);    
-        modbus_rx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
-        modbus_rx      (C_MODBUS_READ,    "MODBUS TX Read"                 );
-        modbus_rx      (x"02",            "MODBUS TX Byte"                 );
-        modbus_rx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
-        modbus_rx      (data,             "MODBUS TX Data LSB"             );
-        modbus_rx_end  (                  "MODBUS TX CRC"                  );    
+      variable len : natural := data_array'length;
+    begin
+      modbus_tx_begin(msg);    
+      modbus_tx      (C_MODBUS_SLAVE_ID, "MODBUS TX Slave ID");
+      modbus_tx      (C_MODBUS_READ,     "MODBUS TX Read");
+      modbus_tx      (x"00",             "MODBUS TX Addr MSB (Ignored)");
+      modbus_tx      (addr,              "MODBUS TX Addr LSB");
+      modbus_tx      (x"00",             "MODBUS TX Len MSB (Ignored)");
+      modbus_tx      (std_logic_vector(to_unsigned(len, 8)), "MODBUS TX Len LSB");
+      modbus_tx_end  ("MODBUS TX CRC");
 
-      end;
-    
+      modbus_rx_begin(msg);    
+      modbus_rx      (C_MODBUS_SLAVE_ID, "MODBUS RX Slave ID");
+      modbus_rx      (C_MODBUS_READ,     "MODBUS RX Read");
+      modbus_rx      (std_logic_vector(to_unsigned(len * 2, 8)), "MODBUS RX Byte Count");
+
+      for i in 0 to len - 1 loop
+        modbus_rx(x"00", "MODBUS RX Data MSB (Ignored)");
+        modbus_rx(data_array(i), "MODBUS RX Data LSB");
+      end loop;
+
+      modbus_rx_end("MODBUS RX CRC");
+    end procedure;      
+
     procedure set_inputs_passive(
       dummy   : t_void) is
     begin
@@ -334,8 +341,14 @@ begin  -- architecture tb
     log(ID_LOG_HDR, "wait 100 cycles to finish init", C_SCOPE);
     wait for 100*C_CLK_PERIOD;
 
-    modbus_write(C_LED0_BA,x"01", "LED0 <= 0x01");
-    modbus_read (C_LED0_BA,x"01", "LED0");
+    --==================================================================================================
+    -- Test case
+    --------------------------------------------------------------------------------------
+    
+    modbus_write(C_LED0_BA,x"01",        "Write LED0 Data <= 0x01");
+    modbus_read (C_LED0_BA,(0 => x"01"), "Read  LED0 Data");
+    modbus_read (C_LED0_BA,(0 => x"01",
+                            1 => x"FF"), "Read  LED0 Data & OE");
     
 
     --==================================================================================================
