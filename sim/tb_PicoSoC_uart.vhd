@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-30
+-- Last update: 2025-10-31
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -81,8 +81,13 @@ architecture tb of tb_PicoSoC_uart is
   signal   uart_tx_o               : std_logic;
   signal   uart_rx_i               : std_logic := '1';
            
+  -- =====[ TB Signals ]==========================
   signal   cke                     : boolean   := false;
 
+  signal   uart_terminate_loop     : std_logic := '0';
+  signal   debug_crc               : std_logic_vector(16-1 downto 0);
+  
+  -- =====[ TB Constants ]========================
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
   constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
   
@@ -103,16 +108,20 @@ architecture tb of tb_PicoSoC_uart is
     error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
     );
 
+  -- =====[ MODBUS ]==============================
   constant C_MODBUS_SLAVE_ID       : std_logic_vector(8-1 downto 0) := x"01";
   constant C_MODBUS_READ           : std_logic_vector(8-1 downto 0) := x"03";
   constant C_MODBUS_WRITE          : std_logic_vector(8-1 downto 0) := x"06";
 
+  -- =====[ SOC ADDRMAP ]=========================
+  constant C_SWITCH_BA             : std_logic_vector(8-1 downto 0) := x"10";
   constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := x"20";
+  constant C_LED1_BA               : std_logic_vector(8-1 downto 0) := x"40";
+  constant C_UART_BA               : std_logic_vector(8-1 downto 0) := x"80";
+  constant C_SPI_BA                : std_logic_vector(8-1 downto 0) := x"08";
+  constant C_GIC_BA                : std_logic_vector(8-1 downto 0) := x"F0";
 
-  signal   uart_terminate_loop     : std_logic := '0';
-  signal   debug_crc               : std_logic_vector(16-1 downto 0);
-  
-
+  -- =====[ Function ]============================
   -- Fonction CRC16 (Modbus, polynôme 0xA001)
   function crc16_next(
     crc  : std_logic_vector(16-1 downto 0);
@@ -345,12 +354,27 @@ begin  -- architecture tb
     -- Test case
     --------------------------------------------------------------------------------------
     
-    modbus_write(C_LED0_BA,x"01",        "Write LED0 Data <= 0x01");
-    modbus_read (C_LED0_BA,(0 => x"01"), "Read  LED0 Data");
-    modbus_read (C_LED0_BA,(0 => x"01",
-                            1 => x"FF"), "Read  LED0 Data & OE");
+    modbus_write(C_LED0_BA  ,x"01",        "Write LED0 Data <= 0x01");
+    modbus_read (C_LED0_BA  ,(0 => x"01"), "Read  LED0 Data");
+    modbus_read (C_LED0_BA  ,(0 => x"01",
+                              1 => x"FF"), "Read  LED0 Data & OE");
     
-
+    switch_i <= x"5A";
+    modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
+    switch_i <= x"3C";
+    modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
+    switch_i <= x"1E";
+    modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
+    
+    -- Checks modbus error
+    -- 1) bad slave id
+    -- 2) bad function code
+    -- 3) write addr msb
+    -- 4) write data msb
+    -- 5) read addr msb
+    -- 6) read data msb
+    -- 7) bad crc
+        
     --==================================================================================================
     -- Ending the simulation
     --------------------------------------------------------------------------------------
