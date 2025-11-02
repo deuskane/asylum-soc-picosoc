@@ -12,6 +12,7 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-07-31  1.0      mrosiere Created
+// 2025-11-02  1.1      mrosiere Add Timer
 //-----------------------------------------------------------------------------
 
 #ifndef _addrmap_user_h_
@@ -26,6 +27,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "gic.h"
+#include "timer.h"
 
 //--------------------------------------
 // Address Map
@@ -36,11 +38,13 @@
 #define UART                0x80
 #define SPI                 0x08
 #define GIC                 0xF0
+#define TIMER               0xE0
 
 //--------------------------------------
 // IT
 //--------------------------------------
 #define GIC_IT_USER_MSK     0x01
 #define GIC_UART_MSK        0x02
+#define GIC_TIMER_MSK       0x03
 
 #endif

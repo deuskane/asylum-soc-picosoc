@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-10-31
+-- Last update: 2025-11-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -353,16 +353,26 @@ begin  -- architecture tb
     --==================================================================================================
     -- Test case
     --------------------------------------------------------------------------------------
-    
+
+    wait for 40 us;
     modbus_write(C_LED0_BA  ,x"01",        "Write LED0 Data <= 0x01");
+
+    wait for 40 us;
     modbus_read (C_LED0_BA  ,(0 => x"01"), "Read  LED0 Data");
+
+    wait for 40 us;
     modbus_read (C_LED0_BA  ,(0 => x"01",
                               1 => x"FF"), "Read  LED0 Data & OE");
-    
+
+    wait for 40 us;
     switch_i <= x"5A";
     modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
+
+    wait for 40 us;
     switch_i <= x"3C";
     modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
+
+    wait for 40 us;
     switch_i <= x"1E";
     modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
     
