@@ -89,7 +89,9 @@ uint8_t _getchar()
 void modbus_wait ()
 {
   uint8_t status = 0;
-  
+  uint8_t dummy  ;
+
+  gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
   timer_unclear(TIMER);
   timer_enable (TIMER);
 
@@ -100,17 +102,17 @@ void modbus_wait ()
 
       if (status != 0x00)
     	{
-  	  timer_clear  (TIMER);
-	  //_getchar();
+	  _getchar();
 	  gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+  	  timer_clear  (TIMER);
 	  timer_unclear(TIMER);
     	}
       
       status  = gic_get(TIMER);
       status &= TIMER_IT_DONE_MSK;
     }
-  gic_clr(TIMER,TIMER_IT_DONE_MSK);
 
+  gic_clr(TIMER,TIMER_IT_DONE_MSK);
   timer_disable(TIMER);
   timer_clear  (TIMER);
 }
