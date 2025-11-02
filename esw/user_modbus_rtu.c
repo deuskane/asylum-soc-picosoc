@@ -82,20 +82,35 @@ uint8_t _getchar()
 
 //--------------------------------------
 // modbus_wait
-// Wait 3.5T
+// Active loop to Wait 3.5T
+// If uart have msg : pop and restart compteur
 //--------------------------------------
+
 void modbus_wait ()
 {
-  uint8_t status;
+  uint8_t status = 0;
   
   timer_unclear(TIMER);
   timer_enable (TIMER);
 
-  do
+  while (status == 0x00)
     {
-      status = PORT_RD(TIMER,TIMER_ISR);
+      status  = gic_get(UART);
+      status &= UART_IT_RX_EMPTY_B_MSK;
+
+      /*
+      if (status != 0x00)
+    	{
+	  _getchar();
+
+  	  timer_clear  (TIMER);
+  	  timer_unclear(TIMER);
+    	}
+      */
+      
+      status  = gic_get(TIMER);
+      status &= TIMER_IT_DONE_MSK;
     }
-  while ((status&0x01) == 0x00);
   
   timer_disable(TIMER);
   timer_clear  (TIMER);
@@ -317,8 +332,9 @@ void setup()
   // UART
   // * Setup the clock frequency and the target Baud Rate
   // * Configurae the Uart RX Loopback
-  // * No enable interruption
+  // * Enable the Interruption UART RX Empty interuption
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
+  gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
 
   // TIMER
   // * Setup time for 3.5 STOP char

@@ -21,6 +21,7 @@
 #define UART_ISR                0x0
 #define UART_IMR                0x1
 #define UART_DATA               0x2
+#define UART_RESERVED3          0x3
 #define UART_CTRL_TX            0x4
 #define UART_CTRL_RX            0x5
 #define UART_CNT_LSB            0x6
