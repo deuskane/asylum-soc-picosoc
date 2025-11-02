@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-10-25
+-- Last update: 2025-11-02
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -23,6 +23,7 @@
 -- 2025-01-21  2.2      mrosiere Add UART
 -- 2025-04-02  2.3      mrosiere Use ICN
 -- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
+-- 2025-11-02  3.1      mrosiere Add Timer
 -------------------------------------------------------------------------------
 
 
@@ -30,17 +31,23 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
-use     asylum.pbi_pkg.all;
+
+-- CSR Package
 use     asylum.GPIO_csr_pkg.all;
 use     asylum.UART_csr_pkg.all;
 use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
+use     asylum.timer_csr_pkg.all;
+-- Type Package
+use     asylum.pbi_pkg.all;
+-- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.pbi_OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.spi_pkg.all;
 use     asylum.gic_pkg.all;
+use     asylum.timer_pkg.all;
 use     asylum.icn_pkg.all;
 
 entity PicoSoC_user is
@@ -104,14 +111,15 @@ architecture rtl of PicoSoC_user is
   -- ICN Configuration
   constant TARGET_ADDR_ENCODING       : string := "binary";
   
-  constant NB_TARGET                  : positive := 6;
-
   constant TARGET_SWITCH              : integer  := 0;
   constant TARGET_LED0                : integer  := 1;
   constant TARGET_LED1                : integer  := 2;
   constant TARGET_UART                : integer  := 3;
   constant TARGET_SPI                 : integer  := 4;
   constant TARGET_GIC                 : integer  := 5;
+  constant TARGET_TIMER               : integer  := 6;
+  
+  constant NB_TARGET                  : positive := 7;
   
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => X"10"
@@ -120,6 +128,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_UART                     => X"80"
      ,TARGET_SPI                      => X"08"
      ,TARGET_GIC                      => X"F0"
+     ,TARGET_TIMER                    => X"E0"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
@@ -129,6 +138,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_UART                     => UART_ADDR_WIDTH
      ,TARGET_SPI                      => SPI_ADDR_WIDTH
      ,TARGET_GIC                      => GIC_ADDR_WIDTH
+     ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
       );
   
   -- Signals ICN
@@ -177,12 +187,19 @@ architecture rtl of PicoSoC_user is
   signal   uart_it                    : std_logic;
   
   -- Interruption Vector
-  constant GIC_WIDTH                  : positive := 2;
 
   constant GIC_IT_USER                : natural  := 0;
   constant GIC_UART                   : natural  := 1;
+  constant GIC_TIMER                  : natural  := 2;
+
+  constant GIC_WIDTH                  : positive := 3;
 
   signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
+
+  -- Timer
+  signal   timer_disable              : std_logic;
+  signal   timer_clear                : std_logic;
+  signal   timer_it                   : std_logic;
   
   -- Signals Safety
   signal   diff                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
@@ -404,6 +421,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gic_it_vector(GIC_IT_USER) <= it_i   ;
   gic_it_vector(GIC_UART   ) <= uart_it;
+  gic_it_vector(GIC_TIMER  ) <= timer_it;
 
   ins_pbi_gic : pbi_GIC
     port map
@@ -413,6 +431,23 @@ begin  -- architecture rtl
     ,pbi_tgt_o            => icn_pbi_tgts(TARGET_GIC)
     ,its_i                => gic_it_vector
     ,itm_o                => cpu_it_val
+    );
+
+  -----------------------------------------------------------------------------
+  -- Timer
+  -----------------------------------------------------------------------------
+  timer_disable <= '0';
+  timer_clear   <= '0';
+
+  ins_pbi_timer : pbi_timer
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,pbi_ini_i            => icn_pbi_inis(TARGET_TIMER)
+    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_TIMER)
+    ,timer_disable_i      => timer_disable
+    ,timer_clear_i        => timer_clear
+    ,it_o                 => timer_it
     );
 
 -------------------------------------------------------------------------------
