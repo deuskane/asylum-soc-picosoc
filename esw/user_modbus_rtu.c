@@ -98,20 +98,19 @@ void modbus_wait ()
       status  = gic_get(UART);
       status &= UART_IT_RX_EMPTY_B_MSK;
 
-      /*
       if (status != 0x00)
     	{
-	  _getchar();
-
   	  timer_clear  (TIMER);
-  	  timer_unclear(TIMER);
+	  //_getchar();
+	  gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+	  timer_unclear(TIMER);
     	}
-      */
       
       status  = gic_get(TIMER);
       status &= TIMER_IT_DONE_MSK;
     }
-  
+  gic_clr(TIMER,TIMER_IT_DONE_MSK);
+
   timer_disable(TIMER);
   timer_clear  (TIMER);
 }
