@@ -1,0 +1,85 @@
+[*]
+[*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
+[*] Mon Nov  3 05:18:24 2025
+[*]
+[dumpfile] "/home/user/Work/ip/asylum-soc-picosoc/build/asylum_soc_PicoSoC_2.8.0/sim_soc1_c_user_modbus_rtu-ghdl/dut.fst"
+[dumpfile_mtime] "Mon Nov  3 05:11:59 2025"
+[dumpfile_size] 195550
+[savefile] "/home/user/Work/ip/asylum-soc-picosoc/sim/wave/waves.gtkw"
+[timestart] 306111000000
+[size] 1858 941
+[pos] -1 -1
+*-28.509039 306360000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_PicoSoC_modbus.
+[treeopen] tb_PicoSoC_modbus.dut.
+[treeopen] tb_PicoSoC_modbus.dut.ins_soc_user.
+[treeopen] tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.
+[treeopen] tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.
+[sst_width] 417
+[signals_width] 237
+[sst_expanded] 1
+[sst_vpaned_height] 481
+@800200
+-TIMER
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.arst_b_i
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.clk_i
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.gic_it[0]
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.it_o
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_cke
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_clear_i
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_cnt_r[31:0]
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_disable_i
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_done
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_init[31:0]
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_restart
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_timer.ins_timer.timer_rst
+@1000200
+-TIMER
+@200
+-
+@800200
+-CPU0
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_OpenBlaze8_0.iaddr_o[9:0]
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_OpenBlaze8_0.ics_o
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_OpenBlaze8_0.idata_i[17:0]
+@200
+-
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu0_pbi_ini.cs
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu0_pbi_ini.re
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu0_pbi_ini.we
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu0_pbi_ini.addr[7:0]
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu0_pbi_ini.wdata[7:0]
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu_pbi_tgt.rdata[7:0]
+@29
+tb_PicoSoC_modbus.dut.ins_soc_user.cpu_pbi_tgt.busy
+@1000200
+-CPU0
+@800200
+-UART
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.rx_tdata[7:0]
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.rx_tready
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.rx_tvalid
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.tx_tdata[7:0]
+@28
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.tx_tready
+tb_PicoSoC_modbus.dut.ins_soc_user.ins_pbi_uart.tx_tvalid
+@1000200
+-UART
+@22
+tb_PicoSoC_modbus.dut.ins_soc_user.led0_o[7:0]
+tb_PicoSoC_modbus.dut.ins_soc_user.led1_o[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

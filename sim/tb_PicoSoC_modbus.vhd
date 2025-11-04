@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
--- Title      : tb_PicoSoC_uart
+-- Title      : tb_PicoSoC_modbus
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : tb_PicoSoC_uart.vhd
+-- File       : tb_PicoSoC_modbus.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-11-02
+-- Last update: 2025-11-04
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ library uvvm_util;
 context uvvm_util.uvvm_util_context;
 use     uvvm_util.uart_bfm_pkg.all;
 
-entity tb_PicoSoC_uart is
+entity tb_PicoSoC_modbus is
   generic
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
@@ -56,9 +56,9 @@ entity tb_PicoSoC_uart is
     ;HAVE_SPI_MEMORY  : boolean  := False
      );
 
-end entity tb_PicoSoC_uart;
+end entity tb_PicoSoC_modbus;
 
-architecture tb of tb_PicoSoC_uart is
+architecture tb of tb_PicoSoC_modbus is
 
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
@@ -262,11 +262,12 @@ begin  -- architecture tb
     procedure modbus_write(
       constant addr : in std_logic_vector;
       constant data : in std_logic_vector;
-      constant msg  : in string
+      constant msg  : in string          ;
+      constant id   : in std_logic_vector:=C_MODBUS_SLAVE_ID
       ) is
       begin
         modbus_tx_begin(msg);    
-        modbus_tx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
+        modbus_tx      (id               ,"MODBUS TX Slave ID"             );
         modbus_tx      (C_MODBUS_WRITE,   "MODBUS TX Write"                );
         modbus_tx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
         modbus_tx      (addr,             "MODBUS TX Addr LSB"             );
@@ -274,15 +275,19 @@ begin  -- architecture tb
         modbus_tx      (data,             "MODBUS TX Data LSB"             );
         modbus_tx_end  (                  "MODBUS TX CRC"                  );    
 
-        modbus_rx_begin(msg);    
-        modbus_rx      (C_MODBUS_SLAVE_ID,"MODBUS TX Slave ID"             );
-        modbus_rx      (C_MODBUS_WRITE,   "MODBUS TX Write"                );
-        modbus_rx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
-        modbus_rx      (addr,             "MODBUS TX Addr LSB"             );
-        modbus_rx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
-        modbus_rx      (data,             "MODBUS TX Data LSB"             );
-        modbus_rx_end  (                  "MODBUS TX CRC"                  );    
-
+        if (id = C_MODBUS_SLAVE_ID)
+        then
+          modbus_rx_begin(msg);    
+          modbus_rx      (id               ,"MODBUS TX Slave ID"             );
+          modbus_rx      (C_MODBUS_WRITE,   "MODBUS TX Write"                );
+          modbus_rx      (x"00",            "MODBUS TX Addr MSB (Ignored)"   );
+          modbus_rx      (addr,             "MODBUS TX Addr LSB"             );
+          modbus_rx      (x"00",            "MODBUS TX Data MSB (Ignored)"   );
+          modbus_rx      (data,             "MODBUS TX Data LSB"             );
+          modbus_rx_end  (                  "MODBUS TX CRC"                  );
+        else
+          wait for 200 us;
+        end if;
       end;
 
     type t_data_array is array (natural range <>) of std_logic_vector(7 downto 0);
@@ -361,8 +366,21 @@ begin  -- architecture tb
     modbus_read (C_LED0_BA  ,(0 => x"01"), "Read  LED0 Data");
 
     wait for 40 us;
+    modbus_write(C_LED0_BA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
+                 ,id => not C_MODBUS_SLAVE_ID
+                 );
+
+    wait for 40 us;
     modbus_read (C_LED0_BA  ,(0 => x"01",
                               1 => x"FF"), "Read  LED0 Data & OE");
+
+    wait for 40 us;
+    modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
+                 ,id => x"00"
+                 );
+
+    wait for 40 us;
+    modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
 
     wait for 40 us;
     switch_i <= x"5A";

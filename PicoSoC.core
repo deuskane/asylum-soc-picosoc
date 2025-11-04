@@ -217,7 +217,7 @@ filesets:
   #---------------------------------------
     files:
       - sim/tb_PicoSoC.vhd
-      - sim/tb_PicoSoC_uart.vhd
+      - sim/tb_PicoSoC_modbus.vhd
     file_type : vhdlSource
     depend :
       - fmf:memory:flash_nor
@@ -626,7 +626,7 @@ targets:
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety None, Without Fault Injection
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC_uart
+    toplevel     : tb_PicoSoC_modbus
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
