@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-02
+-- Last update: 2025-11-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -449,21 +449,6 @@ begin  -- architecture rtl
     ,timer_clear_i        => timer_clear
     ,it_o                 => timer_it
     );
-
--------------------------------------------------------------------------------
----- Interruption
-----
----- From level to Val/Ack interruption
--------------------------------------------------------------------------------
---ins_it_ctrl : it_ctrl
---  port map
---  (clk_i                => clk          
---  ,arstn_i              => arst_b   
---  ,it_i                 => it_i         
---  ,it_val_o             => cpu_it_val   
---  ,it_ack_i             => cpu_it_ack
---  );
-
   
   -----------------------------------------------------------------------------
   -- CPU 1

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-09-07
+-- Last update: 2025-11-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -62,11 +62,11 @@ architecture rtl of PicoSoC_supervisor is
   -- ICN Configuration
   constant TARGET_ADDR_ENCODING       : string   := "one_hot";
 
-  constant NB_TARGET                  : positive := 3;
-
   constant TARGET_LED0                : integer  := 0;
   constant TARGET_LED1                : integer  := 1;
   constant TARGET_GIC                 : integer  := 2;
+
+  constant NB_TARGET                  : positive := 3;
 
   constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => X"10",
