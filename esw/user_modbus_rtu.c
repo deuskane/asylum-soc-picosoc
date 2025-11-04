@@ -91,30 +91,72 @@ void modbus_wait ()
   uint8_t status = 0;
   uint8_t dummy  ;
 
+  // Clear IT From UART
   gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+
+  // Start Timer
   timer_unclear(TIMER);
   timer_enable (TIMER);
 
   while (status == 0x00)
     {
+      // Get Status from UART
       status  = gic_get(UART);
       status &= UART_IT_RX_EMPTY_B_MSK;
 
+      // Is RX Not Empty ?
       if (status != 0x00)
     	{
+	  // Pop (and ignore)
 	  _getchar();
+	  // Clear IT
 	  gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+	  // Restart the timer
   	  timer_clear  (TIMER);
 	  timer_unclear(TIMER);
     	}
-      
+
+      // Get Status from UART
       status  = gic_get(TIMER);
       status &= TIMER_IT_DONE_MSK;
     }
 
-  gic_clr(TIMER,TIMER_IT_DONE_MSK);
+  // Disable Timer
   timer_disable(TIMER);
   timer_clear  (TIMER);
+
+  // Clear IT from Timer
+  gic_clr(TIMER,TIMER_IT_DONE_MSK);
+
+}
+
+//--------------------------------------
+// modbus_id_req
+//
+// Check if and return 1 if value for request
+//--------------------------------------
+uint8_t modbus_id_req(uint8_t id)
+{
+  uint8_t ret = 0;
+  
+  if (id == MODBUS_ADDRESS)
+    ret=1;
+  if (id == 0)
+    ret=1;
+  return ret;
+}
+
+//--------------------------------------
+// modbus_id_rsp
+//
+// Check if and return 1 if value for respons
+//--------------------------------------
+uint8_t modbus_id_rsp(uint8_t id)
+{
+  uint8_t ret = 0;
+  if (id == MODBUS_ADDRESS)
+    ret=1;
+  return ret;
 }
 
 //--------------------------------------
@@ -127,15 +169,13 @@ void modbus_client ()
   uint8_t  function_code;
   uint16_t crc          ;
   uint8_t  errcode      ;
+  uint8_t  slave_id_valid;
 
   // not yet error
   errcode       = 0;
 
   // Get Slave ID and check
   slave_id      = _getchar();
-
-  if (slave_id != MODBUS_ADDRESS)
-    return;
 
   // Get Function code
   function_code = _getchar();
@@ -148,20 +188,26 @@ void modbus_client ()
 	// Request must be 8 bytes
 	// Respons must be 5+2*N bytes
       
-	// Modbus uses 16b address and 16b data
-	// here -> ignore MSB
-
-	uint8_t  read_addr_msb = _getchar();
-	uint8_t  read_addr_lsb = _getchar();
-	uint8_t  read_addr     = read_addr_lsb; // ignore MSB
-	uint8_t  read_len_msb  = _getchar();
-	uint8_t  read_len_lsb  = _getchar();
-	uint8_t  read_len      = read_len_lsb; // ignore MSB
-	uint8_t  crc_rx_lsb    = _getchar();
-	uint8_t  crc_rx_msb    = _getchar();
+	uint8_t  read_addr_msb;
+	uint8_t  read_addr_lsb;
+	uint8_t  read_addr    ;
+	uint8_t  read_len_msb ;
+	uint8_t  read_len_lsb ;
+	uint8_t  read_len     ;
+	uint8_t  crc_rx_lsb   ;
+	uint8_t  crc_rx_msb   ;
 	uint16_t crc_rx       ;
 	uint8_t  i            ;
 
+	if (modbus_id_rsp(slave_id)==0)
+	  break;
+
+	read_addr_msb  = _getchar();
+	read_addr_lsb  = _getchar();
+	read_len_msb   = _getchar();
+	read_len_lsb   = _getchar();
+	crc_rx_lsb     = _getchar();
+	crc_rx_msb     = _getchar();
 	crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
 
 	// crc after address = 1 and read
@@ -190,7 +236,10 @@ void modbus_client ()
 	    errcode = MODBUS_ERR_INVALID_DATA;
 	    break;
 	  }
-        
+
+	read_addr      = read_addr_lsb; // ignore MSB
+	read_len       = read_len_lsb ; // ignore MSB
+	
 	// Response :
 	// Byte 0 : Slave ID
 	// Byte 1 : Function Code
@@ -229,6 +278,9 @@ void modbus_client ()
 	uint8_t  crc_rx_lsb     ;
 	uint8_t  crc_rx_msb     ;
 	uint16_t crc_rx         ;
+
+	if (modbus_id_req(slave_id)==0)
+	  break;
 
 	// Modbus uses 16b address and 16b data
 	// here -> ignore MSB
@@ -269,7 +321,10 @@ void modbus_client ()
 	  }
             
 	PORT_WR(0,write_addr_lsb,write_data_lsb);
-      
+
+	if (modbus_id_rsp(slave_id)==0)
+	  break;
+
 	// Respons is the same like request
 	crc = 0XFFFF;
 	crc = modbus_response(crc,slave_id      ); 
@@ -279,7 +334,7 @@ void modbus_client ()
 	crc = modbus_response(crc,0x00          ); 
 	crc = modbus_response(crc,write_data_lsb); 
 	modbus_response_crc(crc);
-            
+	
 	break;
       }
           
@@ -291,7 +346,7 @@ void modbus_client ()
       }
           
     }
-
+  
   // Have Error ?
   if (errcode != 0)
     {
