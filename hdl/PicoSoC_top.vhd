@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-09-06
+-- Last update: 2025-11-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -107,7 +107,9 @@ architecture rtl of PicoSoC_top is
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
   signal   uart_tx                      : std_logic;
+  signal   uart_rx                      : std_logic;
   signal   uart_cts_b                   : std_logic;
+  signal   uart_rts_b                   : std_logic;
   
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
@@ -215,9 +217,9 @@ begin  -- architecture rtl
     ,led0_o               => led0_user
     ,led1_o               => led1_user
     ,uart_tx_o            => uart_tx
-    ,uart_rx_i            => uart_rx_i
+    ,uart_rx_i            => uart_rx
     ,uart_cts_b_i         => uart_cts_b
-    ,uart_rts_b_o         => uart_rts_b_o
+    ,uart_rts_b_o         => uart_rts_b
     ,it_i                 => it_user_sync
     ,diff_o               => diff
     ,inject_error_i       => inject_error
@@ -228,7 +230,9 @@ begin  -- architecture rtl
     ,spi_miso_i           => spi_miso_i 
     );
 
-  uart_tx_o <= uart_tx;
+  uart_tx_o    <= uart_tx   ;
+  uart_rx      <= uart_rx_i ;
+  uart_rts_b_o <= uart_rts_b;
   
   ins_uart_cts_b : sync2dffrn
     port map
@@ -237,7 +241,7 @@ begin  -- architecture rtl
     ,d_i                  => uart_cts_b_i
     ,q_o                  => uart_cts_b
     );
-  
+
   -----------------------------------------------------------------------------
   -- SoC Supervisor
   -----------------------------------------------------------------------------
@@ -333,7 +337,11 @@ begin  -- architecture rtl
   gen_debug_b:
   if DEBUG_ENABLE = False
   generate
-    debug_o        <= (others => '0');
+    debug_o        <= ("0000"     &
+                       uart_rts_b &
+                       uart_rx    &
+                       uart_cts_b &
+                       uart_tx    ); -- output
     debug_uart_tx_o<= '0';
   end generate gen_debug_b;
     
