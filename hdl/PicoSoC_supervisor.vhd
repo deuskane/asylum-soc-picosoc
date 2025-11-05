@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-03
+-- Last update: 2025-11-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -116,6 +116,10 @@ begin  -- architecture rtl
   -- CPU 0
   -----------------------------------------------------------------------------
   ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
+    generic map
+    (RAM_DEPTH            => 256,
+     REGFILE_SYNC_READ    => true
+     )
     port map
     (clk_i                => clk      
     ,cke_i                => '1'      

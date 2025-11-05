@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-03
+-- Last update: 2025-11-05
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -222,7 +222,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
     generic map
-    (RAM_DEPTH            => 256
+    (RAM_DEPTH            => 256,
+     REGFILE_SYNC_READ    => true
      )
     port map
     (clk_i                => clk         
@@ -459,7 +460,8 @@ begin  -- architecture rtl
     -- Lock Step
     ins_pbi_OpenBlaze8_1 : pbi_OpenBlaze8
       generic map
-      (RAM_DEPTH            => 256
+      (RAM_DEPTH            => 256,
+       REGFILE_SYNC_READ    => true
        )
       port map
       (clk_i                => clk           
@@ -509,7 +511,8 @@ begin  -- architecture rtl
     -- TMR
     ins_pbi_OpenBlaze8_2 : pbi_OpenBlaze8
       generic map
-      (RAM_DEPTH            => 256
+      (RAM_DEPTH            => 256,
+       REGFILE_SYNC_READ    => true
        )
       port map
       (clk_i                => clk           
