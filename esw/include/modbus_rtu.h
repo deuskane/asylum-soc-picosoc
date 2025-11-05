@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#define MODBUS_ADDRESS                  0x01
+#define MODBUS_ADDRESS                  0x5A
 
 // Modbus function codes
 typedef enum
