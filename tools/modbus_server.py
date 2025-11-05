@@ -16,7 +16,7 @@ def modbus_connect(port: str, baudrate: int, parity: str = 'N') -> ModbusSerialC
         bytesize = 8,
         parity   = parity,
         timeout  = 2,
-        rtscts   = 0
+        rtscts   = 1
     )
     if not client.connect():
         raise ConnectionError(f"Failed to connect to serial port {port}")
@@ -59,7 +59,13 @@ if __name__ == "__main__":
 
         modbus_write (client, slave_id=slave_id, address=0x0020, value=0x003C)
         modbus_read  (client, slave_id=slave_id, address=0x0020, count=1)
+        modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
 
+        #while True:
+        #    res = modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
+        #    modbus_write (client, slave_id=slave_id, address=0x0020, value=res[0])            
+
+        
     except Exception as e:
         log.error(f"[ERROR] {e}")
     finally:
