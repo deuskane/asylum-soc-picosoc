@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-11-05
+-- Last update: 2025-11-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -359,41 +359,51 @@ begin  -- architecture tb
     -- Test case
     --------------------------------------------------------------------------------------
 
-    wait for 40 us;
+    wait for 35 us;
     modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
 
-    wait for 40 us;
+    wait for 35 us;
     modbus_read (C_LED0_BA  ,(0 => x"21"), "Read  LED0 Data");
 
-    wait for 40 us;
+    wait for 35 us;
     switch_i <= x"5A";
     modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
 
-    wait for 40 us;
+    wait for 35 us;
     switch_i <= x"3C";
     modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
 
-    wait for 40 us;
+    wait for 35 us;
     switch_i <= x"1E";
     modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
 
-    wait for 40 us;
+    wait for 35 us;
     modbus_write(C_LED0_BA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
                  ,id => not C_MODBUS_SLAVE_ID
                  );
  
-    wait for 40 us;
+    wait for 35 us;
     modbus_read (C_LED0_BA  ,(0 => x"21",
                               1 => x"FF"), "Read  LED0 Data & OE");
  
-    wait for 40 us;
+    wait for 35 us;
     modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
                  ,id => x"00"
                  );
  
-    wait for 40 us;
+    wait for 35 us;
     modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
 
+    for i in 0 to 7 loop
+      switch_i    <= x"00";
+      switch_i(i) <= '1';
+      wait for 35 us;
+      modbus_read (C_SWITCH_BA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
+      wait for 35 us;
+      modbus_write(C_LED0_BA  ,switch_i       , "Write  LED0 Data - 0x" & to_hstring(switch_i));
+
+    end loop;  -- i
+    
     
     -- Checks modbus error
     -- 1) bad slave id
