@@ -18,6 +18,9 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 
+library asylum;
+use     asylum.uart_pkg.ALL;
+
 package PicoSoC_pkg is
 
   -----------------------------------------------------------------------------
@@ -47,6 +50,9 @@ package PicoSoC_pkg is
     uart_busy   : std_logic;
     spi_cs      : std_logic;
     spi_busy    : std_logic;
+
+    uart        : uart_debug_t;
+
     
   end record PicoSoC_user_debug_t;
 

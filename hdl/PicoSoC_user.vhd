@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-05
+-- Last update: 2025-11-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -389,7 +389,8 @@ begin  -- architecture rtl
     ,uart_rx_i            => uart_rx_i
     ,uart_cts_b_i         => uart_cts_b_i
     ,uart_rts_b_o         => uart_rts_b_o
-    ,it_o                 => uart_it 
+    ,it_o                 => uart_it
+    ,debug_o              => debug_o.uart
      );
 
   -----------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-11-05
+-- Last update: 2025-11-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -337,11 +337,11 @@ begin  -- architecture rtl
   gen_debug_b:
   if DEBUG_ENABLE = False
   generate
-    debug_o        <= ("0000"     &
-                       uart_rts_b &
-                       uart_rx    &
-                       uart_cts_b &
-                       uart_tx    ); -- output
+    debug_o        <= (clk
+                       & debug_user.uart.uart_rx.bit_cnt(2 downto 0)
+                       & debug_user.uart.uart_rx.state
+                       & uart_rx    
+                       & uart_tx    ); -- output
     debug_uart_tx_o<= '0';
   end generate gen_debug_b;
     
