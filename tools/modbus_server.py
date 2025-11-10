@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import time
 import logging
 from pymodbus.client.sync import ModbusSerialClient
 
@@ -9,17 +12,21 @@ log.setLevel(logging.INFO)  # Change to logging.INFO to reduce verbosity
 def modbus_connect(port: str, baudrate: int, parity: str = 'N') -> ModbusSerialClient:
     log.info(f"Connecting to Modbus RTU on port={port}, baudrate={baudrate}, parity={parity}")
     client = ModbusSerialClient(
-        method   = 'rtu',
-        port     = port,
-        baudrate = baudrate,
-        stopbits = 1,
-        bytesize = 8,
-        parity   = parity,
-        timeout  = 2,
-        rtscts   = 1
+        method         = 'rtu',
+        port           = port,
+        baudrate       = baudrate,
+        stopbits       = 1,
+        bytesize       = 8,
+        parity         = parity,
+        timeout        = 1,
+        rtscts         = 1,
+        retry_on_empty = True,  # Important pour éviter les pertes
+        retries        = 3,            # Nombre de tentatives en cas d'échec
+        #strict         = False          # Peut aider si certains esclaves ne respectent pas strictement le protocole
     )
     if not client.connect():
         raise ConnectionError(f"Failed to connect to serial port {port}")
+
     log.info("Connection established.")
     return client
 
@@ -61,10 +68,12 @@ if __name__ == "__main__":
         modbus_read  (client, slave_id=slave_id, address=0x0020, count=1)
         modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
 
-        #while True:
-        #    res = modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
-        #    modbus_write (client, slave_id=slave_id, address=0x0020, value=res[0])            
-
+        cnt        = 0
+        while True:
+            res = modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
+            modbus_write (client, slave_id=slave_id, address=0x0020, value=res[0])            
+            modbus_write (client, slave_id=slave_id, address=0x0040, value=(cnt&0xFF))            
+            cnt += 1
         
     except Exception as e:
         log.error(f"[ERROR] {e}")
