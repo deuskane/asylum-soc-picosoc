@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-10
+-- Last update: 2025-11-22
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -39,10 +39,10 @@ use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
 -- Type Package
-use     asylum.pbi_pkg.all;
+use     asylum.sbi_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
-use     asylum.pbi_OpenBlaze8_pkg.all;
+use     asylum.OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.spi_pkg.all;
@@ -121,7 +121,7 @@ architecture rtl of PicoSoC_user is
   
   constant NB_TARGET                  : positive := 7;
   
-  constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
+  constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => X"10"
      ,TARGET_LED0                     => X"20"
      ,TARGET_LED1                     => X"40"
@@ -142,9 +142,9 @@ architecture rtl of PicoSoC_user is
       );
   
   -- Signals ICN
-  signal   icn_pbi_inis               : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal   icn_pbi_tgts               : pbi_tgts_t(NB_TARGET-1 downto 0)(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_inis               : sbi_inis_t(NB_TARGET-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_tgts               : sbi_tgts_t(NB_TARGET-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
 
   -- Signals Clock/Reset
   signal   clk                        : std_logic;
@@ -154,22 +154,22 @@ architecture rtl of PicoSoC_user is
   signal   cpu0_ics                   : std_logic;
   signal   cpu0_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu0_idata                 : std_logic_vector(18-1 downto 0);
-  signal   cpu0_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   cpu0_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu0_it_ack                : std_logic;
   
   signal   cpu1_ics                   : std_logic;
   signal   cpu1_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu1_idata                 : std_logic_vector(18-1 downto 0);
-  signal   cpu1_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   cpu1_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu1_it_ack                : std_logic;
   
   signal   cpu2_ics                   : std_logic;
   signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
-  signal   cpu2_pbi_ini               : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   cpu2_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu2_it_ack                : std_logic;
 
   -- Signals CPU (post lockstep / TMR)
@@ -177,9 +177,9 @@ architecture rtl of PicoSoC_user is
   signal   cpu_iaddr                  : std_logic_vector(10-1 downto 0);
   signal   cpu_idata                  : std_logic_vector(18-1 downto 0);
 
-  signal   cpu_pbi_ini                : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal   cpu_pbi_tgt                : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal   cpu_sbi_ini                : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu_sbi_tgt                : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu_it_val                 : std_logic;
   signal   cpu_it_ack                 : std_logic;
 
@@ -220,7 +220,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
+  ins_sbi_OpenBlaze8_0 : sbi_OpenBlaze8
     generic map
     (RAM_DEPTH            => 256,
      REGFILE_SYNC_READ    => true
@@ -232,8 +232,8 @@ begin  -- architecture rtl
     ,ics_o                => cpu0_ics    
     ,iaddr_o              => cpu0_iaddr  
     ,idata_i              => cpu0_idata  
-    ,pbi_ini_o            => cpu0_pbi_ini
-    ,pbi_tgt_i            => cpu_pbi_tgt 
+    ,sbi_ini_o            => cpu0_sbi_ini
+    ,sbi_tgt_i            => cpu_sbi_tgt 
     ,interrupt_i          => cpu_it_val  
     ,interrupt_ack_o      => cpu0_it_ack
     );
@@ -241,7 +241,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_ROM : entity asylum.ROM_user(rom)
+  ins_sbi_OpenBlaze8_ROM : entity asylum.ROM_user(rom)
     port map
     (clk_i                => clk      
     ,cke_i                => cpu_ics  
@@ -266,9 +266,9 @@ begin  -- architecture rtl
     cpu_iaddr      <= ((cpu0_iaddr   and cpu1_iaddr  ) or
                        (cpu1_iaddr   and cpu2_iaddr  ) or
                        (cpu2_iaddr   and cpu0_iaddr  ));
-    cpu_pbi_ini    <= ((cpu0_pbi_ini and cpu1_pbi_ini) or
-                       (cpu1_pbi_ini and cpu2_pbi_ini) or
-                       (cpu2_pbi_ini and cpu0_pbi_ini));
+    cpu_sbi_ini    <= ((cpu0_sbi_ini and cpu1_sbi_ini) or
+                       (cpu1_sbi_ini and cpu2_sbi_ini) or
+                       (cpu2_sbi_ini and cpu0_sbi_ini));
     cpu_it_ack     <= ((cpu0_it_ack  and cpu1_it_ack ) or
                        (cpu1_it_ack  and cpu2_it_ack ) or
                        (cpu2_it_ack  and cpu0_it_ack ));
@@ -278,7 +278,7 @@ begin  -- architecture rtl
   generate
     cpu_ics        <= cpu0_ics     ;
     cpu_iaddr      <= cpu0_iaddr   ;
-    cpu_pbi_ini    <= cpu0_pbi_ini ;
+    cpu_sbi_ini    <= cpu0_sbi_ini ;
     cpu_it_ack     <= cpu0_it_ack  ;
   end generate;
   
@@ -286,7 +286,7 @@ begin  -- architecture rtl
   -- Interconnect
   -- From 1 Initiator to N Target
   -----------------------------------------------------------------------------
-  ins_pbi_icn : pbi_icn
+  ins_sbi_icn : sbi_icn
     generic map
     (NB_TARGET            => NB_TARGET
     ,TARGET_ID            => TARGET_ID
@@ -298,16 +298,16 @@ begin  -- architecture rtl
     (clk_i                => clk      
     ,cke_i                => '1'         
     ,arst_b_i             => arst_b      
-    ,pbi_ini_i            => cpu_pbi_ini 
-    ,pbi_tgt_o            => cpu_pbi_tgt 
-    ,pbi_inis_o           => icn_pbi_inis
-    ,pbi_tgts_i           => icn_pbi_tgts
+    ,sbi_ini_i            => cpu_sbi_ini 
+    ,sbi_tgt_o            => cpu_sbi_tgt 
+    ,sbi_inis_o           => icn_sbi_inis
+    ,sbi_tgts_i           => icn_sbi_tgts
     );
 
   -----------------------------------------------------------------------------
   -- GPIO 0 - Switch
   -----------------------------------------------------------------------------
-  ins_pbi_switch : pbi_GPIO
+  ins_sbi_switch : sbi_GPIO
     generic map
     (NB_IO                => NB_SWITCH
     ,DATA_OE_INIT         => CST0(8-1 downto 0)
@@ -317,8 +317,8 @@ begin  -- architecture rtl
     (clk_i                => clk           
     ,cke_i                => '1'           
     ,arstn_i              => arst_b         
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_SWITCH)   
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_SWITCH)   
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_SWITCH)   
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SWITCH)   
     ,data_i               => switch_i      
     ,data_o               => open          
     ,data_oe_o            => open          
@@ -329,7 +329,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 1 - LED
   -----------------------------------------------------------------------------
-  ins_pbi_led0 : pbi_GPIO
+  ins_sbi_led0 : sbi_GPIO
     generic map
     (NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -339,8 +339,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b       
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_LED0) 
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_LED0) 
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED0) 
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED0) 
     ,data_i               => X"00"       
     ,data_o               => led0_o      
     ,data_oe_o            => open        
@@ -351,7 +351,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 2 - LED
   -----------------------------------------------------------------------------
-  ins_pbi_led1 : pbi_GPIO
+  ins_sbi_led1 : sbi_GPIO
     generic map
     (NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -361,8 +361,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b       
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_LED1) 
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_LED1) 
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED1) 
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED1) 
     ,data_i               => X"00"       
     ,data_o               => led1_o      
     ,data_oe_o            => open        
@@ -373,7 +373,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- UART
   -----------------------------------------------------------------------------
-  ins_pbi_uart : pbi_uart
+  ins_sbi_uart : sbi_uart
     generic map
     (BAUD_RATE            => BAUD_RATE     
     ,CLOCK_FREQ           => CLOCK_FREQ
@@ -383,8 +383,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk           
     ,arst_b_i             => arst_b        
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_UART)   
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_UART)   
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_UART)   
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_UART)   
     ,uart_tx_o            => uart_tx_o     
     ,uart_rx_i            => uart_rx_i
     ,uart_cts_b_i         => uart_cts_b_i
@@ -396,7 +396,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SPI
   -----------------------------------------------------------------------------
-  ins_pbi_spi : pbi_spi
+  ins_sbi_spi : sbi_spi
     generic map
     (USER_DEFINE_PRESCALER=> true
     ,PRESCALER_RATIO      => x"00"
@@ -407,8 +407,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk           
     ,arst_b_i             => arst_b        
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_SPI)   
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_SPI)   
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_SPI)   
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SPI)   
     ,sclk_o               => spi_sclk_o   
     ,sclk_oe_o            => open
     ,cs_b_o               => spi_cs_b_o   
@@ -425,12 +425,12 @@ begin  -- architecture rtl
   gic_it_vector(GIC_UART   ) <= uart_it;
   gic_it_vector(GIC_TIMER  ) <= timer_it;
 
-  ins_pbi_gic : pbi_GIC
+  ins_sbi_gic : sbi_GIC
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_GIC)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_GIC)
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_GIC)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_GIC)
     ,its_i                => gic_it_vector
     ,itm_o                => cpu_it_val
     );
@@ -441,12 +441,12 @@ begin  -- architecture rtl
   timer_disable <= '0';
   timer_clear   <= '0';
 
-  ins_pbi_timer : pbi_timer
+  ins_sbi_timer : sbi_timer
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_TIMER)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_TIMER)
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_TIMER)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_TIMER)
     ,timer_disable_i      => timer_disable
     ,timer_clear_i        => timer_clear
     ,it_o                 => timer_it
@@ -459,7 +459,7 @@ begin  -- architecture rtl
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
     -- Lock Step
-    ins_pbi_OpenBlaze8_1 : pbi_OpenBlaze8
+    ins_sbi_OpenBlaze8_1 : sbi_OpenBlaze8
       generic map
       (RAM_DEPTH            => 256,
        REGFILE_SYNC_READ    => true
@@ -471,8 +471,8 @@ begin  -- architecture rtl
       ,ics_o                => cpu1_ics    
       ,iaddr_o              => cpu1_iaddr  
       ,idata_i              => cpu1_idata  
-      ,pbi_ini_o            => cpu1_pbi_ini
-      ,pbi_tgt_i            => cpu_pbi_tgt 
+      ,sbi_ini_o            => cpu1_sbi_ini
+      ,sbi_tgt_i            => cpu_sbi_tgt 
       ,interrupt_i          => cpu_it_val  
       ,interrupt_ack_o      => cpu1_it_ack
        );
@@ -480,7 +480,7 @@ begin  -- architecture rtl
     diff(0) <= '1' when (   (cpu0_ics           /= cpu1_ics          )
                          or (cpu0_iaddr         /= cpu1_iaddr        )
                          or (cpu0_it_ack        /= cpu1_it_ack       )
-                       --or (cpu0_pbi_ini       /= cpu1_pbi_ini      )
+                       --or (cpu0_sbi_ini       /= cpu1_sbi_ini      )
                             ) else
                '0';
     
@@ -510,7 +510,7 @@ begin  -- architecture rtl
   gen_cpu2_enable: if CPU2_ENABLE = true
   generate
     -- TMR
-    ins_pbi_OpenBlaze8_2 : pbi_OpenBlaze8
+    ins_sbi_OpenBlaze8_2 : sbi_OpenBlaze8
       generic map
       (RAM_DEPTH            => 256,
        REGFILE_SYNC_READ    => true
@@ -522,8 +522,8 @@ begin  -- architecture rtl
       ,ics_o                => cpu2_ics    
       ,iaddr_o              => cpu2_iaddr  
       ,idata_i              => cpu2_idata  
-      ,pbi_ini_o            => cpu2_pbi_ini
-      ,pbi_tgt_i            => cpu_pbi_tgt 
+      ,sbi_ini_o            => cpu2_sbi_ini
+      ,sbi_tgt_i            => cpu_sbi_tgt 
       ,interrupt_i          => cpu_it_val  
       ,interrupt_ack_o      => cpu2_it_ack
        );
@@ -531,13 +531,13 @@ begin  -- architecture rtl
     diff(1) <= '1' when (   (cpu1_ics           /= cpu2_ics          )
                          or (cpu1_iaddr         /= cpu2_iaddr        )
                          or (cpu1_it_ack        /= cpu2_it_ack       )
-                       --or (cpu1_pbi_ini       /= cpu2_pbi_ini      )
+                       --or (cpu1_sbi_ini       /= cpu2_sbi_ini      )
                          ) else
                '0';
     diff(2) <= '1' when (   (cpu2_ics           /= cpu0_ics          )
                          or (cpu2_iaddr         /= cpu0_iaddr        )
                          or (cpu2_it_ack        /= cpu0_it_ack       )
-                       --or (cpu2_pbi_ini       /= cpu0_pbi_ini      )
+                       --or (cpu2_sbi_ini       /= cpu0_sbi_ini      )
                          ) else
                '0';
     
@@ -587,24 +587,24 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  debug_o.arst_b      <= arst_b                          ;
-  debug_o.cpu_iaddr   <= cpu_iaddr                       ;
-  debug_o.cpu_idata   <= cpu_idata                       ;
-  debug_o.cpu_dcs     <= cpu_pbi_ini.cs                  ;
-  debug_o.cpu_dre     <= cpu_pbi_ini.re                  ;
-  debug_o.cpu_dwe     <= cpu_pbi_ini.we                  ;
-  debug_o.cpu_daddr   <= cpu_pbi_ini.addr                ;
-  debug_o.cpu_dbusy   <= cpu_pbi_tgt.busy                ;
-  debug_o.switch_cs   <= icn_pbi_inis(TARGET_SWITCH).cs  ;
-  debug_o.switch_busy <= icn_pbi_tgts(TARGET_SWITCH).busy;
-  debug_o.led0_cs     <= icn_pbi_inis(TARGET_LED0  ).cs  ;
-  debug_o.led0_busy   <= icn_pbi_tgts(TARGET_LED0  ).busy;
-  debug_o.led1_cs     <= icn_pbi_inis(TARGET_LED1  ).cs  ;
-  debug_o.led1_busy   <= icn_pbi_tgts(TARGET_LED1  ).busy;
-  debug_o.uart_cs     <= icn_pbi_inis(TARGET_UART  ).cs  ;
-  debug_o.uart_busy   <= icn_pbi_tgts(TARGET_UART  ).busy;
-  debug_o.spi_cs      <= icn_pbi_inis(TARGET_SPI   ).cs  ;
-  debug_o.spi_busy    <= icn_pbi_tgts(TARGET_SPI   ).busy;
+  debug_o.arst_b      <= arst_b                           ;
+  debug_o.cpu_iaddr   <= cpu_iaddr                        ;
+  debug_o.cpu_idata   <= cpu_idata                        ;
+  debug_o.cpu_dcs     <= cpu_sbi_ini.cs                   ;
+  debug_o.cpu_dre     <= cpu_sbi_ini.re                   ;
+  debug_o.cpu_dwe     <= cpu_sbi_ini.we                   ;
+  debug_o.cpu_daddr   <= cpu_sbi_ini.addr                 ;
+  debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
+  debug_o.switch_cs   <= icn_sbi_inis(TARGET_SWITCH).cs   ;
+  debug_o.switch_ready<= icn_sbi_tgts(TARGET_SWITCH).ready;
+  debug_o.led0_cs     <= icn_sbi_inis(TARGET_LED0  ).cs   ;
+  debug_o.led0_ready  <= icn_sbi_tgts(TARGET_LED0  ).ready;
+  debug_o.led1_cs     <= icn_sbi_inis(TARGET_LED1  ).cs   ;
+  debug_o.led1_ready  <= icn_sbi_tgts(TARGET_LED1  ).ready;
+  debug_o.uart_cs     <= icn_sbi_inis(TARGET_UART  ).cs   ;
+  debug_o.uart_ready  <= icn_sbi_tgts(TARGET_UART  ).ready;
+  debug_o.spi_cs      <= icn_sbi_inis(TARGET_SPI   ).cs   ;
+  debug_o.spi_ready   <= icn_sbi_tgts(TARGET_SPI   ).ready;
     
 end architecture rtl;
     

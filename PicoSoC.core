@@ -43,9 +43,10 @@ CAPI=2:
 # 2025-10-18  2.7.4    mrosiere Add sofware modbus
 # 2025-11-02  2.8.0    mrosiere Add Timer (User)
 # 2025-11-10  2.8.1    mrosiere Add debug bus from uart and set to 4 the FIFO depth
+# 2025-11-22  2.8.2    mrosiere Use sbi instead pbi
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.8.0
+name        : asylum:soc:PicoSoC:2.8.2
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC and Timer
 
 #=========================================
@@ -214,13 +215,13 @@ filesets:
       - ">=asylum:target:techmap:1.0.0"
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
-      - ">=asylum:processor:pbi_OpenBlaze8:1.0.0"
       - ">=asylum:communication:uart:1.0.0"
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
       - ">=asylum:system:GIC:1.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
+      - ">=asylum:processor:OpenBlaze8:1.0.0"
       
   #---------------------------------------
   files_sim:

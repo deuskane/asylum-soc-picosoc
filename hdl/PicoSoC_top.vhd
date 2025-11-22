@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-11-10
+-- Last update: 2025-11-22
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,7 +24,6 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
-use     asylum.pbi_pkg.all;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
@@ -310,25 +309,25 @@ begin  -- architecture rtl
 --                      (7          => debug_user      .cpu_dcs,
 --                       6          => debug_user      .cpu_dre,
 --                       5          => debug_user      .cpu_dwe,
---                       4          => debug_user      .cpu_dbusy,
+--                       4          => debug_user      .cpu_dready,
 --                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
 
                       debug_user      .cpu_dcs   &
                       debug_user      .cpu_dre   &
                       debug_user      .cpu_dwe   &
-                      debug_user      .cpu_dbusy &
+                      debug_user      .cpu_dready&
                       debug_user      .cpu_daddr(7 downto 4)         when debug_mux = 5 else
 
                       debug_user      .cpu_daddr(7 downto 0)         when debug_mux = 6 else
                       
                       debug_user      .switch_cs   &
-                      debug_user      .switch_busy &
+                      debug_user      .switch_ready&
                       debug_user      .led0_cs     &
-                      debug_user      .led0_busy   &
+                      debug_user      .led0_ready  &
                       debug_user      .led1_cs     &
-                      debug_user      .led1_busy   &
+                      debug_user      .led1_ready  &
                       debug_user      .uart_cs     &
-                      debug_user      .uart_busy                     when debug_mux = 7 else
+                      debug_user      .uart_ready                    when debug_mux = 7 else
                       
                       (others => '0');
     debug_uart_tx_o<= uart_tx;

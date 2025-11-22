@@ -38,18 +38,18 @@ package PicoSoC_pkg is
     cpu_dre     : std_logic;
     cpu_dwe     : std_logic;
     cpu_daddr   : std_logic_vector( 8-1 downto 0);
-    cpu_dbusy   : std_logic;
+    cpu_dready  : std_logic;
 
     switch_cs   : std_logic;
-    switch_busy : std_logic;
+    switch_ready: std_logic;
     led0_cs     : std_logic;
-    led0_busy   : std_logic;
+    led0_ready  : std_logic;
     led1_cs     : std_logic;
-    led1_busy   : std_logic;
+    led1_ready  : std_logic;
     uart_cs     : std_logic;
-    uart_busy   : std_logic;
+    uart_ready  : std_logic;
     spi_cs      : std_logic;
-    spi_busy    : std_logic;
+    spi_ready   : std_logic;
 
     uart        : uart_debug_t;
 

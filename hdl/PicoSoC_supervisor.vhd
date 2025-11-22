@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-05
+-- Last update: 2025-11-22
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -25,11 +25,11 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
-use     asylum.pbi_pkg.all;
+use     asylum.sbi_pkg.all;
 use     asylum.GPIO_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.PicoSoC_pkg.all;
-use     asylum.pbi_OpenBlaze8_pkg.all;
+use     asylum.OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.icn_pkg.all;
@@ -68,7 +68,7 @@ architecture rtl of PicoSoC_supervisor is
 
   constant NB_TARGET                  : positive := 3;
 
-  constant TARGET_ID                  : pbi_addrs_t   (NB_TARGET-1 downto 0) :=
+  constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => X"10",
       TARGET_LED1                     => X"20",
       TARGET_GIC                      => X"80"
@@ -89,17 +89,17 @@ architecture rtl of PicoSoC_supervisor is
   signal cpu_iaddr                    : std_logic_vector(10-1 downto 0);
   signal cpu_idata                    : std_logic_vector(17 downto 0);
   
-  signal cpu_pbi_ini                  : pbi_ini_t(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal cpu_pbi_tgt                  : pbi_tgt_t(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal cpu_sbi_ini                  : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu_sbi_tgt                  : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
 
   signal cpu_it_val                   : std_logic;
 --signal cpu_it_ack                   : std_logic;
 
   -- Signals ICN
-  signal icn_pbi_inis                 : pbi_inis_t(NB_TARGET-1 downto 0)(addr (PBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(PBI_DATA_WIDTH-1 downto 0));
-  signal icn_pbi_tgts                 : pbi_tgts_t(NB_TARGET-1 downto 0)(rdata(PBI_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_inis                 : sbi_inis_t(NB_TARGET-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_tgts                 : sbi_tgts_t(NB_TARGET-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
   
   signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
   signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
@@ -115,7 +115,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_0 : pbi_OpenBlaze8
+  ins_sbi_OpenBlaze8_0 : sbi_OpenBlaze8
     generic map
     (RAM_DEPTH            => 256,
      REGFILE_SYNC_READ    => true
@@ -127,8 +127,8 @@ begin  -- architecture rtl
     ,ics_o                => cpu_ics  
     ,iaddr_o              => cpu_iaddr
     ,idata_i              => cpu_idata
-    ,pbi_ini_o            => cpu_pbi_ini  
-    ,pbi_tgt_i            => cpu_pbi_tgt  
+    ,sbi_ini_o            => cpu_sbi_ini  
+    ,sbi_tgt_i            => cpu_sbi_tgt  
     ,interrupt_i          => cpu_it_val   
     ,interrupt_ack_o      => open
     );
@@ -136,7 +136,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
-  ins_pbi_OpenBlaze8_ROM : entity asylum.ROM_supervisor(rom)
+  ins_sbi_OpenBlaze8_ROM : entity asylum.ROM_supervisor(rom)
     port map
     (clk_i                => clk      
     ,cke_i                => cpu_ics
@@ -148,7 +148,7 @@ begin  -- architecture rtl
   -- Interconnect
   -- From 1 Initiator to N Target
   -----------------------------------------------------------------------------
-  ins_pbi_icn : pbi_icn
+  ins_sbi_icn : sbi_icn
     generic map
     (NB_TARGET            => NB_TARGET
     ,TARGET_ID            => TARGET_ID
@@ -160,17 +160,17 @@ begin  -- architecture rtl
     (clk_i                => clk        
     ,cke_i                => '1'        
     ,arst_b_i             => arst_b     
-    ,pbi_ini_i            => cpu_pbi_ini    
-    ,pbi_tgt_o            => cpu_pbi_tgt    
-    ,pbi_inis_o           => icn_pbi_inis   
-    ,pbi_tgts_i           => icn_pbi_tgts
+    ,sbi_ini_i            => cpu_sbi_ini    
+    ,sbi_tgt_o            => cpu_sbi_tgt    
+    ,sbi_inis_o           => icn_sbi_inis   
+    ,sbi_tgts_i           => icn_sbi_tgts
      );
 
   -----------------------------------------------------------------------------
   -- GPIO 0 - LED
   -- Used as resetb for soc user
   -----------------------------------------------------------------------------
-  ins_pbi_led0 : pbi_GPIO
+  ins_sbi_led0 : sbi_GPIO
     generic map
     (NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -180,8 +180,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_LED0)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_LED0)
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED0)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED0)
     ,data_i               => CST0(NB_LED0-1 downto 0)
     ,data_o               => led0        
     ,data_oe_o            => open        
@@ -192,7 +192,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 1 - LED
   -----------------------------------------------------------------------------
-  ins_pbi_led1 : pbi_GPIO
+  ins_sbi_led1 : sbi_GPIO
     generic map
     (NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
@@ -202,8 +202,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_LED1)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_LED1)
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED1)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED1)
     ,data_i               => CST0(NB_LED1-1 downto 0)
     ,data_o               => led1        
     ,data_oe_o            => open        
@@ -214,12 +214,12 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GIC - Interruption Vector
   -----------------------------------------------------------------------------
-  ins_pbi_gic : pbi_GIC
+  ins_sbi_gic : sbi_GIC
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,pbi_ini_i            => icn_pbi_inis(TARGET_GIC)
-    ,pbi_tgt_o            => icn_pbi_tgts(TARGET_GIC)
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_GIC)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_GIC)
     ,its_i                => diff_i      
     ,itm_o                => cpu_it_val
     );
