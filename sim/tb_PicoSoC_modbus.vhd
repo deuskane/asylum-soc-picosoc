@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-11-06
+-- Last update: 2025-11-26
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -29,7 +29,8 @@ library work;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
-use     uvvm_util.uart_bfm_pkg.all;
+library bitvis_vip_uart;
+use     bitvis_vip_uart.uart_bfm_pkg.all;
 
 entity tb_PicoSoC_modbus is
   generic

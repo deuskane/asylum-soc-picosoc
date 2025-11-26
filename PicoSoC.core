@@ -44,9 +44,10 @@ CAPI=2:
 # 2025-11-02  2.8.0    mrosiere Add Timer (User)
 # 2025-11-10  2.8.1    mrosiere Add debug bus from uart and set to 4 the FIFO depth
 # 2025-11-22  2.8.2    mrosiere Use sbi instead pbi
+# 2025-11-26  2.8.3    mrosiere Use uvvm instead uvvm light
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.8.2
+name        : asylum:soc:PicoSoC:2.8.3
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC and Timer
 
 #=========================================
@@ -232,8 +233,7 @@ filesets:
     file_type : vhdlSource
     depend :
       - fmf:memory:flash_nor
-      - bitvis:verification:uvvm_light
-#      - ">=xilinx:primitive:unisim:11.1"
+      - bitvis:verification:uvvm
 
   #---------------------------------------
   files_basys:
