@@ -28,6 +28,7 @@
 #include "spi.h"
 #include "gic.h"
 #include "timer.h"
+#include "crc.h"
 
 //--------------------------------------
 // Address Map
@@ -39,6 +40,7 @@
 #define SPI                 0x08
 #define GIC                 0xF0
 #define TIMER               0xE0
+#define CRC                 0xD0
 
 //--------------------------------------
 // IT

@@ -25,6 +25,7 @@
 //#define DISABLE_ERROR
 //#define DISABLE_WAIT
 //#define UART_ECHO
+#define CRC_HW
 
 //--------------------------------------
 // crc16_next
@@ -33,6 +34,7 @@
 uint16_t crc16_next(uint16_t crc,
                     uint8_t  data)
 {
+#ifndef CRC_HW
   crc = crc ^ data;
 
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
@@ -43,7 +45,17 @@ uint16_t crc16_next(uint16_t crc,
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
+#else
+  uint8_t byte0;
+  uint8_t byte1;
+  
+  crc_wr(CRC,DATA0,data);
 
+  byte1 = crc_rd(CRC,CRC1);
+  byte0 = crc_rd(CRC,CRC0);
+  crc   = ((byte1<<8)|
+           (byte0));
+#endif
   return crc;
 }
 
@@ -114,15 +126,15 @@ void modbus_wait ()
 
       // Is RX Not Empty ?
       if (status != 0x00)
-    	{
-	  // Pop (and ignore)
-	  _getchar();
-	  // Clear IT
-	  gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
-	  // Restart the timer
-  	  timer_clear  (TIMER);
-	  timer_unclear(TIMER);
-    	}
+        {
+          // Pop (and ignore)
+          _getchar();
+          // Clear IT
+          gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
+          // Restart the timer
+          timer_clear  (TIMER);
+          timer_unclear(TIMER);
+        }
 
       // Get Status from UART
       status  = gic_get(TIMER);
@@ -195,9 +207,9 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
     {
 #ifndef DISABLE_ERROR
       if (modbus_id_rsp(slave_id)==0)
-	break;
+        break;
 #endif
-	
+        
       read_addr_msb  = _getchar();
       read_addr_lsb  = _getchar();
       read_len_msb   = _getchar();
@@ -207,7 +219,12 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
       crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
 
       // crc after address = 1 and read
+#ifndef CRC_HW
       crc = 0xFFFF;
+#else
+      crc_wr(CRC,CRC0,0xFF);
+      crc_wr(CRC,CRC1,0xFF);
+#endif      
       crc = crc16_next(crc,slave_id      );
       crc = crc16_next(crc,function_code );
       crc = crc16_next(crc,read_addr_msb);
@@ -218,31 +235,36 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
 #ifndef DISABLE_ERROR
       // If CRC is different, just ignore
       if (crc_rx != crc)
-	break;
+        break;
 
       // Supported Only 8b Address
       if (read_addr_msb != 0x00)
-	{
-	  errcode = MODBUS_ERR_INVALID_ADDR;
-	  break;
-	}
+        {
+          errcode = MODBUS_ERR_INVALID_ADDR;
+          break;
+        }
 
       // Supported Only 8b  
       if (read_len_msb != 0x00)
-	{
-	  errcode = MODBUS_ERR_INVALID_DATA;
-	  break;
-	}
+        {
+          errcode = MODBUS_ERR_INVALID_DATA;
+          break;
+        }
 #endif
-	
+        
       read_addr      = read_addr_lsb; // ignore MSB
       read_len       = read_len_lsb ; // ignore MSB
-	
+        
       // Response :
       // Byte 0 : Slave ID
       // Byte 1 : Function Code
       // Byte 2 : Number of read bytes
+#ifndef CRC_HW
       crc = 0xFFFF;
+#else
+      crc_wr(CRC,CRC0,0xFF);
+      crc_wr(CRC,CRC1,0xFF);
+#endif      
       crc = modbus_response(crc,slave_id     );
       crc = modbus_response(crc,function_code);
       crc = modbus_response(crc,read_len << 1); // read_len is in read word so 16b
@@ -250,16 +272,16 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
       // Byte 3 : read data MSB
       // Byte 4 : read data LSB
       for (i = 0; i < read_len; i++)
-	{
-	  //uint16_t read_data = holding_registers[read_addr + i];
-	  //crc = modbus_response(crc,(read_data >> 8  ));
-	  //crc = modbus_response(crc,(read_data & 0xFF));
+        {
+          //uint16_t read_data = holding_registers[read_addr + i];
+          //crc = modbus_response(crc,(read_data >> 8  ));
+          //crc = modbus_response(crc,(read_data & 0xFF));
 
-	  uint8_t read_data = PORT_RD(0,read_addr);
-	  crc = modbus_response(crc,0x00);
-	  crc = modbus_response(crc,read_data);
-	  read_addr ++;
-	}
+          uint8_t read_data = PORT_RD(0,read_addr);
+          crc = modbus_response(crc,0x00);
+          crc = modbus_response(crc,read_data);
+          read_addr ++;
+        }
 
       modbus_response_crc(crc);
     }
@@ -292,9 +314,9 @@ uint8_t modbus_client_write_single_register(uint8_t id)
   
 #ifndef DISABLE_ERROR
       if (modbus_id_req(slave_id)==0)
-	break;
+        break;
 #endif
-	
+        
       // Modbus uses 16b address and 16b data
       // here -> ignore MSB
             
@@ -307,7 +329,12 @@ uint8_t modbus_client_write_single_register(uint8_t id)
       crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
             
       // crc after address = 1 and write
+#ifndef CRC_HW
       crc = 0xFFFF;
+#else
+      crc_wr(CRC,CRC0,0xFF);
+      crc_wr(CRC,CRC1,0xFF);
+#endif      
       crc = crc16_next(crc,slave_id      );
       crc = crc16_next(crc,function_code );
       crc = crc16_next(crc,write_addr_msb);
@@ -318,32 +345,37 @@ uint8_t modbus_client_write_single_register(uint8_t id)
 #ifndef DISABLE_ERROR
       // If CRC is different, just ignore
       if (crc_rx != crc)
-	break;
+        break;
 
       // Supported Only 8b Address
       if (write_addr_msb != 0x00)
-	{
-	  errcode = MODBUS_ERR_INVALID_ADDR;
-	  break;
-	}
+        {
+          errcode = MODBUS_ERR_INVALID_ADDR;
+          break;
+        }
 
       // Supported Only 8b  
       if (write_data_msb != 0x00)
-	{
-	  errcode = MODBUS_ERR_INVALID_DATA;
-	  break;
-	}
+        {
+          errcode = MODBUS_ERR_INVALID_DATA;
+          break;
+        }
 #endif
-	
+        
       PORT_WR(0,write_addr_lsb,write_data_lsb);
 
 #ifndef DISABLE_ERROR
       if (modbus_id_rsp(slave_id)==0)
-	break;
+        break;
 #endif
-	
+        
       // Respons is the same like request
-      crc = 0XFFFF;
+#ifndef CRC_HW
+      crc = 0xFFFF;
+#else
+      crc_wr(CRC,CRC0,0xFF);
+      crc_wr(CRC,CRC1,0xFF);
+#endif      
       crc = modbus_response(crc,slave_id      ); 
       crc = modbus_response(crc,function_code ); 
       crc = modbus_response(crc,0x00          ); 
@@ -394,7 +426,12 @@ void modbus_client ()
   // Have Error ?
   if (errcode != 0)
     {
-      crc = 0XFFFF;
+#ifndef CRC_HW
+      crc = 0xFFFF;
+#else
+      crc_wr(CRC,CRC0,0xFF);
+      crc_wr(CRC,CRC1,0xFF);
+#endif      
       crc = modbus_response(crc,slave_id      ); 
       crc = modbus_response(crc,(function_code|0x80)); 
       crc = modbus_response(crc,errcode       ); 

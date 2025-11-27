@@ -45,10 +45,11 @@ CAPI=2:
 # 2025-11-10  2.8.1    mrosiere Add debug bus from uart and set to 4 the FIFO depth
 # 2025-11-22  2.8.2    mrosiere Use sbi instead pbi
 # 2025-11-26  2.8.3    mrosiere Use uvvm instead uvvm light
+# 2025-11-27  2.9.0    mrosiere Add CRC (User)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.8.3
-description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC and Timer
+name        : asylum:soc:PicoSoC:2.9.0
+description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer and CRC
 
 #=========================================
 generate:
@@ -216,6 +217,7 @@ filesets:
       - ">=asylum:target:techmap:1.0.0"
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
+      - ">=asylum:component:crc:1.0.0"
       - ">=asylum:communication:uart:1.0.0"
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"

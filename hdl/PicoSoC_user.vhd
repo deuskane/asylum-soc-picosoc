@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-22
+-- Last update: 2025-11-27
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,6 +24,7 @@
 -- 2025-04-02  2.3      mrosiere Use ICN
 -- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
 -- 2025-11-02  3.1      mrosiere Add Timer
+-- 2025-11-27  3.2      mrosiere Add CRC
 -------------------------------------------------------------------------------
 
 
@@ -38,6 +39,7 @@ use     asylum.UART_csr_pkg.all;
 use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
+use     asylum.crc_csr_pkg.all;
 -- Type Package
 use     asylum.sbi_pkg.all;
 -- Modules Packages
@@ -48,6 +50,7 @@ use     asylum.uart_pkg.all;
 use     asylum.spi_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
+use     asylum.crc_pkg.all;
 use     asylum.icn_pkg.all;
 
 entity PicoSoC_user is
@@ -118,8 +121,9 @@ architecture rtl of PicoSoC_user is
   constant TARGET_SPI                 : integer  := 4;
   constant TARGET_GIC                 : integer  := 5;
   constant TARGET_TIMER               : integer  := 6;
+  constant TARGET_CRC                 : integer  := 7;
   
-  constant NB_TARGET                  : positive := 7;
+  constant NB_TARGET                  : positive := 8;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => X"10"
@@ -129,6 +133,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_SPI                      => X"08"
      ,TARGET_GIC                      => X"F0"
      ,TARGET_TIMER                    => X"E0"
+     ,TARGET_CRC                      => X"D0"
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
@@ -139,6 +144,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_SPI                      => SPI_ADDR_WIDTH
      ,TARGET_GIC                      => GIC_ADDR_WIDTH
      ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
+     ,TARGET_CRC                      => CRC_ADDR_WIDTH
       );
   
   -- Signals ICN
@@ -452,6 +458,22 @@ begin  -- architecture rtl
     ,it_o                 => timer_it
     );
   
+  -----------------------------------------------------------------------------
+  -- CRC
+  -----------------------------------------------------------------------------
+  ins_sbi_crc : sbi_crc
+    generic map
+    (WIDTH_CRC        => 16      ,
+     WIDTH_DATA       => 8       ,
+     POLYNOM          => X"A001"
+      )
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_CRC)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_CRC)
+    );
+
   -----------------------------------------------------------------------------
   -- CPU 1
   -- diff cpu0 vs cpu1
