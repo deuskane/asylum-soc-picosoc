@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-27
+-- Last update: 2025-11-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -25,8 +25,8 @@
 -- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
 -- 2025-11-02  3.1      mrosiere Add Timer
 -- 2025-11-27  3.2      mrosiere Add CRC
+-- 2025-11-29  3.3      mrosiere Use CRC Generic
 -------------------------------------------------------------------------------
-
 
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -465,7 +465,13 @@ begin  -- architecture rtl
     generic map
     (WIDTH_CRC        => 16      ,
      WIDTH_DATA       => 8       ,
-     POLYNOM          => X"A001"
+     POLYNOM          => X"A001" ,
+     SHIFT_LEFT       => false   ,
+     LSB_FIRST        => true    ,
+     POLYNOM_REVERSE  => false   ,
+     REFLECT_IN       => false   ,
+     REFLECT_OUT      => false   ,
+     XOR_OUT          => (others => '0')
       )
     port map
     (clk_i                => clk         
