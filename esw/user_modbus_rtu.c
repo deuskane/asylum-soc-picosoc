@@ -60,6 +60,23 @@ uint16_t crc16_next(uint16_t crc,
 }
 
 //--------------------------------------
+// crc16_init
+//--------------------------------------
+uint16_t crc16_init()
+{
+  uint16_t crc;
+
+  crc = 0xFFFF;
+
+#ifdef CRC_HW
+  crc_wr(CRC,CRC0,0xFF);
+  crc_wr(CRC,CRC1,0xFF);
+#endif
+  
+  return crc;
+}
+
+//--------------------------------------
 // modbus_response
 // send byte to uart and accumulate into crc
 //--------------------------------------
@@ -219,12 +236,7 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
       crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
 
       // crc after address = 1 and read
-#ifndef CRC_HW
-      crc = 0xFFFF;
-#else
-      crc_wr(CRC,CRC0,0xFF);
-      crc_wr(CRC,CRC1,0xFF);
-#endif      
+      crc = crc16_init();
       crc = crc16_next(crc,slave_id      );
       crc = crc16_next(crc,function_code );
       crc = crc16_next(crc,read_addr_msb);
@@ -259,12 +271,7 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
       // Byte 0 : Slave ID
       // Byte 1 : Function Code
       // Byte 2 : Number of read bytes
-#ifndef CRC_HW
-      crc = 0xFFFF;
-#else
-      crc_wr(CRC,CRC0,0xFF);
-      crc_wr(CRC,CRC1,0xFF);
-#endif      
+      crc = crc16_init();
       crc = modbus_response(crc,slave_id     );
       crc = modbus_response(crc,function_code);
       crc = modbus_response(crc,read_len << 1); // read_len is in read word so 16b
@@ -329,12 +336,7 @@ uint8_t modbus_client_write_single_register(uint8_t id)
       crc_rx         = (crc_rx_msb<<8)|crc_rx_lsb;
             
       // crc after address = 1 and write
-#ifndef CRC_HW
-      crc = 0xFFFF;
-#else
-      crc_wr(CRC,CRC0,0xFF);
-      crc_wr(CRC,CRC1,0xFF);
-#endif      
+      crc = crc16_init();
       crc = crc16_next(crc,slave_id      );
       crc = crc16_next(crc,function_code );
       crc = crc16_next(crc,write_addr_msb);
@@ -370,12 +372,7 @@ uint8_t modbus_client_write_single_register(uint8_t id)
 #endif
         
       // Respons is the same like request
-#ifndef CRC_HW
-      crc = 0xFFFF;
-#else
-      crc_wr(CRC,CRC0,0xFF);
-      crc_wr(CRC,CRC1,0xFF);
-#endif      
+      crc = crc16_init();
       crc = modbus_response(crc,slave_id      ); 
       crc = modbus_response(crc,function_code ); 
       crc = modbus_response(crc,0x00          ); 
@@ -426,12 +423,7 @@ void modbus_client ()
   // Have Error ?
   if (errcode != 0)
     {
-#ifndef CRC_HW
-      crc = 0xFFFF;
-#else
-      crc_wr(CRC,CRC0,0xFF);
-      crc_wr(CRC,CRC1,0xFF);
-#endif      
+      crc = crc16_init();
       crc = modbus_response(crc,slave_id      ); 
       crc = modbus_response(crc,(function_code|0x80)); 
       crc = modbus_response(crc,errcode       ); 
