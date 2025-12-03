@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-29
+-- Last update: 2025-12-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ architecture rtl of PicoSoC_user is
   constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
 
   -- ICN Configuration
-  constant TARGET_ADDR_ENCODING       : string := "binary";
+  constant TARGET_ADDR_ENCODING       : string := PICOSOC_USER_ADDR_ENCODING;
   
   constant TARGET_SWITCH              : integer  := 0;
   constant TARGET_LED0                : integer  := 1;
@@ -126,14 +126,14 @@ architecture rtl of PicoSoC_user is
   constant NB_TARGET                  : positive := 8;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => X"10"
-     ,TARGET_LED0                     => X"20"
-     ,TARGET_LED1                     => X"40"
-     ,TARGET_UART                     => X"80"
-     ,TARGET_SPI                      => X"08"
-     ,TARGET_GIC                      => X"F0"
-     ,TARGET_TIMER                    => X"E0"
-     ,TARGET_CRC                      => X"D0"
+    ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
+     ,TARGET_LED0                     => PICOSOC_USER_LED0_BA  
+     ,TARGET_LED1                     => PICOSOC_USER_LED1_BA  
+     ,TARGET_UART                     => PICOSOC_USER_UART_BA  
+     ,TARGET_SPI                      => PICOSOC_USER_SPI_BA   
+     ,TARGET_GIC                      => PICOSOC_USER_GIC_BA   
+     ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
+     ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-11-22
+-- Last update: 2025-12-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ architecture rtl of PicoSoC_supervisor is
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
 
   -- ICN Configuration
-  constant TARGET_ADDR_ENCODING       : string   := "one_hot";
+  constant TARGET_ADDR_ENCODING       : string   := PICOSOC_SUPERVISOR_ADDR_ENCODING;
 
   constant TARGET_LED0                : integer  := 0;
   constant TARGET_LED1                : integer  := 1;
@@ -69,15 +69,15 @@ architecture rtl of PicoSoC_supervisor is
   constant NB_TARGET                  : positive := 3;
 
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => X"10",
-      TARGET_LED1                     => X"20",
-      TARGET_GIC                      => X"80"
+    ( TARGET_LED0                     => PICOSOC_SUPERVISOR_LED0_BA,
+      TARGET_LED1                     => PICOSOC_SUPERVISOR_LED1_BA,
+      TARGET_GIC                      => PICOSOC_SUPERVISOR_GIC_BA 
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
     ( TARGET_LED0                     => GPIO_ADDR_WIDTH,
       TARGET_LED1                     => GPIO_ADDR_WIDTH,
-      TARGET_GIC                      => GPIO_ADDR_WIDTH
+      TARGET_GIC                      => GIC_ADDR_WIDTH
       );
       
   -- Signals Clock/Reset

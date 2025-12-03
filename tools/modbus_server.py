@@ -64,15 +64,24 @@ if __name__ == "__main__":
 
         client    = modbus_connect(port=port_name, baudrate=baudrate, parity=parity)
 
-        modbus_write (client, slave_id=slave_id, address=0x0020, value=0x003C)
-        modbus_read  (client, slave_id=slave_id, address=0x0020, count=1)
+        PICOSOC_USER_SWITCH_BA  = 0x00;
+        PICOSOC_USER_LED0_BA    = 0x10;
+        PICOSOC_USER_LED1_BA    = 0x20;
+        PICOSOC_USER_UART_BA    = 0x30;
+        PICOSOC_USER_SPI_BA     = 0x40;
+        PICOSOC_USER_GIC_BA     = 0x50;
+        PICOSOC_USER_TIMER_BA   = 0x60;
+        PICOSOC_USER_CRC_BA     = 0x70;
+        
+        modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, value=0x003C)
+        modbus_read  (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, count=1)
         modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
 
         cnt        = 0
         while True:
-            res = modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
-            modbus_write (client, slave_id=slave_id, address=0x0020, value=res[0])            
-            modbus_write (client, slave_id=slave_id, address=0x0040, value=(cnt&0xFF))            
+            res = modbus_read  (client, slave_id=slave_id, address=PICOSOC_USER_SWITCH_BA, count=1)
+            modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, value=res[0])            
+            modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED1_BA, value=(cnt&0xFF))            
             cnt += 1
         
     except Exception as e:

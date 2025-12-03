@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-11-26
+-- Last update: 2025-12-03
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -115,12 +115,14 @@ architecture tb of tb_PicoSoC_modbus is
   constant C_MODBUS_WRITE          : std_logic_vector(8-1 downto 0) := x"06";
 
   -- =====[ SOC ADDRMAP ]=========================
-  constant C_SWITCH_BA             : std_logic_vector(8-1 downto 0) := x"10";
-  constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := x"20";
-  constant C_LED1_BA               : std_logic_vector(8-1 downto 0) := x"40";
-  constant C_UART_BA               : std_logic_vector(8-1 downto 0) := x"80";
-  constant C_SPI_BA                : std_logic_vector(8-1 downto 0) := x"08";
-  constant C_GIC_BA                : std_logic_vector(8-1 downto 0) := x"F0";
+  constant C_SWITCH_BA             : std_logic_vector(8-1 downto 0) := PICOSOC_USER_SWITCH_BA;
+  constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_LED0_BA  ;
+  constant C_LED1_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_LED1_BA  ;
+  constant C_UART_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_UART_BA  ;
+  constant C_SPI_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_SPI_BA   ;
+  constant C_GIC_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_GIC_BA   ;
+  constant C_TIMER_BA              : std_logic_vector(8-1 downto 0) := PICOSOC_USER_TIMER_BA ;
+  constant C_CRC_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_CRC_BA   ;
 
   -- =====[ Function ]============================
   -- Fonction CRC16 (Modbus, polynôme 0xA001)

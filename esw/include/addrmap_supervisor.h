@@ -30,6 +30,6 @@
 //--------------------------------------
 #define RST                 0x10
 #define LED                 0x20
-#define GIC                 0x80
+#define GIC                 0x40
 
 #endif
