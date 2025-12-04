@@ -3,6 +3,8 @@
 import serial
 import struct
 import time
+import hjson
+from pathlib import Path
 
 DEBUG = True  # Set to False to disable debug output
 
@@ -81,6 +83,9 @@ def write_single_register(serial_port, slave_id, address, value):
 # Example usage
 if __name__ == "__main__":
     try:
+        addrmap_hjson = hjson.loads(Path("addrmap_user.hjson").read_text(encoding="utf-8"))
+        addrmap       = {item["name"]: item["base"] for item in addrmap_hjson}
+
         port = serial.Serial(
             port='/dev/ttyUSB0',
             baudrate=9600,
@@ -92,11 +97,7 @@ if __name__ == "__main__":
         
         slave_id = 0x5A
 
-        # Read from address 0x0064
-        #read_holding_registers(port, slave_id, address=0x0064, count=1)
-
-        # Write value 0x04D2 to address 0x0065
-        write_single_register(port, slave_id, address=0x0020, value=0x0001)
+        write_single_register(port, slave_id, address=addrmap["led0"], value=0x0001)
 
     except Exception as e:
         print(f"[ERROR] {e}")

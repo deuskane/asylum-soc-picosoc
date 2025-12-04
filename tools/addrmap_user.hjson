@@ -1,0 +1,35 @@
+
+[
+  {
+    name : "switch",
+    base : 0x00
+  }
+  {	 
+    name : "led0"
+    base : 0x10
+  }
+  {	 
+    name : "led1"
+    base : 0x20
+  }
+  {	 
+    name : "uart"
+    base : 0x30
+  }
+  {	 
+    name : "spi"
+    base : 0x40
+  }
+  {	 
+    name : "gic"
+    base : 0x50
+  }
+  {	 
+    name : "timer"
+    base : 0x60
+  }
+  {	 
+    name : "crc"
+    base : 0x70
+  }
+]

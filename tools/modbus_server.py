@@ -2,6 +2,8 @@
 
 import time
 import logging
+import hjson
+from pathlib import Path
 from pymodbus.client.sync import ModbusSerialClient
 
 # === Enable pymodbus debug logging ===
@@ -57,31 +59,26 @@ def modbus_write(client: ModbusSerialClient, slave_id: int, address: int, value:
 # === Example usage ===
 if __name__ == "__main__":
     try:
-        port_name = '/dev/ttyUSB0'  # Replace with your actual serial port
-        baudrate  = 9600
-        parity    = 'N'  # Options: 'N', 'E', 'O', 'M', 'S'
-        slave_id  = 0x5A
+        port_name     = '/dev/ttyUSB0'  # Replace with your actual serial port
+        baudrate      = 9600
+        parity        = 'N'  # Options: 'N', 'E', 'O', 'M', 'S'
+        slave_id      = 0x5A
 
-        client    = modbus_connect(port=port_name, baudrate=baudrate, parity=parity)
 
-        PICOSOC_USER_SWITCH_BA  = 0x00;
-        PICOSOC_USER_LED0_BA    = 0x10;
-        PICOSOC_USER_LED1_BA    = 0x20;
-        PICOSOC_USER_UART_BA    = 0x30;
-        PICOSOC_USER_SPI_BA     = 0x40;
-        PICOSOC_USER_GIC_BA     = 0x50;
-        PICOSOC_USER_TIMER_BA   = 0x60;
-        PICOSOC_USER_CRC_BA     = 0x70;
-        
-        modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, value=0x003C)
-        modbus_read  (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, count=1)
-        modbus_read  (client, slave_id=slave_id, address=0x0010, count=1)
+        addrmap_hjson = hjson.loads(Path("addrmap_user.hjson").read_text(encoding="utf-8"))
+        addrmap       = {item["name"]: item["base"] for item in addrmap_hjson}
+                      
+        client        = modbus_connect(port=port_name, baudrate=baudrate, parity=parity)
 
-        cnt        = 0
+        modbus_write (client, slave_id=slave_id, address=addrmap["led0"], value=0x003C)
+        modbus_read  (client, slave_id=slave_id, address=addrmap["led0"], count=1)
+        modbus_read  (client, slave_id=slave_id, address=addrmap["led0"], count=1)
+
+        cnt           = 0
         while True:
-            res = modbus_read  (client, slave_id=slave_id, address=PICOSOC_USER_SWITCH_BA, count=1)
-            modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED0_BA, value=res[0])            
-            modbus_write (client, slave_id=slave_id, address=PICOSOC_USER_LED1_BA, value=(cnt&0xFF))            
+            res = modbus_read  (client, slave_id=slave_id, address=addrmap["switch"], count=1)
+            modbus_write (client, slave_id=slave_id, address=addrmap["led0"], value=res[0])            
+            modbus_write (client, slave_id=slave_id, address=addrmap["led1"], value=(cnt&0xFF))            
             cnt += 1
         
     except Exception as e:
