@@ -72,7 +72,6 @@ package PicoSoC_pkg is
     spi_ready   : std_logic;
 
     uart        : uart_debug_t;
-
     
   end record PicoSoC_user_debug_t;
 

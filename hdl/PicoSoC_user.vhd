@@ -256,39 +256,6 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
-  -- CPU Signals
-  --  * ROM interface
-  --  * ICN interface
-  --  * IT  interface
-  --
-  -- If safety none or lock-step : take cpu 0
-  -- else if tmr : vote all cpu output
-  -----------------------------------------------------------------------------
-  gen_cpu_vote: if SAFETY = "tmr"
-  generate
-    cpu_ics        <= ((cpu0_ics     and cpu1_ics    ) or
-                       (cpu1_ics     and cpu2_ics    ) or
-                       (cpu2_ics     and cpu0_ics    ));
-    cpu_iaddr      <= ((cpu0_iaddr   and cpu1_iaddr  ) or
-                       (cpu1_iaddr   and cpu2_iaddr  ) or
-                       (cpu2_iaddr   and cpu0_iaddr  ));
-    cpu_sbi_ini    <= ((cpu0_sbi_ini and cpu1_sbi_ini) or
-                       (cpu1_sbi_ini and cpu2_sbi_ini) or
-                       (cpu2_sbi_ini and cpu0_sbi_ini));
-    cpu_it_ack     <= ((cpu0_it_ack  and cpu1_it_ack ) or
-                       (cpu1_it_ack  and cpu2_it_ack ) or
-                       (cpu2_it_ack  and cpu0_it_ack ));
-  end generate;
-
-  gen_cpu_vote_b: if SAFETY /= "tmr"
-  generate
-    cpu_ics        <= cpu0_ics     ;
-    cpu_iaddr      <= cpu0_iaddr   ;
-    cpu_sbi_ini    <= cpu0_sbi_ini ;
-    cpu_it_ack     <= cpu0_it_ack  ;
-  end generate;
-  
-  -----------------------------------------------------------------------------
   -- Interconnect
   -- From 1 Initiator to N Target
   -----------------------------------------------------------------------------
@@ -589,6 +556,39 @@ begin  -- architecture rtl
     diff_o(2) <= '0';
   end generate gen_cpu2_disable;
 
+  -----------------------------------------------------------------------------
+  -- CPU Signals
+  --  * ROM interface
+  --  * ICN interface
+  --  * IT  interface
+  --
+  -- If safety none or lock-step : take cpu 0
+  -- else if tmr : vote all cpu output
+  -----------------------------------------------------------------------------
+  gen_cpu_vote: if SAFETY = "tmr"
+  generate
+    cpu_ics        <= ((cpu0_ics     and cpu1_ics    ) or
+                       (cpu1_ics     and cpu2_ics    ) or
+                       (cpu2_ics     and cpu0_ics    ));
+    cpu_iaddr      <= ((cpu0_iaddr   and cpu1_iaddr  ) or
+                       (cpu1_iaddr   and cpu2_iaddr  ) or
+                       (cpu2_iaddr   and cpu0_iaddr  ));
+    cpu_sbi_ini    <= ((cpu0_sbi_ini and cpu1_sbi_ini) or
+                       (cpu1_sbi_ini and cpu2_sbi_ini) or
+                       (cpu2_sbi_ini and cpu0_sbi_ini));
+    cpu_it_ack     <= ((cpu0_it_ack  and cpu1_it_ack ) or
+                       (cpu1_it_ack  and cpu2_it_ack ) or
+                       (cpu2_it_ack  and cpu0_it_ack ));
+  end generate;
+
+  gen_cpu_vote_b: if SAFETY /= "tmr"
+  generate
+    cpu_ics        <= cpu0_ics     ;
+    cpu_iaddr      <= cpu0_iaddr   ;
+    cpu_sbi_ini    <= cpu0_sbi_ini ;
+    cpu_it_ack     <= cpu0_it_ack  ;
+  end generate;
+  
   -----------------------------------------------------------------------------
   -- Fault Injection
   -----------------------------------------------------------------------------
