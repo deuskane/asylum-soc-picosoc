@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-12-03
+-- Last update: 2025-12-04
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,8 +24,6 @@
 -- 2025-04-02  2.3      mrosiere Use ICN
 -- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
 -- 2025-11-02  3.1      mrosiere Add Timer
--- 2025-11-27  3.2      mrosiere Add CRC
--- 2025-11-29  3.3      mrosiere Use CRC Generic
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -39,7 +37,6 @@ use     asylum.UART_csr_pkg.all;
 use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
-use     asylum.crc_csr_pkg.all;
 -- Type Package
 use     asylum.sbi_pkg.all;
 -- Modules Packages
@@ -50,7 +47,6 @@ use     asylum.uart_pkg.all;
 use     asylum.spi_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
-use     asylum.crc_pkg.all;
 use     asylum.icn_pkg.all;
 
 entity PicoSoC_user is
@@ -65,7 +61,7 @@ entity PicoSoC_user is
     ;NB_SWITCH             : positive := 8
     ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;SAFETY                : string   := "none" -- "none" / "lock-step" / "tmr"
     ;FAULT_INJECTION       : boolean  := False
     
     ;ICN_ALGO_SEL          : string := "or"
@@ -121,9 +117,8 @@ architecture rtl of PicoSoC_user is
   constant TARGET_SPI                 : integer  := 4;
   constant TARGET_GIC                 : integer  := 5;
   constant TARGET_TIMER               : integer  := 6;
-  constant TARGET_CRC                 : integer  := 7;
   
-  constant NB_TARGET                  : positive := 8;
+  constant NB_TARGET                  : positive := 7;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
@@ -133,7 +128,6 @@ architecture rtl of PicoSoC_user is
      ,TARGET_SPI                      => PICOSOC_USER_SPI_BA   
      ,TARGET_GIC                      => PICOSOC_USER_GIC_BA   
      ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
-     ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
@@ -144,7 +138,6 @@ architecture rtl of PicoSoC_user is
      ,TARGET_SPI                      => SPI_ADDR_WIDTH
      ,TARGET_GIC                      => GIC_ADDR_WIDTH
      ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
-     ,TARGET_CRC                      => CRC_ADDR_WIDTH
       );
   
   -- Signals ICN
@@ -424,28 +417,6 @@ begin  -- architecture rtl
     ,timer_clear_i        => timer_clear
     ,it_o                 => timer_it
     );
-  
-  -----------------------------------------------------------------------------
-  -- CRC
-  -----------------------------------------------------------------------------
-  ins_sbi_crc : sbi_crc
-    generic map
-    (WIDTH_CRC        => 16      ,
-     WIDTH_DATA       => 8       ,
-     POLYNOM          => X"A001" ,
-     SHIFT_LEFT       => false   ,
-     LSB_FIRST        => true    ,
-     POLYNOM_REVERSE  => false   ,
-     REFLECT_IN       => false   ,
-     REFLECT_OUT      => false   ,
-     XOR_OUT          => (others => '0')
-      )
-    port map
-    (clk_i                => clk         
-    ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_CRC)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_CRC)
-    );
 
   -----------------------------------------------------------------------------
   -- CPU 1
@@ -453,43 +424,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
-    -- Lock Step
-    ins_sbi_OpenBlaze8_1 : sbi_OpenBlaze8
-      generic map
-      (RAM_DEPTH            => 256,
-       REGFILE_SYNC_READ    => true
-       )
-      port map
-      (clk_i                => clk           
-      ,cke_i                => '1'     
-      ,arstn_i              => arst_b   
-      ,ics_o                => cpu1_ics    
-      ,iaddr_o              => cpu1_iaddr  
-      ,idata_i              => cpu1_idata  
-      ,sbi_ini_o            => cpu1_sbi_ini
-      ,sbi_tgt_i            => cpu_sbi_tgt 
-      ,interrupt_i          => cpu_it_val  
-      ,interrupt_ack_o      => cpu1_it_ack
-       );
-
-    diff(0) <= '1' when (   (cpu0_ics           /= cpu1_ics          )
-                         or (cpu0_iaddr         /= cpu1_iaddr        )
-                         or (cpu0_it_ack        /= cpu1_it_ack       )
-                       --or (cpu0_sbi_ini       /= cpu1_sbi_ini      )
-                            ) else
-               '0';
-    
-    p_diff_r: process (clk, arst_b) is
-    begin  -- process p_diff_r
-      if arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(0) <= '0';
-      elsif clk'event and clk = '1' then  -- rising clock edge
-        -- Trap 1
-        diff_r(0) <= diff_r(0) or diff(0);
-      end if;
-    end process p_diff_r;
-
-    diff_o(0) <= diff_r(0);
   end generate gen_cpu1_enable;
   
   gen_cpu1_disable: if CPU1_ENABLE = false
@@ -504,50 +438,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_cpu2_enable: if CPU2_ENABLE = true
   generate
-    -- TMR
-    ins_sbi_OpenBlaze8_2 : sbi_OpenBlaze8
-      generic map
-      (RAM_DEPTH            => 256,
-       REGFILE_SYNC_READ    => true
-       )
-      port map
-      (clk_i                => clk           
-      ,cke_i                => '1'     
-      ,arstn_i              => arst_b   
-      ,ics_o                => cpu2_ics    
-      ,iaddr_o              => cpu2_iaddr  
-      ,idata_i              => cpu2_idata  
-      ,sbi_ini_o            => cpu2_sbi_ini
-      ,sbi_tgt_i            => cpu_sbi_tgt 
-      ,interrupt_i          => cpu_it_val  
-      ,interrupt_ack_o      => cpu2_it_ack
-       );
-
-    diff(1) <= '1' when (   (cpu1_ics           /= cpu2_ics          )
-                         or (cpu1_iaddr         /= cpu2_iaddr        )
-                         or (cpu1_it_ack        /= cpu2_it_ack       )
-                       --or (cpu1_sbi_ini       /= cpu2_sbi_ini      )
-                         ) else
-               '0';
-    diff(2) <= '1' when (   (cpu2_ics           /= cpu0_ics          )
-                         or (cpu2_iaddr         /= cpu0_iaddr        )
-                         or (cpu2_it_ack        /= cpu0_it_ack       )
-                       --or (cpu2_sbi_ini       /= cpu0_sbi_ini      )
-                         ) else
-               '0';
-    
-    p_diff_r: process (clk, arst_b) is
-    begin  -- process p_diff_r
-      if arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(2 downto 1) <= "00";
-      elsif clk'event and clk = '1' then  -- rising clock edge
-
-        -- Trap 1
-        diff_r(2 downto 1) <= diff_r(2 downto 1) or diff(2 downto 1);
-      end if;
-    end process p_diff_r;
-
-    diff_o(2 downto 1) <= diff_r(2 downto 1);
   end generate gen_cpu2_enable;
   
   gen_cpu2_disable: if CPU2_ENABLE = false
@@ -565,52 +455,35 @@ begin  -- architecture rtl
   -- If safety none or lock-step : take cpu 0
   -- else if tmr : vote all cpu output
   -----------------------------------------------------------------------------
-  gen_cpu_vote: if SAFETY = "tmr"
-  generate
-    cpu_ics        <= ((cpu0_ics     and cpu1_ics    ) or
-                       (cpu1_ics     and cpu2_ics    ) or
-                       (cpu2_ics     and cpu0_ics    ));
-    cpu_iaddr      <= ((cpu0_iaddr   and cpu1_iaddr  ) or
-                       (cpu1_iaddr   and cpu2_iaddr  ) or
-                       (cpu2_iaddr   and cpu0_iaddr  ));
-    cpu_sbi_ini    <= ((cpu0_sbi_ini and cpu1_sbi_ini) or
-                       (cpu1_sbi_ini and cpu2_sbi_ini) or
-                       (cpu2_sbi_ini and cpu0_sbi_ini));
-    cpu_it_ack     <= ((cpu0_it_ack  and cpu1_it_ack ) or
-                       (cpu1_it_ack  and cpu2_it_ack ) or
-                       (cpu2_it_ack  and cpu0_it_ack ));
-  end generate;
-
-  gen_cpu_vote_b: if SAFETY /= "tmr"
+  gen_safety_none    : if SAFETY = "none"
   generate
     cpu_ics        <= cpu0_ics     ;
     cpu_iaddr      <= cpu0_iaddr   ;
     cpu_sbi_ini    <= cpu0_sbi_ini ;
     cpu_it_ack     <= cpu0_it_ack  ;
   end generate;
+
+  gen_safety_lockstep: if SAFETY = "lock-step"
+  generate
+  end generate;
+
+  gen_safety_tmr     : if SAFETY = "tmr"
+  generate
+  end generate;
   
   -----------------------------------------------------------------------------
   -- Fault Injection
   -----------------------------------------------------------------------------
-  gen_inject_error:   if FAULT_INJECTION = true
-  generate
-    cpu0_idata(17)          <= cpu_idata(17) xor inject_error_i(0);
-    cpu0_idata(16 downto 0) <= cpu_idata(16 downto 0);
-
-    cpu1_idata(17)          <= cpu_idata(17) xor inject_error_i(1);
-    cpu1_idata(16 downto 0) <= cpu_idata(16 downto 0);
-
-    cpu2_idata(17)          <= cpu_idata(17) xor inject_error_i(2);
-    cpu2_idata(16 downto 0) <= cpu_idata(16 downto 0);
-        
-  end generate gen_inject_error;
-
   gen_inject_error_n: if FAULT_INJECTION = false
   generate
     cpu0_idata              <= cpu_idata;
     cpu1_idata              <= cpu_idata;        
     cpu2_idata              <= cpu_idata;        
   end generate gen_inject_error_n;
+
+  gen_inject_error:   if FAULT_INJECTION = true
+  generate
+  end generate gen_inject_error;
 
   -----------------------------------------------------------------------------
   -- Debug

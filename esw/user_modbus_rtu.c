@@ -25,7 +25,7 @@
 //#define DISABLE_ERROR
 //#define DISABLE_WAIT
 //#define UART_ECHO
-#define CRC_HW
+//#define CRC_HW
 
 //--------------------------------------
 // crc16_next
@@ -46,16 +46,8 @@ uint16_t crc16_next(uint16_t crc,
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
   if ((crc & 0x0001) != 0) {crc >>= 1; crc ^= 0xA001;} else { crc >>= 1; }
 #else
-  uint8_t byte0;
-  uint8_t byte1;
-  
-  crc_wr(CRC,DATA0,data);
-
-  byte1 = crc_rd(CRC,CRC1);
-  byte0 = crc_rd(CRC,CRC0);
-  crc   = ((byte1<<8)|
-           (byte0));
 #endif
+
   return crc;
 }
 
@@ -69,8 +61,6 @@ uint16_t crc16_init()
   crc = 0xFFFF;
 
 #ifdef CRC_HW
-  crc_wr(CRC,CRC0,0xFF);
-  crc_wr(CRC,CRC1,0xFF);
 #endif
   
   return crc;
