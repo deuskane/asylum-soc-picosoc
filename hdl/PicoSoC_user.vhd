@@ -66,7 +66,6 @@ entity PicoSoC_user is
     ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
     ;SAFETY                : string   := "none" -- "none" / "lock-step" / "tmr"
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;ICN_ALGO_SEL          : string   := "or"
