@@ -46,9 +46,10 @@ CAPI=2:
 # 2025-11-22  2.8.2    mrosiere Use sbi instead pbi
 # 2025-11-26  2.8.3    mrosiere Use uvvm instead uvvm light
 # 2025-11-27  2.9.0    mrosiere Add CRC (User)
+# 2025-12-06  2.9.1    mrosiere Add Generic LOCK_STEP_DEPTH (User)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.9.0
+name        : asylum:soc:PicoSoC:2.9.1
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer and CRC
 
 #=========================================

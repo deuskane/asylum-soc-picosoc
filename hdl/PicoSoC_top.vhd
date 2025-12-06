@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-11-22
+-- Last update: 2025-12-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -43,6 +43,7 @@ entity PicoSoC_top is
     ;RESET_POLARITY   : string   := "low"       -- "high" / "low"
     ;SUPERVISOR       : boolean  := True 
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH  : natural  := 2
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
@@ -205,7 +206,8 @@ begin  -- architecture rtl
     ,NB_SWITCH            => NB_SWITCH          
     ,NB_LED0              => NB_LED0_USER       
     ,NB_LED1              => NB_LED1_USER       
-    ,SAFETY               => SAFETY             
+    ,SAFETY               => SAFETY
+    ,LOCK_STEP_DEPTH      => LOCK_STEP_DEPTH
     ,FAULT_INJECTION      => FAULT_INJECTION    
     ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
     )
