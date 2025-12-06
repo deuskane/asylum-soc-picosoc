@@ -26,22 +26,33 @@ package PicoSoC_pkg is
   -----------------------------------------------------------------------------
   -- Address Map
   -----------------------------------------------------------------------------
-  constant PICOSOC_USER_ADDR_ENCODING       : string := "binary";
+  constant PICOSOC_USER_ADDR_ENCODING          : string := "binary";
+                                               
+  constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"00";
+  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"30";
+  constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"40";
+  constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"50";
+  constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"60";
+  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"70";
+                                               
+  constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "one_hot";
+                                               
+  constant PICOSOC_SUPERVISOR_LED0_BA          : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_SUPERVISOR_LED1_BA          : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_SUPERVISOR_GIC_BA           : std_logic_vector(8-1 downto 0) := X"40";
 
-  constant PICOSOC_USER_SWITCH_BA           : std_logic_vector(8-1 downto 0) := X"00";
-  constant PICOSOC_USER_LED0_BA             : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_USER_LED1_BA             : std_logic_vector(8-1 downto 0) := X"20";
-  constant PICOSOC_USER_UART_BA             : std_logic_vector(8-1 downto 0) := X"30";
-  constant PICOSOC_USER_SPI_BA              : std_logic_vector(8-1 downto 0) := X"40";
-  constant PICOSOC_USER_GIC_BA              : std_logic_vector(8-1 downto 0) := X"50";
-  constant PICOSOC_USER_TIMER_BA            : std_logic_vector(8-1 downto 0) := X"60";
-  constant PICOSOC_USER_CRC_BA              : std_logic_vector(8-1 downto 0) := X"70";
-
-  constant PICOSOC_SUPERVISOR_ADDR_ENCODING : string := "one_hot";
-
-  constant PICOSOC_SUPERVISOR_LED0_BA       : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_SUPERVISOR_LED1_BA       : std_logic_vector(8-1 downto 0) := X"20";
-  constant PICOSOC_SUPERVISOR_GIC_BA        : std_logic_vector(8-1 downto 0) := X"40";
+  -----------------------------------------------------------------------------
+  -- GIC Map
+  -----------------------------------------------------------------------------
+  constant PICOSOC_USER_GIC_IT_USER            : natural  := 0;
+  constant PICOSOC_USER_GIC_UART               : natural  := 1;
+  constant PICOSOC_USER_GIC_TIMER              : natural  := 2;
+  
+  constant PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1 : natural  := 0;
+  constant PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2 : natural  := 1;
+  constant PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0 : natural  := 2;
   
   -----------------------------------------------------------------------------
   -- PicoSoC_user_debug_t

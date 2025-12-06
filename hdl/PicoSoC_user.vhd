@@ -206,9 +206,9 @@ architecture rtl of PicoSoC_user is
   signal   uart_it                    : std_logic;
   
   -- Interruption Vector
-  constant GIC_IT_USER                : natural  := 0;
-  constant GIC_UART                   : natural  := 1;
-  constant GIC_TIMER                  : natural  := 2;
+  constant GIC_IT_USER                : natural  := PICOSOC_USER_GIC_IT_USER;
+  constant GIC_UART                   : natural  := PICOSOC_USER_GIC_UART   ;
+  constant GIC_TIMER                  : natural  := PICOSOC_USER_GIC_TIMER  ;
 
   constant GIC_WIDTH                  : positive := 3;
 
@@ -220,6 +220,12 @@ architecture rtl of PicoSoC_user is
   signal   timer_it                   : std_logic;
   
   -- Signals Safety
+
+  constant DIFF_CPU0_VS_CPU1          : natural  := PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1;
+  constant DIFF_CPU1_VS_CPU2          : natural  := PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2;
+  constant DIFF_CPU2_VS_CPU0          : natural  := PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0;
+
+  
   signal   diff                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
@@ -526,29 +532,29 @@ begin  -- architecture rtl
     cpu1_sbi_tgt <= cpu0_sbi_tgt (LOCK_STEP_DEPTH_INT);
     cpu1_it_val  <= cpu0_it_val  (LOCK_STEP_DEPTH_INT);
 
-    diff(0) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
-                         or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
-                         or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
-                       --or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
-                            ) else
-               '0';
+    diff(DIFF_CPU0_VS_CPU1) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
+                                         or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
+                                         or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
+                                       --or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
+                                            ) else
+                               '0';
     
     p_diff_r: process (clk, cpu1_arst_b) is
     begin  -- process p_diff_r
       if cpu1_arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(0) <= '0';
+        diff_r(DIFF_CPU0_VS_CPU1) <= '0';
       elsif rising_edge(clk) then  -- rising clock edge
         -- Trap 1
-        diff_r(0) <= diff_r(0) or diff(0);
+        diff_r(DIFF_CPU0_VS_CPU1) <= diff_r(DIFF_CPU0_VS_CPU1) or diff(DIFF_CPU0_VS_CPU1);
       end if;
     end process p_diff_r;
 
-    diff_o(0) <= diff_r(0);
+    diff_o(DIFF_CPU0_VS_CPU1) <= diff_r(DIFF_CPU0_VS_CPU1);
   end generate gen_cpu1_enable;
 
   gen_cpu1_disable: if CPU1_ENABLE = false
   generate
-    diff_o(0) <= '0';
+    diff_o(DIFF_CPU0_VS_CPU1) <= '0';
   end generate gen_cpu1_disable;
 
   -----------------------------------------------------------------------------
@@ -582,13 +588,13 @@ begin  -- architecture rtl
     cpu2_sbi_tgt   <= cpu_sbi_tgt  ;
     cpu2_it_val    <= cpu_it_val   ;
 
-    diff(1) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
-                         or (cpu1_iaddr   /= cpu2_iaddr        )
-                         or (cpu1_it_ack  /= cpu2_it_ack       )
-                       --or (cpu1_sbi_ini /= cpu2_sbi_ini      )
-                         ) else
-               '0';
-    diff(2) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
+    diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
+                                         or (cpu1_iaddr   /= cpu2_iaddr        )
+                                         or (cpu1_it_ack  /= cpu2_it_ack       )
+                                       --or (cpu1_sbi_ini /= cpu2_sbi_ini      )
+                                         ) else
+                               '0';
+    diff(DIFF_CPU2_VS_CPU0) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
                          or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
                          or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
                        --or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
@@ -598,21 +604,24 @@ begin  -- architecture rtl
     p_diff_r: process (clk, arst_b) is
     begin  -- process p_diff_r
       if arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(2 downto 1) <= "00";
+        diff_r(DIFF_CPU1_VS_CPU2) <= '0';
+        diff_r(DIFF_CPU2_VS_CPU0) <= '0';
       elsif rising_edge(clk) then  -- rising clock edge
 
         -- Trap 1
-        diff_r(2 downto 1) <= diff_r(2 downto 1) or diff(2 downto 1);
+        diff_r(DIFF_CPU1_VS_CPU2) <= diff_r(DIFF_CPU1_VS_CPU2) or diff(DIFF_CPU1_VS_CPU2);
+        diff_r(DIFF_CPU2_VS_CPU0) <= diff_r(DIFF_CPU2_VS_CPU0) or diff(DIFF_CPU2_VS_CPU0);
       end if;
     end process p_diff_r;
 
-    diff_o(2 downto 1) <= diff_r(2 downto 1);
+    diff_o(DIFF_CPU1_VS_CPU2) <= diff_r(DIFF_CPU1_VS_CPU2);
+    diff_o(DIFF_CPU2_VS_CPU0) <= diff_r(DIFF_CPU2_VS_CPU0);
   end generate gen_cpu2_enable;
   
   gen_cpu2_disable: if CPU2_ENABLE = false
   generate
-    diff_o(1) <= '0';
-    diff_o(2) <= '0';
+    diff_o(DIFF_CPU1_VS_CPU2) <= '0';
+    diff_o(DIFF_CPU2_VS_CPU0) <= '0';
   end generate gen_cpu2_disable;
 
   -----------------------------------------------------------------------------
