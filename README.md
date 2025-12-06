@@ -347,11 +347,12 @@ The `sim/` folder contains testbenches and simulation scenarios for comprehensiv
 
 **Purpose:** Specialized testbench for Modbus RTU protocol validation
 
-**Description:** Uses UVVM (Universal Verification Methodology) and Bitvis VIP (Verification IP) UART BFM for realistic Modbus protocol testing. Enables comprehensive validation of the Modbus RTU server implementation.
+**Description:** Uses UVVM (Universal Verification Methodology) framework with UART VVC (Verification Component) from Bitvis for realistic Modbus protocol testing. Enables comprehensive validation of the Modbus RTU server implementation using UVVM's queue-based command interface.
 
 **Key Features:**
 - UVVM-based verification framework
-- UART BFM for Modbus protocol stimulus
+- UART VVC (Verification Component) for protocol-aware stimulus and response checking
+- Queue-based command sequencing for flexible test scenarios
 - Register read/write operation testing
 - Modbus compliance verification
 - CRC validation

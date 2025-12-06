@@ -30,8 +30,8 @@ library work;
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
 library bitvis_vip_uart;
-use     bitvis_vip_uart.vip_uart_pkg.all;
-context bitvis_vip_uart.vip_uart_context;
+use     bitvis_vip_uart.vvc_methods_pkg.all;
+use     bitvis_vip_uart.vvc_context.all;
 
 entity tb_PicoSoC_modbus is
   generic
@@ -92,23 +92,6 @@ architecture tb of tb_PicoSoC_modbus is
   -- =====[ TB Constants ]========================
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
   constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
-  
-  constant C_UART_VIP_CONFIG       : t_uart_config := (
-    bit_time                              => C_UART_BIT_TIME,
-    num_data_bits                         => 8,
-    idle_state                            => '1',
-    num_stop_bits                         => STOP_BITS_ONE,
-    parity                                => PARITY_NONE,
-    timeout                               => 0 ns,
-    timeout_severity                      => error,
-    num_bytes_to_log_before_expected_data => 10,
-    match_strictness                      => MATCH_EXACT,
-    id_for_bfm                            => ID_BFM,
-    id_for_bfm_wait                       => ID_BFM_WAIT,
-    id_for_bfm_poll                       => ID_BFM_POLL,
-    id_for_bfm_poll_summary               => ID_BFM_POLL_SUMMARY,
-    error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
-    );
 
   -- =====[ MODBUS ]==============================
   constant C_MODBUS_SLAVE_ID       : std_logic_vector(8-1 downto 0) := x"5A";
@@ -205,16 +188,16 @@ begin  -- architecture tb
   clock_generator(clk_i, cke, C_CLK_PERIOD, "TB Clock", 50);
 
   ------------------------------------------------
-  -- UART VIP Instance
+  -- UART VVC Instance
   ------------------------------------------------
-  uart_vip : entity bitvis_vip_uart.uart_vip
+  uart_vvc : entity bitvis_vip_uart.uart_vvc
     generic map (
       GC_INSTANCE_IDX => 0
     )
     port map (
       clk    => clk_i,
-      uart_rxd => uart_tx_o,   -- DUT output connects to VIP RX input
-      uart_txd => uart_rx_i    -- VIP TX output connects to DUT input
+      uart_rxd => uart_tx_o,   -- DUT output connects to VVC RX input
+      uart_txd => uart_rx_i    -- VVC TX output connects to DUT input
     );
 
   ------------------------------------------------
@@ -240,7 +223,7 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_transmit(UART_VIP_0, data_value, msg);
+      uart_transmit(UART_VVCT, 0, data_value, msg);
       modbus_crc := crc16_next(modbus_crc,data_value);
       debug_crc  <= modbus_crc;
     end;
@@ -249,8 +232,8 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_transmit(UART_VIP_0, modbus_crc( 7 downto 0),msg);
-      uart_transmit(UART_VIP_0, modbus_crc(15 downto 8),msg);
+      uart_transmit(UART_VVCT, 0, modbus_crc( 7 downto 0),msg);
+      uart_transmit(UART_VVCT, 0, modbus_crc(15 downto 8),msg);
     end;
 
     procedure modbus_rx_begin(
@@ -268,7 +251,7 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_expect(UART_VIP_0, data_exp, msg);
+      uart_expect(UART_VVCT, 0, data_exp, msg);
       modbus_crc := crc16_next(modbus_crc,data_exp);
       debug_crc  <= modbus_crc;
     end;
@@ -277,8 +260,8 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_expect(UART_VIP_0, modbus_crc( 7 downto 0),msg);
-      uart_expect(UART_VIP_0, modbus_crc(15 downto 8),msg);
+      uart_expect(UART_VVCT, 0, modbus_crc( 7 downto 0),msg);
+      uart_expect(UART_VVCT, 0, modbus_crc(15 downto 8),msg);
     end;
 
     
@@ -368,8 +351,9 @@ begin  -- architecture tb
 
     log(ID_LOG_HDR, "Start Simulation of TB for IRQC", C_SCOPE);
     
-    -- Configure UART VIP
-    uart_set_config(UART_VIP_0, C_UART_VIP_CONFIG, "UART VIP Configuration");
+    -- Configure UART VVC bit timing
+    uart_set_bfm_config(UART_VVCT, 0, RX, C_UART_BIT_TIME, "Set UART RX bit time");
+    uart_set_bfm_config(UART_VVCT, 0, TX, C_UART_BIT_TIME, "Set UART TX bit time");
     
     ------------------------------------------------------------
 
