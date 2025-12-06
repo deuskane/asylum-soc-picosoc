@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-12-03
+-- Last update: 2025-12-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -157,25 +157,34 @@ architecture rtl of PicoSoC_user is
   signal   arst_b                     : std_logic;
 
   -- Signals CPUs
+  signal   cpu0_arst_b                : std_logic;
   signal   cpu0_ics                   : std_logic;
   signal   cpu0_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu0_idata                 : std_logic_vector(18-1 downto 0);
   signal   cpu0_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu0_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu0_it_val                : std_logic;
   signal   cpu0_it_ack                : std_logic;
   
+  signal   cpu1_arst_b                : std_logic;
   signal   cpu1_ics                   : std_logic;
   signal   cpu1_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu1_idata                 : std_logic_vector(18-1 downto 0);
   signal   cpu1_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu1_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu1_it_val                : std_logic;
   signal   cpu1_it_ack                : std_logic;
   
+  signal   cpu2_arst_b                : std_logic;
   signal   cpu2_ics                   : std_logic;
   signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
   signal   cpu2_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu2_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu2_it_val                : std_logic;
   signal   cpu2_it_ack                : std_logic;
 
   -- Signals CPU (post lockstep / TMR)
@@ -234,15 +243,19 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
-    ,arstn_i              => arst_b      
+    ,arstn_i              => cpu0_arst_b      
     ,ics_o                => cpu0_ics    
     ,iaddr_o              => cpu0_iaddr  
     ,idata_i              => cpu0_idata  
     ,sbi_ini_o            => cpu0_sbi_ini
-    ,sbi_tgt_i            => cpu_sbi_tgt 
-    ,interrupt_i          => cpu_it_val  
+    ,sbi_tgt_i            => cpu0_sbi_tgt 
+    ,interrupt_i          => cpu0_it_val  
     ,interrupt_ack_o      => cpu0_it_ack
     );
+
+  cpu0_arst_b    <= arst_b       ;
+  cpu0_sbi_tgt   <= cpu_sbi_tgt  ;
+  cpu0_it_val    <= cpu_it_val   ;
 
   -----------------------------------------------------------------------------
   -- CPU ROM
@@ -462,15 +475,19 @@ begin  -- architecture rtl
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
-      ,arstn_i              => arst_b   
+      ,arstn_i              => cpu1_arst_b   
       ,ics_o                => cpu1_ics    
       ,iaddr_o              => cpu1_iaddr  
       ,idata_i              => cpu1_idata  
       ,sbi_ini_o            => cpu1_sbi_ini
-      ,sbi_tgt_i            => cpu_sbi_tgt 
-      ,interrupt_i          => cpu_it_val  
+      ,sbi_tgt_i            => cpu1_sbi_tgt 
+      ,interrupt_i          => cpu1_it_val  
       ,interrupt_ack_o      => cpu1_it_ack
        );
+
+    cpu1_arst_b    <= arst_b       ;
+    cpu1_sbi_tgt   <= cpu_sbi_tgt  ;
+    cpu1_it_val    <= cpu_it_val   ;
 
     diff(0) <= '1' when (   (cpu0_ics           /= cpu1_ics          )
                          or (cpu0_iaddr         /= cpu1_iaddr        )
@@ -513,15 +530,19 @@ begin  -- architecture rtl
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
-      ,arstn_i              => arst_b   
+      ,arstn_i              => cpu2_arst_b   
       ,ics_o                => cpu2_ics    
       ,iaddr_o              => cpu2_iaddr  
       ,idata_i              => cpu2_idata  
       ,sbi_ini_o            => cpu2_sbi_ini
-      ,sbi_tgt_i            => cpu_sbi_tgt 
-      ,interrupt_i          => cpu_it_val  
+      ,sbi_tgt_i            => cpu2_sbi_tgt 
+      ,interrupt_i          => cpu2_it_val  
       ,interrupt_ack_o      => cpu2_it_ack
        );
+
+    cpu2_arst_b    <= arst_b       ;
+    cpu2_sbi_tgt   <= cpu_sbi_tgt  ;
+    cpu2_it_val    <= cpu_it_val   ;
 
     diff(1) <= '1' when (   (cpu1_ics           /= cpu2_ics          )
                          or (cpu1_iaddr         /= cpu2_iaddr        )
