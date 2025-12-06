@@ -30,7 +30,8 @@ library work;
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
 library bitvis_vip_uart;
-use     bitvis_vip_uart.uart_bfm_pkg.all;
+use     bitvis_vip_uart.vip_uart_pkg.all;
+context bitvis_vip_uart.vip_uart_context;
 
 entity tb_PicoSoC_modbus is
   generic
@@ -92,13 +93,13 @@ architecture tb of tb_PicoSoC_modbus is
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
   constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
   
-  constant C_UART_BFM_CONFIG       : t_uart_bfm_config := (
+  constant C_UART_VIP_CONFIG       : t_uart_config := (
     bit_time                              => C_UART_BIT_TIME,
     num_data_bits                         => 8,
     idle_state                            => '1',
     num_stop_bits                         => STOP_BITS_ONE,
     parity                                => PARITY_NONE,
-    timeout                               => 0 ns, -- will default never time out
+    timeout                               => 0 ns,
     timeout_severity                      => error,
     num_bytes_to_log_before_expected_data => 10,
     match_strictness                      => MATCH_EXACT,
@@ -123,6 +124,12 @@ architecture tb of tb_PicoSoC_modbus is
   constant C_GIC_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_GIC_BA   ;
   constant C_TIMER_BA              : std_logic_vector(8-1 downto 0) := PICOSOC_USER_TIMER_BA ;
   constant C_CRC_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_CRC_BA   ;
+
+  -- =====[ UART VIP Instance ]====================
+  signal uart_vip_rx_data          : std_logic_vector(7 downto 0);
+  signal uart_vip_rx_valid         : std_logic;
+  signal uart_vip_tx_data          : std_logic_vector(7 downto 0);
+  signal uart_vip_tx_valid         : std_logic;
 
   -- =====[ Function ]============================
   -- Fonction CRC16 (Modbus, polynôme 0xA001)
@@ -198,6 +205,19 @@ begin  -- architecture tb
   clock_generator(clk_i, cke, C_CLK_PERIOD, "TB Clock", 50);
 
   ------------------------------------------------
+  -- UART VIP Instance
+  ------------------------------------------------
+  uart_vip : entity bitvis_vip_uart.uart_vip
+    generic map (
+      GC_INSTANCE_IDX => 0
+    )
+    port map (
+      clk    => clk_i,
+      uart_rxd => uart_tx_o,   -- DUT output connects to VIP RX input
+      uart_txd => uart_rx_i    -- VIP TX output connects to DUT input
+    );
+
+  ------------------------------------------------
   -- PROCESS: p_main
   ------------------------------------------------
   p_main: process
@@ -220,7 +240,7 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_transmit(data_value,msg,uart_rx_i,C_UART_BFM_CONFIG);
+      uart_transmit(UART_VIP_0, data_value, msg);
       modbus_crc := crc16_next(modbus_crc,data_value);
       debug_crc  <= modbus_crc;
     end;
@@ -229,8 +249,8 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_transmit(modbus_crc( 7 downto 0),msg,uart_rx_i,C_UART_BFM_CONFIG);
-      uart_transmit(modbus_crc(15 downto 8),msg,uart_rx_i,C_UART_BFM_CONFIG);
+      uart_transmit(UART_VIP_0, modbus_crc( 7 downto 0),msg);
+      uart_transmit(UART_VIP_0, modbus_crc(15 downto 8),msg);
     end;
 
     procedure modbus_rx_begin(
@@ -248,7 +268,7 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_expect(data_exp,msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
+      uart_expect(UART_VIP_0, data_exp, msg);
       modbus_crc := crc16_next(modbus_crc,data_exp);
       debug_crc  <= modbus_crc;
     end;
@@ -257,8 +277,8 @@ begin  -- architecture tb
       constant msg          : in string
       ) is
     begin
-      uart_expect(modbus_crc( 7 downto 0),msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
-      uart_expect(modbus_crc(15 downto 8),msg,uart_tx_o,uart_terminate_loop,1,1 ms,ERROR, C_UART_BFM_CONFIG);
+      uart_expect(UART_VIP_0, modbus_crc( 7 downto 0),msg);
+      uart_expect(UART_VIP_0, modbus_crc(15 downto 8),msg);
     end;
 
     
@@ -347,6 +367,10 @@ begin  -- architecture tb
     --enable_log_msg(ID_LOG_HDR);
 
     log(ID_LOG_HDR, "Start Simulation of TB for IRQC", C_SCOPE);
+    
+    -- Configure UART VIP
+    uart_set_config(UART_VIP_0, C_UART_VIP_CONFIG, "UART VIP Configuration");
+    
     ------------------------------------------------------------
 
     set_inputs_passive (VOID);
