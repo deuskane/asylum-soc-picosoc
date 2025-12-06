@@ -26,22 +26,33 @@ package PicoSoC_pkg is
   -----------------------------------------------------------------------------
   -- Address Map
   -----------------------------------------------------------------------------
-  constant PICOSOC_USER_ADDR_ENCODING       : string := "binary";
+  constant PICOSOC_USER_ADDR_ENCODING          : string := "binary";
+                                               
+  constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"00";
+  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"30";
+  constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"40";
+  constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"50";
+  constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"60";
+  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"70";
+                                               
+  constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "one_hot";
+                                               
+  constant PICOSOC_SUPERVISOR_LED0_BA          : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_SUPERVISOR_LED1_BA          : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_SUPERVISOR_GIC_BA           : std_logic_vector(8-1 downto 0) := X"40";
 
-  constant PICOSOC_USER_SWITCH_BA           : std_logic_vector(8-1 downto 0) := X"00";
-  constant PICOSOC_USER_LED0_BA             : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_USER_LED1_BA             : std_logic_vector(8-1 downto 0) := X"20";
-  constant PICOSOC_USER_UART_BA             : std_logic_vector(8-1 downto 0) := X"30";
-  constant PICOSOC_USER_SPI_BA              : std_logic_vector(8-1 downto 0) := X"40";
-  constant PICOSOC_USER_GIC_BA              : std_logic_vector(8-1 downto 0) := X"50";
-  constant PICOSOC_USER_TIMER_BA            : std_logic_vector(8-1 downto 0) := X"60";
-  constant PICOSOC_USER_CRC_BA              : std_logic_vector(8-1 downto 0) := X"70";
-
-  constant PICOSOC_SUPERVISOR_ADDR_ENCODING : string := "one_hot";
-
-  constant PICOSOC_SUPERVISOR_LED0_BA       : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_SUPERVISOR_LED1_BA       : std_logic_vector(8-1 downto 0) := X"20";
-  constant PICOSOC_SUPERVISOR_GIC_BA        : std_logic_vector(8-1 downto 0) := X"40";
+  -----------------------------------------------------------------------------
+  -- GIC Map
+  -----------------------------------------------------------------------------
+  constant PICOSOC_USER_GIC_IT_USER            : natural  := 0;
+  constant PICOSOC_USER_GIC_UART               : natural  := 1;
+  constant PICOSOC_USER_GIC_TIMER              : natural  := 2;
+  
+  constant PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1 : natural  := 0;
+  constant PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2 : natural  := 1;
+  constant PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0 : natural  := 2;
   
   -----------------------------------------------------------------------------
   -- PicoSoC_user_debug_t
@@ -88,26 +99,6 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
-component PicoSoC_supervisor is
-  generic
-    (NB_LED0               : positive := 8
-    ;NB_LED1               : positive := 8
-
-    ;ICN_ALGO_SEL          : string := "or"
-    );
-  port
-    (clk_i                 : in  std_logic
-    ;arst_b_i              : in  std_logic
-                          
-    ;led0_o                : out std_logic_vector(NB_LED0  -1 downto 0)
-    ;led1_o                : out std_logic_vector(NB_LED1  -1 downto 0)
-                          
-    ;diff_i                : in  std_logic_vector(        3-1 downto 0)
-                          
-    ;debug_o               : out PicoSoC_supervisor_debug_t
-     );
-end component PicoSoC_supervisor;
-
 component PicoSoC_top is
   generic
     (FSYS             : positive := 50_000_000
@@ -123,6 +114,7 @@ component PicoSoC_top is
     ;RESET_POLARITY   : string   := "low"       -- "high" / "low"
     ;SUPERVISOR       : boolean  := True 
     ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH  : natural  := 2
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
@@ -159,6 +151,26 @@ component PicoSoC_top is
     );
 end component PicoSoC_top;
 
+component PicoSoC_supervisor is
+  generic
+    (NB_LED0               : positive := 8
+    ;NB_LED1               : positive := 8
+
+    ;ICN_ALGO_SEL          : string := "or"
+    );
+  port
+    (clk_i                 : in  std_logic
+    ;arst_b_i              : in  std_logic
+                          
+    ;led0_o                : out std_logic_vector(NB_LED0  -1 downto 0)
+    ;led1_o                : out std_logic_vector(NB_LED1  -1 downto 0)
+                          
+    ;diff_i                : in  std_logic_vector(        3-1 downto 0)
+                          
+    ;debug_o               : out PicoSoC_supervisor_debug_t
+     );
+end component PicoSoC_supervisor;
+
 component PicoSoC_user is
   generic
     (CLOCK_FREQ            : integer  := 50000000
@@ -172,9 +184,9 @@ component PicoSoC_user is
     ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
     ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
-    
-    ;ICN_ALGO_SEL          : string := "or"
+    ;ICN_ALGO_SEL          : string   := "or"
     );
   port
     (clk_i                 : in  std_logic

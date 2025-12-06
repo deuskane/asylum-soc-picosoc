@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-12-04
+-- Last update: 2025-12-06
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -24,6 +24,9 @@
 -- 2025-04-02  2.3      mrosiere Use ICN
 -- 2025-07-15  3.0      mrosiere Add FIFO depth for UART and SPI
 -- 2025-11-02  3.1      mrosiere Add Timer
+-- 2025-11-27  3.2      mrosiere Add CRC
+-- 2025-11-29  3.3      mrosiere Use CRC Generic
+-- 2025-11-06  3.4      mrosiere Add Generic LOCK_STEP_DEPTH
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -39,6 +42,7 @@ use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
 -- Type Package
 use     asylum.sbi_pkg.all;
+use     asylum.logic_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.OpenBlaze8_pkg.all;
@@ -62,9 +66,10 @@ entity PicoSoC_user is
     ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
     ;SAFETY                : string   := "none" -- "none" / "lock-step" / "tmr"
+    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
-    
-    ;ICN_ALGO_SEL          : string := "or"
+    ;ICN_ALGO_SEL          : string   := "or"
     );
   port
     (clk_i                 : in  std_logic
@@ -103,12 +108,14 @@ architecture rtl of PicoSoC_user is
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
 
   -- Module parameters
-  constant CPU1_ENABLE                : boolean := ((SAFETY = "lock-step") or
-                                                    (SAFETY = "tmr"));
-  constant CPU2_ENABLE                : boolean := ((SAFETY = "tmr"));
+  constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or
+                                                     (SAFETY = "tmr"));
+  constant CPU2_ENABLE                : boolean  := ((SAFETY = "tmr"));
 
+  constant LOCK_STEP_DEPTH_INT        : natural  := mux2(SAFETY = "lock-step",LOCK_STEP_DEPTH,0);
+  
   -- ICN Configuration
-  constant TARGET_ADDR_ENCODING       : string := PICOSOC_USER_ADDR_ENCODING;
+  constant TARGET_ADDR_ENCODING       : string   := PICOSOC_USER_ADDR_ENCODING;
   
   constant TARGET_SWITCH              : integer  := 0;
   constant TARGET_LED0                : integer  := 1;
@@ -150,25 +157,34 @@ architecture rtl of PicoSoC_user is
   signal   arst_b                     : std_logic;
 
   -- Signals CPUs
-  signal   cpu0_ics                   : std_logic;
-  signal   cpu0_iaddr                 : std_logic_vector(10-1 downto 0);
-  signal   cpu0_idata                 : std_logic_vector(18-1 downto 0);
-  signal   cpu0_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal   cpu0_it_ack                : std_logic;
-  
+  signal   cpu0_arst_b                : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal   cpu0_ics                   : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal   cpu0_iaddr                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(10-1 downto 0);
+  signal   cpu0_idata                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(18-1 downto 0);
+  signal   cpu0_sbi_ini               : sbi_inis_t(LOCK_STEP_DEPTH_INT downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                                                 wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu0_sbi_tgt               : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu0_it_val                : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal   cpu0_it_ack                : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+
+  signal   cpu1_arst_b                : std_logic;
   signal   cpu1_ics                   : std_logic;
   signal   cpu1_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu1_idata                 : std_logic_vector(18-1 downto 0);
   signal   cpu1_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu1_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu1_it_val                : std_logic;
   signal   cpu1_it_ack                : std_logic;
   
+  signal   cpu2_arst_b                : std_logic;
   signal   cpu2_ics                   : std_logic;
   signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
   signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
   signal   cpu2_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu2_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu2_it_val                : std_logic;
   signal   cpu2_it_ack                : std_logic;
 
   -- Signals CPU (post lockstep / TMR)
@@ -186,10 +202,9 @@ architecture rtl of PicoSoC_user is
   signal   uart_it                    : std_logic;
   
   -- Interruption Vector
-
-  constant GIC_IT_USER                : natural  := 0;
-  constant GIC_UART                   : natural  := 1;
-  constant GIC_TIMER                  : natural  := 2;
+  constant GIC_IT_USER                : natural  := PICOSOC_USER_GIC_IT_USER;
+  constant GIC_UART                   : natural  := PICOSOC_USER_GIC_UART   ;
+  constant GIC_TIMER                  : natural  := PICOSOC_USER_GIC_TIMER  ;
 
   constant GIC_WIDTH                  : positive := 3;
 
@@ -201,12 +216,22 @@ architecture rtl of PicoSoC_user is
   signal   timer_it                   : std_logic;
   
   -- Signals Safety
+
+  constant DIFF_CPU0_VS_CPU1          : natural  := PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1;
+  constant DIFF_CPU1_VS_CPU2          : natural  := PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2;
+  constant DIFF_CPU2_VS_CPU0          : natural  := PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0;
+
+  
   signal   diff                       : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
   signal   diff_r                     : std_logic_vector(3-1 downto 0); -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
+
+  signal   cpu0_idata_seu             : std_logic_vector(18-1 downto 0);
+  signal   cpu1_idata_seu             : std_logic_vector(18-1 downto 0);
+  signal   cpu2_idata_seu             : std_logic_vector(18-1 downto 0);
 
 begin  -- architecture rtl
 
@@ -227,15 +252,20 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
-    ,arstn_i              => arst_b      
-    ,ics_o                => cpu0_ics    
-    ,iaddr_o              => cpu0_iaddr  
-    ,idata_i              => cpu0_idata  
-    ,sbi_ini_o            => cpu0_sbi_ini
-    ,sbi_tgt_i            => cpu_sbi_tgt 
-    ,interrupt_i          => cpu_it_val  
-    ,interrupt_ack_o      => cpu0_it_ack
+    ,arstn_i              => cpu0_arst_b  (0)
+    ,ics_o                => cpu0_ics     (0)
+    ,iaddr_o              => cpu0_iaddr   (0)
+    ,idata_i              => cpu0_idata   (0)
+    ,sbi_ini_o            => cpu0_sbi_ini (0)
+    ,sbi_tgt_i            => cpu0_sbi_tgt (0)
+    ,interrupt_i          => cpu0_it_val  (0)
+    ,interrupt_ack_o      => cpu0_it_ack  (0)
     );
+
+  cpu0_arst_b  (0) <= arst_b       ;
+  cpu0_idata   (0) <= cpu_idata    ;
+  cpu0_sbi_tgt (0) <= cpu_sbi_tgt  ;
+  cpu0_it_val  (0) <= cpu_it_val   ;
 
   -----------------------------------------------------------------------------
   -- CPU ROM
@@ -419,16 +449,23 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
+  -- CPU 0 pipe register
+  -----------------------------------------------------------------------------
+  gen_cpu0_lockstep_pipe: for i in 1 to LOCK_STEP_DEPTH_INT
+  generate
+  end generate gen_cpu0_lockstep_pipe;
+
+  -----------------------------------------------------------------------------
   -- CPU 1
   -- diff cpu0 vs cpu1
   -----------------------------------------------------------------------------
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
   end generate gen_cpu1_enable;
-  
+
   gen_cpu1_disable: if CPU1_ENABLE = false
   generate
-    diff_o(0) <= '0';
+    diff_o(DIFF_CPU0_VS_CPU1) <= '0';
   end generate gen_cpu1_disable;
 
   -----------------------------------------------------------------------------
@@ -442,8 +479,8 @@ begin  -- architecture rtl
   
   gen_cpu2_disable: if CPU2_ENABLE = false
   generate
-    diff_o(1) <= '0';
-    diff_o(2) <= '0';
+    diff_o(DIFF_CPU1_VS_CPU2) <= '0';
+    diff_o(DIFF_CPU2_VS_CPU0) <= '0';
   end generate gen_cpu2_disable;
 
   -----------------------------------------------------------------------------
@@ -457,10 +494,10 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_safety_none    : if SAFETY = "none"
   generate
-    cpu_ics        <= cpu0_ics     ;
-    cpu_iaddr      <= cpu0_iaddr   ;
-    cpu_sbi_ini    <= cpu0_sbi_ini ;
-    cpu_it_ack     <= cpu0_it_ack  ;
+    cpu_ics        <= cpu0_ics     (0);
+    cpu_iaddr      <= cpu0_iaddr   (0);
+    cpu_sbi_ini    <= cpu0_sbi_ini (0);
+    cpu_it_ack     <= cpu0_it_ack  (0);
   end generate;
 
   gen_safety_lockstep: if SAFETY = "lock-step"
@@ -476,9 +513,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_inject_error_n: if FAULT_INJECTION = false
   generate
-    cpu0_idata              <= cpu_idata;
-    cpu1_idata              <= cpu_idata;        
-    cpu2_idata              <= cpu_idata;        
   end generate gen_inject_error_n;
 
   gen_inject_error:   if FAULT_INJECTION = true
