@@ -1,12 +1,12 @@
-# PicoSoC - Secure System-on-Chip with Safety Features
+# PicoSoC - System-on-Chip with Safety Features
 
 ## Overview
 
-This repository contains a complete System-on-Chip (SoC) implementation featuring a Xilinx Picoblaze-8 microcontroller with integrated safety mechanisms. The architecture consists of two independent SoC domains:
+This repository contains a complete System-on-Chip (SoC) implementation featuring a Xilinx Picoblaze-8 Clone microcontroller with integrated safety mechanisms. The architecture consists of two independent SoC domains:
 
 ### User SoC Domain
 The main application processing domain with:
-- **Picoblaze-8 MCU** with instruction ROM and dedicated RAM
+- **OpenBlaze8 MCU** with instruction ROM and dedicated RAM
 - **3 GPIO Controllers** (1 for switches, 2 for LEDs)
 - **UART Interface** with CTS/RTS flow control
 - **SPI Master Controller** for external device communication
@@ -18,7 +18,7 @@ The main application processing domain with:
 
 ### Supervisor SoC Domain
 An independent safety monitoring domain with:
-- **Picoblaze-8 MCU** for supervision logic
+- **OpenBlaze8 MCU** for supervision logic
 - **2 GPIO Controllers** (1 for User SoC reset, 1 for status indication)
 - **Generic Interrupt Controller (GIC)** for error signal reception
 - **Interconnect Network (ICN)** for peripheral connection
@@ -42,7 +42,7 @@ The `hdl/` folder contains all VHDL hardware design files that define the System
 ```
 PicoSoC_top
 ├── PicoSoC_user (User SoC Domain)
-│   ├── Picoblaze-8 Microcontroller
+│   ├── OpenBlaze8 Microcontroller
 │   ├── 3× GPIO Controllers
 │   ├── UART Interface
 │   ├── SPI Master
@@ -51,9 +51,9 @@ PicoSoC_top
 │   ├── CRC Unit
 │   └── ICN (Interconnect)
 └── PicoSoC_supervisor (Supervisor SoC Domain)
-    ├── Picoblaze-8 Microcontroller
+    ├── OpenBlaze8 Microcontroller
     ├── 2× GPIO Controllers
-    ├── GIC (Error Detection)
+    ├── GIC (Interrupt Controller)
     └── ICN (Interconnect)
 ```
 
