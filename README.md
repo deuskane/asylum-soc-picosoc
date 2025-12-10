@@ -115,10 +115,10 @@ PicoSoC_top
 
 **Purpose:** User SoC domain with application logic
 
-**Description:** Main processing unit containing the Picoblaze MCU and all user-facing peripherals. Implements safety features like Lock-Step or Triple Modular Redundancy (TMR) for fault detection and correction.
+**Description:** Main processing unit containing the OpenBlaze8 MCU and all user-facing peripherals. Implements safety features like Lock-Step or Triple Modular Redundancy (TMR) for fault detection and correction.
 
 **Integrated Components:**
-- Picoblaze-8 microcontroller (OpenBlaze8) with instruction ROM and dedicated RAM
+- OpenBlaze8 microcontroller with instruction ROM and dedicated RAM
 - 3 GPIO controllers (1 for switches, 2 for LEDs)
 - UART interface for serial communication
 - SPI Master controller
@@ -176,7 +176,7 @@ PicoSoC_top
 **Description:** Independent monitoring unit that oversees the User SoC health. Detects errors reported by the User SoC and initiates corrective actions (system reset). Implements a hardened safety architecture isolated from user logic.
 
 **Integrated Components:**
-- Picoblaze-8 microcontroller for supervision logic
+- OpenBlaze8 microcontroller for supervision logic
 - 2 GPIO controllers (1 for User SoC reset control, 1 for status LEDs)
 - Generic Interrupt Controller (GIC) for error reception
 - Interconnect Network (ICN) for slave connections
@@ -217,7 +217,7 @@ PicoSoC_top
 
 ## Embedded Software
 
-The `esw/` folder contains the C and assembly firmware running on the Picoblaze-8 microcontrollers.
+The `esw/` folder contains the C and assembly firmware running on the OpenBlaze8 microcontrollers.
 
 ### Core Firmware
 
@@ -225,7 +225,7 @@ The `esw/` folder contains the C and assembly firmware running on the Picoblaze-
 
 **Purpose:** Primary firmware for the User SoC domain
 
-**Description:** Main application that manages the Picoblaze-8 microcontroller operations in the User domain. Handles GPIO control for switches and LEDs, UART communication, SPI interface, and interrupt service routines.
+**Description:** Main application that manages the OpenBlaze8 microcontroller operations in the User domain. Handles GPIO control for switches and LEDs, UART communication, SPI interface, and interrupt service routines.
 
 **Key Features:**
 - GPIO setup and configuration (switches as inputs, LEDs as outputs)
@@ -239,7 +239,7 @@ The `esw/` folder contains the C and assembly firmware running on the Picoblaze-
 
 **Purpose:** Safety monitoring firmware for the Supervisor domain
 
-**Description:** Lightweight firmware running on the Supervisor Picoblaze-8 that monitors the User SoC health. Implements error detection and response mechanisms. Supports both TMR (Triple Modular Redundancy) and standard modes.
+**Description:** Lightweight firmware running on the Supervisor OpenBlaze8 that monitors the User SoC health. Implements error detection and response mechanisms. Supports both TMR (Triple Modular Redundancy) and standard modes.
 
 **Key Features:**
 - Error detection from User SoC via difference signals
@@ -295,7 +295,7 @@ The `esw/` folder contains the C and assembly firmware running on the Picoblaze-
 
 **Purpose:** Template for new applications
 
-**Description:** Minimal C file with empty main function, used as a starting template for developing new applications on the Picoblaze-8.
+**Description:** Minimal C file with empty main function, used as a starting template for developing new applications on the OpenBlaze8.
 
 #### user_identity.psm - Picoblaze Assembly Code
 
