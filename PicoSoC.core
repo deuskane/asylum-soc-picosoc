@@ -391,7 +391,7 @@ targets:
       - DEBUG_ENABLE=false
 
   #---------------------------------------
-  emu_ng_medium_soc1_modbus:
+  emu_ng_medium_soc1_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modubus_rtu.c - No Supervisor, No Safety, No Fault Injection
