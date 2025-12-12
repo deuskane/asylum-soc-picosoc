@@ -31,10 +31,6 @@ void main()
   while (1)
     {
       uint8_t sw = gpio_rd(SWITCH);
-
-#ifdef INVERT_SWITCH
-      sw = ~sw;
-#endif
   
       gpio_wr(LED0, sw);
     }
