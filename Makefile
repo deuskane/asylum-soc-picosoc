@@ -82,7 +82,8 @@ help : $(FILE_TARGETS)
 	@echo "==============| Rules"
 	@echo "help          : Print this message"
 	@echo "info          : Display library list and cores list"
-	@echo "clean         : delete build directory"
+	@echo "update        : Update the FuseSoC core libraries"
+	@echo "clean         : Delete build directory"
 	@echo "nonreg        : Run all simulation targets"
 	@echo ""
 	@echo "target        : Execute all   stages of fusesoc flow for specific target and tool"
@@ -112,6 +113,14 @@ info :
 	@fusesoc core    list
 
 .PHONY : info
+
+#--------------------------------------------------------
+# Update the FuseSoC core libraries
+update :
+#--------------------------------------------------------
+	@fusesoc library update
+
+.PHONY : update
 
 #--------------------------------------------------------
 target :
