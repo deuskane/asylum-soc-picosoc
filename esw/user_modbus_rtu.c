@@ -196,9 +196,9 @@ uint8_t modbus_id_rsp(uint8_t id)
 }
 
 //--------------------------------------
-// modbus_client_read_holding_registers
+// modbus_slave_read_holding_registers
 //--------------------------------------
-uint8_t modbus_client_read_holding_registers(uint8_t id)
+uint8_t modbus_slave_read_holding_registers(uint8_t id)
 {
   uint8_t  slave_id      = id;
   uint8_t  function_code = MODBUS_FC_READ_HOLDING_REGISTERS;
@@ -298,9 +298,9 @@ uint8_t modbus_client_read_holding_registers(uint8_t id)
 }
   
 //--------------------------------------
-// modbus_client_write_single_register
+// modbus_slave_write_single_register
 //--------------------------------------
-uint8_t modbus_client_write_single_register(uint8_t id)
+uint8_t modbus_slave_write_single_register(uint8_t id)
 {
   uint8_t  slave_id      = id;
   uint8_t  function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;
@@ -387,10 +387,10 @@ uint8_t modbus_client_write_single_register(uint8_t id)
 }
 
 //--------------------------------------
-// modbus_client
+// modbus_slave
 // send byte to uart and accumulate into crc
 //--------------------------------------
-void modbus_client ()
+void modbus_slave ()
 {
   uint8_t  slave_id      ;
   uint8_t  function_code ;
@@ -408,11 +408,11 @@ void modbus_client ()
   
   if      (function_code == MODBUS_FC_READ_HOLDING_REGISTERS)
     {
-      errcode = modbus_client_read_holding_registers(slave_id);
+      errcode = modbus_slave_read_holding_registers(slave_id);
     }
   else if (function_code == MODBUS_FC_WRITE_SINGLE_REGISTER)
     {
-      errcode = modbus_client_write_single_register(slave_id);
+      errcode = modbus_slave_write_single_register(slave_id);
     }
   else 
       // Unsupported Function
@@ -496,6 +496,6 @@ void main()
 #ifndef DISABLE_WAIT
       modbus_wait   ();
 #endif
-      modbus_client ();
+      modbus_slave  ();
     }
 }
