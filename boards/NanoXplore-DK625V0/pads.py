@@ -56,10 +56,10 @@ p.addPad('spi_miso_i'        ,{'location':'USER_D10'    }) # USER_* have predefi
 # Bank5 spare I/Os                                      
 p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left
 #                             {'location':'IOB5_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 3 from left
-p.addPad('uart_cts_b_i'      ,{'location':'IOB5_D01P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullDown'}) # 4 from left
-p.addPad('uart_rts_b_o'      ,{'location':'IOB5_D01N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 5 from left
-p.addPad('uart_rx_i'         ,{'location':'IOB5_D03P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 6 from left
-p.addPad('uart_tx_o'         ,{'location':'IOB5_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 7 from left
+p.addPad('uart_rts_b_o'      ,{'location':'IOB5_D01P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 4 from left
+p.addPad('uart_cts_b_i'      ,{'location':'IOB5_D01N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullDown'}) # 5 from left
+p.addPad('uart_tx_o'         ,{'location':'IOB5_D03P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 6 from left
+p.addPad('uart_rx_i'         ,{'location':'IOB5_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 7 from left
                                                         
 # Bank0 spare I/Os                                        
 p.addPad('debug_o[0]'        ,{'location':'IOB0_D06P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 2  from bottom
