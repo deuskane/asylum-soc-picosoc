@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-12-03
+-- Last update: 2025-12-23
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -134,18 +134,20 @@ architecture tb of tb_PicoSoC_modbus is
     variable d        : std_logic_vector(8-1 downto 0) := data;
     variable i        : integer;
   begin
+    log(NO_ID, "CRC Data : 0x" & to_hstring(data), C_SCOPE);
+    log(NO_ID, "CRC Begin: 0x" & to_hstring(crc), C_SCOPE);
+    
     crc_var := crc xor ("00000000" & d);  -- concatène 8 bits de 0 avec data
-
     
     for i in 0 to 8-1 loop
-      --report "CRC : " & to_hstring(crc_var);
+      log(NO_ID, "CRC Step : 0x" & to_hstring(crc_var) & " - " & integer'image(i) , C_SCOPE);
       if crc_var(0) = '1' then
         crc_var := ('0' & crc_var(16-1 downto 1)) xor x"A001";
       else
         crc_var := '0' & crc_var(16-1 downto 1);
       end if;
     end loop;
-    --report "CRC : " & to_hstring(crc_var);
+    log(NO_ID, "CRC End  : 0x" & to_hstring(crc_var), C_SCOPE);
 
     return crc_var;
   end function;
