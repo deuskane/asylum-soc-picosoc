@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
--- Title      : tb_PicoSoC_modbus
+-- Title      : tb_PicoSoC_modbus_rtu
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : tb_PicoSoC_modbus.vhd
+-- File       : tb_PicoSoC_modbus_rtu.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-12-23
+-- Last update: 2025-12-29
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ context uvvm_util.uvvm_util_context;
 library bitvis_vip_uart;
 use     bitvis_vip_uart.uart_bfm_pkg.all;
 
-entity tb_PicoSoC_modbus is
+entity tb_PicoSoC_modbus_rtu is
   generic
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
@@ -57,9 +57,9 @@ entity tb_PicoSoC_modbus is
     ;HAVE_SPI_MEMORY  : boolean  := False
      );
 
-end entity tb_PicoSoC_modbus;
+end entity tb_PicoSoC_modbus_rtu;
 
-architecture tb of tb_PicoSoC_modbus is
+architecture tb of tb_PicoSoC_modbus_rtu is
 
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
