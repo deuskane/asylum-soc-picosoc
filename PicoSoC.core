@@ -47,9 +47,11 @@ CAPI=2:
 # 2025-11-26  2.8.3    mrosiere Use uvvm instead uvvm light
 # 2025-11-27  2.9.0    mrosiere Add CRC (User)
 # 2025-12-06  2.9.1    mrosiere Add Generic LOCK_STEP_DEPTH (User)
+# 2025-12-30  2.9.2    mrosiere rename tb_PicoSoC_modbus to tb_PicoSoC_modbus_rtu
+#                               Add targets
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:2.9.1
+name        : asylum:soc:PicoSoC:2.9.2
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer and CRC
 
 #=========================================
@@ -719,14 +721,13 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=50000
-      - HAVE_SPI_MEMORY=true
 
   #---------------------------------------
   sim_soc2_c_user:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c]
+    generate     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -751,7 +752,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c_uart_921600,gen_supervisor_c]
+    generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -770,6 +771,32 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=50000
       - HAVE_SPI_MEMORY=false
+
+
+  #---------------------------------------
+  sim_soc2_c_user_modbus_rtu:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
+    toplevel     : tb_PicoSoC_modbus_rtu
+    parameters   :
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - SAFETY=lock-step
+      - FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=50000
 
   #---------------------------------------
   sim_soc3_fault_c_user:
