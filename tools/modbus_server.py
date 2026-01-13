@@ -60,7 +60,7 @@ def modbus_write(client: ModbusSerialClient, slave_id: int, address: int, value:
 if __name__ == "__main__":
     try:
         port_name     = '/dev/ttyUSB0'  # Replace with your actual serial port
-        baudrate      = 9600
+        baudrate      = 4800
         parity        = 'N'  # Options: 'N', 'E', 'O', 'M', 'S'
         slave_id      = 0x5A
 

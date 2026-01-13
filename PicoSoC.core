@@ -104,13 +104,13 @@ generate:
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
-  gen_user_c_uart_9600_spi :
+  gen_user_c_uart_4800_spi :
     generator : pbcc_gen
     parameters :
       file         : esw/user.c
       type         : c
       entity       : ROM_user
-      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
+      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=4800 -DHAVE_SPI
       logical_name : asylum
 
   gen_user_c_uart_921600_spi :
@@ -131,13 +131,13 @@ generate:
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
       logical_name : asylum
 
-  gen_user_c_uart_9600_spi_mem :
+  gen_user_c_uart_4800_spi_mem :
     generator : pbcc_gen
     parameters :
       file         : esw/user.c
       type         : c
       entity       : ROM_user
-      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
+      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=4800 -DHAVE_SPI -DHAVE_SPI_MEMORY
       logical_name : asylum
 
   gen_user_xmodem_c :
@@ -158,13 +158,13 @@ generate:
       cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
-  gen_user_modbus_rtu_9600 :
+  gen_user_modbus_rtu_4800 :
     generator : pbcc_gen
     parameters :
       file         : esw/user_modbus_rtu.c
       type         : c
       entity       : ROM_user
-      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
+      cflags       : -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=4800
       logical_name : asylum
 
   gen_supervisor_c :
@@ -327,7 +327,7 @@ targets:
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
-    generate : [gen_user_c_uart_9600_spi,gen_supervisor_c_tmr]
+    generate : [gen_user_c_uart_4800_spi,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -338,7 +338,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -366,7 +366,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate : [gen_user_c_uart_9600_spi_mem,gen_supervisor_c_dummy]
+    generate : [gen_user_c_uart_4800_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -377,7 +377,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -397,7 +397,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
+    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -408,7 +408,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -428,7 +428,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
-    generate : [gen_user_c_uart_9600,gen_supervisor_c_dummy]
+    generate : [gen_user_c_uart_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -439,7 +439,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -459,7 +459,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
+    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -470,7 +470,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -490,7 +490,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
-    generate : [gen_user_c_uart_9600,gen_supervisor_c]
+    generate : [gen_user_c_uart_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -501,7 +501,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -521,7 +521,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
+    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -532,7 +532,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -552,7 +552,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_c_uart_9600,gen_supervisor_c]
+    generate : [gen_user_c_uart_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -563,7 +563,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -583,7 +583,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_modbus_rtu_9600,gen_supervisor_c]
+    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -594,7 +594,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -614,7 +614,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate     : [gen_user_c_uart_9600,gen_supervisor_c_tmr]
+    generate     : [gen_user_c_uart_4800,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -625,7 +625,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -645,7 +645,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_tmr]
+    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -656,7 +656,7 @@ targets:
       - FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
+      - BAUD_RATE=4800
       - UART_DEPTH_TX=4
       - UART_DEPTH_RX=4
       - SPI_DEPTH_CMD=4
@@ -1115,7 +1115,7 @@ parameters :
   BAUD_RATE :
     description : Baud Rate
     datatype    : int
-    default     : 9600
+    default     : 4800
     paramtype   : generic
 
   UART_DEPTH_TX :
