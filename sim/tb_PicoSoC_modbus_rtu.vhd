@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
--- Title      : tb_PicoSoC_modbus
+-- Title      : tb_PicoSoC_modbus_rtu
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : tb_PicoSoC_modbus.vhd
+-- File       : tb_PicoSoC_modbus_rtu.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-12-03
+-- Last update: 2025-12-30
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -28,11 +28,12 @@ use     asylum.PicoSoC_pkg.all;
 library work;
 
 library uvvm_util;
+use     uvvm_util.methods_pkg.all;
 context uvvm_util.uvvm_util_context;
 library bitvis_vip_uart;
 use     bitvis_vip_uart.uart_bfm_pkg.all;
 
-entity tb_PicoSoC_modbus is
+entity tb_PicoSoC_modbus_rtu is
   generic
     (FSYS             : positive := 50_000_000
     ;FSYS_INT         : positive := 50_000_000
@@ -57,9 +58,9 @@ entity tb_PicoSoC_modbus is
     ;HAVE_SPI_MEMORY  : boolean  := False
      );
 
-end entity tb_PicoSoC_modbus;
+end entity tb_PicoSoC_modbus_rtu;
 
-architecture tb of tb_PicoSoC_modbus is
+architecture tb of tb_PicoSoC_modbus_rtu is
 
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
@@ -81,6 +82,10 @@ architecture tb of tb_PicoSoC_modbus is
   signal   inject_error_i          : std_logic_vector(        3-1 downto 0);
   signal   uart_tx_o               : std_logic;
   signal   uart_rx_i               : std_logic := '1';
+
+  alias    led_switch              : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
+  alias    led_it                  : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
+  alias    led_diff                : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
            
   -- =====[ TB Signals ]==========================
   signal   cke                     : boolean   := false;
@@ -134,18 +139,20 @@ architecture tb of tb_PicoSoC_modbus is
     variable d        : std_logic_vector(8-1 downto 0) := data;
     variable i        : integer;
   begin
+    log(NO_ID, "CRC Data : 0x" & to_hstring(data), C_SCOPE);
+    log(NO_ID, "CRC Begin: 0x" & to_hstring(crc), C_SCOPE);
+    
     crc_var := crc xor ("00000000" & d);  -- concatène 8 bits de 0 avec data
-
     
     for i in 0 to 8-1 loop
-      --report "CRC : " & to_hstring(crc_var);
+      log(NO_ID, "CRC Step : 0x" & to_hstring(crc_var) & " - " & integer'image(i) , C_SCOPE);
       if crc_var(0) = '1' then
         crc_var := ('0' & crc_var(16-1 downto 1)) xor x"A001";
       else
         crc_var := '0' & crc_var(16-1 downto 1);
       end if;
     end loop;
-    --report "CRC : " & to_hstring(crc_var);
+    log(NO_ID, "CRC End  : 0x" & to_hstring(crc_var), C_SCOPE);
 
     return crc_var;
   end function;
@@ -364,6 +371,7 @@ begin  -- architecture tb
 
     wait for 35 us;
     modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
+    await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
 
     wait for 35 us;
     modbus_read (C_LED0_BA  ,(0 => x"21"), "Read  LED0 Data");
@@ -393,7 +401,8 @@ begin  -- architecture tb
     modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
                  ,id => x"00"
                  );
- 
+    await_value (led_switch, x"15", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x15", C_SCOPE);
+
     wait for 35 us;
     modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
 
@@ -404,6 +413,7 @@ begin  -- architecture tb
       modbus_read (C_SWITCH_BA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
       wait for 35 us;
       modbus_write(C_LED0_BA  ,switch_i       , "Write  LED0 Data - 0x" & to_hstring(switch_i));
+      await_value (led_switch, switch_i, 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x" & to_hstring(switch_i), C_SCOPE);
 
     end loop;  -- i
     
