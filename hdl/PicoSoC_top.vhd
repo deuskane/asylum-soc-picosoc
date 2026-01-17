@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-12-06
+-- Last update: 2026-01-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -248,21 +248,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_supervisor: if SUPERVISOR = True
   generate
-    ins_soc_supervisor : PicoSoC_supervisor
-      generic map
-      (NB_LED0              => 1
-      ,NB_LED1              => NB_LED_SUPERVISOR
-      ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
-       )
-      port map
-      (clk_i                => clk
-      ,arst_b_i             => arst_b_supervisor
-      ,led0_o               => arst_b_user
-      ,led1_o               => led_supervisor
-      ,diff_i               => diff 
-      ,debug_o              => debug_supervisor
-       );
-
   end generate gen_supervisor;
 
   gen_supervisor_n: if SUPERVISOR = False
