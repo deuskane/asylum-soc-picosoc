@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-12-06
+-- Last update: 2026-01-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -212,6 +212,9 @@ architecture rtl of PicoSoC_user is
 
   constant GIC_WIDTH                  : positive := 3;
 
+  constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '0',
+                                                                                   others      => '0');
+    
   signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
 
   -- Timer
@@ -426,6 +429,9 @@ begin  -- architecture rtl
   gic_it_vector(GIC_TIMER  ) <= timer_it;
 
   ins_sbi_gic : sbi_GIC
+    generic map
+    (ITS_SYNC_ENABLE      => GIC_ITS_SYNC_ENABLE
+     )
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2025-12-06
+-- Last update: 2026-01-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -103,7 +103,6 @@ architecture rtl of PicoSoC_top is
   signal   diff                         : std_logic_vector(3-1 downto 0);
            
   signal   it_user                      : std_logic;
-  signal   it_user_sync                 : std_logic;
   signal   inject_error                 : std_logic_vector(3-1 downto 0);
 
   signal   uart_tx                      : std_logic;
@@ -180,16 +179,6 @@ begin  -- architecture rtl
   generate
     it_user <=     it_user_i;
   end generate gen_it_user;
-  
-  -----------------------------------------------------------------------------
-  -- Input synchronization
-  -----------------------------------------------------------------------------
-  ins_it_user : sync2dff
-    port map
-    (clk_i                => clk
-    ,d_i                  => it_user
-    ,q_o                  => it_user_sync
-    );
 
   -----------------------------------------------------------------------------
   -- SoC User
@@ -221,7 +210,7 @@ begin  -- architecture rtl
     ,uart_rx_i            => uart_rx
     ,uart_cts_b_i         => uart_cts_b
     ,uart_rts_b_o         => uart_rts_b
-    ,it_i                 => it_user_sync
+    ,it_i                 => it_user
     ,diff_o               => diff
     ,inject_error_i       => inject_error
     ,debug_o              => debug_user

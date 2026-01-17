@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2025-12-03
+-- Last update: 2026-01-17
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -103,6 +103,10 @@ architecture rtl of PicoSoC_supervisor is
   
   signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
   signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
+
+  
+  -- Interruption Vector
+  constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(diff_i'range) := (others      => '0');
   
 begin  -- architecture rtl
 
@@ -215,6 +219,9 @@ begin  -- architecture rtl
   -- GIC - Interruption Vector
   -----------------------------------------------------------------------------
   ins_sbi_gic : sbi_GIC
+    generic map
+    (ITS_SYNC_ENABLE      => GIC_ITS_SYNC_ENABLE
+     )
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
