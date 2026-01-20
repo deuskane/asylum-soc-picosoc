@@ -301,7 +301,7 @@ targets:
       - files_hdl
       - files_basys 
       - pbcc_dep
-    generate : [gen_user_asm_identity,gen_supervisor_c_dummy]
+    generate_append : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=50000000
       - FSYS_INT=50000000
@@ -327,7 +327,7 @@ targets:
       - files_hdl
       - files_ng_medium 
       - pbcc_dep
-    generate : [gen_user_c_uart_4800_spi,gen_supervisor_c_tmr]
+    generate_append : [gen_user_c_uart_4800_spi,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -366,7 +366,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate : [gen_user_c_uart_4800_spi_mem,gen_supervisor_c_dummy]
+    generate_append : [gen_user_c_uart_4800_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -397,7 +397,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
+    generate_append : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -428,7 +428,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
-    generate : [gen_user_c_uart_4800,gen_supervisor_c_dummy]
+    generate_append : [gen_user_c_uart_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -459,7 +459,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
+    generate_append : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -490,7 +490,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
-    generate : [gen_user_c_uart_4800,gen_supervisor_c]
+    generate_append : [gen_user_c_uart_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -521,7 +521,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
+    generate_append : [gen_user_modbus_rtu_4800,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -552,7 +552,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_c_uart_4800,gen_supervisor_c]
+    generate_append : [gen_user_c_uart_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -583,7 +583,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c]
+    generate_append : [gen_user_modbus_rtu_4800,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -614,7 +614,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate     : [gen_user_c_uart_4800,gen_supervisor_c_tmr]
+    generate_append     : [gen_user_c_uart_4800,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -645,7 +645,7 @@ targets:
   #---------------------------------------
     << : *emu_ng_medium_default
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate : [gen_user_modbus_rtu_4800,gen_supervisor_c_tmr]
+    generate_append : [gen_user_modbus_rtu_4800,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=6250000
@@ -676,7 +676,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_identity.psm
-    generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -701,7 +701,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_identity.c
-    generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c_identity,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -726,7 +726,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -751,7 +751,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -776,7 +776,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate     : [gen_user_c_uart_921600_spi,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c_uart_921600_spi,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -801,7 +801,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-    generate     : [gen_user_c_uart_921600_spi_mem,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c_uart_921600_spi_mem,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -826,7 +826,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
       - FSYS=25000000
@@ -851,7 +851,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -876,7 +876,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -901,7 +901,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
+    generate_append     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
       - FSYS=25000000
@@ -926,7 +926,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c]
+    generate_append     : [gen_user_c,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -951,7 +951,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
-    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
+    generate_append     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
       - FSYS=25000000
@@ -976,7 +976,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c]
+    generate_append     : [gen_user_c,gen_supervisor_c]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -1001,7 +1001,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
+    generate_append     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
       - FSYS=25000000
@@ -1026,7 +1026,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate     : [gen_user_c,gen_supervisor_c_tmr]
+    generate_append     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -1051,7 +1051,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate     : [gen_user_c_uart_921600,gen_supervisor_c_tmr]
+    generate_append     : [gen_user_c_uart_921600,gen_supervisor_c_tmr]
     parameters   :
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -1076,7 +1076,7 @@ targets:
   #---------------------------------------
     << : *sim
     description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_tmr]
+    generate_append     : [gen_user_modbus_rtu_921600,gen_supervisor_c_tmr]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
       - FSYS=25000000
