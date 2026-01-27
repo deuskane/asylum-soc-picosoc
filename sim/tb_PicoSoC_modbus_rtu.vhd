@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2025-12-30
+-- Last update: 2026-01-10
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -61,6 +61,11 @@ entity tb_PicoSoC_modbus_rtu is
 end entity tb_PicoSoC_modbus_rtu;
 
 architecture tb of tb_PicoSoC_modbus_rtu is
+
+  -- =====[ Test Case ]===========================
+  constant TEST_CASE_BASIC         : boolean   := true;
+  constant TEST_CASE_FAULT         : boolean   := FAULT_INJECTION;
+  constant TEST_CASE_SEQUENCE      : boolean   := true;
 
   -- =====[ Parameters ]==========================
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
@@ -212,6 +217,13 @@ begin  -- architecture tb
 
     variable modbus_crc : std_logic_vector(16-1 downto 0);
 
+    procedure run(
+      constant n            : in positive           -- nb cycle
+       ) is
+    begin
+      wait for n*C_CLK_PERIOD;
+    end run;
+    
     procedure modbus_tx_begin(
       constant msg          : in string
       ) is
@@ -362,61 +374,118 @@ begin  -- architecture tb
 
     gen_pulse(arst_b_i, '0', 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
 
-    log(ID_LOG_HDR, "wait 100 cycles to finish init", C_SCOPE);
-    wait for 100*C_CLK_PERIOD;
+    log(ID_LOG_HDR, "wait 500 cycles to finish init", C_SCOPE);
+    run(500);
 
     --==================================================================================================
     -- Test case
     --------------------------------------------------------------------------------------
 
-    wait for 35 us;
-    modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
-    await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
-
-    wait for 35 us;
-    modbus_read (C_LED0_BA  ,(0 => x"21"), "Read  LED0 Data");
-
-    wait for 35 us;
-    switch_i <= x"5A";
-    modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
-
-    wait for 35 us;
-    switch_i <= x"3C";
-    modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
-
-    wait for 35 us;
-    switch_i <= x"1E";
-    modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
-
-    wait for 35 us;
-    modbus_write(C_LED0_BA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
-                 ,id => not C_MODBUS_SLAVE_ID
-                 );
- 
-    wait for 35 us;
-    modbus_read (C_LED0_BA  ,(0 => x"21",
-                              1 => x"FF"), "Read  LED0 Data & OE");
- 
-    wait for 35 us;
-    modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
-                 ,id => x"00"
-                 );
-    await_value (led_switch, x"15", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x15", C_SCOPE);
-
-    wait for 35 us;
-    modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
-
-    for i in 0 to 7 loop
-      switch_i    <= x"00";
-      switch_i(i) <= '1';
-      wait for 35 us;
-      modbus_read (C_SWITCH_BA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
-      wait for 35 us;
-      modbus_write(C_LED0_BA  ,switch_i       , "Write  LED0 Data - 0x" & to_hstring(switch_i));
-      await_value (led_switch, switch_i, 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x" & to_hstring(switch_i), C_SCOPE);
-
-    end loop;  -- i
+    if TEST_CASE_BASIC
+    then
     
+      -- Write LED0 and check if led switch have the expected value
+      wait for 35 us;
+      modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
+      await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
+
+      -- Read LED0 and check if it's the expected value
+      wait for 35 us;
+      modbus_read (C_LED0_BA  ,(0 => x"21"), "Read  LED0 Data");
+
+      -- Change Switch and check if it's the expected value
+      wait for 35 us;
+      switch_i <= x"5A";
+      modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
+
+      -- Change Switch and check if it's the expected value
+      wait for 35 us;
+      switch_i <= x"3C";
+      modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
+
+      -- Change Switch and check if it's the expected value
+      wait for 35 us;
+      switch_i <= x"1E";
+      modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
+
+      -- Write LED0 with another ID and check that the LED0 don't change
+      wait for 35 us;
+      modbus_write(C_LED0_BA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
+                   ,id => not C_MODBUS_SLAVE_ID
+                   );
+      await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
+      
+      wait for 35 us;
+      modbus_read (C_LED0_BA  ,(0 => x"21",
+                                1 => x"FF"), "Read  LED0 Data & OE");
+      await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
+      
+      -- Write LED0 with broadcast Address and check that the LED0 change
+      wait for 35 us;
+      modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
+                   ,id => x"00"
+                   );
+      await_value (led_switch, x"15", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x15", C_SCOPE);
+
+      wait for 35 us;
+      modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
+    end if;
+      
+    -- Check ERROR
+    -- When ERROR, the supervisor reset the user soc then LED0 = 0x00
+    if TEST_CASE_FAULT
+    then
+
+      if (SUPERVISOR and SAFETY="lock-step")
+      then
+        log(ID_LOG_HDR, "Inject error (lock-step)", C_SCOPE);
+        
+        wait for 50 us;
+        modbus_write(C_LED0_BA  ,x"DE",        "Write LED0 Data <= 0xDE"
+                     );
+        await_value (led_switch, x"DE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xDE", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU0", C_SCOPE);
+        inject_error_i(0) <= '1';
+        run(100);
+        inject_error_i(0) <= '0';
+        await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset ", C_SCOPE);
+
+        wait for 50 us;
+        modbus_write(C_LED0_BA  ,x"AD",        "Write LED0 Data <= 0xAD"
+                     );
+        await_value (led_switch, x"AD", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xAD", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU1", C_SCOPE);
+        inject_error_i(1) <= '1';
+        run(100);
+        inject_error_i(1) <= '0';
+        await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset ", C_SCOPE);
+        
+      end if;
+
+      if (SUPERVISOR and SAFETY="tmr")
+      then
+        log(ID_LOG_HDR, "Inject error (TMR)", C_SCOPE);
+        
+      end if;
+    end if;
+
+    if TEST_CASE_SEQUENCE
+    then
+      wait for 20 us;
+      -- Perform change switch one by one, read switch and write in LED0
+      for i in 0 to 7 loop
+        switch_i    <= x"00";
+        switch_i(i) <= '1';
+        wait for 35 us;
+        modbus_read (C_SWITCH_BA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
+        wait for 35 us;
+        modbus_write(C_LED0_BA  ,switch_i       , "Write LED0 Data - 0x" & to_hstring(switch_i));
+        await_value (led_switch, switch_i, 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x" & to_hstring(switch_i), C_SCOPE);
+
+      end loop;  -- i
+    end if;
     
     -- Checks modbus error
     -- 1) bad slave id
