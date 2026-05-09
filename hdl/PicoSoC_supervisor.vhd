@@ -39,7 +39,9 @@ entity PicoSoC_supervisor is
     (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
 
-    ;ICN_ALGO_SEL          : string := "or"
+    ;ICN_ALGO_SEL          : string   := "or"
+
+    ;CPU_MODEL             : string   := "OpenBlaze8" 
     );
   port
     (clk_i                 : in  std_logic
@@ -58,6 +60,12 @@ architecture rtl of PicoSoC_supervisor is
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
+
+  -- CPU parameters
+  constant CPU_IMEM_ADDR_WIDTH        : positive := 10;
+  constant CPU_IMEM_DATA_WIDTH        : positive := 18;
+  constant CPU_DMEM_ADDR_WIDTH        : positive := SBI_ADDR_WIDTH;
+  constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 
   -- ICN Configuration
   constant TARGET_ADDR_ENCODING       : string   := PICOSOC_SUPERVISOR_ADDR_ENCODING;
@@ -86,8 +94,8 @@ architecture rtl of PicoSoC_supervisor is
   
   -- Signals CPUs
   signal cpu_ics                      : std_logic;
-  signal cpu_iaddr                    : std_logic_vector(10-1 downto 0);
-  signal cpu_idata                    : std_logic_vector(17 downto 0);
+  signal cpu_iaddr                    : std_logic_vector(CPU_DMEM_ADDR_WIDTH-1 downto 0);
+  signal cpu_idata                    : std_logic_vector(CPU_DMEM_DATA_WIDTH-1 downto 0);
   
   signal cpu_sbi_ini                  : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
@@ -103,7 +111,6 @@ architecture rtl of PicoSoC_supervisor is
   
   signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
   signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
-
   
   -- Interruption Vector
   constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(diff_i'range) := (others      => '0');

@@ -118,8 +118,9 @@ component PicoSoC_top is
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True 
-    );
+    ;DEBUG_ENABLE     : boolean  := True
+    ;CPU_MODEL        : string   := "OpenBlaze8" 
+     );
   port
     (clk_i            : in  std_logic
     ;arst_i           : in  std_logic
@@ -156,7 +157,10 @@ component PicoSoC_supervisor is
     (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
 
-    ;ICN_ALGO_SEL          : string := "or"
+    ;ICN_ALGO_SEL          : string   := "or"
+
+    ;CPU_MODEL             : string   := "OpenBlaze8" 
+
     );
   port
     (clk_i                 : in  std_logic
@@ -187,6 +191,7 @@ component PicoSoC_user is
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;ICN_ALGO_SEL          : string   := "or"
+    ;CPU_MODEL             : string   := "OpenBlaze8" 
     );
   port
     (clk_i                 : in  std_logic

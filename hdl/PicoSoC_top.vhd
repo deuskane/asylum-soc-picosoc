@@ -47,7 +47,8 @@ entity PicoSoC_top is
     ;FAULT_INJECTION  : boolean  := True  
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True 
+    ;DEBUG_ENABLE     : boolean  := True
+    ;CPU_MODEL        : string   := "OpenBlaze8" 
     );
   port
     (clk_i            : in  std_logic
@@ -198,7 +199,8 @@ begin  -- architecture rtl
     ,SAFETY               => SAFETY
     ,LOCK_STEP_DEPTH      => LOCK_STEP_DEPTH
     ,FAULT_INJECTION      => FAULT_INJECTION    
-    ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
+    ,ICN_ALGO_SEL         => ICN_ALGO_SEL   
+    ,CPU_MODEL            => CPU_MODEL     
     )
   port map
     (clk_i                => clk
@@ -242,6 +244,7 @@ begin  -- architecture rtl
       (NB_LED0              => 1
       ,NB_LED1              => NB_LED_SUPERVISOR
       ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
+      ,CPU_MODEL            => CPU_MODEL     
        )
       port map
       (clk_i                => clk

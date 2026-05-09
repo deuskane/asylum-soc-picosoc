@@ -71,6 +71,7 @@ entity PicoSoC_user is
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;ICN_ALGO_SEL          : string   := "or"
+    ;CPU_MODEL             : string   := "OpenBlaze8" 
     );
   port
     (clk_i                 : in  std_logic
@@ -107,6 +108,12 @@ architecture rtl of PicoSoC_user is
   -- Constant declaration
   constant CST0                       : std_logic_vector (8-1 downto 0) := (others => '0');
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
+
+  -- CPU parameters
+  constant CPU_IMEM_ADDR_WIDTH        : positive := 10;
+  constant CPU_IMEM_DATA_WIDTH        : positive := 18;
+  constant CPU_DMEM_ADDR_WIDTH        : positive := SBI_ADDR_WIDTH;
+  constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 
   -- Module parameters
   constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or
@@ -163,8 +170,8 @@ architecture rtl of PicoSoC_user is
   -- Signals CPUs
   signal   cpu0_arst_b                : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
   signal   cpu0_ics                   : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal   cpu0_iaddr                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(10-1 downto 0);
-  signal   cpu0_idata                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(18-1 downto 0);
+  signal   cpu0_iaddr                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal   cpu0_idata                 : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(CPU_IMEM_DATA_WIDTH-1 downto 0);
   signal   cpu0_sbi_ini               : sbi_inis_t(LOCK_STEP_DEPTH_INT downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu0_sbi_tgt               : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
@@ -173,8 +180,8 @@ architecture rtl of PicoSoC_user is
 
   signal   cpu1_arst_b                : std_logic;
   signal   cpu1_ics                   : std_logic;
-  signal   cpu1_iaddr                 : std_logic_vector(10-1 downto 0);
-  signal   cpu1_idata                 : std_logic_vector(18-1 downto 0);
+  signal   cpu1_iaddr                 : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal   cpu1_idata                 : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   signal   cpu1_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu1_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
@@ -183,8 +190,8 @@ architecture rtl of PicoSoC_user is
   
   signal   cpu2_arst_b                : std_logic;
   signal   cpu2_ics                   : std_logic;
-  signal   cpu2_iaddr                 : std_logic_vector(10-1 downto 0);
-  signal   cpu2_idata                 : std_logic_vector(18-1 downto 0);
+  signal   cpu2_iaddr                 : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal   cpu2_idata                 : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   signal   cpu2_sbi_ini               : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
   signal   cpu2_sbi_tgt               : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
@@ -193,8 +200,8 @@ architecture rtl of PicoSoC_user is
 
   -- Signals CPU (post lockstep / TMR)
   signal   cpu_ics                    : std_logic;
-  signal   cpu_iaddr                  : std_logic_vector(10-1 downto 0);
-  signal   cpu_idata                  : std_logic_vector(18-1 downto 0);
+  signal   cpu_iaddr                  : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal   cpu_idata                  : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
 
   signal   cpu_sbi_ini                : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
@@ -236,9 +243,9 @@ architecture rtl of PicoSoC_user is
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
 
-  signal   cpu0_idata_seu             : std_logic_vector(18-1 downto 0);
-  signal   cpu1_idata_seu             : std_logic_vector(18-1 downto 0);
-  signal   cpu2_idata_seu             : std_logic_vector(18-1 downto 0);
+  signal   cpu0_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+  signal   cpu1_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+  signal   cpu2_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
 
 begin  -- architecture rtl
 
