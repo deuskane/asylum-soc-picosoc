@@ -94,8 +94,8 @@ architecture rtl of PicoSoC_supervisor is
   
   -- Signals CPUs
   signal cpu_ics                      : std_logic;
-  signal cpu_iaddr                    : std_logic_vector(CPU_DMEM_ADDR_WIDTH-1 downto 0);
-  signal cpu_idata                    : std_logic_vector(CPU_DMEM_DATA_WIDTH-1 downto 0);
+  signal cpu_iaddr                    : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal cpu_idata                    : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   
   signal cpu_sbi_ini                  : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
@@ -147,7 +147,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
-  ins_sbi_OpenBlaze8_ROM : entity asylum.ROM_supervisor(rom)
+  ins_ROM_supervisor : entity asylum.ROM_supervisor(rom)
     port map
     (clk_i                => clk      
     ,cke_i                => cpu_ics

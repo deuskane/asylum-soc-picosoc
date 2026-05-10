@@ -284,7 +284,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
-  ins_sbi_OpenBlaze8_ROM : entity asylum.ROM_user(rom)
+  ins_ROM_user : entity asylum.ROM_user(rom)
     port map
     (clk_i                => clk      
     ,cke_i                => cpu_ics  
