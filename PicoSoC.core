@@ -212,6 +212,7 @@ filesets:
   files_hdl:
   #---------------------------------------
     files        :
+      - hdl/cpu_wrapper.vhd
       - hdl/PicoSoC_pkg.vhd
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd

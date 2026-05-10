@@ -126,15 +126,14 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
-  ins_sbi_OpenBlaze8_0 : sbi_OpenBlaze8
+  ins_cpu : entity asylum.cpu_wrapper
     generic map
-    (RAM_DEPTH            => 256,
-     REGFILE_SYNC_READ    => true
-     )
+    (CPU_MODEL            => CPU_MODEL
+    )
     port map
     (clk_i                => clk      
     ,cke_i                => '1'      
-    ,arstn_i              => arst_b   
+    ,arst_b_i             => arst_b   
     ,ics_o                => cpu_ics  
     ,iaddr_o              => cpu_iaddr
     ,idata_i              => cpu_idata

@@ -243,6 +243,10 @@ architecture rtl of PicoSoC_user is
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
 
+  signal   cpu0_idata_with_seu        : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+  signal   cpu1_idata_with_seu        : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+  signal   cpu2_idata_with_seu        : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+
   signal   cpu0_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   signal   cpu1_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   signal   cpu2_idata_seu             : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
@@ -258,18 +262,17 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
-  ins_sbi_OpenBlaze8_0 : sbi_OpenBlaze8
+  ins_cpu_0 : entity asylum.cpu_wrapper
     generic map
-    (RAM_DEPTH            => 256,
-     REGFILE_SYNC_READ    => true
+    (CPU_MODEL            => CPU_MODEL
      )
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
-    ,arstn_i              => cpu0_arst_b  (0)
+    ,arst_b_i             => cpu0_arst_b  (0)
     ,ics_o                => cpu0_ics     (0)
     ,iaddr_o              => cpu0_iaddr   (0)
-    ,idata_i              => cpu0_idata   (0) xor cpu0_idata_seu
+    ,idata_i              => cpu0_idata_with_seu
     ,sbi_ini_o            => cpu0_sbi_ini (0)
     ,sbi_tgt_i            => cpu0_sbi_tgt (0)
     ,interrupt_i          => cpu0_it_val  (0)
@@ -522,18 +525,17 @@ begin  -- architecture rtl
   gen_cpu1_enable: if CPU1_ENABLE = true
   generate
     -- Lock Step
-    ins_sbi_OpenBlaze8_1 : sbi_OpenBlaze8
+    ins_cpu_1 : entity asylum.cpu_wrapper
       generic map
-      (RAM_DEPTH            => 256,
-       REGFILE_SYNC_READ    => true
+      (CPU_MODEL            => CPU_MODEL
        )
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
-      ,arstn_i              => cpu1_arst_b  
+      ,arst_b_i             => cpu1_arst_b  
       ,ics_o                => cpu1_ics     
       ,iaddr_o              => cpu1_iaddr   
-      ,idata_i              => cpu1_idata  xor cpu1_idata_seu
+      ,idata_i              => cpu1_idata_with_seu
       ,sbi_ini_o            => cpu1_sbi_ini 
       ,sbi_tgt_i            => cpu1_sbi_tgt 
       ,interrupt_i          => cpu1_it_val  
@@ -578,18 +580,17 @@ begin  -- architecture rtl
   gen_cpu2_enable: if CPU2_ENABLE = true
   generate
     -- TMR
-    ins_sbi_OpenBlaze8_2 : sbi_OpenBlaze8
+    ins_cpu_2 : entity asylum.cpu_wrapper
       generic map
-      (RAM_DEPTH            => 256,
-       REGFILE_SYNC_READ    => true
+      (CPU_MODEL            => CPU_MODEL
        )
       port map
       (clk_i                => clk           
       ,cke_i                => '1'     
-      ,arstn_i              => cpu2_arst_b
+      ,arst_b_i             => cpu2_arst_b
       ,ics_o                => cpu2_ics    
       ,iaddr_o              => cpu2_iaddr  
-      ,idata_i              => cpu2_idata xor cpu2_idata_seu
+      ,idata_i              => cpu2_idata_with_seu
       ,sbi_ini_o            => cpu2_sbi_ini
       ,sbi_tgt_i            => cpu2_sbi_tgt 
       ,interrupt_i          => cpu2_it_val  
@@ -689,6 +690,10 @@ begin  -- architecture rtl
     cpu1_idata_seu <= (others => '0');
     cpu2_idata_seu <= (others => '0');
   end generate gen_inject_error_n;
+
+  cpu0_idata_with_seu <= cpu0_idata(0) xor cpu0_idata_seu;
+  cpu1_idata_with_seu <= cpu1_idata    xor cpu1_idata_seu;
+  cpu2_idata_with_seu <= cpu2_idata    xor cpu2_idata_seu;
 
   -----------------------------------------------------------------------------
   -- Debug
