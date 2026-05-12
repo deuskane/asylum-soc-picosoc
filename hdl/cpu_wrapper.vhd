@@ -25,7 +25,7 @@ use     IEEE.numeric_std.ALL;
 
 library asylum;
 use     asylum.sbi_pkg.all;
-use     asylum.OpenBlaze8_pkg.all;
+use     asylum.WardRV_pkg.all;
 
 entity cpu_wrapper is
   generic (
@@ -81,5 +81,37 @@ gen_OpenBlaze8 : if CPU_MODEL = "OpenBlaze8" generate
       interrupt_ack_o      => interrupt_ack_o
     );
 end generate gen_OpenBlaze8;
+
+gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
+  cpu_WardRV_fsm : entity asylum.sbi_WardRV_fsm
+    generic map (
+      HARTID               => x"00000000",
+      RESET_ADDR           => x"00000000",
+      IADDR_WIDTH          => iaddr_o'length
+     )
+    port map (
+      clk_i                => clk_i,
+      cke_i                => cke_i,
+      arstn_i              => arst_b_i,
+
+      -- Instructions
+      ics_o                => ics_o,
+      iaddr_o              => iaddr_o,
+      idata_i              => idata_i,
+      
+      -- Bus
+      sbi_ini_o            => sbi_ini_o,
+      sbi_tgt_i            => sbi_tgt_i,
+
+      -- To/From IT Ctrl
+      interrupt_i          => interrupt_i,
+      interrupt_ack_o      => interrupt_ack_o
+    );
+  end generate gen_WardRV_fsm;
+
+  assert (CPU_MODEL = "OpenBlaze8" or 
+          CPU_MODEL = "WardRV_fsm")
+    report "Invalid CPU_MODEL: " & CPU_MODEL
+    severity failure;
 
 end architecture rtl;

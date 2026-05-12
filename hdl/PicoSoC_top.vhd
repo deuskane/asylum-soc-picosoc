@@ -48,7 +48,7 @@ entity PicoSoC_top is
     ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
     ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE     : boolean  := True
-    ;CPU_MODEL        : string   := "OpenBlaze8" 
+    ;CPU_MODEL        : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
     );
   port
     (clk_i            : in  std_logic

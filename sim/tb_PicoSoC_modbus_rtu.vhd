@@ -51,7 +51,8 @@ entity tb_PicoSoC_modbus_rtu is
     ;FAULT_INJECTION  : boolean  := True  
   --;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
   --;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True 
+    ;DEBUG_ENABLE     : boolean  := True
+    ;CPU_MODEL        : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
     ;TB_WATCHDOG      : natural  := 10_000
@@ -182,6 +183,7 @@ begin  -- architecture tb
     ,FAULT_POLARITY   => FAULT_POLARITY  
     ,UART_DEPTH_TX    => UART_DEPTH_TX
     ,UART_DEPTH_RX    => UART_DEPTH_RX
+    ,CPU_MODEL        => CPU_MODEL
      )  
     port map
     (clk_i            => clk_i           

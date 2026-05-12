@@ -47,6 +47,7 @@ entity tb_PicoSoC is
   --;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
   --;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE     : boolean  := True 
+    ;CPU_MODEL        : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
     ;TB_WATCHDOG      : natural  := 10_000
@@ -147,6 +148,7 @@ begin  -- architecture tb
     ,FAULT_INJECTION  => FAULT_INJECTION 
     ,IT_USER_POLARITY => IT_USER_POLARITY
     ,FAULT_POLARITY   => FAULT_POLARITY  
+    ,CPU_MODEL        => CPU_MODEL
      )  
     port map
     (clk_i            => clk_i           

@@ -231,6 +231,7 @@ filesets:
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:processor:OpenBlaze8:1.0.0"
+      - ">=asylum:processor:WardRV:0.0.1"
       
   #---------------------------------------
   files_sim:
@@ -285,6 +286,7 @@ targets:
     default_tool    : ghdl
     toplevel        : tb_PicoSoC
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
     filesets_append :
@@ -306,6 +308,7 @@ targets:
       - pbcc_dep
     generate : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=50000000
       - FSYS_INT=50000000
       - NB_SWITCH=8
@@ -332,6 +335,7 @@ targets:
       - pbcc_dep
     generate : [gen_user_c_uart_9600_spi,gen_supervisor_c_tmr]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -371,6 +375,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
     generate : [gen_user_c_uart_9600_spi_mem,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -402,6 +407,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
     generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
       - NB_SWITCH=6
@@ -433,6 +439,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
     generate : [gen_user_c_uart_9600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -464,6 +471,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
       - NB_SWITCH=6
@@ -495,6 +503,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
     generate : [gen_user_c_uart_9600,gen_supervisor_c]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -526,6 +535,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
     generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
       - NB_SWITCH=6
@@ -557,6 +567,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate : [gen_user_c_uart_9600,gen_supervisor_c]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -588,6 +599,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate : [gen_user_modbus_rtu_9600,gen_supervisor_c]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
       - NB_SWITCH=6
@@ -619,6 +631,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
     generate     : [gen_user_c_uart_9600,gen_supervisor_c_tmr]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
       - NB_SWITCH=6
@@ -650,6 +663,7 @@ targets:
     description  : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
     generate : [gen_user_modbus_rtu_9600,gen_supervisor_c_tmr]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
       - NB_SWITCH=6
@@ -681,6 +695,7 @@ targets:
     description  : Simulation of the test esw/user_identity.psm
     generate     : [gen_user_asm_identity,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -706,6 +721,7 @@ targets:
     description  : Simulation of the test esw/user_identity.c
     generate     : [gen_user_c_identity,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -731,6 +747,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -756,6 +773,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
     generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -781,6 +799,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
     generate     : [gen_user_c_uart_921600_spi,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -806,6 +825,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
     generate     : [gen_user_c_uart_921600_spi_mem,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -832,6 +852,7 @@ targets:
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -856,6 +877,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -881,6 +903,7 @@ targets:
     description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c_uart_921600,gen_supervisor_c_dummy]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -907,6 +930,7 @@ targets:
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_dummy]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -931,6 +955,7 @@ targets:
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, Without Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -957,6 +982,7 @@ targets:
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -981,6 +1007,7 @@ targets:
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate     : [gen_user_c,gen_supervisor_c]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -1007,6 +1034,7 @@ targets:
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -1031,6 +1059,7 @@ targets:
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
     generate     : [gen_user_c,gen_supervisor_c_tmr]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -1056,6 +1085,7 @@ targets:
     description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
     generate     : [gen_user_c_uart_921600,gen_supervisor_c_tmr]
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -1082,6 +1112,7 @@ targets:
     generate     : [gen_user_modbus_rtu_921600,gen_supervisor_c_tmr]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
+      - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
 
@@ -1215,4 +1246,10 @@ parameters :
     description : The Testbench have an spi memory
     datatype    : bool
     default     : false
+    paramtype   : generic
+
+  CPU_MODEL :
+    description : CPU Model (OpenBlaze8 / WardRV_fsm)
+    datatype    : str
+    default     : OpenBlaze8
     paramtype   : generic
