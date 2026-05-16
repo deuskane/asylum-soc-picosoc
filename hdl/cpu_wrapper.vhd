@@ -87,7 +87,8 @@ gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
     generic map (
       HARTID               => x"00000000",
       RESET_ADDR           => x"00000000",
-      IADDR_WIDTH          => iaddr_o'length
+      IADDR_WIDTH          => iaddr_o'length,
+      IADDR_ALIGN_BITS     => 2 -- Word-aligned instructions
      )
     port map (
       clk_i                => clk_i,

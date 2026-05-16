@@ -27,6 +27,7 @@
 -- 2025-11-27  3.2      mrosiere Add CRC
 -- 2025-11-29  3.3      mrosiere Use CRC Generic
 -- 2025-11-06  3.4      mrosiere Add Generic LOCK_STEP_DEPTH
+-- 2026-05-06  3.5      mrosiere Add Generic CPU_MODEL-
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -54,6 +55,7 @@ use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
 use     asylum.crc_pkg.all;
 use     asylum.icn_pkg.all;
+use     asylum.ROM_user_pkg.all;
 
 entity PicoSoC_user is
   generic
@@ -110,8 +112,8 @@ architecture rtl of PicoSoC_user is
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
 
   -- CPU parameters
-  constant CPU_IMEM_ADDR_WIDTH        : positive := 10;
-  constant CPU_IMEM_DATA_WIDTH        : positive := 18;
+  constant CPU_IMEM_ADDR_WIDTH        : positive := ROM_user_ADDR_WIDTH;
+  constant CPU_IMEM_DATA_WIDTH        : positive := ROM_user_DATA_WIDTH;
   constant CPU_DMEM_ADDR_WIDTH        : positive := SBI_ADDR_WIDTH;
   constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 

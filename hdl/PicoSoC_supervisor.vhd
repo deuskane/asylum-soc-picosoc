@@ -33,6 +33,7 @@ use     asylum.OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.icn_pkg.all;
+use     asylum.ROM_supervisor_pkg.all;
 
 entity PicoSoC_supervisor is
   generic
@@ -62,8 +63,8 @@ architecture rtl of PicoSoC_supervisor is
   constant CST1                       : std_logic_vector (8-1 downto 0) := (others => '1');
 
   -- CPU parameters
-  constant CPU_IMEM_ADDR_WIDTH        : positive := 10;
-  constant CPU_IMEM_DATA_WIDTH        : positive := 18;
+  constant CPU_IMEM_ADDR_WIDTH        : positive := ROM_supervisor_ADDR_WIDTH;
+  constant CPU_IMEM_DATA_WIDTH        : positive := ROM_supervisor_DATA_WIDTH;
   constant CPU_DMEM_ADDR_WIDTH        : positive := SBI_ADDR_WIDTH;
   constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 

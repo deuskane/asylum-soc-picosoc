@@ -20,6 +20,8 @@ use     ieee.numeric_std.all;
 
 library asylum;
 use     asylum.uart_pkg.ALL;
+use     asylum.ROM_user_pkg.all;
+use     asylum.sbi_pkg.all;
 
 package PicoSoC_pkg is
 
@@ -62,8 +64,8 @@ package PicoSoC_pkg is
 
   type PicoSoC_user_debug_t is record
     arst_b      : std_logic;
-    cpu_iaddr   : std_logic_vector(10-1 downto 0);
-    cpu_idata   : std_logic_vector(18-1 downto 0);
+    cpu_iaddr   : std_logic_vector(ROM_user_ADDR_WIDTH-1 downto 0);
+    cpu_idata   : std_logic_vector(ROM_user_DATA_WIDTH-1 downto 0);
                 
     cpu_dcs     : std_logic;
     cpu_dre     : std_logic;
