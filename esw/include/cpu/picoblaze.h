@@ -24,7 +24,31 @@
 //--------------------------------------
 // Port Macro
 //--------------------------------------
-#include "intr.h"
+
+#define EINT  ENABLE INTERRUPT
+#define DINT  DISABLE INTERRUPT
+
+void enable_interrupt (void);
+void disable_interrupt(void);
+//inline bool enabled_interrupt();
+//void set_interrupt_handler(void *(void))
+//void set_interrupt(BOOL enable);
+
+void enable_interrupt(void)
+{
+   __asm
+       EINT
+   __endasm;
+}
+
+void disable_interrupt(void)
+{
+  __asm;   
+      DINT
+  __endasm;
+}
+
+
 
 // This variable is defined in the picoblaze compiler
 extern volatile uint8_t PBLAZEPORT[];

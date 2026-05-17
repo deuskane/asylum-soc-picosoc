@@ -81,9 +81,7 @@ void main()
   // Mask Enable
   gic_it_enable (GIC,VECTOR_MASK_DEFAULT);
 
-  __asm
-    ENABLE INTERRUPT
-  __endasm;
+  enable_interrupt();
 
   gpio_wr       (RST,1);
 

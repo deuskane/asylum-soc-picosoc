@@ -474,7 +474,7 @@ void setup()
   gic_it_enable(TIMER,TIMER_IT_DONE_MSK);
   
   // Enable Interrtuption in the CPU
-  //pbcc_enable_interrupt();
+  //enable_interrupt();
 }
 
 

@@ -143,7 +143,7 @@ void setup()
   gic_it_enable(GIC,GIC_IT_USER_MSK);
 //gic_it_enable(GIC,GIC_UART_MSK);
   
-  pbcc_enable_interrupt();
+  enable_interrupt();
 }
 
 //--------------------------------------

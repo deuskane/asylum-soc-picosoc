@@ -27,5 +27,4 @@
 #define PORT_WR(_BA_,_OFFSET_,_DATA_) DMEM[(_BA_)+(_OFFSET_)] = (_DATA_)
 #define PORT_RD(_BA_,_OFFSET_)        DMEM[(_BA_)+(_OFFSET_)]
 
-
 #endif

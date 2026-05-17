@@ -102,7 +102,7 @@ void setup()
   gic_it_enable(GIC,GIC_UART_MSK);
 
   // Enable Interrtuption in the CPU
-  pbcc_enable_interrupt();
+  enable_interrupt();
 }
 
 //--------------------------------------
