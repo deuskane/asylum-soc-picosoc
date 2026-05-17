@@ -36,6 +36,10 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
 
+-- Type Package
+use     asylum.sbi_pkg.all;
+use     asylum.logic_pkg.all;
+use     asylum.math_pkg.all;
 -- CSR Package
 use     asylum.GPIO_csr_pkg.all;
 use     asylum.UART_csr_pkg.all;
@@ -43,13 +47,8 @@ use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
 use     asylum.crc_csr_pkg.all;
--- Type Package
-use     asylum.sbi_pkg.all;
-use     asylum.logic_pkg.all;
-use     asylum.math_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
-use     asylum.OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.spi_pkg.all;
@@ -57,9 +56,8 @@ use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
 use     asylum.crc_pkg.all;
 use     asylum.icn_pkg.all;
-use     asylum.ROM_user_pkg.all;
 use     asylum.ram_pkg.all;
-
+use     asylum.ROM_user_pkg.all;
 
 entity PicoSoC_user is
   generic

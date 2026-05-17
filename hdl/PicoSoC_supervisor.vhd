@@ -25,14 +25,19 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
+
+-- Type Package
 use     asylum.sbi_pkg.all;
+use     asylum.math_pkg.all;
+-- CSR Package
 use     asylum.GPIO_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
+-- Modules Packages
 use     asylum.PicoSoC_pkg.all;
-use     asylum.OpenBlaze8_pkg.all;
 use     asylum.gpio_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.icn_pkg.all;
+use     asylum.ram_pkg.all;
 use     asylum.ROM_supervisor_pkg.all;
 
 entity PicoSoC_supervisor is
@@ -75,19 +80,22 @@ architecture rtl of PicoSoC_supervisor is
   constant TARGET_LED0                : integer  := 0;
   constant TARGET_LED1                : integer  := 1;
   constant TARGET_GIC                 : integer  := 2;
+  constant TARGET_RAM                 : integer  := 3;
 
-  constant NB_TARGET                  : positive := 3;
+  constant NB_TARGET                  : positive := 4;
 
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => PICOSOC_SUPERVISOR_LED0_BA,
-      TARGET_LED1                     => PICOSOC_SUPERVISOR_LED1_BA,
-      TARGET_GIC                      => PICOSOC_SUPERVISOR_GIC_BA 
+    ( TARGET_LED0                     => PICOSOC_SUPERVISOR_LED0_BA
+     ,TARGET_LED1                     => PICOSOC_SUPERVISOR_LED1_BA
+     ,TARGET_GIC                      => PICOSOC_SUPERVISOR_GIC_BA 
+     ,TARGET_RAM                      => PICOSOC_SUPERVISOR_RAM_BA   
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => GPIO_ADDR_WIDTH,
-      TARGET_LED1                     => GPIO_ADDR_WIDTH,
-      TARGET_GIC                      => GIC_ADDR_WIDTH
+    ( TARGET_LED0                     => GPIO_ADDR_WIDTH
+     ,TARGET_LED1                     => GPIO_ADDR_WIDTH
+     ,TARGET_GIC                      => GIC_ADDR_WIDTH
+     ,TARGET_RAM                      => log2(RAM_DEPTH)
       );
       
   -- Signals Clock/Reset
@@ -239,6 +247,21 @@ begin  -- architecture rtl
     ,itm_o                => cpu_it_val
     );
   
+  -----------------------------------------------------------------------------
+  -- RAM
+  -----------------------------------------------------------------------------
+  ins_sbi_ram : sbi_ram
+    generic map
+    (DEPTH                => 128      ,
+     SYNC_READ            => true   
+   )
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_RAM)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_RAM)
+    );
+ 
   -----------------------------------------------------------------------------
   -- Output
   -----------------------------------------------------------------------------
