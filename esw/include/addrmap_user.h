@@ -22,7 +22,7 @@
 // IP
 //--------------------------------------
 
-#include "picoblaze.h"
+#include "cpu.h"
 #include "gpio.h"
 #include "uart.h"
 #include "spi.h"

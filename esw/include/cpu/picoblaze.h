@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro to define Address Map for supervisor soc
+// Title      : Macro for picoblaze
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : addrmap_supervisor.h
+// File       : picoblaze.h
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
@@ -11,25 +11,26 @@
 //-----------------------------------------------------------------------------
 // Revisions  :
 // Date        Version  Author   Description
-// 2025-07-31  1.0      mrosiere Created
+// 2025-06-14  1.0      mrosiere Created
+// 2026-05-14  1.1      mrosiere Support others picoblaze cores 
+//                               (but keep the same interface)
 //-----------------------------------------------------------------------------
 
-#ifndef _addrmap_supervisor_h_
-#define _addrmap_supervisor_h_
+#ifndef _picoblaze_h_
+#define _picoblaze_h_
+
+#include <stdint.h>
 
 //--------------------------------------
-// IP
+// Port Macro
 //--------------------------------------
+#include "intr.h"
 
-#include "cpu.h"
-#include "gpio.h"
-#include "gic.h"
+// This variable is defined in the picoblaze compiler
+extern volatile uint8_t PBLAZEPORT[];
 
-//--------------------------------------
-// Address Map
-//--------------------------------------
-#define RST                 0x10
-#define LED                 0x20
-#define GIC                 0x40
+#define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[(_BA_)+(_OFFSET_)] = (_DATA_)
+#define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[(_BA_)+(_OFFSET_)]
+
 
 #endif

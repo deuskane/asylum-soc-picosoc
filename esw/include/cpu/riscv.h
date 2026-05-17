@@ -1,39 +1,31 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro for picoblaze
+// Title      : Macro for riscv
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : picoblaze.h
+// File       : riscv.h
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
 //-----------------------------------------------------------------------------
-// Copyright (c) 2025
+// Copyright (c) 2026
 //-----------------------------------------------------------------------------
 // Revisions  :
 // Date        Version  Author   Description
-// 2025-06-14  1.0      mrosiere Created
-// 2026-05-14  1.1      mrosiere Support others picoblaze cores 
-//                               (but keep the same interface)
+// 2026-05-17  1.0      mrosiere Created
 //-----------------------------------------------------------------------------
 
-#ifndef _picoblaze_h_
-#define _picoblaze_h_
+#ifndef _riscv_h_
+#define _riscv_h_
 
 #include <stdint.h>
 
 //--------------------------------------
 // Port Macro
 //--------------------------------------
-#ifdef picoblaze
+#define DMEM ((volatile uint8_t*)0)
 
-// This variable is defined in the picoblaze compiler
-extern volatile uint8_t PBLAZEPORT[];
-#else
-#define PBLAZEPORT ((volatile uint8_t*)0)
-#endif
-
-#define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[(_BA_)+(_OFFSET_)] = (_DATA_)
-#define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[(_BA_)+(_OFFSET_)]
+#define PORT_WR(_BA_,_OFFSET_,_DATA_) DMEM[(_BA_)+(_OFFSET_)] = (_DATA_)
+#define PORT_RD(_BA_,_OFFSET_)        DMEM[(_BA_)+(_OFFSET_)]
 
 
 #endif

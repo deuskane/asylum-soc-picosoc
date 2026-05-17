@@ -17,7 +17,6 @@
 // 2025-01-06  1.1      mrosiere Add comments
 // 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 //-----------------------------------------------------------------------------
-#include <stdint.h>
 #include "addrmap_supervisor.h"
 
 //--------------------------------------

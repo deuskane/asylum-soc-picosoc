@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro to define Address Map for supervisor soc
+// Title      : Macro for cpu
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : addrmap_supervisor.h
+// File       : cpu.h
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
@@ -11,25 +11,19 @@
 //-----------------------------------------------------------------------------
 // Revisions  :
 // Date        Version  Author   Description
-// 2025-07-31  1.0      mrosiere Created
+// 2026-05-17  1.0      mrosiere Created
 //-----------------------------------------------------------------------------
 
-#ifndef _addrmap_supervisor_h_
-#define _addrmap_supervisor_h_
+#ifndef _cpu_h_
+#define _cpu_h_
 
-//--------------------------------------
-// IP
-//--------------------------------------
+#ifdef picoblaze
 
-#include "cpu.h"
-#include "gpio.h"
-#include "gic.h"
+#include "cpu/picoblaze.h"
 
-//--------------------------------------
-// Address Map
-//--------------------------------------
-#define RST                 0x10
-#define LED                 0x20
-#define GIC                 0x40
+#else
 
+#include "cpu/riscv.h"
+
+#endif
 #endif

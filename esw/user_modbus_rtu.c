@@ -14,7 +14,7 @@
 // 2025-10-18  1.0      mrosiere Created
 //-----------------------------------------------------------------------------
 
-#include <intr.h>
+//#include <intr.h>
 #include "addrmap_user.h"
 #include "modbus_rtu.h"
 
@@ -434,13 +434,14 @@ void modbus_slave ()
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
+#ifdef picoblaze
 void isr (void) __interrupt(1)
 {
   // Nothing
 
   // All done
 }
-
+#endif
 //--------------------------------------
 // Application Setup
 //--------------------------------------
@@ -483,7 +484,6 @@ void setup()
 // Arduino Style, Don't modify
 void main()
 {
-  uint32_t cpt = 0;
 
   setup();
 
