@@ -30,25 +30,27 @@ use     asylum.clock_divider_pkg.all;
 
 entity PicoSoC_top is
   generic
-    (FSYS             : positive := 50_000_000
-    ;FSYS_INT         : positive := 50_000_000
-    ;BAUD_RATE        : integer  := 115200
-    ;UART_DEPTH_TX    : natural  := 0
-    ;UART_DEPTH_RX    : natural  := 0
-    ;SPI_DEPTH_CMD    : natural  := 0
-    ;SPI_DEPTH_TX     : natural  := 0
-    ;SPI_DEPTH_RX     : natural  := 0
-    ;NB_SWITCH        : positive := 8
-    ;NB_LED           : positive := 19
-    ;RESET_POLARITY   : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR       : boolean  := True 
-    ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH  : natural  := 2
-    ;FAULT_INJECTION  : boolean  := True  
-    ;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
-    ;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True
-    ;CPU_MODEL        : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    (FSYS                  : positive := 50_000_000
+    ;FSYS_INT              : positive := 50_000_000
+    ;BAUD_RATE             : integer  := 115200
+    ;UART_DEPTH_TX         : natural  := 0
+    ;UART_DEPTH_RX         : natural  := 0
+    ;SPI_DEPTH_CMD         : natural  := 0
+    ;SPI_DEPTH_TX          : natural  := 0
+    ;SPI_DEPTH_RX          : natural  := 0
+    ;NB_SWITCH             : positive := 8
+    ;NB_LED                : positive := 19
+    ;RESET_POLARITY        : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR            : boolean  := True 
+    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH       : natural  := 2
+    ;FAULT_INJECTION       : boolean  := True  
+    ;IT_USER_POLARITY      : string   := "low"       -- "high" / "low"
+    ;FAULT_POLARITY        : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE          : boolean  := True
+    ;CPU_MODEL             : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;SUPERVISOR_RAM_DEPTH  : natural  := 128
+    ;USER_RAM_DEPTH        : natural  := 128
     );
   port
     (clk_i            : in  std_logic
@@ -200,7 +202,8 @@ begin  -- architecture rtl
     ,LOCK_STEP_DEPTH      => LOCK_STEP_DEPTH
     ,FAULT_INJECTION      => FAULT_INJECTION    
     ,ICN_ALGO_SEL         => ICN_ALGO_SEL   
-    ,CPU_MODEL            => CPU_MODEL     
+    ,CPU_MODEL            => CPU_MODEL
+    ,RAM_DEPTH            => USER_RAM_DEPTH     
     )
   port map
     (clk_i                => clk
@@ -245,6 +248,7 @@ begin  -- architecture rtl
       ,NB_LED1              => NB_LED_SUPERVISOR
       ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
       ,CPU_MODEL            => CPU_MODEL     
+      ,RAM_DEPTH            => SUPERVISOR_RAM_DEPTH
        )
       port map
       (clk_i                => clk

@@ -43,6 +43,7 @@ entity PicoSoC_supervisor is
     ;ICN_ALGO_SEL          : string   := "or"
 
     ;CPU_MODEL             : string   := "OpenBlaze8" 
+    ;RAM_DEPTH             : natural  := 128
     );
   port
     (clk_i                 : in  std_logic

@@ -27,7 +27,8 @@
 -- 2025-11-27  3.2      mrosiere Add CRC
 -- 2025-11-29  3.3      mrosiere Use CRC Generic
 -- 2025-11-06  3.4      mrosiere Add Generic LOCK_STEP_DEPTH
--- 2026-05-06  3.5      mrosiere Add Generic CPU_MODEL-
+-- 2026-05-06  3.5      mrosiere Add Generic CPU_MODEL
+-- 2026-05-16  3.6      mrosiere Add RAM
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -45,6 +46,7 @@ use     asylum.crc_csr_pkg.all;
 -- Type Package
 use     asylum.sbi_pkg.all;
 use     asylum.logic_pkg.all;
+use     asylum.math_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.OpenBlaze8_pkg.all;
@@ -56,6 +58,8 @@ use     asylum.timer_pkg.all;
 use     asylum.crc_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ROM_user_pkg.all;
+use     asylum.ram_pkg.all;
+
 
 entity PicoSoC_user is
   generic
@@ -73,7 +77,8 @@ entity PicoSoC_user is
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;ICN_ALGO_SEL          : string   := "or"
-    ;CPU_MODEL             : string   := "OpenBlaze8" 
+    ;CPU_MODEL             : string   := "OpenBlaze8"
+    ;RAM_DEPTH             : natural  := 128
     );
   port
     (clk_i                 : in  std_logic
@@ -135,8 +140,9 @@ architecture rtl of PicoSoC_user is
   constant TARGET_GIC                 : integer  := 5;
   constant TARGET_TIMER               : integer  := 6;
   constant TARGET_CRC                 : integer  := 7;
+  constant TARGET_RAM                 : integer  := 8;
   
-  constant NB_TARGET                  : positive := 8;
+  constant NB_TARGET                  : positive := 9;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
@@ -147,6 +153,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_GIC                      => PICOSOC_USER_GIC_BA   
      ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
      ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
+     ,TARGET_RAM                      => PICOSOC_USER_RAM_BA   
       );
 
   constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
@@ -158,6 +165,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_GIC                      => GIC_ADDR_WIDTH
      ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
      ,TARGET_CRC                      => CRC_ADDR_WIDTH
+     ,TARGET_RAM                      => log2(RAM_DEPTH)
       );
   
   -- Signals ICN
@@ -492,6 +500,22 @@ begin  -- architecture rtl
     ,sbi_tgt_o            => icn_sbi_tgts(TARGET_CRC)
     );
 
+
+  -----------------------------------------------------------------------------
+  -- RAM
+  -----------------------------------------------------------------------------
+  ins_sbi_ram : sbi_ram
+    generic map
+    (DEPTH                => 128      ,
+     SYNC_READ            => true   
+   )
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_RAM)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_RAM)
+    );
+    
   -----------------------------------------------------------------------------
   -- CPU 0 pipe register
   -----------------------------------------------------------------------------
