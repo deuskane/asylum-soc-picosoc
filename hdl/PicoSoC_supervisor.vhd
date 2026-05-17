@@ -19,6 +19,7 @@
 -- 2025-01-01  1.0      mrosiere Created
 -- 2025-04-02  1.1      mrosiere Add ICN
 -- 2025-07-05  1.2      mrosiere Use GIC instead GPIO
+-- 2026-05-17  1.3      mrosiere Add RAM
 -------------------------------------------------------------------------------
 
 library ieee;
