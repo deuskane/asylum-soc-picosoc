@@ -109,7 +109,7 @@ void modbus_response_crc (uint16_t crc)
 //--------------------------------------
 uint8_t _getchar()
 {
-  uint8_t byte = getchar();
+  volatile uint8_t byte = getchar();
 
 #ifdef UART_ECHO
   putchar(byte);
