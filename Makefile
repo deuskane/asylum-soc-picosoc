@@ -76,6 +76,8 @@ help : $(FILE_TARGETS)
 	@for target in $(TARGETS_LINT); do \
 	 echo "                * $${target}"; \
 	 done
+	@echo "TARGETS_FILTER: Filter for targets (regex)"
+	@echo "                $(TARGETS_FILTER)"
 	@echo "NONREG        : Non Regression Type (SIM/EMU/LINT)"
 	@echo "                $(NONREG)"
 	@echo "PATH_BUILD    : Path to build directory"
