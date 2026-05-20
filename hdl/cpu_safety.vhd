@@ -294,9 +294,19 @@ begin
   -----------------------------------------------------------------------------
   gen_inject_error: if FAULT_INJECTION
   generate
-    cpu0_idata_seu <= (17 => inject_error_i(0), others => '0');
-    cpu1_idata_seu <= (16 => inject_error_i(1), others => '0');
-    cpu2_idata_seu <= (15 => inject_error_i(2), others => '0');
+    gen_seu_openblaze: if CPU_MODEL = "OpenBlaze8" 
+    generate
+      cpu0_idata_seu <= (17 => inject_error_i(0), others => '0');
+      cpu1_idata_seu <= (16 => inject_error_i(1), others => '0');
+      cpu2_idata_seu <= (15 => inject_error_i(2), others => '0');
+    elsif CPU_MODEL = "WardRV_fsm" 
+    generate
+      cpu0_idata_seu <= (0 => inject_error_i(0), others => '0');
+      cpu1_idata_seu <= (1 => inject_error_i(1), others => '0');
+      cpu2_idata_seu <= (2 => inject_error_i(2), others => '0');
+    else generate
+      -- Default case for other CPU models, no SEU injection
+    end generate;
   else generate
     cpu0_idata_seu <= (others => '0');
     cpu1_idata_seu <= (others => '0');
