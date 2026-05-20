@@ -376,8 +376,8 @@ begin  -- architecture tb
 
     gen_pulse(arst_b_i, '0', 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
 
-    log(ID_LOG_HDR, "wait 1000 cycles to finish init", C_SCOPE);
-    run(1000);
+    log(ID_LOG_HDR, "wait 2000 cycles to finish init", C_SCOPE);
+    run(2000);
 
     --==================================================================================================
     -- Test case

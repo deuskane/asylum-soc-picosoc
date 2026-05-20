@@ -177,6 +177,32 @@ component cpu_wrapper is
   
 end component cpu_wrapper;
 
+  component cpu_safety is
+    generic
+      (SAFETY                : string   := "lock-step"
+      ;LOCK_STEP_DEPTH       : natural  := 2
+      ;FAULT_INJECTION       : boolean  := False
+      ;CPU_MODEL             : string   := "OpenBlaze8"
+      ;IMEM_ADDR_WIDTH       : positive := 12
+      ;IMEM_DATA_WIDTH       : positive := 18
+      );
+    port
+      (clk_i                 : in  std_logic
+      ;cke_i                 : in  std_logic
+      ;arst_b_i              : in  std_logic
+      ;ics_o                 : out std_logic
+      ;iaddr_o               : out std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0)
+      ;idata_i               : in  std_logic_vector(IMEM_DATA_WIDTH-1 downto 0)
+      ;sbi_ini_o             : out sbi_ini_t
+      ;sbi_tgt_i             : in  sbi_tgt_t
+      ;interrupt_i           : in  std_logic
+      ;interrupt_ack_o       : out std_logic
+      ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
+      ;diff_o                : out std_logic_vector(3-1 downto 0)
+      );
+  end component;
+  
+
 component PicoSoC_top is
   generic
     (FSYS                  : positive := 50_000_000

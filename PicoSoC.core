@@ -348,6 +348,7 @@ filesets:
   #---------------------------------------
     files        :
       - hdl/cpu_wrapper.vhd
+      - hdl/cpu_safety.vhd
       - hdl/PicoSoC_pkg.vhd
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd
@@ -925,7 +926,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -977,7 +978,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=true
 
   #---------------------------------------
@@ -1004,7 +1005,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user:
@@ -1029,7 +1030,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1055,7 +1056,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1082,7 +1083,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc3_openblaze8_c_user:
@@ -1107,7 +1108,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1134,7 +1135,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc3_openblaze8_fault_c_user:
@@ -1159,7 +1160,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1186,7 +1187,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc4_openblaze8_fault_c_user:
@@ -1211,7 +1212,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1237,7 +1238,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1264,7 +1265,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   emu_basys_soc1_wardrv_fsm_asm_identity:
@@ -1758,7 +1759,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -1810,7 +1811,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=true
 
   #---------------------------------------
@@ -1837,7 +1838,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user:
@@ -1862,7 +1863,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1888,7 +1889,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1915,7 +1916,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_c_user:
@@ -1940,7 +1941,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -1967,7 +1968,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user:
@@ -1992,7 +1993,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -2019,7 +2020,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user:
@@ -2044,7 +2045,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -2070,7 +2071,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=false
 
   #---------------------------------------
@@ -2097,7 +2098,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=50000
+      - TB_WATCHDOG=200000
 
 #=========================================
 parameters :
