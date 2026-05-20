@@ -25,36 +25,42 @@
 // Port Macro
 //--------------------------------------
 
-#define EINT  ENABLE INTERRUPT
-#define DINT  DISABLE INTERRUPT
-
-void enable_interrupt (void);
-void disable_interrupt(void);
-//inline bool enabled_interrupt();
-//void set_interrupt_handler(void *(void))
-//void set_interrupt(BOOL enable);
-
-void enable_interrupt(void)
-{
-   __asm
-       EINT
-   __endasm;
-}
-
-void disable_interrupt(void)
-{
-  __asm;   
-      DINT
-  __endasm;
-}
-
-
-
 // This variable is defined in the picoblaze compiler
 extern volatile uint8_t PBLAZEPORT[];
 
 #define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[(_BA_)+(_OFFSET_)] = (_DATA_)
 #define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[(_BA_)+(_OFFSET_)]
 
+//--------------------------------------
+// Interruption
+//--------------------------------------
+
+#define EINT  ENABLE INTERRUPT
+#define DINT  DISABLE INTERRUPT
+
+void interrupt_setup(void (*handler)(void));
+void interrupt_enable (void);
+void interrupt_disable(void);
+
+#define ISR_FCT  __interrupt(1)
+#define ISR_RET do {} while (0)
+
+void interrupt_setup(void (*handler)(void))
+{
+}
+
+void interrupt_enable(void)
+{
+   __asm
+       EINT
+   __endasm;
+}
+
+void interrupt_disable(void)
+{
+  __asm;   
+      DINT
+  __endasm;
+}
 
 #endif
