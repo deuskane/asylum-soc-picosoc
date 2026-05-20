@@ -32,9 +32,11 @@ IP_NAME          = $(shell echo $(CORE_NAME) | cut -d':' -f4)
 IP_VERSION       = $(shell echo $(CORE_NAME) | cut -d':' -f5)
 VLNV             = $(IP_VENDOR):$(IP_LIBRARY):$(IP_NAME):$(IP_VERSION)
 
-TARGETS_SIM     := $(shell cat $(FILE_TARGETS) | grep sim_   | cut -d ':' -f1 | tr -d ' ')
-TARGETS_EMU     := $(shell cat $(FILE_TARGETS) | grep emu_   | cut -d ':' -f1 | tr -d ' ')
-TARGETS_LINT    := $(shell cat $(FILE_TARGETS) | grep lint_  | cut -d ':' -f1 | tr -d ' ')
+TARGETS_FILTER  ?= .
+
+TARGETS_SIM     := $(shell grep sim_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
+TARGETS_EMU     := $(shell grep emu_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
+TARGETS_LINT    := $(shell grep lint_ $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
 
 PATH_BUILD      ?= $(CURDIR)/build
 
