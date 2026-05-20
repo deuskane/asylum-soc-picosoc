@@ -19,7 +19,6 @@
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
-#include <intr.h>
 #include "addrmap_user.h"
 
 //--------------------------------------
@@ -37,7 +36,7 @@
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-void isr (void) __interrupt(1)
+void isr (void) ISR_FCT
 {
   // GIC : Get interruption status
   uint8_t gic_it_vector = gic_isr(GIC);
@@ -67,6 +66,7 @@ void isr (void) __interrupt(1)
     }
 
   // All done
+  ISR_RET;
 }
 
 //--------------------------------------
@@ -101,8 +101,11 @@ void setup()
   gic_it_enable(GIC,GIC_IT_USER_MSK);
   gic_it_enable(GIC,GIC_UART_MSK);
 
+  // Setup the interruption handler address in the CPU
+  interrupt_setup(isr);
+
   // Enable Interrtuption in the CPU
-  enable_interrupt();
+  interrupt_enable();
 }
 
 //--------------------------------------
@@ -110,8 +113,6 @@ void setup()
 //--------------------------------------
 void spi_sfdp()
 {
-  uint8_t dummy;
-
   // Execute instruction SFDP with @0 and get 4 bytes
   spi_inst24(SPI,SPI_SFDP,0x000000,SPI_CONTINUE);
   spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,4-1);
@@ -150,8 +151,6 @@ void spi_wait_device_ready()
 //--------------------------------------
 void spi_write()
 {
-  uint8_t dummy;
-
   spi_inst  (SPI,SPI_WRITE_ENABLE,SPI_LAST);
   spi_inst24(SPI,SPI_PAGE_PROGRAM,0x000000,SPI_CONTINUE);
   spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_DISABLE,SPI_LAST,14-1);

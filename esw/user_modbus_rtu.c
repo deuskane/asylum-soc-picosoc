@@ -434,14 +434,13 @@ void modbus_slave ()
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-#ifdef picoblaze
-void isr (void) __interrupt(1)
+void isr (void) ISR_FCT
 {
   // Nothing
 
   // All done
 }
-#endif
+
 //--------------------------------------
 // Application Setup
 //--------------------------------------
@@ -473,8 +472,11 @@ void setup()
   timer_wr(TIMER,timer_cnt);
   gic_it_enable(TIMER,TIMER_IT_DONE_MSK);
   
+  // Setup the interruption handler address in the CPU
+  interrupt_setup(isr);
+
   // Enable Interrtuption in the CPU
-  //enable_interrupt();
+  //interrupt_enable();
 }
 
 

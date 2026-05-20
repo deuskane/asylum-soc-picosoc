@@ -104,7 +104,7 @@ uint8_t xmodem_rx(uint8_t * buffer, uint8_t len)
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-void isr (void) __interrupt(1)
+void isr (void) ISR_FCT
 {
   uint8_t gic_it_vector = gic_isr(GIC);
 
@@ -143,7 +143,11 @@ void setup()
   gic_it_enable(GIC,GIC_IT_USER_MSK);
 //gic_it_enable(GIC,GIC_UART_MSK);
   
-  enable_interrupt();
+  // Setup the interruption handler address in the CPU
+  interrupt_setup(isr);
+  
+  // Enable Interrtuption in the CPU
+  interrupt_enable();
 }
 
 //--------------------------------------

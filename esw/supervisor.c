@@ -28,7 +28,7 @@
 // Interrupt Sub Routine
 //--------------------------------------
 #ifdef SAFETY_TMR
-void isr (void) __interrupt(1)
+void isr (void) ISR_FCT
 {
   uint8_t it_vector;
 
@@ -53,7 +53,7 @@ void isr (void) __interrupt(1)
 
 #else
 
-void isr (void) __interrupt(1)
+void isr (void) ISR_FCT
 {
   gpio_wr       (RST,0);
   gic_clr       (GIC,VECTOR_MASK_DEFAULT);
@@ -81,7 +81,11 @@ void main()
   // Mask Enable
   gic_it_enable (GIC,VECTOR_MASK_DEFAULT);
 
-  enable_interrupt();
+  // Setup the interruption handler address in the CPU
+  interrupt_setup(isr);
+
+  // Enable Interrtuption in the CPU
+  interrupt_enable();
 
   gpio_wr       (RST,1);
 
