@@ -185,6 +185,8 @@ end component cpu_wrapper;
       ;CPU_MODEL             : string   := "OpenBlaze8"
       ;IMEM_ADDR_WIDTH       : positive := 12
       ;IMEM_DATA_WIDTH       : positive := 18
+      ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
+      ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH
       );
     port
       (clk_i                 : in  std_logic
@@ -202,7 +204,6 @@ end component cpu_wrapper;
       );
   end component;
   
-
 component PicoSoC_top is
   generic
     (FSYS                  : positive := 50_000_000
