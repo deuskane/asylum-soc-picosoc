@@ -219,6 +219,8 @@ begin  -- architecture rtl
     ,CPU_MODEL            => CPU_MODEL
     ,IMEM_ADDR_WIDTH      => CPU_IMEM_ADDR_WIDTH
     ,IMEM_DATA_WIDTH      => CPU_IMEM_DATA_WIDTH
+    ,DMEM_ADDR_WIDTH      => CPU_DMEM_ADDR_WIDTH
+    ,DMEM_DATA_WIDTH      => CPU_DMEM_DATA_WIDTH
      )
     port map
     (clk_i                => clk         
