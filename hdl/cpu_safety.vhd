@@ -70,7 +70,7 @@ architecture rtl of cpu_safety is
   signal cpu0_it_val                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
   signal cpu0_it_ack                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
 
-  -- CPU 1 & 2 signals
+  -- CPU 1 signals
   signal cpu1_arst_b                  : std_logic;
   signal cpu1_ics                     : std_logic;
   signal cpu1_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
@@ -81,12 +81,16 @@ architecture rtl of cpu_safety is
   signal cpu1_it_val                  : std_logic;
   signal cpu1_it_ack                  : std_logic;
   
+  -- CPU 2 signals
+  signal cpu2_arst_b                  : std_logic;
   signal cpu2_ics                     : std_logic;
-  signal cpu2_it_ack                  : std_logic;
   signal cpu2_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
   signal cpu2_idata                   : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
   signal cpu2_sbi_ini                 : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                   wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu2_sbi_tgt                 : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu2_it_val                  : std_logic;
+  signal cpu2_it_ack                  : std_logic;
 
   -- Error injection and comparison signals
   signal cpu0_idata_with_seu          : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
@@ -100,7 +104,7 @@ architecture rtl of cpu_safety is
 begin
 
   -----------------------------------------------------------------------------
-  -- CPU 0 (Main Instance)
+  -- CPU 0
   -- This is the primary CPU core used in all configurations
   -----------------------------------------------------------------------------
   ins_cpu_0 : entity asylum.cpu_wrapper
@@ -188,13 +192,11 @@ begin
         diff_r(DIFF_CPU0_VS_CPU1) <= diff_r(DIFF_CPU0_VS_CPU1) or diff(DIFF_CPU0_VS_CPU1);
       end if;
     end process p_diff_r;
-
-    diff_o(DIFF_CPU0_VS_CPU1) <= diff_r(DIFF_CPU0_VS_CPU1);
   end generate;
 
   gen_cpu1_disable: if CPU1_ENABLE = false
   generate
-    diff_o(DIFF_CPU0_VS_CPU1) <= '0';
+    diff_r(DIFF_CPU0_VS_CPU1) <= '0';
   end generate;
 
   -----------------------------------------------------------------------------
@@ -211,30 +213,34 @@ begin
       port map
       (clk_i           => clk_i
       ,cke_i           => cke_i
-      ,arst_b_i        => arst_b_i
+      ,arst_b_i        => cpu2_arst_b
       ,ics_o           => cpu2_ics
       ,iaddr_o         => cpu2_iaddr
       ,idata_i         => cpu2_idata_with_seu
       ,sbi_ini_o       => cpu2_sbi_ini
-      ,sbi_tgt_i       => sbi_tgt_i
-      ,interrupt_i     => interrupt_i
+      ,sbi_tgt_i       => cpu2_sbi_tgt
+      ,interrupt_i     => cpu2_it_val
       ,interrupt_ack_o => cpu2_it_ack
       );
 
+    cpu2_arst_b    <= arst_b_i;
     cpu2_idata     <= idata_i;
-    
+    cpu2_sbi_tgt   <= sbi_tgt_i;
+    cpu2_it_val    <= interrupt_i;   
+
     diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
                                          or (cpu1_iaddr   /= cpu2_iaddr        )
                                          or (cpu1_it_ack  /= cpu2_it_ack       )
                                        --or (cpu1_sbi_ini /= cpu2_sbi_ini      )
                                          ) else
                                '0';
+      
     diff(DIFF_CPU2_VS_CPU0) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
-                         or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
-                         or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
-                       --or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
-                         ) else
-               '0';
+                                         or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
+                                         or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
+                                       --or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
+                                        ) else
+                               '0';
     
     p_diff_r: process (clk_i, arst_b_i) is
     begin  -- process p_diff_r
@@ -248,15 +254,12 @@ begin
         diff_r(DIFF_CPU2_VS_CPU0) <= diff_r(DIFF_CPU2_VS_CPU0) or diff(DIFF_CPU2_VS_CPU0);
       end if;
     end process p_diff_r;
-
-    diff_o(DIFF_CPU1_VS_CPU2) <= diff_r(DIFF_CPU1_VS_CPU2);
-    diff_o(DIFF_CPU2_VS_CPU0) <= diff_r(DIFF_CPU2_VS_CPU0);
   end generate;
 
   gen_cpu2_disable: if CPU2_ENABLE = false
   generate
-    diff_o(DIFF_CPU1_VS_CPU2) <= '0';
-    diff_o(DIFF_CPU2_VS_CPU0) <= '0';
+    diff_r(DIFF_CPU1_VS_CPU2) <= '0';
+    diff_r(DIFF_CPU2_VS_CPU0) <= '0';
   end generate;
 
   -----------------------------------------------------------------------------
@@ -316,6 +319,8 @@ begin
   cpu0_idata_with_seu <= cpu0_idata(0) xor cpu0_idata_seu;
   cpu1_idata_with_seu <= cpu1_idata    xor cpu1_idata_seu;
   cpu2_idata_with_seu <= cpu2_idata    xor cpu2_idata_seu;
+
+  diff_o              <= diff_r;
 
   -----------------------------------------------------------------------------
   -- Reports
