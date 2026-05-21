@@ -15,6 +15,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-05-20  1.0      mrosiere Created
+-- 2026-05-21  1.1      mrosiere Cosmetics
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -51,14 +52,28 @@ entity cpu_safety is
 end cpu_safety;
 
 architecture rtl of cpu_safety is
+  -- CPU Enable
   constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or (SAFETY = "tmr"));
   constant CPU2_ENABLE                : boolean  := ((SAFETY = "tmr"));
+
+  -- Lock Step Depth configuration
   constant LOCK_STEP_DEPTH_INT        : natural  := mux2(SAFETY = "lock-step", LOCK_STEP_DEPTH, 0);
 
+  -- Difference vector
   constant DIFF_CPU0_VS_CPU1          : natural  := PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1;
   constant DIFF_CPU1_VS_CPU2          : natural  := PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2;
   constant DIFF_CPU2_VS_CPU0          : natural  := PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0;
 
+  -- SEU bit positions (model-dependent : target the opcode)
+  constant CPU0_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 17, 
+                                                    mux2(CPU_MODEL = "WardRV_fsm",  0, 
+                                                         0));
+  constant CPU1_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 16, 
+                                                    mux2(CPU_MODEL = "WardRV_fsm",  1, 
+                                                         1));
+  constant CPU2_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 15,
+                                                    mux2(CPU_MODEL = "WardRV_fsm",  2,
+                                                         2));
   -- CPU 0 signals
   signal cpu0_arst_b                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
   signal cpu0_ics                     : sls_t(LOCK_STEP_DEPTH_INT downto 0);
@@ -297,19 +312,9 @@ begin
   -----------------------------------------------------------------------------
   gen_inject_error: if FAULT_INJECTION
   generate
-    gen_seu_openblaze: if CPU_MODEL = "OpenBlaze8" 
-    generate
-      cpu0_idata_seu <= (17 => inject_error_i(0), others => '0');
-      cpu1_idata_seu <= (16 => inject_error_i(1), others => '0');
-      cpu2_idata_seu <= (15 => inject_error_i(2), others => '0');
-    elsif CPU_MODEL = "WardRV_fsm" 
-    generate
-      cpu0_idata_seu <= (0 => inject_error_i(0), others => '0');
-      cpu1_idata_seu <= (1 => inject_error_i(1), others => '0');
-      cpu2_idata_seu <= (2 => inject_error_i(2), others => '0');
-    else generate
-      -- Default case for other CPU models, no SEU injection
-    end generate;
+    cpu0_idata_seu <= (CPU0_SEU_BIT => inject_error_i(0), others => '0');
+    cpu1_idata_seu <= (CPU1_SEU_BIT => inject_error_i(1), others => '0');
+    cpu2_idata_seu <= (CPU2_SEU_BIT => inject_error_i(2), others => '0');
   else generate
     cpu0_idata_seu <= (others => '0');
     cpu1_idata_seu <= (others => '0');
@@ -320,6 +325,9 @@ begin
   cpu1_idata_with_seu <= cpu1_idata    xor cpu1_idata_seu;
   cpu2_idata_with_seu <= cpu2_idata    xor cpu2_idata_seu;
 
+  -----------------------------------------------------------------------------
+  -- Difference vector output
+  -----------------------------------------------------------------------------
   diff_o              <= diff_r;
 
   -----------------------------------------------------------------------------
