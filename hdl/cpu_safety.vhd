@@ -56,6 +56,10 @@ architecture rtl of cpu_safety is
   constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or (SAFETY = "tmr"));
   constant CPU2_ENABLE                : boolean  := ((SAFETY = "tmr"));
 
+  -- Data Memory Configuration
+  constant DMEM_ADDR_WIDTH            : positive := SBI_ADDR_WIDTH;
+  constant DMEM_DATA_WIDTH            : positive := SBI_DATA_WIDTH;
+
   -- Lock Step Depth configuration
   constant LOCK_STEP_DEPTH_INT        : natural  := mux2(SAFETY = "lock-step", LOCK_STEP_DEPTH, 0);
 
@@ -75,24 +79,24 @@ architecture rtl of cpu_safety is
                                                     mux2(CPU_MODEL = "WardRV_fsm",  2,
                                                          2));
   -- CPU 0 signals
-  signal cpu0_arst_b                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_ics                     : sls_t(LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_iaddr                   : slvs_t(LOCK_STEP_DEPTH_INT downto 0)(IMEM_ADDR_WIDTH-1 downto 0);
-  signal cpu0_idata                   : slvs_t(LOCK_STEP_DEPTH_INT downto 0)(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu0_sbi_ini                 : sbi_inis_t(LOCK_STEP_DEPTH_INT downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                                                 wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal cpu0_sbi_tgt                 : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
-  signal cpu0_it_val                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_it_ack                  : sls_t(LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_arst_b                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_ics                     : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_iaddr                   : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(IMEM_ADDR_WIDTH-1 downto 0);
+  signal cpu0_idata                   : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(IMEM_DATA_WIDTH-1 downto 0);
+  signal cpu0_sbi_ini                 : sbi_inis_t(LOCK_STEP_DEPTH_INT downto 0)(addr (DMEM_ADDR_WIDTH-1 downto 0),
+                                                                                 wdata(DMEM_DATA_WIDTH-1 downto 0));
+  signal cpu0_sbi_tgt                 : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(DMEM_DATA_WIDTH-1 downto 0));
+  signal cpu0_it_val                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_it_ack                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
 
   -- CPU 1 signals
   signal cpu1_arst_b                  : std_logic;
   signal cpu1_ics                     : std_logic;
   signal cpu1_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
   signal cpu1_idata                   : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu1_sbi_ini                 : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal cpu1_sbi_tgt                 : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu1_sbi_ini                 : sbi_ini_t(addr (DMEM_ADDR_WIDTH-1 downto 0),
+                                                  wdata(DMEM_DATA_WIDTH-1 downto 0));
+  signal cpu1_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
   signal cpu1_it_val                  : std_logic;
   signal cpu1_it_ack                  : std_logic;
   
@@ -101,9 +105,9 @@ architecture rtl of cpu_safety is
   signal cpu2_ics                     : std_logic;
   signal cpu2_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
   signal cpu2_idata                   : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu2_sbi_ini                 : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal cpu2_sbi_tgt                 : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu2_sbi_ini                 : sbi_ini_t(addr (DMEM_ADDR_WIDTH-1 downto 0),
+                                                  wdata(DMEM_DATA_WIDTH-1 downto 0));
+  signal cpu2_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
   signal cpu2_it_val                  : std_logic;
   signal cpu2_it_ack                  : std_logic;
 
@@ -114,7 +118,8 @@ architecture rtl of cpu_safety is
   signal cpu0_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
   signal cpu1_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
   signal cpu2_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal diff                         : std_logic_vector(3-1 downto 0); -- Instantaneous difference signals
+
+  signal diff                         : std_logic_vector(3-1 downto 0); -- Instantaneous      difference signals
   signal diff_r                       : std_logic_vector(3-1 downto 0); -- Registered/Latched difference signals
 begin
 
