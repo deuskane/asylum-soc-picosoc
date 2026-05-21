@@ -34,6 +34,8 @@ entity cpu_safety is
     ;CPU_MODEL             : string   := "OpenBlaze8"
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
+    ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH;
+    ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH;
     );
   port
     (clk_i                 : in  std_logic
@@ -55,10 +57,6 @@ architecture rtl of cpu_safety is
   -- CPU Enable
   constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or (SAFETY = "tmr"));
   constant CPU2_ENABLE                : boolean  := ((SAFETY = "tmr"));
-
-  -- Data Memory Configuration
-  constant DMEM_ADDR_WIDTH            : positive := SBI_ADDR_WIDTH;
-  constant DMEM_DATA_WIDTH            : positive := SBI_DATA_WIDTH;
 
   -- Lock Step Depth configuration
   constant LOCK_STEP_DEPTH_INT        : natural  := mux2(SAFETY = "lock-step", LOCK_STEP_DEPTH, 0);
