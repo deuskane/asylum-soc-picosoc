@@ -72,8 +72,8 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
   constant TB_WATCHDOG_TIME        : time    := TB_WATCHDOG * TB_PERIOD;
 
-  constant C_ERROR_DURATION        : time    :=   5 us;
-  constant C_ERROR_LATENCY         : time    :=  10 us; -- Time between error injection and error detection (difference led on)
+  constant C_ERROR_DURATION        : time    :=   1 us;
+  constant C_ERROR_LATENCY         : time    :=  20 us; -- Time between error injection and error detection (difference led on)
   constant C_RESET_LATENCY         : time    := 200 us;
 
 
@@ -448,6 +448,7 @@ begin  -- architecture tb
         log(ID_LOG_HDR, "Inject error (lock-step)", C_SCOPE);
 
         wait for C_RESET_LATENCY;
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"DE",        "Write LED0 Data <= 0xDE"
                      );
         await_value (led_switch, x"DE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xDE", C_SCOPE);
@@ -460,6 +461,7 @@ begin  -- architecture tb
         await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset ", C_SCOPE);
 
         wait for C_RESET_LATENCY;
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"AD",        "Write LED0 Data <= 0xAD"
                      );
         await_value (led_switch, x"AD", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xAD", C_SCOPE);
@@ -480,6 +482,7 @@ begin  -- architecture tb
 
         wait for C_RESET_LATENCY;
 
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"CA",        "Write LED0 Data <= 0xCA");
         await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA", C_SCOPE);
 
@@ -490,6 +493,7 @@ begin  -- architecture tb
         wait for C_ERROR_LATENCY;
         await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA (CPU0)", C_SCOPE);
 
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"FE",        "Write LED0 Data <= 0xFE");
         await_value (led_switch, x"FE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xFE", C_SCOPE);
 
@@ -502,6 +506,7 @@ begin  -- architecture tb
         
         wait for C_RESET_LATENCY;
 
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"ED",        "Write LED0 Data <= 0xED");
         await_value (led_switch, x"ED", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xED", C_SCOPE);
 
@@ -521,6 +526,7 @@ begin  -- architecture tb
 
         wait for C_RESET_LATENCY;
 
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
         await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
 
@@ -531,6 +537,7 @@ begin  -- architecture tb
         wait for C_ERROR_LATENCY;
         await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21 (CPU1)", C_SCOPE);
 
+        wait for 35 us;
         modbus_write(C_LED0_BA  ,x"04",        "Write LED0 Data <= 0x04");
         await_value (led_switch, x"04", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x04", C_SCOPE);
 
