@@ -41,13 +41,21 @@ entity cpu_safety is
     (clk_i                 : in  std_logic
     ;cke_i                 : in  std_logic
     ;arst_b_i              : in  std_logic
+
+    -- Instruction Interface
     ;ics_o                 : out std_logic
     ;iaddr_o               : out std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0)
     ;idata_i               : in  std_logic_vector(IMEM_DATA_WIDTH-1 downto 0)
+
+    -- Data 
     ;sbi_ini_o             : out sbi_ini_t
     ;sbi_tgt_i             : in  sbi_tgt_t
+
+    -- Interrupts
     ;interrupt_i           : in  std_logic
     ;interrupt_ack_o       : out std_logic
+
+    -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
     );
@@ -325,9 +333,9 @@ begin
       cpu2_idata_seu(CPU2_SEU_BIT) <= inject_error_i(2);
     end process;
   else generate
-    cpu0_idata_seu <= (others => '0');
-    cpu1_idata_seu <= (others => '0');
-    cpu2_idata_seu <= (others => '0');
+    cpu0_idata_seu                 <= (others => '0');
+    cpu1_idata_seu                 <= (others => '0');
+    cpu2_idata_seu                 <= (others => '0');
   end generate;
 
   cpu0_idata_with_seu <= cpu0_idata(0) xor cpu0_idata_seu;
@@ -353,12 +361,30 @@ begin
   end process;
 
   -- Display difference vector upon detection
-  process(diff_r)
+  process(diff_r(DIFF_CPU0_VS_CPU1))
   begin
-    if (diff_r /= "000") then
-      report "CPU Safety: Difference detected ! diff(2 downto 0) = " & 
-             std_logic'image(diff_r(2)) & std_logic'image(diff_r(1)) & std_logic'image(diff_r(0)) 
-             severity warning;
+    if true --(diff_r(DIFF_CPU0_VS_CPU1) /= '0')
+    then
+      report "CPU Safety: Difference (CPU0 VS CPU1) : " & std_logic'image(diff_r(DIFF_CPU0_VS_CPU1))
+      severity warning;
+    end if;
+  end process;
+
+  process(diff_r(DIFF_CPU1_VS_CPU2))
+  begin
+    if true --(diff_r(DIFF_CPU1_VS_CPU2) /= '0')
+    then
+      report "CPU Safety: Difference (CPU1 VS CPU2) : " & std_logic'image(diff_r(DIFF_CPU1_VS_CPU2))
+      severity warning;
+    end if;
+  end process;
+
+  process(diff_r(DIFF_CPU2_VS_CPU0))
+  begin
+    if true --(diff_r(DIFF_CPU2_VS_CPU0) /= '0')
+    then
+      report "CPU Safety: Difference (CPU2 VS CPU0) : " & std_logic'image(diff_r(DIFF_CPU2_VS_CPU0))
+      severity warning;
     end if;
   end process;
 
