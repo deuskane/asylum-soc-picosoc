@@ -34,8 +34,8 @@ entity cpu_safety is
     ;CPU_MODEL             : string   := "OpenBlaze8"
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
-    ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH;
-    ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH;
+    ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
+    ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH
     );
   port
     (clk_i                 : in  std_logic
@@ -315,9 +315,15 @@ begin
   -----------------------------------------------------------------------------
   gen_inject_error: if FAULT_INJECTION
   generate
-    cpu0_idata_seu <= (CPU0_SEU_BIT => inject_error_i(0), others => '0');
-    cpu1_idata_seu <= (CPU1_SEU_BIT => inject_error_i(1), others => '0');
-    cpu2_idata_seu <= (CPU2_SEU_BIT => inject_error_i(2), others => '0');
+    process(inject_error_i) is
+    begin
+      cpu0_idata_seu               <= (others => '0');
+      cpu1_idata_seu               <= (others => '0');
+      cpu2_idata_seu               <= (others => '0');
+      cpu0_idata_seu(CPU0_SEU_BIT) <= inject_error_i(0);
+      cpu1_idata_seu(CPU1_SEU_BIT) <= inject_error_i(1);
+      cpu2_idata_seu(CPU2_SEU_BIT) <= inject_error_i(2);
+    end process;
   else generate
     cpu0_idata_seu <= (others => '0');
     cpu1_idata_seu <= (others => '0');
