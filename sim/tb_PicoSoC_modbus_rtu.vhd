@@ -72,6 +72,11 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
   constant TB_WATCHDOG_TIME        : time    := TB_WATCHDOG * TB_PERIOD;
 
+  constant C_ERROR_DURATION        : time    :=   5 us;
+  constant C_ERROR_LATENCY         : time    :=  10 us; -- Time between error injection and error detection (difference led on)
+  constant C_RESET_LATENCY         : time    := 200 us;
+
+
   constant NB_SWITCH               : positive :=  8;
   constant NB_LED                  : positive := 19;
 
@@ -376,8 +381,8 @@ begin  -- architecture tb
 
     gen_pulse(arst_b_i, '0', 10 * C_CLK_PERIOD, "Pulsed reset-signal - active for 10T");
 
-    log(ID_LOG_HDR, "wait 2000 cycles to finish init", C_SCOPE);
-    run(2000);
+    log(ID_LOG_HDR, "wait to finish init", C_SCOPE);
+    wait for C_RESET_LATENCY;
 
     --==================================================================================================
     -- Test case
@@ -385,7 +390,7 @@ begin  -- architecture tb
 
     if TEST_CASE_BASIC
     then
-    
+          
       -- Write LED0 and check if led switch have the expected value
       wait for 35 us;
       modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
@@ -441,41 +446,109 @@ begin  -- architecture tb
       if (SUPERVISOR and SAFETY="lock-step")
       then
         log(ID_LOG_HDR, "Inject error (lock-step)", C_SCOPE);
-        
-        wait for 50 us;
+
+        wait for C_RESET_LATENCY;
         modbus_write(C_LED0_BA  ,x"DE",        "Write LED0 Data <= 0xDE"
                      );
         await_value (led_switch, x"DE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xDE", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU0", C_SCOPE);
         inject_error_i(0) <= '1';
-        run(100);
+        wait for C_ERROR_DURATION;
         inject_error_i(0) <= '0';
+        wait for C_ERROR_LATENCY;
         await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset ", C_SCOPE);
 
-        wait for 50 us;
+        wait for C_RESET_LATENCY;
         modbus_write(C_LED0_BA  ,x"AD",        "Write LED0 Data <= 0xAD"
                      );
         await_value (led_switch, x"AD", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xAD", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU1", C_SCOPE);
         inject_error_i(1) <= '1';
-        run(100);
+        wait for C_ERROR_DURATION;
         inject_error_i(1) <= '0';
+        wait for C_ERROR_LATENCY;
         await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset ", C_SCOPE);
         
+        wait for C_RESET_LATENCY;
       end if;
 
       if (SUPERVISOR and SAFETY="tmr")
       then
         log(ID_LOG_HDR, "Inject error (TMR)", C_SCOPE);
+
+        wait for C_RESET_LATENCY;
+
+        modbus_write(C_LED0_BA  ,x"CA",        "Write LED0 Data <= 0xCA");
+        await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU0", C_SCOPE);
+        inject_error_i(0) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(0) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA (CPU0)", C_SCOPE);
+
+        modbus_write(C_LED0_BA  ,x"FE",        "Write LED0 Data <= 0xFE");
+        await_value (led_switch, x"FE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xFE", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU1", C_SCOPE);
+        inject_error_i(1) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(1) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset (CPU1)", C_SCOPE);
         
-      end if;
+        wait for C_RESET_LATENCY;
+
+        modbus_write(C_LED0_BA  ,x"ED",        "Write LED0 Data <= 0xED");
+        await_value (led_switch, x"ED", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xED", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU2", C_SCOPE);
+        inject_error_i(2) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(2) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"ED", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 (CPU2)", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU0", C_SCOPE);
+        inject_error_i(0) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(0) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset (CPU0)", C_SCOPE);
+
+        wait for C_RESET_LATENCY;
+
+        modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
+        await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU1", C_SCOPE);
+        inject_error_i(1) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(1) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21 (CPU1)", C_SCOPE);
+
+        modbus_write(C_LED0_BA  ,x"04",        "Write LED0 Data <= 0x04");
+        await_value (led_switch, x"04", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x04", C_SCOPE);
+
+        log(NO_ID, "Inject error in CPU2", C_SCOPE);
+        inject_error_i(2) <= '1';
+        wait for C_ERROR_DURATION;
+        inject_error_i(2) <= '0';
+        wait for C_ERROR_LATENCY;
+        await_value (led_switch, x"00", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x00 after reset (CPU2)", C_SCOPE);
+        
+        wait for C_RESET_LATENCY;
+
+        end if;
     end if;
 
     if TEST_CASE_SEQUENCE
     then
-      wait for 20 us;
+      wait for 35 us;
       -- Perform change switch one by one, read switch and write in LED0
       for i in 0 to 7 loop
         switch_i    <= x"00";
