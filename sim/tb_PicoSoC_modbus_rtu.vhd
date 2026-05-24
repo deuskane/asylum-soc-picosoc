@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-10-23
--- Last update: 2026-01-10
+-- Last update: 2026-05-24
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   constant TB_PERIOD               : time    := (1e9 / FSYS) * 1 ns;
   constant TB_WATCHDOG_TIME        : time    := TB_WATCHDOG * TB_PERIOD;
 
-  constant C_ERROR_DURATION        : time    :=   1 us;
+  constant C_ERROR_DURATION        : time    :=   2 us;
   constant C_ERROR_LATENCY         : time    :=  20 us; -- Time between error injection and error detection (difference led on)
   constant C_RESET_LATENCY         : time    := 200 us;
 
