@@ -40,7 +40,7 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"70";
   constant PICOSOC_USER_RAM_BA                 : std_logic_vector(8-1 downto 0) := X"80";
                                                
-  constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "one_hot";
+  constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "binary";
                                                
   constant PICOSOC_SUPERVISOR_LED0_BA          : std_logic_vector(8-1 downto 0) := X"10";
   constant PICOSOC_SUPERVISOR_LED1_BA          : std_logic_vector(8-1 downto 0) := X"20";

@@ -28,10 +28,13 @@ An independent safety monitoring domain with:
 
 1. [HDL Architecture](#hdl-architecture)
 2. [Embedded Software](#embedded-software)
-3. [Simulation and Verification](#simulation-and-verification)
-4. [Project Structure](#project-structure)
+3. [Development Environment](#development-environment)
+4. [Getting Started](#getting-started)
+5. [Simulation and Verification](#simulation-and-verification)
+6. [Project Structure](#project-structure)
 
 ---
+
 
 ## HDL Architecture
 
@@ -70,6 +73,7 @@ PicoSoC_top
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
 | `FSYS` | positive | 50_000_000 | System clock frequency (Hz) |
+| `CPU_MODEL` | string | "openblaze8" | CPU core selection ("openblaze8" or "WardRV_fsm") |
 | `FSYS_INT` | positive | 50_000_000 | Internal clock frequency (Hz) |
 | `BAUD_RATE` | integer | 115200 | UART baud rate |
 | `UART_DEPTH_TX` | natural | 0 | UART TX FIFO depth |
@@ -115,15 +119,11 @@ PicoSoC_top
 
 **Purpose:** User SoC domain with application logic
 
-**Description:** Main processing unit containing the OpenBlaze8 MCU and all user-facing peripherals. Implements safety features like Lock-Step or Triple Modular Redundancy (TMR) for fault detection and correction.
+**Description:** Main processing unit containing the Modular CPU wrapper and all user-facing peripherals. Implements safety features like Lock-Step or Triple Modular Redundancy (TMR) for fault detection and correction.
 
 **Integrated Components:**
-- OpenBlaze8 microcontroller with instruction ROM and dedicated RAM
-- 3 GPIO controllers (1 for switches, 2 for LEDs)
-- UART interface for serial communication
-- SPI Master controller
-- Generic Interrupt Controller (GIC)
-- Interconnect Network (ICN) for addressing slaves
+- **cpu_wrapper**: Abstraction layer for the CPU core.
+- **cpu_safety**: Hardware logic for error detection (Lock-step/TMR).
 - Timer module
 - CRC calculator for error checking
 
@@ -176,10 +176,7 @@ PicoSoC_top
 **Description:** Independent monitoring unit that oversees the User SoC health. Detects errors reported by the User SoC and initiates corrective actions (system reset). Implements a hardened safety architecture isolated from user logic.
 
 **Integrated Components:**
-- OpenBlaze8 microcontroller for supervision logic
-- 2 GPIO controllers (1 for User SoC reset control, 1 for status LEDs)
-- Generic Interrupt Controller (GIC) for error reception
-- Interconnect Network (ICN) for slave connections
+- **cpu_wrapper**: Wraps the supervisor CPU core.
 
 **Generics:**
 
@@ -212,6 +209,50 @@ PicoSoC_top
 - Address mappings for all peripherals (GPIO, UART, SPI, GIC, Timer, CRC)
 - Address encoding schemes ("binary" for User, "one_hot" for Supervisor)
 - Debug signal structures
+
+---
+
+## Development Environment
+
+### Hardware Toolchain
+- **FuseSoC**: Package manager and build system abstraction.
+- **Python 3**: Used for various generators and build scripts.
+
+### Software Toolchain
+The embedded firmware is compiled using architecture-specific toolchains:
+
+**For OpenBlaze8:**
+- **PBCC/SDCC toolchain**: Used by the `pbcc` generator to compile C code into Picoblaze assembly (PSM) and then into VHDL ROM.
+
+**For RISC-V:**
+- **GNU RISC-V Toolchain**: `riscv64-unknown-elf-gcc` for C/C++ compilation.
+
+### Custom Generators and Scripts
+The project leverages several custom Python scripts and FuseSoC generators to automate various aspects of the hardware and software build process:
+
+- **`regtool` (FuseSoC Generator)**: Located at `asylum-utils-generators/generators/regtool/regtool.py`, this generator automates the creation of Control and Status Register (CSR) related files. It takes a register definition file as input and generates corresponding VHDL packages, VHDL modules, C header files, and Markdown documentation for the CSRs. This ensures consistency between hardware and software interfaces.
+
+- **`pbcc` (FuseSoC Generator)**: Located at `asylum-utils-generators/generators/pbcc/pbcc.py`, this generator is crucial for firmware integration. It compiles C or Picoblaze assembly (PSM) source files into VHDL ROM initialization files and a VHDL package for the ROM. It utilizes the `sdcc` (Small Device C Compiler) for C code compilation and `picoasm` for PSM assembly.
+
+- **`component.py` (Utility Script)**: Located at `asylum-utils-generators/scripts/component.py`, this standalone Python script assists in VHDL development. It scans a specified directory for VHDL entity declarations and automatically generates a VHDL package containing component declarations for all found entities. This simplifies component instantiation and improves VHDL code reusability.
+
+## Getting Started
+
+### 1. Prerequisites
+Ensure you have the following tools installed:
+- A VHDL simulator (e.g., GHDL, ModelSim, or Vivado XSim)
+
+### 2. Building the Firmware
+To compile the C firmware for the User SoC:
+```bash
+make esw
+```
+
+### 3. Running Simulation
+To run a specific simulation scenario using FuseSoC:
+```bash
+fusesoc run --target=sim_soc1_c_user asylum:soc:picosoc
+```
 
 ---
 
@@ -473,6 +514,3 @@ asylum-soc-picosoc/
 ```
 
 ---
-
-
-
