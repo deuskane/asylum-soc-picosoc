@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2026-01-17
+-- Last update: 2026-05-25
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -254,7 +254,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_icn : sbi_icn
     generic map
-    (NB_TARGET            => NB_TARGET
+    (NAME                 => "icn_user"
+    ,NB_TARGET            => NB_TARGET
     ,TARGET_ID            => TARGET_ID
     ,TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH
     ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
