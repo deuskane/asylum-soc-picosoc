@@ -103,107 +103,29 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
-component PicoSoC_user is
+component PicoSoC_supervisor is
   generic
-    (CLOCK_FREQ            : integer  := 50000000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED0               : positive := 8
+    (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := False
+
     ;ICN_ALGO_SEL          : string   := "or"
-    ;CPU_MODEL             : string   := "OpenBlaze8"
+
+    ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
     );
   port
     (clk_i                 : in  std_logic
     ;arst_b_i              : in  std_logic
                           
-    ;switch_i              : in  std_logic_vector(NB_SWITCH-1 downto 0)
     ;led0_o                : out std_logic_vector(NB_LED0  -1 downto 0)
     ;led1_o                : out std_logic_vector(NB_LED1  -1 downto 0)
-
-     -- UART Interface
-    ;uart_tx_o             : out std_logic
-    ;uart_rx_i             : in  std_logic
-    ;uart_cts_b_i          : in  std_logic -- Clear   To Send (Active low)
-    ;uart_rts_b_o          : out std_logic -- Request To Send (Active low)
                           
-    -- SPI Interface
-    ;spi_sclk_o            : out std_logic
-    ;spi_cs_b_o            : out std_logic
-    ;spi_mosi_o            : out std_logic
-    ;spi_miso_i            : in  std_logic
+    ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
-    ;it_i                  : in  std_logic
-    ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
-    ;diff_o                : out std_logic_vector(        3-1 downto 0) -- bit 0 : cpu0 vs cpu1
-                                                                        -- bit 1 : cpu1 vs cpu2
-                                                                        -- bit 2 : cpu2 vs cpu0
-                                 
-    ;debug_o               : out PicoSoC_user_debug_t
-    );
-end component PicoSoC_user;
+    ;debug_o               : out PicoSoC_supervisor_debug_t
+     );
+end component PicoSoC_supervisor;
 
-component cpu_wrapper is
-  generic (
-     CPU_MODEL             : string   := "OpenBlaze8" 
-  );
-  port   (
-    clk_i            : in    std_logic;
-    cke_i            : in    std_logic;
-    arst_b_i         : in    std_logic; -- asynchronous reset
-
-    -- Instructions
-    ics_o            : out   std_logic;
-    iaddr_o          : out   std_logic_vector;
-    idata_i          : in    std_logic_vector;
-    
-    -- Bus
-    sbi_ini_o        : out   sbi_ini_t;
-    sbi_tgt_i        : in    sbi_tgt_t;
-
-    -- To/From IT Ctrl
-    interrupt_i      : in    std_logic;
-    interrupt_ack_o  : out   std_logic
-    );
-  
-end component cpu_wrapper;
-
-  component cpu_safety is
-    generic
-      (SAFETY                : string   := "lock-step"
-      ;LOCK_STEP_DEPTH       : natural  := 2
-      ;FAULT_INJECTION       : boolean  := False
-      ;CPU_MODEL             : string   := "OpenBlaze8"
-      ;IMEM_ADDR_WIDTH       : positive := 12
-      ;IMEM_DATA_WIDTH       : positive := 18
-      ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
-      ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH
-      );
-    port
-      (clk_i                 : in  std_logic
-      ;cke_i                 : in  std_logic
-      ;arst_b_i              : in  std_logic
-      ;ics_o                 : out std_logic
-      ;iaddr_o               : out std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0)
-      ;idata_i               : in  std_logic_vector(IMEM_DATA_WIDTH-1 downto 0)
-      ;sbi_ini_o             : out sbi_ini_t
-      ;sbi_tgt_i             : in  sbi_tgt_t
-      ;interrupt_i           : in  std_logic
-      ;interrupt_ack_o       : out std_logic
-      ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
-      ;diff_o                : out std_logic_vector(3-1 downto 0)
-      );
-  end component;
-  
 component PicoSoC_top is
   generic
     (FSYS                  : positive := 50_000_000
@@ -259,28 +181,114 @@ component PicoSoC_top is
     );
 end component PicoSoC_top;
 
-component PicoSoC_supervisor is
+component PicoSoC_user is
   generic
-    (NB_LED0               : positive := 8
+    (CLOCK_FREQ            : integer  := 50000000
+    ;BAUD_RATE             : integer  := 115200
+    ;UART_DEPTH_TX         : natural  := 0
+    ;UART_DEPTH_RX         : natural  := 0
+    ;SPI_DEPTH_CMD         : natural  := 0
+    ;SPI_DEPTH_TX          : natural  := 0
+    ;SPI_DEPTH_RX          : natural  := 0
+    ;NB_SWITCH             : positive := 8
+    ;NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
-
+    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH       : natural  := 2
+    ;FAULT_INJECTION       : boolean  := False
     ;ICN_ALGO_SEL          : string   := "or"
-
-    ;CPU_MODEL             : string   := "OpenBlaze8" 
+    ;CPU_MODEL             : string   := "OpenBlaze8"
     ;RAM_DEPTH             : natural  := 128
     );
   port
     (clk_i                 : in  std_logic
     ;arst_b_i              : in  std_logic
                           
+    ;switch_i              : in  std_logic_vector(NB_SWITCH-1 downto 0)
     ;led0_o                : out std_logic_vector(NB_LED0  -1 downto 0)
     ;led1_o                : out std_logic_vector(NB_LED1  -1 downto 0)
+
+     -- UART Interface
+    ;uart_tx_o             : out std_logic
+    ;uart_rx_i             : in  std_logic
+    ;uart_cts_b_i          : in  std_logic -- Clear   To Send (Active low)
+    ;uart_rts_b_o          : out std_logic -- Request To Send (Active low)
                           
-    ;diff_i                : in  std_logic_vector(        3-1 downto 0)
+    -- SPI Interface
+    ;spi_sclk_o            : out std_logic
+    ;spi_cs_b_o            : out std_logic
+    ;spi_mosi_o            : out std_logic
+    ;spi_miso_i            : in  std_logic
                           
-    ;debug_o               : out PicoSoC_supervisor_debug_t
-     );
-end component PicoSoC_supervisor;
+    ;it_i                  : in  std_logic
+    ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
+    ;diff_o                : out std_logic_vector(        3-1 downto 0) -- bit 0 : cpu0 vs cpu1
+                                                                        -- bit 1 : cpu1 vs cpu2
+                                                                        -- bit 2 : cpu2 vs cpu0
+                                 
+    ;debug_o               : out PicoSoC_user_debug_t
+    );
+end component PicoSoC_user;
+
+component cpu_safety is
+  generic
+    (SAFETY                : string   := "lock-step"
+    ;LOCK_STEP_DEPTH       : natural  := 2
+    ;FAULT_INJECTION       : boolean  := False
+    ;CPU_MODEL             : string   := "OpenBlaze8"
+    ;IMEM_ADDR_WIDTH       : positive := 12
+    ;IMEM_DATA_WIDTH       : positive := 18
+    ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
+    ;DMEM_DATA_WIDTH       : positive := SBI_DATA_WIDTH
+    );
+  port
+    (clk_i                 : in  std_logic
+    ;cke_i                 : in  std_logic
+    ;arst_b_i              : in  std_logic
+
+    -- Instruction Interface
+    ;ics_o                 : out std_logic
+    ;iaddr_o               : out std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0)
+    ;idata_i               : in  std_logic_vector(IMEM_DATA_WIDTH-1 downto 0)
+
+    -- Data 
+    ;sbi_ini_o             : out sbi_ini_t
+    ;sbi_tgt_i             : in  sbi_tgt_t
+
+    -- Interrupts
+    ;interrupt_i           : in  std_logic
+    ;interrupt_ack_o       : out std_logic
+
+    -- Error injection and difference output
+    ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
+    ;diff_o                : out std_logic_vector(3-1 downto 0)
+    );
+end component cpu_safety;
+
+component cpu_wrapper is
+  generic (
+    CPU_MODEL        : string   := "OpenBlaze8" 
+  );
+  port   (
+    clk_i            : in    std_logic;
+    cke_i            : in    std_logic;
+    arst_b_i         : in    std_logic; -- asynchronous reset
+
+    -- Instructions
+    ics_o            : out   std_logic;
+    iaddr_o          : out   std_logic_vector;
+    idata_i          : in    std_logic_vector;
+    
+    -- Bus
+    sbi_ini_o        : out   sbi_ini_t;
+    sbi_tgt_i        : in    sbi_tgt_t;
+
+    -- To/From IT Ctrl
+    interrupt_i      : in    std_logic;
+    interrupt_ack_o  : out   std_logic
+    );
+  
+end component cpu_wrapper;
 
 -- [COMPONENT_INSERT][END]
 end package PicoSoC_pkg;
