@@ -31,13 +31,15 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_ADDR_ENCODING          : string := "binary";
                                                
   constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"00";
-  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"04";
+  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"08";
+  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"0C";
+  constant PICOSOC_USER_SPINLOCK_BA            : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_USER_MAILBOX_BA             : std_logic_vector(8-1 downto 0) := X"20";
   constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"30";
   constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"40";
   constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"50";
   constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"60";
-  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"70";
   constant PICOSOC_USER_RAM_BA                 : std_logic_vector(8-1 downto 0) := X"80";
                                                
   constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "binary";
