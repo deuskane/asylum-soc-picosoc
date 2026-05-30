@@ -30,6 +30,7 @@
 #include "gic.h"
 #include "timer.h"
 #include "crc.h"
+#include "spinlock.h"
 
 //--------------------------------------
 // Address Map

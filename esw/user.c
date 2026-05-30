@@ -284,7 +284,6 @@ void main()
       // Get switch[5]
       if (sw&0x20)
 	{
-	  uint8_t spi_byte;
 	  uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
 
 	  // Split 32b counter into 4 bytes
@@ -320,11 +319,32 @@ void main()
 	  putchar('-');
 	  puthex (sw);
 
-	  // Print SPI Byte @ cpt
-	  putchar('-');
-	  spi_byte = spi_rx(SPI);
-	  puthex (spi_byte);
-      
+    {
+      // Print SPI Byte @ cpt
+      uint8_t spi_byte;
+      putchar('-');
+      spi_byte = spi_rx(SPI);
+      puthex (spi_byte);
+    }
+
+    {
+      // Test Spinlock
+      uint8_t spinlock;
+
+      putchar(' ');
+      putchar('L');
+      putchar('o');
+      putchar('c');
+      putchar('k');
+      putchar(' ');
+      spinlock = spinlock_try_lock(SPINLOCK,0);
+      puthex (spinlock);
+      putchar(' ');
+      spinlock = spinlock_try_lock(SPINLOCK,0);
+      puthex (spinlock);
+      spinlock_unlock(SPINLOCK,0);
+    }
+
 	  putchar('\r');
 	  putchar('\n');
 
