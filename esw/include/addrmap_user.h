@@ -13,6 +13,7 @@
 // Date        Version  Author   Description
 // 2025-07-31  1.0      mrosiere Created
 // 2025-11-02  1.1      mrosiere Add Timer
+// 2026-05-29  1.2      mrosiere Add SPINLOCK and MAILBOX
 //-----------------------------------------------------------------------------
 
 #ifndef _addrmap_user_h_

@@ -47,6 +47,7 @@ use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
 use     asylum.crc_csr_pkg.all;
+use     asylum.spinlock_csr_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.gpio_pkg.all;
@@ -55,6 +56,7 @@ use     asylum.spi_pkg.all;
 use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
 use     asylum.crc_pkg.all;
+use     asylum.spinlock_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_user_pkg.all;
@@ -131,9 +133,10 @@ architecture rtl of PicoSoC_user is
   constant TARGET_GIC                 : integer  := 5;
   constant TARGET_TIMER               : integer  := 6;
   constant TARGET_CRC                 : integer  := 7;
-  constant TARGET_RAM                 : integer  := 8;
+  constant TARGET_SPINLOCK            : integer  := 8;
+  constant TARGET_RAM                 : integer  := 9;
   
-  constant NB_TARGET                  : positive := 9;
+  constant NB_TARGET                  : positive := 10;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
@@ -144,6 +147,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_GIC                      => PICOSOC_USER_GIC_BA   
      ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
      ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
+     ,TARGET_SPINLOCK                 => PICOSOC_USER_SPINLOCK_BA
      ,TARGET_RAM                      => PICOSOC_USER_RAM_BA   
       );
 
@@ -156,6 +160,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_GIC                      => GIC_ADDR_WIDTH
      ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
      ,TARGET_CRC                      => CRC_ADDR_WIDTH
+     ,TARGET_SPINLOCK                 => SPINLOCK_ADDR_WIDTH
      ,TARGET_RAM                      => log2(RAM_DEPTH)
       );
   
@@ -444,6 +449,16 @@ begin  -- architecture rtl
     ,sbi_tgt_o            => icn_sbi_tgts(TARGET_CRC)
     );
 
+  -----------------------------------------------------------------------------
+  -- spinlock
+  -----------------------------------------------------------------------------
+  ins_sbi_spinlock : sbi_spinlock
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn_sbi_inis(TARGET_SPINLOCK)
+    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SPINLOCK)
+    );
 
   -----------------------------------------------------------------------------
   -- RAM
