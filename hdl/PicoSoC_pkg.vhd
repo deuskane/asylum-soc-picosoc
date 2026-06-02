@@ -130,27 +130,31 @@ end component PicoSoC_supervisor;
 
 component PicoSoC_top is
   generic
-    (FSYS                  : positive := 50_000_000
-    ;FSYS_INT              : positive := 50_000_000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED                : positive := 19
-    ;RESET_POLARITY        : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR            : boolean  := True 
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := True  
-    ;IT_USER_POLARITY      : string   := "low"       -- "high" / "low"
-    ;FAULT_POLARITY        : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE          : boolean  := True
-    ;CPU_MODEL             : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
-    ;SUPERVISOR_RAM_DEPTH  : natural  := 128
-    ;USER_RAM_DEPTH        : natural  := 128
+    (FSYS                   : positive := 50_000_000
+    ;FSYS_INT               : positive := 50_000_000
+    ;BAUD_RATE              : integer  := 115200
+    ;UART_DEPTH_TX          : natural  := 0
+    ;UART_DEPTH_RX          : natural  := 0
+    ;SPI_DEPTH_CMD          : natural  := 0
+    ;SPI_DEPTH_TX           : natural  := 0
+    ;SPI_DEPTH_RX           : natural  := 0
+    ;NB_SWITCH              : positive := 8
+    ;NB_LED                 : positive := 19
+    ;RESET_POLARITY         : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR             : boolean  := True 
+    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH        : natural  := 2
+    ;FAULT_INJECTION        : boolean  := True  
+    ;IT_USER_POLARITY       : string   := "low"       -- "high" / "low"
+    ;FAULT_POLARITY         : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE           : boolean  := True
+    ;CPU_MODEL              : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;SUPERVISOR_RAM_DEPTH   : natural  := 128
+    ;USER_RAM_DEPTH         : natural  := 128
+    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
     );
   port
     (clk_i            : in  std_logic
@@ -185,22 +189,26 @@ end component PicoSoC_top;
 
 component PicoSoC_user is
   generic
-    (CLOCK_FREQ            : integer  := 50000000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED0               : positive := 8
-    ;NB_LED1               : positive := 8
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := False
-    ;ICN_ALGO_SEL          : string   := "or"
-    ;CPU_MODEL             : string   := "OpenBlaze8"
-    ;RAM_DEPTH             : natural  := 128
+    (CLOCK_FREQ             : integer  := 50000000
+    ;BAUD_RATE              : integer  := 115200
+    ;UART_DEPTH_TX          : natural  := 0
+    ;UART_DEPTH_RX          : natural  := 0
+    ;SPI_DEPTH_CMD          : natural  := 0
+    ;SPI_DEPTH_TX           : natural  := 0
+    ;SPI_DEPTH_RX           : natural  := 0
+    ;NB_SWITCH              : positive := 8
+    ;NB_LED0                : positive := 8
+    ;NB_LED1                : positive := 8
+    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH        : natural  := 2
+    ;FAULT_INJECTION        : boolean  := False
+    ;ICN_ALGO_SEL           : string   := "or"
+    ;CPU_MODEL              : string   := "OpenBlaze8"
+    ;RAM_DEPTH              : natural  := 128
+    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
     );
   port
     (clk_i                 : in  std_logic

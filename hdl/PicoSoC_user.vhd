@@ -29,6 +29,7 @@
 -- 2025-11-06  3.4      mrosiere Add Generic LOCK_STEP_DEPTH
 -- 2026-05-06  3.5      mrosiere Add Generic CPU_MODEL
 -- 2026-05-16  3.6      mrosiere Add RAM
+-- 2026-05-25  3.7      mrosiere Add Spinlock and mailbox
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -48,6 +49,7 @@ use     asylum.GIC_csr_pkg.all;
 use     asylum.timer_csr_pkg.all;
 use     asylum.crc_csr_pkg.all;
 use     asylum.spinlock_csr_pkg.all;
+use     asylum.mailbox_csr_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.gpio_pkg.all;
@@ -57,28 +59,33 @@ use     asylum.gic_pkg.all;
 use     asylum.timer_pkg.all;
 use     asylum.crc_pkg.all;
 use     asylum.spinlock_pkg.all;
+use     asylum.mailbox_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_user_pkg.all;
 
 entity PicoSoC_user is
   generic
-    (CLOCK_FREQ            : integer  := 50000000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED0               : positive := 8
-    ;NB_LED1               : positive := 8
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := False
-    ;ICN_ALGO_SEL          : string   := "or"
-    ;CPU_MODEL             : string   := "OpenBlaze8"
-    ;RAM_DEPTH             : natural  := 128
+    (CLOCK_FREQ             : integer  := 50000000
+    ;BAUD_RATE              : integer  := 115200
+    ;UART_DEPTH_TX          : natural  := 0
+    ;UART_DEPTH_RX          : natural  := 0
+    ;SPI_DEPTH_CMD          : natural  := 0
+    ;SPI_DEPTH_TX           : natural  := 0
+    ;SPI_DEPTH_RX           : natural  := 0
+    ;NB_SWITCH              : positive := 8
+    ;NB_LED0                : positive := 8
+    ;NB_LED1                : positive := 8
+    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH        : natural  := 2
+    ;FAULT_INJECTION        : boolean  := False
+    ;ICN_ALGO_SEL           : string   := "or"
+    ;CPU_MODEL              : string   := "OpenBlaze8"
+    ;RAM_DEPTH              : natural  := 128
+    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
     );
   port
     (clk_i                 : in  std_logic
@@ -134,9 +141,10 @@ architecture rtl of PicoSoC_user is
   constant TARGET_TIMER               : integer  := 6;
   constant TARGET_CRC                 : integer  := 7;
   constant TARGET_SPINLOCK            : integer  := 8;
-  constant TARGET_RAM                 : integer  := 9;
+  constant TARGET_MAILBOX             : integer  := 9;
+  constant TARGET_RAM                 : integer  := 10;
   
-  constant NB_TARGET                  : positive := 10;
+  constant NB_TARGET                  : positive := 11;
   
   constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
     ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
@@ -148,6 +156,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
      ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
      ,TARGET_SPINLOCK                 => PICOSOC_USER_SPINLOCK_BA
+     ,TARGET_MAILBOX                  => PICOSOC_USER_MAILBOX_BA
      ,TARGET_RAM                      => PICOSOC_USER_RAM_BA   
       );
 
@@ -161,6 +170,7 @@ architecture rtl of PicoSoC_user is
      ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
      ,TARGET_CRC                      => CRC_ADDR_WIDTH
      ,TARGET_SPINLOCK                 => SPINLOCK_ADDR_WIDTH
+     ,TARGET_MAILBOX                  => MAILBOX_ADDR_WIDTH
      ,TARGET_RAM                      => log2(RAM_DEPTH)
       );
   
@@ -459,6 +469,23 @@ begin  -- architecture rtl
     ,sbi_ini_i            => icn_sbi_inis(TARGET_SPINLOCK)
     ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SPINLOCK)
     );
+
+  -----------------------------------------------------------------------------
+  -- mailbox
+  -----------------------------------------------------------------------------
+  ins_sbi_mailbox : sbi_mailbox
+    generic map
+     (FIFO0_DEPTH_TX => MAILBOX_FIFO0_DEPTH_TX
+     ,FIFO0_DEPTH_RX => MAILBOX_FIFO0_DEPTH_RX
+     ,FIFO1_DEPTH_TX => MAILBOX_FIFO1_DEPTH_TX
+     ,FIFO1_DEPTH_RX => MAILBOX_FIFO1_DEPTH_RX
+      )
+    port map
+     (clk_i                => clk         
+     ,arst_b_i             => arst_b      
+     ,sbi_ini_i            => icn_sbi_inis(TARGET_MAILBOX)
+     ,sbi_tgt_o            => icn_sbi_tgts(TARGET_MAILBOX)
+      );
 
   -----------------------------------------------------------------------------
   -- RAM
