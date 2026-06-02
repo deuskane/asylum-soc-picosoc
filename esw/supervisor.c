@@ -28,7 +28,7 @@
 // Interrupt Sub Routine
 //--------------------------------------
 #ifdef SAFETY_TMR
-void isr (void) ISR_FCT
+ISR_FCT
 {
   uint8_t it_vector;
 
@@ -53,7 +53,7 @@ void isr (void) ISR_FCT
 
 #else
 
-void isr (void) ISR_FCT
+ISR_FCT
 {
   gpio_wr       (RST,0);
   gic_clr       (GIC,VECTOR_MASK_DEFAULT);

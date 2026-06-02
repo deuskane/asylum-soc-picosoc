@@ -1,29 +1,32 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro for spinlock
+// Title      : Macro for Mailbox
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : spinlock.h
+// File       : mailbox.h
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
+// Interface for Mailbox FIFO management.
 //-----------------------------------------------------------------------------
 // Copyright (c) 2026
 //-----------------------------------------------------------------------------
 // Revisions  :
 // Date        Version  Author   Description
-// 2026-05-30  1.0      mrosiere Created
+// 2026-05-31  1.0      mrosiere Created
 //-----------------------------------------------------------------------------
 
-#ifndef _spinlock_h_
-#define _spinlock_h_
+#ifndef _mailbox_h_
+#define _mailbox_h_
 
-#define SPINLOCK_DATA0      0x0
-#define SPINLOCK_DATA1      0x1
+// FIFO Addresses
+#define MAILBOX_FIFO0      0x0
+#define MAILBOX_FIFO1      0x2
 
-// Read Set   : Returns 0 if lock acquired (was 0, now set to 1), 1 if already locked.
-#define spinlock_try_lock(_BA_,_ID_) PORT_RD(_BA_,SPINLOCK_DATA##_ID_)
+// Push: Writes data to the specified FIFO (_ID_: 0 or 1)
+#define mailbox_push(_BA_, _ID_, _VAL_) PORT_WR(_BA_, MAILBOX_FIFO##_ID_, _VAL_)
 
-// Write 0 Clear : Release the lock by writing 0.
-#define spinlock_unlock(_BA_,_ID_)   PORT_WR(_BA_,SPINLOCK_DATA##_ID_,0x00)
+// Pop: Reads data from the specified FIFO (_ID_: 0 or 1)
+#define mailbox_pop(_BA_, _ID_)         PORT_RD(_BA_, MAILBOX_FIFO##_ID_)
+#define mailbox_pop0(_BA_)              mailbox_pop(_BA_, 0)
 
 #endif

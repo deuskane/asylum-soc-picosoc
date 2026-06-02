@@ -31,6 +31,7 @@
 #include "timer.h"
 #include "crc.h"
 #include "spinlock.h"
+#include "mailbox.h"
 
 //--------------------------------------
 // Address Map

@@ -38,16 +38,14 @@ extern volatile uint8_t PBLAZEPORT[];
 #define EINT  ENABLE INTERRUPT
 #define DINT  DISABLE INTERRUPT
 
-void interrupt_setup(void (*handler)(void));
+#define interrupt_setup(handler) do { \
+    /* In PicoBlaze, the interrupt vector is fixed at address 0. The handler should be placed at this address in the program memory. */ \
+} while (0)
+
 void interrupt_enable (void);
 void interrupt_disable(void);
 
-#define ISR_FCT  __interrupt(1)
-#define ISR_RET do {} while (0)
-
-void interrupt_setup(void (*handler)(void))
-{
-}
+#define ISR_FCT void isr (void) __interrupt(1)
 
 void interrupt_enable(void)
 {

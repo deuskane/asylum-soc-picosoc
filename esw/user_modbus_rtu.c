@@ -434,11 +434,8 @@ void modbus_slave ()
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-void isr (void) ISR_FCT
+ISR_FCT
 {
-  // Nothing
-
-  // All done
 }
 
 //--------------------------------------
