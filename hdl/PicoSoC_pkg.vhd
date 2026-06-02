@@ -31,13 +31,15 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_ADDR_ENCODING          : string := "binary";
                                                
   constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"00";
-  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"04";
+  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"08";
+  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"0C";
+  constant PICOSOC_USER_SPINLOCK_BA            : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_USER_MAILBOX_BA             : std_logic_vector(8-1 downto 0) := X"20";
   constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"30";
   constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"40";
   constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"50";
   constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"60";
-  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"70";
   constant PICOSOC_USER_RAM_BA                 : std_logic_vector(8-1 downto 0) := X"80";
                                                
   constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "binary";
@@ -128,27 +130,31 @@ end component PicoSoC_supervisor;
 
 component PicoSoC_top is
   generic
-    (FSYS                  : positive := 50_000_000
-    ;FSYS_INT              : positive := 50_000_000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED                : positive := 19
-    ;RESET_POLARITY        : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR            : boolean  := True 
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := True  
-    ;IT_USER_POLARITY      : string   := "low"       -- "high" / "low"
-    ;FAULT_POLARITY        : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE          : boolean  := True
-    ;CPU_MODEL             : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
-    ;SUPERVISOR_RAM_DEPTH  : natural  := 128
-    ;USER_RAM_DEPTH        : natural  := 128
+    (FSYS                   : positive := 50_000_000
+    ;FSYS_INT               : positive := 50_000_000
+    ;BAUD_RATE              : integer  := 115200
+    ;UART_DEPTH_TX          : natural  := 0
+    ;UART_DEPTH_RX          : natural  := 0
+    ;SPI_DEPTH_CMD          : natural  := 0
+    ;SPI_DEPTH_TX           : natural  := 0
+    ;SPI_DEPTH_RX           : natural  := 0
+    ;NB_SWITCH              : positive := 8
+    ;NB_LED                 : positive := 19
+    ;RESET_POLARITY         : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR             : boolean  := True 
+    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH        : natural  := 2
+    ;FAULT_INJECTION        : boolean  := True  
+    ;IT_USER_POLARITY       : string   := "low"       -- "high" / "low"
+    ;FAULT_POLARITY         : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE           : boolean  := True
+    ;CPU_MODEL              : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;SUPERVISOR_RAM_DEPTH   : natural  := 128
+    ;USER_RAM_DEPTH         : natural  := 128
+    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
     );
   port
     (clk_i            : in  std_logic
@@ -183,22 +189,26 @@ end component PicoSoC_top;
 
 component PicoSoC_user is
   generic
-    (CLOCK_FREQ            : integer  := 50000000
-    ;BAUD_RATE             : integer  := 115200
-    ;UART_DEPTH_TX         : natural  := 0
-    ;UART_DEPTH_RX         : natural  := 0
-    ;SPI_DEPTH_CMD         : natural  := 0
-    ;SPI_DEPTH_TX          : natural  := 0
-    ;SPI_DEPTH_RX          : natural  := 0
-    ;NB_SWITCH             : positive := 8
-    ;NB_LED0               : positive := 8
-    ;NB_LED1               : positive := 8
-    ;SAFETY                : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH       : natural  := 2
-    ;FAULT_INJECTION       : boolean  := False
-    ;ICN_ALGO_SEL          : string   := "or"
-    ;CPU_MODEL             : string   := "OpenBlaze8"
-    ;RAM_DEPTH             : natural  := 128
+    (CLOCK_FREQ             : integer  := 50000000
+    ;BAUD_RATE              : integer  := 115200
+    ;UART_DEPTH_TX          : natural  := 0
+    ;UART_DEPTH_RX          : natural  := 0
+    ;SPI_DEPTH_CMD          : natural  := 0
+    ;SPI_DEPTH_TX           : natural  := 0
+    ;SPI_DEPTH_RX           : natural  := 0
+    ;NB_SWITCH              : positive := 8
+    ;NB_LED0                : positive := 8
+    ;NB_LED1                : positive := 8
+    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;LOCK_STEP_DEPTH        : natural  := 2
+    ;FAULT_INJECTION        : boolean  := False
+    ;ICN_ALGO_SEL           : string   := "or"
+    ;CPU_MODEL              : string   := "OpenBlaze8"
+    ;RAM_DEPTH              : natural  := 128
+    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
     );
   port
     (clk_i                 : in  std_logic

@@ -31,13 +31,11 @@
 // Interruption
 //--------------------------------------
 
-void interrupt_setup(void (*handler)(void));
+void interrupt_setup  (void (*handler)(void));
 void interrupt_enable (void);
 void interrupt_disable(void);
 
-#define ISR_FCT
-
-#define ISR_RET __asm__ volatile ("mret")
+#define ISR_FCT void __attribute__((interrupt)) isr (void)
 
 void interrupt_setup(void (*handler)(void))
 {

@@ -104,7 +104,7 @@ uint8_t xmodem_rx(uint8_t * buffer, uint8_t len)
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-void isr (void) ISR_FCT
+ISR_FCT
 {
   uint8_t gic_it_vector = gic_isr(GIC);
 

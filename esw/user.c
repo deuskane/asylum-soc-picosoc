@@ -36,7 +36,7 @@
 //--------------------------------------
 // Interrupt Sub Routine
 //--------------------------------------
-void isr (void) ISR_FCT
+ISR_FCT
 {
   // GIC : Get interruption status
   uint8_t gic_it_vector = gic_isr(GIC);
@@ -64,9 +64,6 @@ void isr (void) ISR_FCT
       gic_clr(UART,UART_IT_RX_EMPTY_B_MSK);
       gic_clr(GIC,GIC_UART_MSK);
     }
-
-  // All done
-  ISR_RET;
 }
 
 //--------------------------------------
@@ -284,7 +281,6 @@ void main()
       // Get switch[5]
       if (sw&0x20)
 	{
-	  uint8_t spi_byte;
 	  uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
 
 	  // Split 32b counter into 4 bytes
@@ -320,11 +316,54 @@ void main()
 	  putchar('-');
 	  puthex (sw);
 
-	  // Print SPI Byte @ cpt
-	  putchar('-');
-	  spi_byte = spi_rx(SPI);
-	  puthex (spi_byte);
-      
+    {
+      // Print SPI Byte @ cpt
+      uint8_t spi_byte;
+      putchar('-');
+      spi_byte = spi_rx(SPI);
+      puthex (spi_byte);
+    }
+
+    {
+      // Test Spinlock
+      uint8_t spinlock;
+
+      putchar(' ');
+      putchar('L');
+      putchar('o');
+      putchar('c');
+      putchar('k');
+      putchar(' ');
+      spinlock = spinlock_try_lock(SPINLOCK,0);
+      puthex (spinlock);
+      putchar(' ');
+      spinlock = spinlock_try_lock(SPINLOCK,0);
+      puthex (spinlock);
+      spinlock_unlock(SPINLOCK,0);
+    }
+
+    {
+      // Test Mailbox
+      uint8_t mb;
+      uint8_t i;
+
+      putchar(' ');
+      putchar('M');
+      putchar('B');
+      putchar('0');
+      putchar(' ');
+      for (i=0; i<8; i++)
+        {
+          mailbox_push(MAILBOX,0,i);
+        }
+      for (i=0; i<8; i++)
+        {
+          mb = mailbox_pop(MAILBOX,0);
+          puthex(mb);
+          putchar(' ');
+        }
+    }
+
 	  putchar('\r');
 	  putchar('\n');
 

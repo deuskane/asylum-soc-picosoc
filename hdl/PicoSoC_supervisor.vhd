@@ -254,7 +254,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_ram : sbi_ram
     generic map
-    (DEPTH                => 128      ,
+    (DEPTH                => RAM_DEPTH      ,
      SYNC_READ            => true   
    )
     port map
