@@ -367,6 +367,7 @@ filesets:
       - ">=asylum:infrastructure:icn:1.0.0"
       - ">=asylum:system:GIC:1.0.0"
       - ">=asylum:system:spinlock:1.0.0"
+      - ">=asylum:system:mailbox:1.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -851,7 +852,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=10000
+      - TB_WATCHDOG=20000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -877,7 +878,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=10000
+      - TB_WATCHDOG=20000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -903,7 +904,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=10000
+      - TB_WATCHDOG=20000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -955,7 +956,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=100000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -1684,7 +1685,7 @@ targets:
 #      - DEBUG_ENABLE=false
 #
 #      # Test Bench Configuration
-#      - TB_WATCHDOG=10000
+#      - TB_WATCHDOG=20000
 #      - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -1710,7 +1711,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=10000
+      - TB_WATCHDOG=20000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -1736,7 +1737,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=10000
+      - TB_WATCHDOG=20000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
@@ -1788,7 +1789,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=100000
+      - TB_WATCHDOG=200000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
