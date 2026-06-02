@@ -249,6 +249,7 @@ begin  -- architecture tb
       report "[TESTBENCH] Change Switch" ;
       switch_i       <= (others => '0');
       for i in NB_SWITCH-1 downto 0 loop
+        report "[TESTBENCH]   Switch " & integer'image(i);
         switch_i(i)    <= '1';
         wait until (led_switch = switch_i) ;
         
