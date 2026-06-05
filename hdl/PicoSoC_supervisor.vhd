@@ -47,7 +47,9 @@ entity PicoSoC_supervisor is
     ;NB_LED1               : positive := 8
 
     ;ICN_ALGO_SEL          : string   := "or"
+    ;ICN_MASTER_SEL        : string   := "fix"
 
+    ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
     );
@@ -76,6 +78,8 @@ architecture rtl of PicoSoC_supervisor is
   constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 
   -- ICN Configuration
+  constant NB_MASTER                  : positive := NB_CPU;
+
   constant TARGET_ADDR_ENCODING       : string   := PICOSOC_SUPERVISOR_ADDR_ENCODING;
 
   constant TARGET_LED0                : integer  := 0;
@@ -116,6 +120,10 @@ architecture rtl of PicoSoC_supervisor is
 --signal cpu_it_ack                   : std_logic;
 
   -- Signals ICN
+  signal icn_sbi_inim                 : sbi_inis_t(NB_MASTER-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
+                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_tgtm                 : sbi_tgts_t(NB_MASTER-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+
   signal icn_sbi_inis                 : sbi_inis_t(NB_TARGET-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
                                                                          wdata(SBI_DATA_WIDTH-1 downto 0));
   signal icn_sbi_tgts                 : sbi_tgts_t(NB_TARGET-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
@@ -154,6 +162,9 @@ begin  -- architecture rtl
     ,interrupt_ack_o      => open
     );
 
+  icn_sbi_inim(0) <= cpu_sbi_ini;
+  cpu_sbi_tgt     <= icn_sbi_tgtm(0);
+
   -----------------------------------------------------------------------------
   -- CPU ROM
   -----------------------------------------------------------------------------
@@ -172,6 +183,8 @@ begin  -- architecture rtl
   ins_sbi_icn : sbi_icn
     generic map
     (NAME                 => "icn_supervisor"
+    ,NB_MASTER            => NB_MASTER
+    ,MASTER_SEL           => ICN_MASTER_SEL
     ,NB_TARGET            => NB_TARGET
     ,TARGET_ID            => TARGET_ID
     ,TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH
@@ -182,8 +195,8 @@ begin  -- architecture rtl
     (clk_i                => clk        
     ,cke_i                => '1'        
     ,arst_b_i             => arst_b     
-    ,sbi_ini_i            => cpu_sbi_ini    
-    ,sbi_tgt_o            => cpu_sbi_tgt    
+    ,sbi_inis_i           => icn_sbi_inim
+    ,sbi_tgts_o           => icn_sbi_tgtm  
     ,sbi_inis_o           => icn_sbi_inis   
     ,sbi_tgts_i           => icn_sbi_tgts
      );

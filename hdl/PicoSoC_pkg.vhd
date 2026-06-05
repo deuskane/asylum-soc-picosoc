@@ -111,7 +111,9 @@ component PicoSoC_supervisor is
     ;NB_LED1               : positive := 8
 
     ;ICN_ALGO_SEL          : string   := "or"
+    ;ICN_MASTER_SEL        : string   := "fix"
 
+    ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
     );
@@ -203,6 +205,8 @@ component PicoSoC_user is
     ;LOCK_STEP_DEPTH        : natural  := 2
     ;FAULT_INJECTION        : boolean  := False
     ;ICN_ALGO_SEL           : string   := "or"
+    ;ICN_MASTER_SEL        : string   := "fix"
+    ;NB_CPU                 : natural  := 1
     ;CPU_MODEL              : string   := "OpenBlaze8"
     ;RAM_DEPTH              : natural  := 128
     ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4

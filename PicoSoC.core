@@ -52,10 +52,11 @@ CAPI=2:
 # 2026-01-17  2.9.3    mrosiere Move it sync dff into GIC
 # 2026-05-09  3.0.0    mrosiere Add Generic CPU_MODEL
 # 2026-05-24  3.0.1    mrosiere Change Supervisor ICN Address Encoding
-# 2026-06-27  3.1.0    mrosiere Add spinlock and mailbox
+# 2026-05-27  3.1.0    mrosiere Add spinlock and mailbox
+# 2026-06-05  3.2.0    mrosiere Use ICN with NB_MASTER
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.1.0
+name        : asylum:soc:PicoSoC:3.2.0
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer, RAM and CRC
 
 #=========================================

@@ -90,7 +90,11 @@ end PicoSoC_top;
 architecture rtl of PicoSoC_top is
 
   constant ICN_ALGO_SEL                 : string   := "mux";
+  constant ICN_MASTER_SEL               : string   := "fix";
 
+  constant USER_NB_CPU                  : natural  := 1;
+  constant SUPERVISOR_NB_CPU            : natural  := 1;
+  
   constant NB_LED0_USER                 : positive := 8;
   constant NB_LED1_USER                 : positive := 8;
   constant NB_LED_SUPERVISOR            : positive := 3;
@@ -206,7 +210,9 @@ begin  -- architecture rtl
     ,LOCK_STEP_DEPTH        => LOCK_STEP_DEPTH
     ,FAULT_INJECTION        => FAULT_INJECTION    
     ,ICN_ALGO_SEL           => ICN_ALGO_SEL   
+    ,NB_CPU                 => USER_NB_CPU
     ,CPU_MODEL              => CPU_MODEL
+    ,ICN_MASTER_SEL         => ICN_MASTER_SEL
     ,RAM_DEPTH              => USER_RAM_DEPTH     
     ,MAILBOX_FIFO0_DEPTH_TX => MAILBOX_FIFO0_DEPTH_TX
     ,MAILBOX_FIFO0_DEPTH_RX => MAILBOX_FIFO0_DEPTH_RX
@@ -255,6 +261,8 @@ begin  -- architecture rtl
       (NB_LED0              => 1
       ,NB_LED1              => NB_LED_SUPERVISOR
       ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
+      ,ICN_MASTER_SEL       => ICN_MASTER_SEL
+      ,NB_CPU               => SUPERVISOR_NB_CPU
       ,CPU_MODEL            => CPU_MODEL     
       ,RAM_DEPTH            => SUPERVISOR_RAM_DEPTH
        )
