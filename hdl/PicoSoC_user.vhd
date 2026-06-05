@@ -79,8 +79,8 @@ entity PicoSoC_user is
     ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;LOCK_STEP_DEPTH        : natural  := 2
     ;FAULT_INJECTION        : boolean  := False
-    ;ICN_ALGO_SEL           : string   := "or"
-    ;ICN_MASTER_SEL        : string   := "fix"
+    ;ICN_TARGET_SEL         : string   := "or"
+    ;ICN_MASTER_SEL         : string   := "fix"
     ;NB_CPU                 : natural  := 1
     ;CPU_MODEL              : string   := "OpenBlaze8"
     ;RAM_DEPTH              : natural  := 128
@@ -284,10 +284,10 @@ begin  -- architecture rtl
     ,NB_MASTER            => NB_MASTER
     ,MASTER_SEL           => ICN_MASTER_SEL
     ,NB_TARGET            => NB_TARGET
+    ,TARGET_SEL           => ICN_TARGET_SEL
     ,TARGET_ID            => TARGET_ID
     ,TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH
     ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
-    ,ALGO_SEL             => ICN_ALGO_SEL
       )
     port map
     (clk_i                => clk      

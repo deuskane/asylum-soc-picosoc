@@ -40,6 +40,7 @@ entity PicoSoC_top is
     ;CPU_MODEL                   : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
+    ;USER_NB_CPU                 : natural  := 1
     ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
     ;USER_BAUD_RATE              : integer  := 115200
     ;USER_UART_DEPTH_TX          : natural  := 0
@@ -94,10 +95,9 @@ end PicoSoC_top;
   
 architecture rtl of PicoSoC_top is
 
-  constant ICN_ALGO_SEL                 : string   := "mux";
+  constant ICN_TARGET_SEL               : string   := "or";
   constant ICN_MASTER_SEL               : string   := "fix";
 
-  constant USER_NB_CPU                  : natural  := 1;
   constant SUPERVISOR_NB_CPU            : natural  := 1;
   
   constant NB_LED0_USER                 : positive := 8;
@@ -214,7 +214,7 @@ begin  -- architecture rtl
     ,SAFETY                 => USER_SAFETY
     ,LOCK_STEP_DEPTH        => USER_LOCK_STEP_DEPTH
     ,FAULT_INJECTION        => USER_FAULT_INJECTION
-    ,ICN_ALGO_SEL           => ICN_ALGO_SEL
+    ,ICN_TARGET_SEL         => ICN_TARGET_SEL
     ,NB_CPU                 => USER_NB_CPU
     ,CPU_MODEL              => CPU_MODEL
     ,ICN_MASTER_SEL         => ICN_MASTER_SEL
@@ -265,7 +265,7 @@ begin  -- architecture rtl
       generic map
       (NB_LED0              => 1
       ,NB_LED1              => NB_LED_SUPERVISOR
-      ,ICN_ALGO_SEL         => ICN_ALGO_SEL        
+      ,ICN_TARGET_SEL       => ICN_TARGET_SEL        
       ,ICN_MASTER_SEL       => ICN_MASTER_SEL
       ,NB_CPU               => SUPERVISOR_NB_CPU
       ,CPU_MODEL            => CPU_MODEL     

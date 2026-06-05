@@ -143,7 +143,7 @@ PicoSoC_top
 | `NB_LED1` | positive | 8 | Number of LED1 outputs |
 | `SAFETY` | string | "lock-step" | Safety mode ("none", "lock-step", or "tmr") |
 | `FAULT_INJECTION` | boolean | False | Enable fault injection |
-| `ICN_ALGO_SEL` | string | "or" | ICN algorithm selection |
+| `ICN_TARGET_SEL` | string | "or" | ICN algorithm selection |
 
 **Ports:**
 
@@ -184,7 +184,7 @@ PicoSoC_top
 |------|------|---------|-------------|
 | `NB_LED0` | positive | 8 | Number of LED0 outputs |
 | `NB_LED1` | positive | 8 | Number of LED1 outputs |
-| `ICN_ALGO_SEL` | string | "or" | ICN algorithm selection |
+| `ICN_TARGET_SEL` | string | "or" | ICN algorithm selection |
 
 **Ports:**
 

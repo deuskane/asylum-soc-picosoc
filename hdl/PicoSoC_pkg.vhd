@@ -110,7 +110,7 @@ component PicoSoC_supervisor is
     (NB_LED0               : positive := 8
     ;NB_LED1               : positive := 8
 
-    ;ICN_ALGO_SEL          : string   := "or"
+    ;ICN_TARGET_SEL          : string   := "or"
     ;ICN_MASTER_SEL        : string   := "fix"
 
     ;NB_CPU                : natural  := 1
@@ -132,38 +132,37 @@ end component PicoSoC_supervisor;
 
 component PicoSoC_top is
   generic
-    (FSYS                   : positive := 50_000_000
-    ;FSYS_INT               : positive := 50_000_000
-    ;NB_SWITCH              : positive := 8
-    ;NB_LED                 : positive := 19
-    ;RESET_POLARITY         : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE           : boolean  := True
+    (FSYS                        : positive := 50_000_000
+    ;FSYS_INT                    : positive := 50_000_000
+    ;NB_SWITCH                   : positive := 8
+    ;NB_LED                      : positive := 19
+    ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE                : boolean  := True
  
-    ;CPU_MODEL              : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;CPU_MODEL                   : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
+    ;USER_NB_CPU                 : natural  := 1
+    ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
     ;USER_BAUD_RATE              : integer  := 115200
     ;USER_UART_DEPTH_TX          : natural  := 0
     ;USER_UART_DEPTH_RX          : natural  := 0
     ;USER_SPI_DEPTH_CMD          : natural  := 0
     ;USER_SPI_DEPTH_TX           : natural  := 0
     ;USER_SPI_DEPTH_RX           : natural  := 0
-
-    -- SUPERVISOR SoC
-    ;SUPERVISOR             : boolean  := True 
-    ;SUPERVISOR_RAM_DEPTH   : natural  := 128
-    ;USER_RAM_DEPTH         : natural  := 128
-
     ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_LOCK_STEP_DEPTH        : natural  := 2
     ;USER_FAULT_INJECTION        : boolean  := True  
     ;USER_FAULT_POLARITY         : string   := "low"       -- "high" / "low"
-
-    ;USER_IT_POLARITY       : string   := "low"       -- "high" / "low"
+    ;USER_IT_POLARITY            : string   := "low"       -- "high" / "low"
     ;USER_MAILBOX_FIFO0_DEPTH_TX : natural  := 4
     ;USER_MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;USER_MAILBOX_FIFO1_DEPTH_TX : natural  := 4
     ;USER_MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
+
+    -- SUPERVISOR SoC
+    ;SUPERVISOR                  : boolean  := True 
+    ;SUPERVISOR_RAM_DEPTH        : natural  := 128         -- Up to 128 bytes
     );
   port
     (clk_i            : in  std_logic
@@ -211,7 +210,7 @@ component PicoSoC_user is
     ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;LOCK_STEP_DEPTH        : natural  := 2
     ;FAULT_INJECTION        : boolean  := False
-    ;ICN_ALGO_SEL           : string   := "or"
+    ;ICN_TARGET_SEL           : string   := "or"
     ;ICN_MASTER_SEL        : string   := "fix"
     ;NB_CPU                 : natural  := 1
     ;CPU_MODEL              : string   := "OpenBlaze8"
