@@ -35,28 +35,28 @@ use     bitvis_vip_uart.uart_bfm_pkg.all;
 
 entity tb_PicoSoC_modbus_rtu is
   generic
-    (FSYS             : positive := 50_000_000
-    ;FSYS_INT         : positive := 50_000_000
-    ;BAUD_RATE        : integer  := 115200
-    ;UART_DEPTH_TX    : natural  := 8
-    ;UART_DEPTH_RX    : natural  := 8
-  --;SPI_DEPTH_CMD    : natural  := 0
-  --;SPI_DEPTH_TX     : natural  := 0
-  --;SPI_DEPTH_RX     : natural  := 0
-  --;NB_SWITCH        : positive := 8
-  --;NB_LED           : positive := 19
-  --;RESET_POLARITY   : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR       : boolean  := True 
-    ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;FAULT_INJECTION  : boolean  := True  
-  --;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
-  --;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True
-    ;CPU_MODEL        : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
+    (FSYS                  : positive := 50_000_000
+    ;FSYS_INT              : positive := 50_000_000
+    ;USER_BAUD_RATE        : integer  := 115200
+    ;USER_UART_DEPTH_TX    : natural  := 8
+    ;USER_UART_DEPTH_RX    : natural  := 8
+  --;USER_SPI_DEPTH_CMD    : natural  := 0
+  --;USER_SPI_DEPTH_TX     : natural  := 0
+  --;USER_SPI_DEPTH_RX     : natural  := 0
+  --;NB_SWITCH             : positive := 8
+  --;NB_LED                : positive := 19
+  --;RESET_POLARITY        : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR            : boolean  := True 
+    ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_FAULT_INJECTION  : boolean  := True  
+  --;USER_IT_POLARITY      : string   := "low"       -- "high" / "low"
+  --;USER_FAULT_POLARITY   : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE          : boolean  := True
+    ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
-    ;TB_WATCHDOG      : natural  := 10_000
-    ;HAVE_SPI_MEMORY  : boolean  := False
+    ;TB_WATCHDOG           : natural  := 10_000
+    ;HAVE_SPI_MEMORY       : boolean  := False
      );
 
 end entity tb_PicoSoC_modbus_rtu;
@@ -65,7 +65,7 @@ architecture tb of tb_PicoSoC_modbus_rtu is
 
   -- =====[ Test Case ]===========================
   constant TEST_CASE_BASIC         : boolean   := true;
-  constant TEST_CASE_FAULT         : boolean   := FAULT_INJECTION;
+  constant TEST_CASE_FAULT         : boolean   := USER_FAULT_INJECTION;
   constant TEST_CASE_SEQUENCE      : boolean   := true;
 
   -- =====[ Parameters ]==========================
@@ -81,8 +81,8 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   constant NB_LED                  : positive := 19;
 
   constant RESET_POLARITY          : string   := "low";  -- "high" / "low"
-  constant IT_USER_POLARITY        : string   := "high"; -- "high" / "low"
-  constant FAULT_POLARITY          : string   := "high"; -- "high" / "low"
+  constant USER_IT_POLARITY        : string   := "high"; -- "high" / "low"
+  constant USER_FAULT_POLARITY     : string   := "high"; -- "high" / "low"
 
   -- =====[ Dut Signals ]=========================
   signal   clk_i                   : std_logic := '0';
@@ -106,7 +106,7 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   
   -- =====[ TB Constants ]========================
   constant C_CLK_PERIOD            : time      := 1 sec / FSYS;
-  constant C_UART_BIT_TIME         : time      := 1 sec / BAUD_RATE;
+  constant C_UART_BIT_TIME         : time      := 1 sec / USER_BAUD_RATE;
   
   constant C_UART_BFM_CONFIG       : t_uart_bfm_config := (
     bit_time                              => C_UART_BIT_TIME,
@@ -175,20 +175,20 @@ begin  -- architecture tb
   -----------------------------------------------------
   dut : PicoSoC_top
     generic map
-    (FSYS             => FSYS            
-    ,FSYS_INT         => FSYS_INT        
-    ,BAUD_RATE        => BAUD_RATE
-    ,NB_SWITCH        => NB_SWITCH       
-    ,NB_LED           => NB_LED          
-    ,RESET_POLARITY   => RESET_POLARITY  
-    ,SUPERVISOR       => SUPERVISOR      
-    ,SAFETY           => SAFETY          
-    ,FAULT_INJECTION  => FAULT_INJECTION 
-    ,IT_USER_POLARITY => IT_USER_POLARITY
-    ,FAULT_POLARITY   => FAULT_POLARITY  
-    ,UART_DEPTH_TX    => UART_DEPTH_TX
-    ,UART_DEPTH_RX    => UART_DEPTH_RX
-    ,CPU_MODEL        => CPU_MODEL
+    (FSYS                  => FSYS            
+    ,FSYS_INT              => FSYS_INT        
+    ,USER_BAUD_RATE        => USER_BAUD_RATE
+    ,NB_SWITCH             => NB_SWITCH       
+    ,NB_LED                => NB_LED          
+    ,RESET_POLARITY        => RESET_POLARITY  
+    ,SUPERVISOR            => SUPERVISOR      
+    ,USER_SAFETY           => USER_SAFETY          
+    ,USER_FAULT_INJECTION  => USER_FAULT_INJECTION 
+    ,USER_IT_POLARITY      => USER_IT_POLARITY
+    ,USER_FAULT_POLARITY   => USER_FAULT_POLARITY  
+    ,USER_UART_DEPTH_TX    => USER_UART_DEPTH_TX
+    ,USER_UART_DEPTH_RX    => USER_UART_DEPTH_RX
+    ,CPU_MODEL             => CPU_MODEL
      )  
     port map
     (clk_i            => clk_i           
@@ -443,7 +443,7 @@ begin  -- architecture tb
     if TEST_CASE_FAULT
     then
 
-      if (SUPERVISOR and SAFETY="lock-step")
+      if (SUPERVISOR and USER_SAFETY="lock-step")
       then
         log(ID_LOG_HDR, "Inject error (lock-step)", C_SCOPE);
 
@@ -476,7 +476,7 @@ begin  -- architecture tb
         wait for C_RESET_LATENCY;
       end if;
 
-      if (SUPERVISOR and SAFETY="tmr")
+      if (SUPERVISOR and USER_SAFETY="tmr")
       then
         log(ID_LOG_HDR, "Inject error (TMR)", C_SCOPE);
 

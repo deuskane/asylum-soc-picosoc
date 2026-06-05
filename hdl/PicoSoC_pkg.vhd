@@ -134,29 +134,36 @@ component PicoSoC_top is
   generic
     (FSYS                   : positive := 50_000_000
     ;FSYS_INT               : positive := 50_000_000
-    ;BAUD_RATE              : integer  := 115200
-    ;UART_DEPTH_TX          : natural  := 0
-    ;UART_DEPTH_RX          : natural  := 0
-    ;SPI_DEPTH_CMD          : natural  := 0
-    ;SPI_DEPTH_TX           : natural  := 0
-    ;SPI_DEPTH_RX           : natural  := 0
     ;NB_SWITCH              : positive := 8
     ;NB_LED                 : positive := 19
     ;RESET_POLARITY         : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR             : boolean  := True 
-    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH        : natural  := 2
-    ;FAULT_INJECTION        : boolean  := True  
-    ;IT_USER_POLARITY       : string   := "low"       -- "high" / "low"
-    ;FAULT_POLARITY         : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE           : boolean  := True
+ 
     ;CPU_MODEL              : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+
+    -- USER SoC
+    ;USER_BAUD_RATE              : integer  := 115200
+    ;USER_UART_DEPTH_TX          : natural  := 0
+    ;USER_UART_DEPTH_RX          : natural  := 0
+    ;USER_SPI_DEPTH_CMD          : natural  := 0
+    ;USER_SPI_DEPTH_TX           : natural  := 0
+    ;USER_SPI_DEPTH_RX           : natural  := 0
+
+    -- SUPERVISOR SoC
+    ;SUPERVISOR             : boolean  := True 
     ;SUPERVISOR_RAM_DEPTH   : natural  := 128
     ;USER_RAM_DEPTH         : natural  := 128
-    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
-    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
-    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
-    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
+
+    ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_LOCK_STEP_DEPTH        : natural  := 2
+    ;USER_FAULT_INJECTION        : boolean  := True  
+    ;USER_FAULT_POLARITY         : string   := "low"       -- "high" / "low"
+
+    ;USER_IT_POLARITY       : string   := "low"       -- "high" / "low"
+    ;USER_MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;USER_MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;USER_MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;USER_MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
     );
   port
     (clk_i            : in  std_logic

@@ -483,21 +483,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_USER_SPI_DEPTH_CMD=4
+      - USER_USER_SPI_DEPTH_TX=4
+      - USER_USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -523,21 +523,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_USER_SPI_DEPTH_CMD=4
+      - USER_USER_SPI_DEPTH_TX=4
+      - USER_USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -555,21 +555,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_USER_SPI_DEPTH_CMD=4
+      - USER_USER_SPI_DEPTH_TX=4
+      - USER_USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -587,21 +587,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -619,21 +619,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -651,21 +651,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -683,21 +683,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -715,21 +715,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -747,21 +747,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -779,21 +779,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -811,21 +811,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -842,12 +842,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -868,12 +868,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -894,12 +894,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -920,12 +920,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -946,12 +946,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -972,12 +972,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -999,12 +999,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1024,12 +1024,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1050,12 +1050,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1077,12 +1077,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1102,12 +1102,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1129,12 +1129,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1154,12 +1154,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1181,12 +1181,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1206,12 +1206,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1232,12 +1232,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=false
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1259,12 +1259,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1316,21 +1316,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1356,21 +1356,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1388,21 +1388,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1420,21 +1420,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1452,21 +1452,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1484,21 +1484,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1516,21 +1516,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1548,21 +1548,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1580,21 +1580,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1612,21 +1612,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1644,21 +1644,21 @@ targets:
       - NB_SWITCH=6
       - NB_LED=19
       - RESET_POLARITY=low
-      - IT_USER_POLARITY=low
-      - FAULT_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
 
       # SoC User Configuration
-      - BAUD_RATE=9600
-      - UART_DEPTH_TX=4
-      - UART_DEPTH_RX=4
-      - SPI_DEPTH_CMD=4
-      - SPI_DEPTH_TX=4
-      - SPI_DEPTH_RX=4
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1675,12 +1675,12 @@ targets:
 #      - FSYS_INT=12500000
 #
 #      # SoC User Configuration
-#      - BAUD_RATE=921600
+#      - USER_BAUD_RATE=921600
 #      
 #      # Platform Configuration
 #      - SUPERVISOR=false
-#      - SAFETY=none
-#      - FAULT_INJECTION=false
+#      - USER_SAFETY=none
+#      - USER_FAULT_INJECTION=false
 #
 #      # Debug
 #      - DEBUG_ENABLE=false
@@ -1701,12 +1701,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1727,12 +1727,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1753,12 +1753,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1779,12 +1779,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1805,12 +1805,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1832,12 +1832,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=none
-      - FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1857,12 +1857,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1883,12 +1883,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1910,12 +1910,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=false
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1935,12 +1935,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1962,12 +1962,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -1987,12 +1987,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -2014,12 +2014,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=lock-step
-      - FAULT_INJECTION=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -2039,12 +2039,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -2065,12 +2065,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=false
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=false
 
       # Debug
       - DEBUG_ENABLE=false
@@ -2092,12 +2092,12 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - BAUD_RATE=921600
+      - USER_BAUD_RATE=921600
       
       # Platform Configuration
       - SUPERVISOR=true
-      - SAFETY=tmr
-      - FAULT_INJECTION=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=false
@@ -2121,37 +2121,37 @@ parameters :
     default     : 500000000
     paramtype   : generic
 
-  BAUD_RATE :
+  USER_BAUD_RATE :
     description : Baud Rate
     datatype    : int
     default     : 9600
     paramtype   : generic
 
-  UART_DEPTH_TX :
+  USER_UART_DEPTH_TX :
     description : UART TX Depth FIFO
     datatype    : int
     default     : 0
     paramtype   : generic
 
-  UART_DEPTH_RX :
+  USER_UART_DEPTH_RX :
     description : UART RX Depth FIFO
     datatype    : int
     default     : 0
     paramtype   : generic
 
-  SPI_DEPTH_CMD :
+  USER_SPI_DEPTH_CMD :
     description : SPI TX Depth FIFO
     datatype    : int
     default     : 0
     paramtype   : generic
 
-  SPI_DEPTH_TX :
+  USER_SPI_DEPTH_TX :
     description : SPI TX Depth FIFO
     datatype    : int
     default     : 0
     paramtype   : generic
 
-  SPI_DEPTH_RX :
+  USER_SPI_DEPTH_RX :
     description : SPI RX Depth FIFO
     datatype    : int
     default     : 0
@@ -2181,25 +2181,25 @@ parameters :
     default     : false
     paramtype   : generic
 
-  SAFETY :
+  USER_SAFETY :
     description : Safety Algorithm (none / lock-step / tmr)
     datatype    : str
     default     : none
     paramtype   : generic
 
-  FAULT_INJECTION :
+  USER_FAULT_INJECTION :
     description : Polarity of arst_i signal (low / high)
     datatype    : bool
     default     : false
     paramtype   : generic
 
-  IT_USER_POLARITY :
+  USER_IT_POLARITY :
     description : Polarity of it_user_i signal (low / high)
     datatype    : str
     default     : low
     paramtype   : generic
 
-  FAULT_POLARITY :
+  USER_FAULT_POLARITY :
     description : Polarity of inject_err_r_i signal (low / high)
     datatype    : str
     default     : low

@@ -30,28 +30,28 @@ library work;
   
 entity tb_PicoSoC is
   generic
-    (FSYS             : positive := 50_000_000
-    ;FSYS_INT         : positive := 50_000_000
-    ;BAUD_RATE        : integer  := 115200
-  --;UART_DEPTH_TX    : natural  := 0
-  --;UART_DEPTH_RX    : natural  := 0
-  --;SPI_DEPTH_CMD    : natural  := 0
-  --;SPI_DEPTH_TX     : natural  := 0
-  --;SPI_DEPTH_RX     : natural  := 0
-  --;NB_SWITCH        : positive := 8
-  --;NB_LED           : positive := 19
-  --;RESET_POLARITY   : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR       : boolean  := True 
-    ;SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;FAULT_INJECTION  : boolean  := True  
-  --;IT_USER_POLARITY : string   := "low"       -- "high" / "low"
-  --;FAULT_POLARITY   : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE     : boolean  := True 
-    ;CPU_MODEL        : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
+    (FSYS                  : positive := 50_000_000
+    ;FSYS_INT              : positive := 50_000_000
+    ;USER_BAUD_RATE        : integer  := 115200
+  --;USER_UART_DEPTH_TX    : natural  := 0
+  --;USER_UART_DEPTH_RX    : natural  := 0
+  --;USER_SPI_DEPTH_CMD    : natural  := 0
+  --;USER_SPI_DEPTH_TX     : natural  := 0
+  --;USER_SPI_DEPTH_RX     : natural  := 0
+  --;NB_SWITCH             : positive := 8
+  --;NB_LED                : positive := 19
+  --;RESET_POLARITY        : string   := "low"       -- "high" / "low"
+    ;SUPERVISOR            : boolean  := True 
+    ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_FAULT_INJECTION  : boolean  := True  
+  --;USER_IT_POLARITY      : string   := "low"       -- "high" / "low"
+  --;USER_FAULT_POLARITY   : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE          : boolean  := True 
+    ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
-    ;TB_WATCHDOG      : natural  := 10_000
-    ;HAVE_SPI_MEMORY  : boolean  := False
+    ;TB_WATCHDOG           : natural  := 10_000
+    ;HAVE_SPI_MEMORY       : boolean  := False
      );
   
 end entity tb_PicoSoC;
@@ -65,8 +65,8 @@ architecture tb of tb_PicoSoC is
   constant NB_LED                  : positive := 19;
 
   constant RESET_POLARITY          : string   := "low";  -- "high" / "low"
-  constant IT_USER_POLARITY        : string   := "high"; -- "high" / "low"
-  constant FAULT_POLARITY          : string   := "high"; -- "high" / "low"
+  constant USER_IT_POLARITY        : string   := "high"; -- "high" / "low"
+  constant USER_FAULT_POLARITY     : string   := "high"; -- "high" / "low"
   
   -- =====[ Dut Signals ]=========================
   signal  clk_i                    : std_logic := '0';
@@ -137,18 +137,18 @@ begin  -- architecture tb
   -----------------------------------------------------
   dut : PicoSoC_top
     generic map
-    (FSYS             => FSYS            
-    ,FSYS_INT         => FSYS_INT        
-    ,BAUD_RATE        => BAUD_RATE
-    ,NB_SWITCH        => NB_SWITCH       
-    ,NB_LED           => NB_LED          
-    ,RESET_POLARITY   => RESET_POLARITY  
-    ,SUPERVISOR       => SUPERVISOR      
-    ,SAFETY           => SAFETY          
-    ,FAULT_INJECTION  => FAULT_INJECTION 
-    ,IT_USER_POLARITY => IT_USER_POLARITY
-    ,FAULT_POLARITY   => FAULT_POLARITY  
-    ,CPU_MODEL        => CPU_MODEL
+    (FSYS                  => FSYS            
+    ,FSYS_INT              => FSYS_INT        
+    ,USER_BAUD_RATE        => USER_BAUD_RATE
+    ,NB_SWITCH             => NB_SWITCH       
+    ,NB_LED                => NB_LED          
+    ,RESET_POLARITY        => RESET_POLARITY  
+    ,SUPERVISOR            => SUPERVISOR      
+    ,USER_SAFETY           => USER_SAFETY          
+    ,USER_FAULT_INJECTION  => USER_FAULT_INJECTION 
+    ,USER_IT_POLARITY      => USER_IT_POLARITY
+    ,USER_FAULT_POLARITY   => USER_FAULT_POLARITY  
+    ,CPU_MODEL             => CPU_MODEL
      )  
     port map
     (clk_i            => clk_i           
@@ -269,7 +269,7 @@ begin  -- architecture tb
       it_user_i        <= '0';
       run(1000);
       
-      if (FAULT_INJECTION and SUPERVISOR and SAFETY="lock-step")
+      if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="lock-step")
       then
         report "[TESTBENCH] Inject error (lock-step)" ;
         assert led_diff = "000" report "Bad value of led_diff" severity failure;
@@ -309,7 +309,7 @@ begin  -- architecture tb
 
       end if;
 
-      if (FAULT_INJECTION and SUPERVISOR and SAFETY="tmr")
+      if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="tmr")
       then
         report "[TESTBENCH] Inject error (TMR)" ;
         assert led_diff = "000" report "Bad value of led_diff" severity failure;

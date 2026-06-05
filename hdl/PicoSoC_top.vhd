@@ -30,31 +30,36 @@ use     asylum.clock_divider_pkg.all;
 
 entity PicoSoC_top is
   generic
-    (FSYS                   : positive := 50_000_000
-    ;FSYS_INT               : positive := 50_000_000
-    ;BAUD_RATE              : integer  := 115200
-    ;UART_DEPTH_TX          : natural  := 0
-    ;UART_DEPTH_RX          : natural  := 0
-    ;SPI_DEPTH_CMD          : natural  := 0
-    ;SPI_DEPTH_TX           : natural  := 0
-    ;SPI_DEPTH_RX           : natural  := 0
-    ;NB_SWITCH              : positive := 8
-    ;NB_LED                 : positive := 19
-    ;RESET_POLARITY         : string   := "low"       -- "high" / "low"
-    ;SUPERVISOR             : boolean  := True 
-    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
-    ;LOCK_STEP_DEPTH        : natural  := 2
-    ;FAULT_INJECTION        : boolean  := True  
-    ;IT_USER_POLARITY       : string   := "low"       -- "high" / "low"
-    ;FAULT_POLARITY         : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE           : boolean  := True
-    ;CPU_MODEL              : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
-    ;SUPERVISOR_RAM_DEPTH   : natural  := 128
-    ;USER_RAM_DEPTH         : natural  := 128
-    ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
-    ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
-    ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
-    ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
+    (FSYS                        : positive := 50_000_000
+    ;FSYS_INT                    : positive := 50_000_000
+    ;NB_SWITCH                   : positive := 8
+    ;NB_LED                      : positive := 19
+    ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
+    ;DEBUG_ENABLE                : boolean  := True
+ 
+    ;CPU_MODEL                   : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+
+    -- USER SoC
+    ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
+    ;USER_BAUD_RATE              : integer  := 115200
+    ;USER_UART_DEPTH_TX          : natural  := 0
+    ;USER_UART_DEPTH_RX          : natural  := 0
+    ;USER_SPI_DEPTH_CMD          : natural  := 0
+    ;USER_SPI_DEPTH_TX           : natural  := 0
+    ;USER_SPI_DEPTH_RX           : natural  := 0
+    ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_LOCK_STEP_DEPTH        : natural  := 2
+    ;USER_FAULT_INJECTION        : boolean  := True  
+    ;USER_FAULT_POLARITY         : string   := "low"       -- "high" / "low"
+    ;USER_IT_POLARITY            : string   := "low"       -- "high" / "low"
+    ;USER_MAILBOX_FIFO0_DEPTH_TX : natural  := 4
+    ;USER_MAILBOX_FIFO0_DEPTH_RX : natural  := 4
+    ;USER_MAILBOX_FIFO1_DEPTH_TX : natural  := 4
+    ;USER_MAILBOX_FIFO1_DEPTH_RX : natural  := 4    
+
+    -- SUPERVISOR SoC
+    ;SUPERVISOR                  : boolean  := True 
+    ;SUPERVISOR_RAM_DEPTH        : natural  := 128         -- Up to 128 bytes
     );
   port
     (clk_i            : in  std_logic
@@ -180,13 +185,13 @@ begin  -- architecture rtl
   -- IT_USER User
   -----------------------------------------------------------------------------
   gen_it_user_b:
-  if IT_USER_POLARITY = "low"
+  if USER_IT_POLARITY = "low"
   generate
     it_user <= not it_user_i;
   end generate gen_it_user_b;
 
   gen_it_user:
-  if IT_USER_POLARITY = "high"
+  if USER_IT_POLARITY = "high"
   generate
     it_user <=     it_user_i;
   end generate gen_it_user;
@@ -196,28 +201,28 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_soc_user : PicoSoC_user
     generic map
-    (CLOCK_FREQ             => FSYS_INT           
-    ,BAUD_RATE              => BAUD_RATE          
-    ,UART_DEPTH_TX          => UART_DEPTH_TX 
-    ,UART_DEPTH_RX          => UART_DEPTH_RX 
-    ,SPI_DEPTH_CMD          => SPI_DEPTH_CMD
-    ,SPI_DEPTH_TX           => SPI_DEPTH_TX 
-    ,SPI_DEPTH_RX           => SPI_DEPTH_RX 
-    ,NB_SWITCH              => NB_SWITCH          
-    ,NB_LED0                => NB_LED0_USER       
-    ,NB_LED1                => NB_LED1_USER       
-    ,SAFETY                 => SAFETY
-    ,LOCK_STEP_DEPTH        => LOCK_STEP_DEPTH
-    ,FAULT_INJECTION        => FAULT_INJECTION    
-    ,ICN_ALGO_SEL           => ICN_ALGO_SEL   
+    (CLOCK_FREQ             => FSYS_INT
+    ,BAUD_RATE              => USER_BAUD_RATE
+    ,UART_DEPTH_TX          => USER_UART_DEPTH_TX
+    ,UART_DEPTH_RX          => USER_UART_DEPTH_RX
+    ,SPI_DEPTH_CMD          => USER_SPI_DEPTH_CMD
+    ,SPI_DEPTH_TX           => USER_SPI_DEPTH_TX
+    ,SPI_DEPTH_RX           => USER_SPI_DEPTH_RX
+    ,NB_SWITCH              => NB_SWITCH
+    ,NB_LED0                => NB_LED0_USER
+    ,NB_LED1                => NB_LED1_USER
+    ,SAFETY                 => USER_SAFETY
+    ,LOCK_STEP_DEPTH        => USER_LOCK_STEP_DEPTH
+    ,FAULT_INJECTION        => USER_FAULT_INJECTION
+    ,ICN_ALGO_SEL           => ICN_ALGO_SEL
     ,NB_CPU                 => USER_NB_CPU
     ,CPU_MODEL              => CPU_MODEL
     ,ICN_MASTER_SEL         => ICN_MASTER_SEL
-    ,RAM_DEPTH              => USER_RAM_DEPTH     
-    ,MAILBOX_FIFO0_DEPTH_TX => MAILBOX_FIFO0_DEPTH_TX
-    ,MAILBOX_FIFO0_DEPTH_RX => MAILBOX_FIFO0_DEPTH_RX
-    ,MAILBOX_FIFO1_DEPTH_TX => MAILBOX_FIFO1_DEPTH_TX
-    ,MAILBOX_FIFO1_DEPTH_RX => MAILBOX_FIFO1_DEPTH_RX
+    ,RAM_DEPTH              => USER_RAM_DEPTH
+    ,MAILBOX_FIFO0_DEPTH_TX => USER_MAILBOX_FIFO0_DEPTH_TX
+    ,MAILBOX_FIFO0_DEPTH_RX => USER_MAILBOX_FIFO0_DEPTH_RX
+    ,MAILBOX_FIFO1_DEPTH_TX => USER_MAILBOX_FIFO1_DEPTH_TX
+    ,MAILBOX_FIFO1_DEPTH_RX => USER_MAILBOX_FIFO1_DEPTH_RX
     )
   port map
     (clk_i                => clk
@@ -295,13 +300,13 @@ begin  -- architecture rtl
   -- FAULT_INJECTION
   -----------------------------------------------------------------------------
   gen_inject_error_b:
-  if FAULT_POLARITY = "low"
+  if USER_FAULT_POLARITY = "low"
   generate
     inject_error <= not inject_error_i;
   end generate gen_inject_error_b;
 
   gen_inject_error:
-  if FAULT_POLARITY = "high"
+  if USER_FAULT_POLARITY = "high"
   generate
     inject_error <=     inject_error_i;
   end generate gen_inject_error;
