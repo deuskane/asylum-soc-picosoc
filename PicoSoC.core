@@ -54,9 +54,11 @@ CAPI=2:
 # 2026-05-24  3.0.1    mrosiere Change Supervisor ICN Address Encoding
 # 2026-05-27  3.1.0    mrosiere Add spinlock and mailbox
 # 2026-06-05  3.2.0    mrosiere Use ICN with NB_MASTER
+# 2026-06-06  3.2.1    mrosiere Rename LED
+#                               Add name
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.2.0
+name        : asylum:soc:PicoSoC:3.2.1
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer, RAM and CRC
 
 #=========================================
@@ -453,8 +455,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=50000000
       - FSYS_INT=50000000
-      - NB_SWITCH=8
-      - NB_LED=8
+      - USER_NB_SWITCH=8
+      - USER_NB_LED0=4
+      - USER_NB_LED1=1
       - RESET_POLARITY=high
     flags:
       TARGET  : XILINX_UNISIM
@@ -480,8 +483,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -520,8 +524,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -552,8 +557,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -584,8 +590,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -616,8 +623,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -648,8 +656,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -680,8 +689,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -712,8 +722,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -744,8 +755,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -776,8 +788,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -808,8 +821,9 @@ targets:
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1286,8 +1300,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=50000000
       - FSYS_INT=50000000
-      - NB_SWITCH=8
-      - NB_LED=8
+      - USER_NB_SWITCH=8
+      - USER_NB_LED0=4
+      - USER_NB_LED1=1
       - RESET_POLARITY=high
     flags:
       TARGET  : XILINX_UNISIM
@@ -1313,8 +1328,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1353,8 +1369,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1385,8 +1402,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1417,8 +1435,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1449,8 +1468,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1481,8 +1501,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1513,8 +1534,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1545,8 +1567,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1577,8 +1600,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1609,8 +1633,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -1641,8 +1666,9 @@ targets:
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=6250000
-      - NB_SWITCH=6
-      - NB_LED=19
+      - USER_NB_SWITCH=6
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
@@ -2157,13 +2183,19 @@ parameters :
     default     : 0
     paramtype   : generic
 
-  NB_SWITCH :
+  USER_NB_SWITCH :
     description : Switch number on board
     datatype    : int
     default     : 8
     paramtype   : generic
 
-  NB_LED :
+  USER_NB_LED0 :
+    description : led number on board
+    datatype    : int
+    default     : 8
+    paramtype   : generic
+
+  USER_NB_LED1 :
     description : led number on board
     datatype    : int
     default     : 8

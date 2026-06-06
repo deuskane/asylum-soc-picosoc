@@ -25,25 +25,25 @@ p.addPad('inject_error_i[2]' ,{'location':'IOB10_D07N'  , 'standard':'LVCMOS', '
 #------------------------------------------------------------------
 # User LEDs
 #------------------------------------------------------------------
-p.addPad('led_o[0]'          ,{'location':'IOB0_D01P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED1
-p.addPad('led_o[1]'          ,{'location':'IOB0_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED2
-p.addPad('led_o[2]'          ,{'location':'IOB0_D03P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED3
-p.addPad('led_o[3]'          ,{'location':'IOB1_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED4
-p.addPad('led_o[4]'          ,{'location':'IOB1_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED5
-p.addPad('led_o[5]'          ,{'location':'IOB1_D06N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED6
-p.addPad('led_o[6]'          ,{'location':'IOB1_D06P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED7
-p.addPad('led_o[7]'          ,{'location':'IOB1_D02N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED8
-p.addPad('led_o[8]'          ,{'location':'USER_D0'     }) # USER_* have predefined parameters
-p.addPad('led_o[9]'          ,{'location':'USER_D1'     }) # USER_* have predefined parameters
-p.addPad('led_o[10]'         ,{'location':'USER_D2'     }) # USER_* have predefined parameters
-p.addPad('led_o[11]'         ,{'location':'USER_D3'     }) # USER_* have predefined parameters
-p.addPad('led_o[12]'         ,{'location':'USER_D4'     }) # USER_* have predefined parameters
-p.addPad('led_o[13]'         ,{'location':'USER_D5'     }) # USER_* have predefined parameters
-p.addPad('led_o[14]'         ,{'location':'USER_D6'     }) # USER_* have predefined parameters
-p.addPad('led_o[15]'         ,{'location':'USER_D7'     }) # USER_* have predefined parameters
-p.addPad('led_o[16]'         ,{'location':'USER_CS_N'   }) # USER_* have predefined parameters
-p.addPad('led_o[17]'         ,{'location':'USER_WE_N'   }) # USER_* have predefined parameters
-p.addPad('led_o[18]'         ,{'location':'USER_DATA_OE'}) # USER_* have predefined parameters
+p.addPad('led0_o[0]'          ,{'location':'IOB0_D01P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED1
+p.addPad('led0_o[1]'          ,{'location':'IOB0_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED2
+p.addPad('led0_o[2]'          ,{'location':'IOB0_D03P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED3
+p.addPad('led0_o[3]'          ,{'location':'IOB1_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED4
+p.addPad('led0_o[4]'          ,{'location':'IOB1_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED5
+p.addPad('led0_o[5]'          ,{'location':'IOB1_D06N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED6
+p.addPad('led0_o[6]'          ,{'location':'IOB1_D06P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED7
+p.addPad('led0_o[7]'          ,{'location':'IOB1_D02N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # LED8
+p.addPad('led_diff_o[0]'      ,{'location':'USER_D0'     }) # USER_* have predefined parameters
+p.addPad('led_diff_o[1]'      ,{'location':'USER_D1'     }) # USER_* have predefined parameters
+p.addPad('led_diff_o[2]'      ,{'location':'USER_D2'     }) # USER_* have predefined parameters
+p.addPad('led1_o[0]'          ,{'location':'USER_D3'     }) # USER_* have predefined parameters
+p.addPad('led1_o[1]'          ,{'location':'USER_D4'     }) # USER_* have predefined parameters
+p.addPad('led1_o[2]'          ,{'location':'USER_D5'     }) # USER_* have predefined parameters
+p.addPad('led1_o[3]'          ,{'location':'USER_D6'     }) # USER_* have predefined parameters
+p.addPad('led1_o[4]'          ,{'location':'USER_D7'     }) # USER_* have predefined parameters
+p.addPad('led1_o[5]'          ,{'location':'USER_CS_N'   }) # USER_* have predefined parameters
+p.addPad('led1_o[6]'          ,{'location':'USER_WE_N'   }) # USER_* have predefined parameters
+p.addPad('led1_o[7]'          ,{'location':'USER_DATA_OE'}) # USER_* have predefined parameters
 
 #------------------------------------------------------------------
 # SPI Flash

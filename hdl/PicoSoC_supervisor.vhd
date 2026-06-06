@@ -207,7 +207,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_led0 : sbi_GPIO
     generic map
-    (NB_IO                => NB_LED0
+    (NAME                 => "USER_ARST"
+    ,NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
@@ -229,7 +230,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_led1 : sbi_GPIO
     generic map
-    (NB_IO                => NB_LED1
+    (NAME                 => "LED_DIFF"
+    ,NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
@@ -267,8 +269,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_ram : sbi_ram
     generic map
-    (DEPTH                => RAM_DEPTH      ,
-     SYNC_READ            => true   
+    (DEPTH                => RAM_DEPTH
+    ,SYNC_READ            => true   
    )
     port map
     (clk_i                => clk         

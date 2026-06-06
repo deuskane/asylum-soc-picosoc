@@ -43,8 +43,9 @@ entity tb_PicoSoC_modbus_rtu is
   --;USER_SPI_DEPTH_CMD    : natural  := 0
   --;USER_SPI_DEPTH_TX     : natural  := 0
   --;USER_SPI_DEPTH_RX     : natural  := 0
-  --;NB_SWITCH             : positive := 8
-  --;NB_LED                : positive := 19
+  --;USER_NB_SWITCH        : positive := 8
+  --;USER_NB_LED0          : positive := 8
+  --;USER_NB_LED1          : positive := 8
   --;RESET_POLARITY        : string   := "low"       -- "high" / "low"
     ;SUPERVISOR            : boolean  := True 
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
@@ -76,9 +77,9 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   constant C_ERROR_LATENCY         : time    :=  20 us; -- Time between error injection and error detection (difference led on)
   constant C_RESET_LATENCY         : time    := 200 us;
 
-
-  constant NB_SWITCH               : positive :=  8;
-  constant NB_LED                  : positive := 19;
+  constant USER_NB_SWITCH          : positive :=  8;
+  constant USER_NB_LED0            : positive :=  8;
+  constant USER_NB_LED1            : positive :=  8;
 
   constant RESET_POLARITY          : string   := "low";  -- "high" / "low"
   constant USER_IT_POLARITY        : string   := "high"; -- "high" / "low"
@@ -87,16 +88,18 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   -- =====[ Dut Signals ]=========================
   signal   clk_i                   : std_logic := '0';
   signal   arst_b_i                : std_logic := '1';
-  signal   switch_i                : std_logic_vector(NB_SWITCH-1 downto 0);
-  signal   led_o                   : std_logic_vector(NB_LED   -1 downto 0);
+  signal   switch_i                : std_logic_vector(USER_NB_SWITCH-1 downto 0);
+  signal   led0_o                  : std_logic_vector(USER_NB_LED0  -1 downto 0);
+  signal   led1_o                  : std_logic_vector(USER_NB_LED1  -1 downto 0);
+  signal   led_diff_o              : std_logic_vector(             3-1 downto 0);
   signal   it_user_i               : std_logic;
-  signal   inject_error_i          : std_logic_vector(        3-1 downto 0);
+  signal   inject_error_i          : std_logic_vector(             3-1 downto 0);
   signal   uart_tx_o               : std_logic;
   signal   uart_rx_i               : std_logic := '1';
 
-  alias    led_switch              : std_logic_vector(NB_SWITCH-1 downto 0) is led_o(NB_SWITCH-1 downto  0);
-  alias    led_it                  : std_logic_vector(        8-1 downto 0) is led_o(       16-1 downto  8);
-  alias    led_diff                : std_logic_vector(        3-1 downto 0) is led_o(       19-1 downto 16);
+  alias    led_switch              : std_logic_vector(USER_NB_SWITCH-1 downto 0) is led0_o(USER_NB_SWITCH-1 downto  0);
+  alias    led_it                  : std_logic_vector(USER_NB_LED1  -1 downto 0) is led1_o;
+  alias    led_diff                : std_logic_vector(             3-1 downto 0) is led_diff_o;
            
   -- =====[ TB Signals ]==========================
   signal   cke                     : boolean   := false;
@@ -178,8 +181,9 @@ begin  -- architecture tb
     (FSYS                  => FSYS            
     ,FSYS_INT              => FSYS_INT        
     ,USER_BAUD_RATE        => USER_BAUD_RATE
-    ,NB_SWITCH             => NB_SWITCH       
-    ,NB_LED                => NB_LED          
+    ,USER_NB_SWITCH        => USER_NB_SWITCH       
+    ,USER_NB_LED0          => USER_NB_LED0        
+    ,USER_NB_LED1          => USER_NB_LED1        
     ,RESET_POLARITY        => RESET_POLARITY  
     ,SUPERVISOR            => SUPERVISOR      
     ,USER_SAFETY           => USER_SAFETY          
@@ -194,7 +198,9 @@ begin  -- architecture tb
     (clk_i            => clk_i           
     ,arst_i           => arst_b_i        
     ,switch_i         => switch_i        
-    ,led_o            => led_o           
+    ,led0_o           => led0_o
+    ,led1_o           => led1_o
+    ,led_diff_o       => led_diff_o
     ,it_user_i        => it_user_i     
     ,inject_error_i   => inject_error_i
     ,uart_tx_o        => uart_tx_o

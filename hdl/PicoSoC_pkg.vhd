@@ -134,8 +134,6 @@ component PicoSoC_top is
   generic
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
-    ;NB_SWITCH                   : positive := 8
-    ;NB_LED                      : positive := 19
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True
  
@@ -143,7 +141,12 @@ component PicoSoC_top is
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
+    ;USER_ICN_TARGET_SEL         : string   := "or"
+    ;USER_ICN_MASTER_SEL         : string   := "fix"
     ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
+    ;USER_NB_SWITCH              : positive := 8
+    ;USER_NB_LED0                : positive := 8
+    ;USER_NB_LED1                : positive := 8
     ;USER_BAUD_RATE              : integer  := 115200
     ;USER_UART_DEPTH_TX          : natural  := 0
     ;USER_UART_DEPTH_RX          : natural  := 0
@@ -162,14 +165,18 @@ component PicoSoC_top is
 
     -- SUPERVISOR SoC
     ;SUPERVISOR                  : boolean  := True 
+    ;SUPERVISOR_ICN_TARGET_SEL   : string   := "or"
+    ;SUPERVISOR_ICN_MASTER_SEL   : string   := "fix"
     ;SUPERVISOR_RAM_DEPTH        : natural  := 128         -- Up to 128 bytes
     );
   port
     (clk_i            : in  std_logic
     ;arst_i           : in  std_logic
 
-    ;switch_i         : in  std_logic_vector(NB_SWITCH-1 downto 0)
-    ;led_o            : out std_logic_vector(NB_LED   -1 downto 0)
+    ;switch_i         : in  std_logic_vector(USER_NB_SWITCH-1 downto 0)
+    ;led0_o           : out std_logic_vector(USER_NB_LED0  -1 downto 0)
+    ;led1_o           : out std_logic_vector(USER_NB_LED1  -1 downto 0)    
+    ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
     -- UART Interface

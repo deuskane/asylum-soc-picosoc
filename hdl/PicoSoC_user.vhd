@@ -304,7 +304,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_switch : sbi_GPIO
     generic map
-    (NB_IO                => NB_SWITCH
+    (NAME                 => "SWITCH"
+    ,NB_IO                => NB_SWITCH
     ,DATA_OE_INIT         => CST0(8-1 downto 0)
     ,IT_ENABLE            => false
     )
@@ -326,7 +327,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_led0 : sbi_GPIO
     generic map
-    (NB_IO                => NB_LED0
+    (NAME                 => "LED0"
+    ,NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
@@ -348,7 +350,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_led1 : sbi_GPIO
     generic map
-    (NB_IO                => NB_LED1
+    (NAME                 => "LED1"
+    ,NB_IO                => NB_LED1 
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
     ,IT_ENABLE            => false
     )
@@ -455,15 +458,16 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_crc : sbi_crc
     generic map
-    (WIDTH_CRC        => 16      ,
-     WIDTH_DATA       => 8       ,
-     POLYNOM          => X"A001" ,
-     SHIFT_LEFT       => false   ,
-     LSB_FIRST        => true    ,
-     POLYNOM_REVERSE  => false   ,
-     REFLECT_IN       => false   ,
-     REFLECT_OUT      => false   ,
-     XOR_OUT          => (others => '0')
+    (NAME             => "CRC16"
+    ,WIDTH_CRC        => 16     
+    ,WIDTH_DATA       => 8      
+    ,POLYNOM          => X"A001"
+    ,SHIFT_LEFT       => false  
+    ,LSB_FIRST        => true   
+    ,POLYNOM_REVERSE  => false  
+    ,REFLECT_IN       => false  
+    ,REFLECT_OUT      => false  
+    ,XOR_OUT          => (others => '0')
       )
     port map
     (clk_i                => clk         
@@ -488,10 +492,10 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_mailbox : sbi_mailbox
     generic map
-     (FIFO0_DEPTH_TX => MAILBOX_FIFO0_DEPTH_TX
-     ,FIFO0_DEPTH_RX => MAILBOX_FIFO0_DEPTH_RX
-     ,FIFO1_DEPTH_TX => MAILBOX_FIFO1_DEPTH_TX
-     ,FIFO1_DEPTH_RX => MAILBOX_FIFO1_DEPTH_RX
+     (FIFO0_DEPTH_TX       => MAILBOX_FIFO0_DEPTH_TX
+     ,FIFO0_DEPTH_RX       => MAILBOX_FIFO0_DEPTH_RX
+     ,FIFO1_DEPTH_TX       => MAILBOX_FIFO1_DEPTH_TX
+     ,FIFO1_DEPTH_RX       => MAILBOX_FIFO1_DEPTH_RX
       )
     port map
      (clk_i                => clk         
@@ -505,8 +509,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   ins_sbi_ram : sbi_ram
     generic map
-    (DEPTH                => RAM_DEPTH      ,
-     SYNC_READ            => true   
+    (DEPTH                => RAM_DEPTH
+    ,SYNC_READ            => true   
    )
     port map
     (clk_i                => clk         

@@ -32,8 +32,6 @@ entity PicoSoC_top is
   generic
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
-    ;NB_SWITCH                   : positive := 8
-    ;NB_LED                      : positive := 19
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True
  
@@ -41,7 +39,12 @@ entity PicoSoC_top is
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
+    ;USER_ICN_TARGET_SEL         : string   := "or"
+    ;USER_ICN_MASTER_SEL         : string   := "fix"
     ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
+    ;USER_NB_SWITCH              : positive := 8
+    ;USER_NB_LED0                : positive := 8
+    ;USER_NB_LED1                : positive := 8
     ;USER_BAUD_RATE              : integer  := 115200
     ;USER_UART_DEPTH_TX          : natural  := 0
     ;USER_UART_DEPTH_RX          : natural  := 0
@@ -60,14 +63,18 @@ entity PicoSoC_top is
 
     -- SUPERVISOR SoC
     ;SUPERVISOR                  : boolean  := True 
+    ;SUPERVISOR_ICN_TARGET_SEL   : string   := "or"
+    ;SUPERVISOR_ICN_MASTER_SEL   : string   := "fix"
     ;SUPERVISOR_RAM_DEPTH        : natural  := 128         -- Up to 128 bytes
     );
   port
     (clk_i            : in  std_logic
     ;arst_i           : in  std_logic
 
-    ;switch_i         : in  std_logic_vector(NB_SWITCH-1 downto 0)
-    ;led_o            : out std_logic_vector(NB_LED   -1 downto 0)
+    ;switch_i         : in  std_logic_vector(USER_NB_SWITCH-1 downto 0)
+    ;led0_o           : out std_logic_vector(USER_NB_LED0  -1 downto 0)
+    ;led1_o           : out std_logic_vector(USER_NB_LED1  -1 downto 0)    
+    ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
     -- UART Interface
@@ -95,22 +102,16 @@ end PicoSoC_top;
   
 architecture rtl of PicoSoC_top is
 
-  constant ICN_TARGET_SEL               : string   := "or";
-  constant ICN_MASTER_SEL               : string   := "fix";
-
   constant SUPERVISOR_NB_CPU            : natural  := 1;
-  
-  constant NB_LED0_USER                 : positive := 8;
-  constant NB_LED1_USER                 : positive := 8;
-  constant NB_LED_SUPERVISOR            : positive := 3;
+  constant SUPERVISOR_NB_LED            : positive := 3;
   
   signal   clk                          : std_logic;
   signal   arst_b                       : std_logic;
   signal   arst_b_sync1                 : std_logic;
   signal   arst_b_sync2                 : std_logic;
-  signal   led0_user                    : std_logic_vector(NB_LED0_USER     -1 downto 0);
-  signal   led1_user                    : std_logic_vector(NB_LED1_USER     -1 downto 0);
-  signal   led_supervisor               : std_logic_vector(NB_LED_SUPERVISOR-1 downto 0);
+  signal   led0_user                    : std_logic_vector(USER_NB_LED0     -1 downto 0);
+  signal   led1_user                    : std_logic_vector(USER_NB_LED1     -1 downto 0);
+  signal   led_supervisor               : std_logic_vector(SUPERVISOR_NB_LED-1 downto 0);
            
   signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
@@ -202,22 +203,22 @@ begin  -- architecture rtl
   ins_soc_user : PicoSoC_user
     generic map
     (CLOCK_FREQ             => FSYS_INT
+    ,CPU_MODEL              => CPU_MODEL
     ,BAUD_RATE              => USER_BAUD_RATE
     ,UART_DEPTH_TX          => USER_UART_DEPTH_TX
     ,UART_DEPTH_RX          => USER_UART_DEPTH_RX
     ,SPI_DEPTH_CMD          => USER_SPI_DEPTH_CMD
     ,SPI_DEPTH_TX           => USER_SPI_DEPTH_TX
     ,SPI_DEPTH_RX           => USER_SPI_DEPTH_RX
-    ,NB_SWITCH              => NB_SWITCH
-    ,NB_LED0                => NB_LED0_USER
-    ,NB_LED1                => NB_LED1_USER
+    ,NB_SWITCH              => USER_NB_SWITCH
+    ,NB_LED0                => USER_NB_LED0
+    ,NB_LED1                => USER_NB_LED1
     ,SAFETY                 => USER_SAFETY
     ,LOCK_STEP_DEPTH        => USER_LOCK_STEP_DEPTH
     ,FAULT_INJECTION        => USER_FAULT_INJECTION
-    ,ICN_TARGET_SEL         => ICN_TARGET_SEL
+    ,ICN_TARGET_SEL         => USER_ICN_TARGET_SEL
     ,NB_CPU                 => USER_NB_CPU
-    ,CPU_MODEL              => CPU_MODEL
-    ,ICN_MASTER_SEL         => ICN_MASTER_SEL
+    ,ICN_MASTER_SEL         => USER_ICN_MASTER_SEL
     ,RAM_DEPTH              => USER_RAM_DEPTH
     ,MAILBOX_FIFO0_DEPTH_TX => USER_MAILBOX_FIFO0_DEPTH_TX
     ,MAILBOX_FIFO0_DEPTH_RX => USER_MAILBOX_FIFO0_DEPTH_RX
@@ -263,12 +264,12 @@ begin  -- architecture rtl
   generate
     ins_soc_supervisor : PicoSoC_supervisor
       generic map
-      (NB_LED0              => 1
-      ,NB_LED1              => NB_LED_SUPERVISOR
-      ,ICN_TARGET_SEL       => ICN_TARGET_SEL        
-      ,ICN_MASTER_SEL       => ICN_MASTER_SEL
+      (CPU_MODEL            => CPU_MODEL     
+      ,NB_LED0              => 1
+      ,NB_LED1              => SUPERVISOR_NB_LED
+      ,ICN_TARGET_SEL       => SUPERVISOR_ICN_TARGET_SEL        
+      ,ICN_MASTER_SEL       => SUPERVISOR_ICN_MASTER_SEL
       ,NB_CPU               => SUPERVISOR_NB_CPU
-      ,CPU_MODEL            => CPU_MODEL     
       ,RAM_DEPTH            => SUPERVISOR_RAM_DEPTH
        )
       port map
@@ -292,9 +293,9 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- LED
   -----------------------------------------------------------------------------
-  led_o <= led_supervisor &
-           led1_user      &
-           led0_user;
+  led_diff_o <= led_supervisor;
+  led0_o     <= led0_user;
+  led1_o     <= led1_user;
 
   -----------------------------------------------------------------------------
   -- FAULT_INJECTION
