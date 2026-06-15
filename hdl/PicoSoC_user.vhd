@@ -132,60 +132,60 @@ architecture rtl of PicoSoC_user is
   constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 
   -- ICN Configuration
-  constant NB_MASTER                  : positive := NB_CPU;
+  constant ICN_NB_MASTER              : positive := NB_CPU;
 
-  constant TARGET_ADDR_ENCODING       : string   := PICOSOC_USER_ADDR_ENCODING;
+  constant ICN_TARGET_ADDR_ENCODING   : string   := PICOSOC_USER_ADDR_ENCODING;
   
-  constant TARGET_SWITCH              : integer  := 0;
-  constant TARGET_LED0                : integer  := 1;
-  constant TARGET_LED1                : integer  := 2;
-  constant TARGET_UART                : integer  := 3;
-  constant TARGET_SPI                 : integer  := 4;
-  constant TARGET_GIC                 : integer  := 5;
-  constant TARGET_TIMER               : integer  := 6;
-  constant TARGET_CRC                 : integer  := 7;
-  constant TARGET_SPINLOCK            : integer  := 8;
-  constant TARGET_MAILBOX             : integer  := 9;
-  constant TARGET_RAM                 : integer  := 10;
+  constant ICN_TARGET_SWITCH          : integer  := 0;
+  constant ICN_TARGET_LED0            : integer  := 1;
+  constant ICN_TARGET_LED1            : integer  := 2;
+  constant ICN_TARGET_UART            : integer  := 3;
+  constant ICN_TARGET_SPI             : integer  := 4;
+  constant ICN_TARGET_GIC             : integer  := 5;
+  constant ICN_TARGET_TIMER           : integer  := 6;
+  constant ICN_TARGET_CRC             : integer  := 7;
+  constant ICN_TARGET_SPINLOCK        : integer  := 8;
+  constant ICN_TARGET_MAILBOX         : integer  := 9;
+  constant ICN_TARGET_RAM             : integer  := 10;
   
-  constant NB_TARGET                  : positive := 11;
+  constant ICN_NB_TARGET              : positive := 11;
   
-  constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => PICOSOC_USER_SWITCH_BA
-     ,TARGET_LED0                     => PICOSOC_USER_LED0_BA  
-     ,TARGET_LED1                     => PICOSOC_USER_LED1_BA  
-     ,TARGET_UART                     => PICOSOC_USER_UART_BA  
-     ,TARGET_SPI                      => PICOSOC_USER_SPI_BA   
-     ,TARGET_GIC                      => PICOSOC_USER_GIC_BA   
-     ,TARGET_TIMER                    => PICOSOC_USER_TIMER_BA 
-     ,TARGET_CRC                      => PICOSOC_USER_CRC_BA   
-     ,TARGET_SPINLOCK                 => PICOSOC_USER_SPINLOCK_BA
-     ,TARGET_MAILBOX                  => PICOSOC_USER_MAILBOX_BA
-     ,TARGET_RAM                      => PICOSOC_USER_RAM_BA   
+  constant ICN_TARGET_ID              : sbi_addrs_t   (ICN_NB_TARGET-1 downto 0) :=
+    ( ICN_TARGET_SWITCH               => PICOSOC_USER_SWITCH_BA
+     ,ICN_TARGET_LED0                 => PICOSOC_USER_LED0_BA  
+     ,ICN_TARGET_LED1                 => PICOSOC_USER_LED1_BA  
+     ,ICN_TARGET_UART                 => PICOSOC_USER_UART_BA  
+     ,ICN_TARGET_SPI                  => PICOSOC_USER_SPI_BA   
+     ,ICN_TARGET_GIC                  => PICOSOC_USER_GIC_BA   
+     ,ICN_TARGET_TIMER                => PICOSOC_USER_TIMER_BA 
+     ,ICN_TARGET_CRC                  => PICOSOC_USER_CRC_BA   
+     ,ICN_TARGET_SPINLOCK             => PICOSOC_USER_SPINLOCK_BA
+     ,ICN_TARGET_MAILBOX              => PICOSOC_USER_MAILBOX_BA
+     ,ICN_TARGET_RAM                  => PICOSOC_USER_RAM_BA   
       );
 
-  constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
-    ( TARGET_SWITCH                   => GPIO_ADDR_WIDTH
-     ,TARGET_LED0                     => GPIO_ADDR_WIDTH
-     ,TARGET_LED1                     => GPIO_ADDR_WIDTH
-     ,TARGET_UART                     => UART_ADDR_WIDTH
-     ,TARGET_SPI                      => SPI_ADDR_WIDTH
-     ,TARGET_GIC                      => GIC_ADDR_WIDTH
-     ,TARGET_TIMER                    => TIMER_ADDR_WIDTH
-     ,TARGET_CRC                      => CRC_ADDR_WIDTH
-     ,TARGET_SPINLOCK                 => SPINLOCK_ADDR_WIDTH
-     ,TARGET_MAILBOX                  => MAILBOX_ADDR_WIDTH
-     ,TARGET_RAM                      => log2(RAM_DEPTH)
+  constant ICN_TARGET_ADDR_WIDTH      : naturals_t    (ICN_NB_TARGET-1 downto 0) :=
+    ( ICN_TARGET_SWITCH               => GPIO_ADDR_WIDTH
+     ,ICN_TARGET_LED0                 => GPIO_ADDR_WIDTH
+     ,ICN_TARGET_LED1                 => GPIO_ADDR_WIDTH
+     ,ICN_TARGET_UART                 => UART_ADDR_WIDTH
+     ,ICN_TARGET_SPI                  => SPI_ADDR_WIDTH
+     ,ICN_TARGET_GIC                  => GIC_ADDR_WIDTH
+     ,ICN_TARGET_TIMER                => TIMER_ADDR_WIDTH
+     ,ICN_TARGET_CRC                  => CRC_ADDR_WIDTH
+     ,ICN_TARGET_SPINLOCK             => SPINLOCK_ADDR_WIDTH
+     ,ICN_TARGET_MAILBOX              => MAILBOX_ADDR_WIDTH
+     ,ICN_TARGET_RAM                  => log2(RAM_DEPTH)
       );
   
   -- Signals ICN
-  signal   icn_sbi_inim               : sbi_inis_t(NB_MASTER-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal   icn_sbi_tgtm               : sbi_tgts_t(NB_MASTER-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_inim               : sbi_inis_t(ICN_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                             wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_tgtm               : sbi_tgts_t(ICN_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
 
-  signal   icn_sbi_inis               : sbi_inis_t(NB_TARGET-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal   icn_sbi_tgts               : sbi_tgts_t(NB_TARGET-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_inis               : sbi_inis_t(ICN_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                             wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   icn_sbi_tgts               : sbi_tgts_t(ICN_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
 
   -- Signals Clock/Reset
   signal   clk                        : std_logic;
@@ -196,9 +196,9 @@ architecture rtl of PicoSoC_user is
   signal   cpu_iaddr                  : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
   signal   cpu_idata                  : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
 
-  signal   cpu_sbi_ini                : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal   cpu_sbi_tgt                : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal   cpu_sbi_ini                : sbi_ini_t(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                  wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   cpu_sbi_tgt                : sbi_tgt_t(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
   signal   cpu_it_val                 : std_logic;
   signal   cpu_it_ack                 : std_logic;
 
@@ -281,13 +281,13 @@ begin  -- architecture rtl
   ins_sbi_icn : sbi_icn
     generic map
     (NAME                 => "icn_user"
-    ,NB_MASTER            => NB_MASTER
+    ,NB_MASTER            => ICN_NB_MASTER
     ,MASTER_SEL           => ICN_MASTER_SEL
-    ,NB_TARGET            => NB_TARGET
+    ,NB_TARGET            => ICN_NB_TARGET
     ,TARGET_SEL           => ICN_TARGET_SEL
-    ,TARGET_ID            => TARGET_ID
-    ,TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH
-    ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
+    ,TARGET_ID            => ICN_TARGET_ID
+    ,TARGET_ADDR_WIDTH    => ICN_TARGET_ADDR_WIDTH
+    ,TARGET_ADDR_ENCODING => ICN_TARGET_ADDR_ENCODING
       )
     port map
     (clk_i                => clk      
@@ -313,8 +313,8 @@ begin  -- architecture rtl
     (clk_i                => clk           
     ,cke_i                => '1'           
     ,arstn_i              => arst_b         
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_SWITCH)   
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SWITCH)   
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_SWITCH)   
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_SWITCH)   
     ,data_i               => switch_i      
     ,data_o               => open          
     ,data_oe_o            => open          
@@ -336,8 +336,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b       
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED0) 
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED0) 
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_LED0) 
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_LED0) 
     ,data_i               => X"00"       
     ,data_o               => led0_o      
     ,data_oe_o            => open        
@@ -359,8 +359,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b       
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED1) 
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED1) 
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_LED1) 
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_LED1) 
     ,data_i               => X"00"       
     ,data_o               => led1_o      
     ,data_oe_o            => open        
@@ -381,8 +381,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk           
     ,arst_b_i             => arst_b        
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_UART)   
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_UART)   
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_UART)   
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_UART)   
     ,uart_tx_o            => uart_tx_o     
     ,uart_rx_i            => uart_rx_i
     ,uart_cts_b_i         => uart_cts_b_i
@@ -405,8 +405,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk           
     ,arst_b_i             => arst_b        
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_SPI)   
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SPI)   
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_SPI)   
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_SPI)   
     ,sclk_o               => spi_sclk_o   
     ,sclk_oe_o            => open
     ,cs_b_o               => spi_cs_b_o   
@@ -430,8 +430,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_GIC)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_GIC)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_GIC)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_GIC)
     ,its_i                => gic_it_vector
     ,itm_o                => cpu_it_val
     );
@@ -446,8 +446,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_TIMER)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_TIMER)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_TIMER)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_TIMER)
     ,timer_disable_i      => timer_disable
     ,timer_clear_i        => timer_clear
     ,it_o                 => timer_it
@@ -472,8 +472,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_CRC)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_CRC)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_CRC)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_CRC)
     );
 
   -----------------------------------------------------------------------------
@@ -483,8 +483,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_SPINLOCK)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_SPINLOCK)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_SPINLOCK)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_SPINLOCK)
     );
 
   -----------------------------------------------------------------------------
@@ -500,8 +500,8 @@ begin  -- architecture rtl
     port map
      (clk_i                => clk         
      ,arst_b_i             => arst_b      
-     ,sbi_ini_i            => icn_sbi_inis(TARGET_MAILBOX)
-     ,sbi_tgt_o            => icn_sbi_tgts(TARGET_MAILBOX)
+     ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_MAILBOX)
+     ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_MAILBOX)
       );
 
   -----------------------------------------------------------------------------
@@ -515,8 +515,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_RAM)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_RAM)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_RAM)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_RAM)
     );
     
   -----------------------------------------------------------------------------
@@ -530,16 +530,16 @@ begin  -- architecture rtl
   debug_o.cpu_dwe     <= cpu_sbi_ini.we                   ;
   debug_o.cpu_daddr   <= cpu_sbi_ini.addr                 ;
   debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
-  debug_o.switch_cs   <= icn_sbi_inis(TARGET_SWITCH).cs   ;
-  debug_o.switch_ready<= icn_sbi_tgts(TARGET_SWITCH).ready;
-  debug_o.led0_cs     <= icn_sbi_inis(TARGET_LED0  ).cs   ;
-  debug_o.led0_ready  <= icn_sbi_tgts(TARGET_LED0  ).ready;
-  debug_o.led1_cs     <= icn_sbi_inis(TARGET_LED1  ).cs   ;
-  debug_o.led1_ready  <= icn_sbi_tgts(TARGET_LED1  ).ready;
-  debug_o.uart_cs     <= icn_sbi_inis(TARGET_UART  ).cs   ;
-  debug_o.uart_ready  <= icn_sbi_tgts(TARGET_UART  ).ready;
-  debug_o.spi_cs      <= icn_sbi_inis(TARGET_SPI   ).cs   ;
-  debug_o.spi_ready   <= icn_sbi_tgts(TARGET_SPI   ).ready;
+  debug_o.switch_cs   <= icn_sbi_inis(ICN_TARGET_SWITCH).cs   ;
+  debug_o.switch_ready<= icn_sbi_tgts(ICN_TARGET_SWITCH).ready;
+  debug_o.led0_cs     <= icn_sbi_inis(ICN_TARGET_LED0  ).cs   ;
+  debug_o.led0_ready  <= icn_sbi_tgts(ICN_TARGET_LED0  ).ready;
+  debug_o.led1_cs     <= icn_sbi_inis(ICN_TARGET_LED1  ).cs   ;
+  debug_o.led1_ready  <= icn_sbi_tgts(ICN_TARGET_LED1  ).ready;
+  debug_o.uart_cs     <= icn_sbi_inis(ICN_TARGET_UART  ).cs   ;
+  debug_o.uart_ready  <= icn_sbi_tgts(ICN_TARGET_UART  ).ready;
+  debug_o.spi_cs      <= icn_sbi_inis(ICN_TARGET_SPI   ).cs   ;
+  debug_o.spi_ready   <= icn_sbi_tgts(ICN_TARGET_SPI   ).ready;
     
 end architecture rtl;
     

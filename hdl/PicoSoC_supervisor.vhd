@@ -78,29 +78,28 @@ architecture rtl of PicoSoC_supervisor is
   constant CPU_DMEM_DATA_WIDTH        : positive := SBI_DATA_WIDTH;
 
   -- ICN Configuration
-  constant NB_MASTER                  : positive := NB_CPU;
+  constant ICN_NB_MASTER              : positive := NB_CPU;
 
-  constant TARGET_ADDR_ENCODING       : string   := PICOSOC_SUPERVISOR_ADDR_ENCODING;
+  constant ICN_TARGET_ADDR_ENCODING   : string   := PICOSOC_SUPERVISOR_ADDR_ENCODING;
 
-  constant TARGET_LED0                : integer  := 0;
-  constant TARGET_LED1                : integer  := 1;
-  constant TARGET_GIC                 : integer  := 2;
-  constant TARGET_RAM                 : integer  := 3;
+  constant ICN_TARGET_LED0            : integer  := 0;
+  constant ICN_TARGET_LED1            : integer  := 1;
+  constant ICN_TARGET_GIC             : integer  := 2;
+  constant ICN_TARGET_RAM             : integer  := 3;
 
-  constant NB_TARGET                  : positive := 4;
+  constant ICN_NB_TARGET              : positive := 4;
 
-  constant TARGET_ID                  : sbi_addrs_t   (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => PICOSOC_SUPERVISOR_LED0_BA
-     ,TARGET_LED1                     => PICOSOC_SUPERVISOR_LED1_BA
-     ,TARGET_GIC                      => PICOSOC_SUPERVISOR_GIC_BA 
-     ,TARGET_RAM                      => PICOSOC_SUPERVISOR_RAM_BA   
+  constant ICN_TARGET_ID              : sbi_addrs_t   (ICN_NB_TARGET-1 downto 0) :=
+    ( ICN_TARGET_LED0                 => PICOSOC_SUPERVISOR_LED0_BA
+     ,ICN_TARGET_LED1                 => PICOSOC_SUPERVISOR_LED1_BA
+     ,ICN_TARGET_GIC                  => PICOSOC_SUPERVISOR_GIC_BA 
+     ,ICN_TARGET_RAM                  => PICOSOC_SUPERVISOR_RAM_BA
       );
-
-  constant TARGET_ADDR_WIDTH          : naturals_t    (NB_TARGET-1 downto 0) :=
-    ( TARGET_LED0                     => GPIO_ADDR_WIDTH
-     ,TARGET_LED1                     => GPIO_ADDR_WIDTH
-     ,TARGET_GIC                      => GIC_ADDR_WIDTH
-     ,TARGET_RAM                      => log2(RAM_DEPTH)
+  constant ICN_TARGET_ADDR_WIDTH      : naturals_t    (ICN_NB_TARGET-1 downto 0) :=
+    ( ICN_TARGET_LED0                 => GPIO_ADDR_WIDTH
+     ,ICN_TARGET_LED1                 => GPIO_ADDR_WIDTH
+     ,ICN_TARGET_GIC                  => GIC_ADDR_WIDTH
+     ,ICN_TARGET_RAM                  => log2(RAM_DEPTH)
       );
       
   -- Signals Clock/Reset
@@ -112,21 +111,21 @@ architecture rtl of PicoSoC_supervisor is
   signal cpu_iaddr                    : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
   signal cpu_idata                    : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
   
-  signal cpu_sbi_ini                  : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                  wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal cpu_sbi_tgt                  : sbi_tgt_t(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal cpu_sbi_ini                  : sbi_ini_t(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                  wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal cpu_sbi_tgt                  : sbi_tgt_t(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
 
   signal cpu_it_val                   : std_logic;
 --signal cpu_it_ack                   : std_logic;
 
   -- Signals ICN
-  signal icn_sbi_inim                 : sbi_inis_t(NB_MASTER-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal icn_sbi_tgtm                 : sbi_tgts_t(NB_MASTER-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_inim                 : sbi_inis_t(ICN_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                             wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_tgtm                 : sbi_tgts_t(ICN_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
 
-  signal icn_sbi_inis                 : sbi_inis_t(NB_TARGET-1 downto 0)(addr (SBI_ADDR_WIDTH-1 downto 0),
-                                                                         wdata(SBI_DATA_WIDTH-1 downto 0));
-  signal icn_sbi_tgts                 : sbi_tgts_t(NB_TARGET-1 downto 0)(rdata(SBI_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_inis                 : sbi_inis_t(ICN_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                             wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal icn_sbi_tgts                 : sbi_tgts_t(ICN_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
   
   signal led0                         : std_logic_vector(NB_LED0-1 downto 0);
   signal led1                         : std_logic_vector(NB_LED1-1 downto 0);
@@ -183,13 +182,13 @@ begin  -- architecture rtl
   ins_sbi_icn : sbi_icn
     generic map
     (NAME                 => "icn_supervisor"
-    ,NB_MASTER            => NB_MASTER
+    ,NB_MASTER            => ICN_NB_MASTER
     ,MASTER_SEL           => ICN_MASTER_SEL
-    ,NB_TARGET            => NB_TARGET
+    ,NB_TARGET            => ICN_NB_TARGET
     ,TARGET_SEL           => ICN_TARGET_SEL
-    ,TARGET_ID            => TARGET_ID
-    ,TARGET_ADDR_WIDTH    => TARGET_ADDR_WIDTH
-    ,TARGET_ADDR_ENCODING => TARGET_ADDR_ENCODING
+    ,TARGET_ID            => ICN_TARGET_ID
+    ,TARGET_ADDR_WIDTH    => ICN_TARGET_ADDR_WIDTH
+    ,TARGET_ADDR_ENCODING => ICN_TARGET_ADDR_ENCODING
      )
     port map
     (clk_i                => clk        
@@ -216,8 +215,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED0)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED0)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_LED0)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_LED0)
     ,data_i               => CST0(NB_LED0-1 downto 0)
     ,data_o               => led0        
     ,data_oe_o            => open        
@@ -239,8 +238,8 @@ begin  -- architecture rtl
     (clk_i                => clk         
     ,cke_i                => '1'         
     ,arstn_i              => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_LED1)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_LED1)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_LED1)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_LED1)
     ,data_i               => CST0(NB_LED1-1 downto 0)
     ,data_o               => led1        
     ,data_oe_o            => open        
@@ -258,8 +257,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_GIC)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_GIC)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_GIC)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_GIC)
     ,its_i                => diff_i      
     ,itm_o                => cpu_it_val
     );
@@ -275,8 +274,8 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn_sbi_inis(TARGET_RAM)
-    ,sbi_tgt_o            => icn_sbi_tgts(TARGET_RAM)
+    ,sbi_ini_i            => icn_sbi_inis(ICN_TARGET_RAM)
+    ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_RAM)
     );
  
   -----------------------------------------------------------------------------
