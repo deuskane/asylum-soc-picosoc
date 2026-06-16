@@ -140,16 +140,18 @@ architecture rtl of PicoSoC_user is
   constant ICN1_TARGET_RAM            : integer  := 1;
   constant ICN1_TARGET_ICN2           : integer  := 2;
   
-  constant ICN1_NB_TARGET             : positive := 2; -- For default target, add 1 to the number of targets
+  constant ICN1_NB_TARGET             : positive := 3; -- For default target, add 1 to the number of targets
   
   constant ICN1_TARGET_ID             : sbi_addrs_t   (ICN1_NB_TARGET-1 downto 0) :=
     ( ICN1_TARGET_GIC                 => PICOSOC_USER_GIC_BA   
-     ,ICN1_TARGET_RAM                 => PICOSOC_USER_RAM_BA   
+     ,ICN1_TARGET_RAM                 => PICOSOC_USER_RAM_BA
+     ,ICN1_TARGET_ICN2                => CST0
       );
 
   constant ICN1_TARGET_ADDR_WIDTH     : naturals_t    (ICN1_NB_TARGET-1 downto 0) :=
     ( ICN1_TARGET_GIC                 => GIC_ADDR_WIDTH
      ,ICN1_TARGET_RAM                 => log2(RAM_DEPTH)
+     ,ICN1_TARGET_ICN2                => CPU_DMEM_DATA_WIDTH
       );
 
   -- ICN2 (System) Configuration
