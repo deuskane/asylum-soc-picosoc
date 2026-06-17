@@ -30,6 +30,7 @@
 -- 2026-05-06  3.5      mrosiere Add Generic CPU_MODEL
 -- 2026-05-16  3.6      mrosiere Add RAM
 -- 2026-05-25  3.7      mrosiere Add Spinlock and mailbox
+-- 2026-06-17  3.8      mrosiere Add RAM2
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -83,7 +84,8 @@ entity PicoSoC_user is
     ;ICN_MASTER_SEL         : string   := "fix"
     ;NB_CPU                 : natural  := 1
     ;CPU_MODEL              : string   := "OpenBlaze8"
-    ;RAM_DEPTH              : natural  := 128
+    ;RAM1_DEPTH             : natural  := 128
+    ;RAM2_DEPTH             : natural  := 64
     ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
@@ -137,20 +139,20 @@ architecture rtl of PicoSoC_user is
   constant ICN1_TARGET_ADDR_ENCODING  : string   := PICOSOC_USER_ADDR_ENCODING;
   
   constant ICN1_TARGET_GIC            : integer  := 0;
-  constant ICN1_TARGET_RAM            : integer  := 1;
+  constant ICN1_TARGET_RAM1           : integer  := 1;
   constant ICN1_TARGET_ICN2           : integer  := 2;
   
   constant ICN1_NB_TARGET             : positive := 3; -- For default target, add 1 to the number of targets
   
   constant ICN1_TARGET_ID             : sbi_addrs_t   (ICN1_NB_TARGET-1 downto 0) :=
     ( ICN1_TARGET_GIC                 => PICOSOC_USER_GIC_BA   
-     ,ICN1_TARGET_RAM                 => PICOSOC_USER_RAM_BA
+     ,ICN1_TARGET_RAM1                => PICOSOC_USER_RAM1_BA
      ,ICN1_TARGET_ICN2                => CST0
       );
 
   constant ICN1_TARGET_ADDR_WIDTH     : naturals_t    (ICN1_NB_TARGET-1 downto 0) :=
     ( ICN1_TARGET_GIC                 => GIC_ADDR_WIDTH
-     ,ICN1_TARGET_RAM                 => log2(RAM_DEPTH)
+     ,ICN1_TARGET_RAM1                => log2(RAM1_DEPTH)
      ,ICN1_TARGET_ICN2                => CPU_DMEM_DATA_WIDTH
       );
 
@@ -168,8 +170,9 @@ architecture rtl of PicoSoC_user is
   constant ICN2_TARGET_CRC            : integer  := 6;
   constant ICN2_TARGET_SPINLOCK       : integer  := 7;
   constant ICN2_TARGET_MAILBOX        : integer  := 8;
+  constant ICN2_TARGET_RAM2           : integer  := 9;
   
-  constant ICN2_NB_TARGET             : positive := 9;
+  constant ICN2_NB_TARGET             : positive := 10;
   
   constant ICN2_TARGET_ID             : sbi_addrs_t   (ICN2_NB_TARGET-1 downto 0) :=
     ( ICN2_TARGET_SWITCH              => PICOSOC_USER_SWITCH_BA
@@ -181,6 +184,7 @@ architecture rtl of PicoSoC_user is
      ,ICN2_TARGET_CRC                 => PICOSOC_USER_CRC_BA   
      ,ICN2_TARGET_SPINLOCK            => PICOSOC_USER_SPINLOCK_BA
      ,ICN2_TARGET_MAILBOX             => PICOSOC_USER_MAILBOX_BA
+     ,ICN2_TARGET_RAM2                => PICOSOC_USER_RAM2_BA
       );
 
   constant ICN2_TARGET_ADDR_WIDTH     : naturals_t    (ICN2_NB_TARGET-1 downto 0) :=
@@ -193,6 +197,7 @@ architecture rtl of PicoSoC_user is
      ,ICN2_TARGET_CRC                 => CRC_ADDR_WIDTH
      ,ICN2_TARGET_SPINLOCK            => SPINLOCK_ADDR_WIDTH
      ,ICN2_TARGET_MAILBOX             => MAILBOX_ADDR_WIDTH
+     ,ICN2_TARGET_RAM2                => log2(RAM2_DEPTH)
       );
   
   -- Signals ICN1 - CPU
@@ -562,18 +567,33 @@ begin  -- architecture rtl
       );
 
   -----------------------------------------------------------------------------
-  -- RAM
+  -- RAM1
   -----------------------------------------------------------------------------
-  ins_sbi_ram : sbi_ram
+  ins_sbi_ram1 : sbi_ram
     generic map
-    (DEPTH                => RAM_DEPTH
+    (DEPTH                => RAM1_DEPTH
     ,SYNC_READ            => true   
    )
     port map
     (clk_i                => clk         
     ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_RAM)
-    ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_RAM)
+    ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_RAM1)
+    ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_RAM1)
+    );
+    
+  -----------------------------------------------------------------------------
+  -- RAM2
+  -----------------------------------------------------------------------------
+  ins_sbi_ram2 : sbi_ram
+    generic map
+    (DEPTH                => RAM2_DEPTH
+    ,SYNC_READ            => true   
+   )
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_RAM2)
+    ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_RAM2)
     );
     
   -----------------------------------------------------------------------------

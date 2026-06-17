@@ -30,17 +30,18 @@ package PicoSoC_pkg is
   -----------------------------------------------------------------------------
   constant PICOSOC_USER_ADDR_ENCODING          : string := "binary";
                                                
-  constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"00";
-  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"04";
-  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"08";
-  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"0C";
-  constant PICOSOC_USER_SPINLOCK_BA            : std_logic_vector(8-1 downto 0) := X"10";
-  constant PICOSOC_USER_MAILBOX_BA             : std_logic_vector(8-1 downto 0) := X"20";
-  constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"30";
-  constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"40";
-  constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"50";
-  constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"60";
-  constant PICOSOC_USER_RAM_BA                 : std_logic_vector(8-1 downto 0) := X"80";
+  constant PICOSOC_USER_GIC_BA                 : std_logic_vector(8-1 downto 0) := X"00";
+  constant PICOSOC_USER_SPINLOCK_BA            : std_logic_vector(8-1 downto 0) := X"02";
+  constant PICOSOC_USER_SWITCH_BA              : std_logic_vector(8-1 downto 0) := X"04";
+  constant PICOSOC_USER_LED0_BA                : std_logic_vector(8-1 downto 0) := X"08";
+  constant PICOSOC_USER_LED1_BA                : std_logic_vector(8-1 downto 0) := X"0C";
+  constant PICOSOC_USER_CRC_BA                 : std_logic_vector(8-1 downto 0) := X"10";
+  constant PICOSOC_USER_MAILBOX_BA             : std_logic_vector(8-1 downto 0) := X"14";
+  constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"18";
+  constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"20";
+  constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"28";
+  constant PICOSOC_USER_RAM2_BA                : std_logic_vector(8-1 downto 0) := X"40";
+  constant PICOSOC_USER_RAM1_BA                : std_logic_vector(8-1 downto 0) := X"80";
                                                
   constant PICOSOC_SUPERVISOR_ADDR_ENCODING    : string := "binary";
                                                
@@ -143,7 +144,8 @@ component PicoSoC_top is
     ;USER_NB_CPU                 : natural  := 1
     ;USER_ICN_TARGET_SEL         : string   := "or"
     ;USER_ICN_MASTER_SEL         : string   := "fix"
-    ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
+    ;USER_RAM1_DEPTH             : natural  := 128         -- Up to 128 bytes
+    ;USER_RAM2_DEPTH             : natural  := 64          -- Up to 64  bytes
     ;USER_NB_SWITCH              : positive := 8
     ;USER_NB_LED0                : positive := 8
     ;USER_NB_LED1                : positive := 8
@@ -221,7 +223,8 @@ component PicoSoC_user is
     ;ICN_MASTER_SEL         : string   := "fix"
     ;NB_CPU                 : natural  := 1
     ;CPU_MODEL              : string   := "OpenBlaze8"
-    ;RAM_DEPTH              : natural  := 128
+    ;RAM1_DEPTH             : natural  := 128
+    ;RAM2_DEPTH             : natural  := 64
     ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4

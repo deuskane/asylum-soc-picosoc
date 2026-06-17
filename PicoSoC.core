@@ -56,9 +56,10 @@ CAPI=2:
 # 2026-06-05  3.2.0    mrosiere Use ICN with NB_MASTER
 # 2026-06-06  3.2.1    mrosiere Rename LED
 #                               Add name
+# 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.2.1
+name        : asylum:soc:PicoSoC:3.2.2
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer, RAM and CRC
 
 #=========================================

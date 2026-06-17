@@ -36,16 +36,16 @@
 //--------------------------------------
 // Address Map
 //--------------------------------------
-#define SWITCH              0x00
-#define LED0                0x04
-#define LED1                0x08
-#define CRC                 0x0C
-#define SPINLOCK            0x10
-#define MAILBOX             0x20
-#define UART                0x30
-#define SPI                 0x40
-#define GIC                 0x50
-#define TIMER               0x60
+#define GIC                 0x00
+#define SPINLOCK            0x02
+#define SWITCH              0x04
+#define LED0                0x08
+#define LED1                0x0C
+#define CRC                 0x10
+#define MAILBOX             0x14
+#define SPI                 0x18
+#define UART                0x20
+#define TIMER               0x28
 
 //--------------------------------------
 // IT
