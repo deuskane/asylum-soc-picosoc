@@ -200,21 +200,6 @@ architecture rtl of PicoSoC_user is
      ,ICN2_TARGET_RAM2                => log2(RAM2_DEPTH)
       );
   
-  -- Signals ICN1 - CPU
-  type     icn1_sbi_inim_t is array (NB_CPU-1 downto 0) of sbi_inis_t(ICN1_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
-                                                                                                 wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  type     icn1_sbi_tgtm_t is array (NB_CPU-1 downto 0) of sbi_tgts_t(ICN1_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  type     icn1_sbi_inis_t is array (NB_CPU-1 downto 0) of sbi_inis_t(ICN1_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
-                                                                                                 wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  type     icn1_sbi_tgts_t is array (NB_CPU-1 downto 0) of sbi_tgts_t(ICN1_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-
-
-  signal   icn1_sbi_inim              : icn1_sbi_inim_t;
-  signal   icn1_sbi_tgtm              : icn1_sbi_tgtm_t;
-
-  signal   icn1_sbi_inis              : icn1_sbi_inis_t;
-  signal   icn1_sbi_tgts              : icn1_sbi_tgts_t;
-
   -- Signals ICN2 - System
   signal   icn2_sbi_inim              : sbi_inis_t(ICN2_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
                                                                               wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
@@ -228,17 +213,6 @@ architecture rtl of PicoSoC_user is
   signal   clk                        : std_logic;
   signal   arst_b                     : std_logic;
 
-  -- Signals CPU (post lockstep / TMR)
-  signal   cpu_ics                    : std_logic;
-  signal   cpu_iaddr                  : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
-  signal   cpu_idata                  : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
-
-  signal   cpu_sbi_ini                : sbi_ini_t(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
-                                                  wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  signal   cpu_sbi_tgt                : sbi_tgt_t(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  signal   cpu_it_val                 : std_logic;
-  signal   cpu_it_ack                 : std_logic;
-
   -- UART
   signal   uart_it                    : std_logic;
   
@@ -251,10 +225,6 @@ architecture rtl of PicoSoC_user is
 
   constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '0',
                                                                                    others      => '0');
-  
-  type     gic_it_vector_t is array (NB_CPU-1 downto 0) of std_logic_vector(GIC_WIDTH-1 downto 0);
-
-  signal   gic_it_vector              : gic_it_vector_t;
 
   -- Timer
   signal   timer_disable              : std_logic;
@@ -273,8 +243,46 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU with Safety Logic
   -----------------------------------------------------------------------------
-  gen_cpu_cluster : for i in 0 to NB_CPU-1 
+  gen_cpu_cluster : for i in 0 to NB_CPU-1
+   
   generate
+    -- Signals CPU (post lockstep / TMR)
+  signal   cpu_ics                    : std_logic;
+  signal   cpu_iaddr                  : std_logic_vector(CPU_IMEM_ADDR_WIDTH-1 downto 0);
+  signal   cpu_idata                  : std_logic_vector(CPU_IMEM_DATA_WIDTH-1 downto 0);
+
+  signal   cpu_sbi_ini                : sbi_ini_t(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                  wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   cpu_sbi_tgt                : sbi_tgt_t(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   cpu_it_val                 : std_logic;
+  signal   cpu_it_ack                 : std_logic;
+
+  -- Signals ICN1 - CPU
+  signal   icn1_sbi_inim              : sbi_inis_t(ICN1_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                              wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   icn1_sbi_tgtm              : sbi_tgts_t(ICN1_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+
+  signal   icn1_sbi_inis              : sbi_inis_t(ICN1_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                              wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  signal   icn1_sbi_tgts              : sbi_tgts_t(ICN1_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+
+  -- Interruption Vector
+  signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
+
+  begin
+
+    gen_cpu0_debug :
+    if i = 0 
+    generate
+      debug_o.cpu_iaddr   <= cpu_iaddr                        ;
+      debug_o.cpu_idata   <= cpu_idata                        ;
+      debug_o.cpu_dcs     <= cpu_sbi_ini.cs                   ;
+      debug_o.cpu_dre     <= cpu_sbi_ini.re                   ;
+      debug_o.cpu_dwe     <= cpu_sbi_ini.we                   ;
+      debug_o.cpu_daddr   <= cpu_sbi_ini.addr                 ;
+      debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
+    end generate;
+
     ins_cpu_safety : cpu_safety
       generic map
       (SAFETY               => SAFETY
@@ -302,8 +310,8 @@ begin  -- architecture rtl
       ,diff_o               => diff_o
       );
 
-    icn1_sbi_inim(i)(0) <= cpu_sbi_ini;
-    cpu_sbi_tgt         <= icn1_sbi_tgtm(i)(0);
+    icn1_sbi_inim(0)    <= cpu_sbi_ini;
+    cpu_sbi_tgt         <= icn1_sbi_tgtm(0);
 
     -----------------------------------------------------------------------------
     -- CPU ROM
@@ -336,22 +344,22 @@ begin  -- architecture rtl
       (clk_i                  => clk      
       ,cke_i                  => '1'         
       ,arst_b_i               => arst_b      
-      ,sbi_inis_i             => icn1_sbi_inim(i)
-      ,sbi_tgts_o             => icn1_sbi_tgtm(i)
-      ,sbi_inis_o             => icn1_sbi_inis(i)
-      ,sbi_tgts_i             => icn1_sbi_tgts(i)
+      ,sbi_inis_i             => icn1_sbi_inim
+      ,sbi_tgts_o             => icn1_sbi_tgtm
+      ,sbi_inis_o             => icn1_sbi_inis
+      ,sbi_tgts_i             => icn1_sbi_tgts
       );
 
-    icn2_sbi_inim(i)                   <= icn1_sbi_inis(i)(ICN1_TARGET_ICN2);
-    icn1_sbi_tgts(i)(ICN1_TARGET_ICN2) <= icn2_sbi_tgtm(i);
+    icn2_sbi_inim(i)                <= icn1_sbi_inis(ICN1_TARGET_ICN2);
+    icn1_sbi_tgts(ICN1_TARGET_ICN2) <= icn2_sbi_tgtm(i);
 
     -----------------------------------------------------------------------------
     -- GIC - Interruption Vector
     -----------------------------------------------------------------------------
     -- Same interruptions for all CPUs
-    gic_it_vector(i)(GIC_IT_USER) <= it_i   ;
-    gic_it_vector(i)(GIC_UART   ) <= uart_it;
-    gic_it_vector(i)(GIC_TIMER  ) <= timer_it;
+    gic_it_vector(GIC_IT_USER) <= it_i   ;
+    gic_it_vector(GIC_UART   ) <= uart_it;
+    gic_it_vector(GIC_TIMER  ) <= timer_it;
   
     ins_sbi_gic : sbi_GIC
       generic map
@@ -360,9 +368,9 @@ begin  -- architecture rtl
       port map
       (clk_i                => clk         
       ,arst_b_i             => arst_b      
-      ,sbi_ini_i            => icn1_sbi_inis(i)(ICN1_TARGET_GIC)
-      ,sbi_tgt_o            => icn1_sbi_tgts(i)(ICN1_TARGET_GIC)
-      ,its_i                => gic_it_vector(i)
+      ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_GIC)
+      ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_GIC)
+      ,its_i                => gic_it_vector
       ,itm_o                => cpu_it_val
       );
   
@@ -377,8 +385,8 @@ begin  -- architecture rtl
       port map
       (clk_i                => clk         
       ,arst_b_i             => arst_b      
-      ,sbi_ini_i            => icn1_sbi_inis(i)(ICN1_TARGET_RAM1)
-      ,sbi_tgt_o            => icn1_sbi_tgts(i)(ICN1_TARGET_RAM1)
+      ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_RAM1)
+      ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_RAM1)
       );
   
   end generate;
@@ -613,13 +621,6 @@ begin  -- architecture rtl
   -- Debug
   -----------------------------------------------------------------------------
   debug_o.arst_b      <= arst_b                           ;
-  debug_o.cpu_iaddr   <= cpu_iaddr                        ;
-  debug_o.cpu_idata   <= cpu_idata                        ;
-  debug_o.cpu_dcs     <= cpu_sbi_ini.cs                   ;
-  debug_o.cpu_dre     <= cpu_sbi_ini.re                   ;
-  debug_o.cpu_dwe     <= cpu_sbi_ini.we                   ;
-  debug_o.cpu_daddr   <= cpu_sbi_ini.addr                 ;
-  debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
   debug_o.switch_cs   <= icn2_sbi_inis(ICN2_TARGET_SWITCH).cs   ;
   debug_o.switch_ready<= icn2_sbi_tgts(ICN2_TARGET_SWITCH).ready;
   debug_o.led0_cs     <= icn2_sbi_inis(ICN2_TARGET_LED0  ).cs   ;
