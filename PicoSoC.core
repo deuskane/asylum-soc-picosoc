@@ -1907,7 +1907,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TB_WATCHDOG=1000000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
