@@ -234,5 +234,31 @@ begin  -- architecture tb
     wait;
   end process;
   
+  -----------------------------------------------------
+  -- Test suite
+  -----------------------------------------------------
+  process is
+  begin  -- process
+
+      run(10);
+
+      report "[TESTBENCH] Init signals";
+      it_user_i      <= '0';             -- active low
+      inject_error_i <= (others => '0'); -- active low
+
+      report "[TESTBENCH] Reset Sequence"; 
+      arst_b_i       <= '0';
+
+      if HAVE_SPI_MEMORY = true
+      then
+        wait for 10 ms;
+      end if;
+      
+      run(1);
+
+      test_begin     <= '1';
+      arst_b_i       <= '1';
+      wait;
+  end process;
 
 end architecture tb;
