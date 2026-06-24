@@ -1,0 +1,128 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Wed Jun 24 05:51:57 2026
+[*]
+[dumpfile] "/home/kane/Work/Repo/ip/asylum-soc-picosoc/build/asylum_soc_PicoSoC_3.2.2/sim_soc1x4_wardrv_fsm_c_hello_uart-ghdl/dut.fst"
+[dumpfile_mtime] "Wed Jun 24 05:42:19 2026"
+[dumpfile_size] 124590
+[savefile] "/home/kane/Work/Repo/ip/asylum-soc-picosoc/wave.gtkw"
+[timestart] 7949040000000
+[size] 1854 1001
+[pos] -27 -24
+*-33.345104 8000430000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_PicoSoC_run.
+[treeopen] tb_PicoSoC_run.dut.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_sbi_icn1.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_sbi_icn1.sbi_inis_i.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_sbi_ram1.
+[treeopen] tb_PicoSoC_run.dut.ins_soc_user.icn2_sbi_inim.
+[sst_width] 278
+[signals_width] 118
+[sst_expanded] 1
+[sst_vpaned_height] 382
+@28
+tb_PicoSoC_run.test_done
+@800200
+-cpu0x0
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.ready
+@23
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.addr[31:0]
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.inst[31:0]
+@200
+-
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.be[3:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.wdata[31:0]
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.we
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.err
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(0).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.rdata[31:0]
+@1000200
+-cpu0x0
+@800200
+-cpu1x0
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.inst[31:0]
+@200
+-
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.be[3:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.wdata[31:0]
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.we
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.err
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(1).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.rdata[31:0]
+@1000200
+-cpu1x0
+@800200
+-cpu2x0
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.inst[31:0]
+@200
+-
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.be[3:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.wdata[31:0]
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.we
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.err
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(2).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.rdata[31:0]
+@1000200
+-cpu2x0
+@800200
+-cpu3x0
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.imem_tgt.inst[31:0]
+@200
+-
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.valid
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.ready
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.addr[31:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.be[3:0]
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.wdata[31:0]
+@28
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_ini.we
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.err
+@22
+tb_PicoSoC_run.dut.ins_soc_user.gen_cpu_cluster(3).ins_cpu_safety.ins_cpu_0.gen_WardRV_fsm.cpu_WardRV_fsm.dmem_tgt.rdata[31:0]
+@1000200
+-cpu3x0
+[pattern_trace] 1
+[pattern_trace] 0

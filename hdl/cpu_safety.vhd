@@ -32,6 +32,7 @@ entity cpu_safety is
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
+    ;HARTID                : std_logic_vector(31 downto 0) := x"00000000"
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
     ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
@@ -136,6 +137,7 @@ begin
   ins_cpu_0 : entity asylum.cpu_wrapper
     generic map
     (CPU_MODEL       => CPU_MODEL
+    ,HARTID          => HARTID
     )
     port map
     (clk_i           => clk_i

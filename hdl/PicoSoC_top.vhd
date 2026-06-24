@@ -41,7 +41,8 @@ entity PicoSoC_top is
     ;USER_NB_CPU                 : natural  := 1
     ;USER_ICN_TARGET_SEL         : string   := "or"
     ;USER_ICN_MASTER_SEL         : string   := "fix"
-    ;USER_RAM_DEPTH              : natural  := 128         -- Up to 128 bytes
+    ;USER_RAM1_DEPTH             : natural  := 128         -- Up to 128 bytes
+    ;USER_RAM2_DEPTH             : natural  := 64          -- Up to 64  bytes
     ;USER_NB_SWITCH              : positive := 8
     ;USER_NB_LED0                : positive := 8
     ;USER_NB_LED1                : positive := 8
@@ -219,7 +220,8 @@ begin  -- architecture rtl
     ,ICN_TARGET_SEL         => USER_ICN_TARGET_SEL
     ,NB_CPU                 => USER_NB_CPU
     ,ICN_MASTER_SEL         => USER_ICN_MASTER_SEL
-    ,RAM_DEPTH              => USER_RAM_DEPTH
+    ,RAM1_DEPTH             => USER_RAM1_DEPTH
+    ,RAM2_DEPTH             => USER_RAM2_DEPTH
     ,MAILBOX_FIFO0_DEPTH_TX => USER_MAILBOX_FIFO0_DEPTH_TX
     ,MAILBOX_FIFO0_DEPTH_RX => USER_MAILBOX_FIFO0_DEPTH_RX
     ,MAILBOX_FIFO1_DEPTH_TX => USER_MAILBOX_FIFO1_DEPTH_TX

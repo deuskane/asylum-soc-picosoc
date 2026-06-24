@@ -56,9 +56,10 @@ CAPI=2:
 # 2026-06-05  3.2.0    mrosiere Use ICN with NB_MASTER
 # 2026-06-06  3.2.1    mrosiere Rename LED
 #                               Add name
+# 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.2.1
+name        : asylum:soc:PicoSoC:3.2.2
 description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer, RAM and CRC
 
 #=========================================
@@ -309,6 +310,15 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
       logical_name : asylum
 
+  gen_rv32i_user_hello_921600 :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/user_hello.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_rv32i_supervisor_c :
     generator : rvcc_gen
     parameters :
@@ -383,6 +393,7 @@ filesets:
     files:
       - sim/tb_PicoSoC.vhd
       - sim/tb_PicoSoC_modbus_rtu.vhd
+      - sim/tb_PicoSoC_run.vhd
     file_type : vhdlSource
     depend :
       - fmf:memory:flash_nor
@@ -1871,6 +1882,63 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
 
+
+  #---------------------------------------
+  sim_soc1x4_wardrv_fsm_c_hello_uart:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
+    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
+    toplevel     : tb_PicoSoC_run
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_NB_CPU=4
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=1000000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
+  sim_soc1x16_wardrv_fsm_c_hello_uart:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 16 CPUs
+    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
+    toplevel     : tb_PicoSoC_run
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_NB_CPU=16
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=1000000
+      - HAVE_SPI_MEMORY=False
+
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user:
   #---------------------------------------
@@ -2147,6 +2215,12 @@ parameters :
     default     : 500000000
     paramtype   : generic
 
+  USER_NB_CPU :
+    description : Number of User CPU
+    datatype    : int
+    default     : 1
+    paramtype   : generic
+    
   USER_BAUD_RATE :
     description : Baud Rate
     datatype    : int
