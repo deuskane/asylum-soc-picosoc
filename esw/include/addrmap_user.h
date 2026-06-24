@@ -46,6 +46,8 @@
 #define SPI                 0x18
 #define UART                0x20
 #define TIMER               0x28
+#define RAM_GLO             0x40
+#define RAM_LOC             0x80
 
 //--------------------------------------
 // IT
