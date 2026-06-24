@@ -266,6 +266,7 @@ component cpu_safety is
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
+    ;HARTID                : std_logic_vector(31 downto 0) := x"00000000"
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
     ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
@@ -297,7 +298,8 @@ end component cpu_safety;
 
 component cpu_wrapper is
   generic (
-    CPU_MODEL        : string   := "OpenBlaze8" 
+    CPU_MODEL        : string   := "OpenBlaze8"
+   ;HARTID           : std_logic_vector(31 downto 0) := x"00000000"
   );
   port   (
     clk_i            : in    std_logic;

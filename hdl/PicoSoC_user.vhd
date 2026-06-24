@@ -201,13 +201,19 @@ architecture rtl of PicoSoC_user is
       );
   
   -- Signals ICN1 - CPU
-  signal   icn1_sbi_inim              : sbi_inis_t(ICN1_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
-                                                                              wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  signal   icn1_sbi_tgtm              : sbi_tgts_t(ICN1_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  type     icn1_sbi_inim_t is array (NB_CPU-1 downto 0) of sbi_inis_t(ICN1_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                                                 wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  type     icn1_sbi_tgtm_t is array (NB_CPU-1 downto 0) of sbi_tgts_t(ICN1_NB_MASTER-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  type     icn1_sbi_inis_t is array (NB_CPU-1 downto 0) of sbi_inis_t(ICN1_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
+                                                                                                 wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+  type     icn1_sbi_tgts_t is array (NB_CPU-1 downto 0) of sbi_tgts_t(ICN1_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
 
-  signal   icn1_sbi_inis              : sbi_inis_t(ICN1_NB_TARGET-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
-                                                                              wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
-  signal   icn1_sbi_tgts              : sbi_tgts_t(ICN1_NB_TARGET-1 downto 0)(rdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
+
+  signal   icn1_sbi_inim              : icn1_sbi_inim_t;
+  signal   icn1_sbi_tgtm              : icn1_sbi_tgtm_t;
+
+  signal   icn1_sbi_inis              : icn1_sbi_inis_t;
+  signal   icn1_sbi_tgts              : icn1_sbi_tgts_t;
 
   -- Signals ICN2 - System
   signal   icn2_sbi_inim              : sbi_inis_t(ICN2_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
@@ -245,8 +251,10 @@ architecture rtl of PicoSoC_user is
 
   constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '0',
                                                                                    others      => '0');
-    
-  signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
+  
+  type     gic_it_vector_t is array (NB_CPU-1 downto 0) of std_logic_vector(GIC_WIDTH-1 downto 0);
+
+  signal   gic_it_vector              : gic_it_vector_t;
 
   -- Timer
   signal   timer_disable              : std_logic;
@@ -265,75 +273,115 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- CPU with Safety Logic
   -----------------------------------------------------------------------------
-  ins_cpu_safety : cpu_safety
-    generic map
-    (SAFETY               => SAFETY
-    ,LOCK_STEP_DEPTH      => LOCK_STEP_DEPTH
-    ,FAULT_INJECTION      => FAULT_INJECTION
-    ,CPU_MODEL            => CPU_MODEL
-    ,IMEM_ADDR_WIDTH      => CPU_IMEM_ADDR_WIDTH
-    ,IMEM_DATA_WIDTH      => CPU_IMEM_DATA_WIDTH
-    ,DMEM_ADDR_WIDTH      => CPU_DMEM_ADDR_WIDTH
-    ,DMEM_DATA_WIDTH      => CPU_DMEM_DATA_WIDTH
+  gen_cpu_cluster : for i in 0 to NB_CPU-1 
+  generate
+    ins_cpu_safety : cpu_safety
+      generic map
+      (SAFETY               => SAFETY
+      ,LOCK_STEP_DEPTH      => LOCK_STEP_DEPTH
+      ,FAULT_INJECTION      => FAULT_INJECTION
+      ,CPU_MODEL            => CPU_MODEL
+      ,HARTID               => std_logic_vector(to_unsigned(i, 32))
+      ,IMEM_ADDR_WIDTH      => CPU_IMEM_ADDR_WIDTH
+      ,IMEM_DATA_WIDTH      => CPU_IMEM_DATA_WIDTH
+      ,DMEM_ADDR_WIDTH      => CPU_DMEM_ADDR_WIDTH
+      ,DMEM_DATA_WIDTH      => CPU_DMEM_DATA_WIDTH
+       )
+      port map
+      (clk_i                => clk         
+      ,cke_i                => '1'         
+      ,arst_b_i             => arst_b
+      ,ics_o                => cpu_ics
+      ,iaddr_o              => cpu_iaddr
+      ,idata_i              => cpu_idata
+      ,sbi_ini_o            => cpu_sbi_ini
+      ,sbi_tgt_i            => cpu_sbi_tgt
+      ,interrupt_i          => cpu_it_val
+      ,interrupt_ack_o      => cpu_it_ack
+      ,inject_error_i       => inject_error_i
+      ,diff_o               => diff_o
+      );
+
+    icn1_sbi_inim(i)(0) <= cpu_sbi_ini;
+    cpu_sbi_tgt         <= icn1_sbi_tgtm(i)(0);
+
+    -----------------------------------------------------------------------------
+    -- CPU ROM
+    -----------------------------------------------------------------------------
+    ins_ROM_user : entity asylum.ROM_user(rom)
+      port map
+      (clk_i                => clk      
+      ,cke_i                => cpu_ics  
+      ,address_i            => cpu_iaddr
+      ,instruction_o        => cpu_idata
+      );
+
+    -----------------------------------------------------------------------------
+    -- Interconnect
+    -- From 1 Initiator to N Target
+    -----------------------------------------------------------------------------
+    ins_sbi_icn1 : sbi_icn
+      generic map
+      (NAME                   => "ICN1_user"
+      ,NB_MASTER              => ICN1_NB_MASTER
+      ,MASTER_SEL             => ICN_MASTER_SEL
+      ,NB_TARGET              => ICN1_NB_TARGET
+      ,TARGET_SEL             => ICN_TARGET_SEL
+      ,TARGET_ID              => ICN1_TARGET_ID
+      ,TARGET_ADDR_WIDTH      => ICN1_TARGET_ADDR_WIDTH
+      ,TARGET_ADDR_ENCODING   => ICN1_TARGET_ADDR_ENCODING
+      ,INTERNAL_DEFAULT_SLAVE => false
+        )
+      port map
+      (clk_i                  => clk      
+      ,cke_i                  => '1'         
+      ,arst_b_i               => arst_b      
+      ,sbi_inis_i             => icn1_sbi_inim(i)
+      ,sbi_tgts_o             => icn1_sbi_tgtm(i)
+      ,sbi_inis_o             => icn1_sbi_inis(i)
+      ,sbi_tgts_i             => icn1_sbi_tgts(i)
+      );
+
+    icn2_sbi_inim(i)                   <= icn1_sbi_inis(i)(ICN1_TARGET_ICN2);
+    icn1_sbi_tgts(i)(ICN1_TARGET_ICN2) <= icn2_sbi_tgtm(i);
+
+    -----------------------------------------------------------------------------
+    -- GIC - Interruption Vector
+    -----------------------------------------------------------------------------
+    -- Same interruptions for all CPUs
+    gic_it_vector(i)(GIC_IT_USER) <= it_i   ;
+    gic_it_vector(i)(GIC_UART   ) <= uart_it;
+    gic_it_vector(i)(GIC_TIMER  ) <= timer_it;
+  
+    ins_sbi_gic : sbi_GIC
+      generic map
+      (ITS_SYNC_ENABLE      => GIC_ITS_SYNC_ENABLE
+       )
+      port map
+      (clk_i                => clk         
+      ,arst_b_i             => arst_b      
+      ,sbi_ini_i            => icn1_sbi_inis(i)(ICN1_TARGET_GIC)
+      ,sbi_tgt_o            => icn1_sbi_tgts(i)(ICN1_TARGET_GIC)
+      ,its_i                => gic_it_vector(i)
+      ,itm_o                => cpu_it_val
+      );
+  
+    -----------------------------------------------------------------------------
+    -- RAM1
+    -----------------------------------------------------------------------------
+    ins_sbi_ram1 : sbi_ram
+      generic map
+      (DEPTH                => RAM1_DEPTH
+      ,SYNC_READ            => true   
      )
-    port map
-    (clk_i                => clk         
-    ,cke_i                => '1'         
-    ,arst_b_i             => arst_b
-    ,ics_o                => cpu_ics
-    ,iaddr_o              => cpu_iaddr
-    ,idata_i              => cpu_idata
-    ,sbi_ini_o            => cpu_sbi_ini
-    ,sbi_tgt_i            => cpu_sbi_tgt
-    ,interrupt_i          => cpu_it_val
-    ,interrupt_ack_o      => cpu_it_ack
-    ,inject_error_i       => inject_error_i
-    ,diff_o               => diff_o
-    );
-
-  icn1_sbi_inim(0) <= cpu_sbi_ini;
-  cpu_sbi_tgt      <= icn1_sbi_tgtm(0);
-
-  -----------------------------------------------------------------------------
-  -- CPU ROM
-  -----------------------------------------------------------------------------
-  ins_ROM_user : entity asylum.ROM_user(rom)
-    port map
-    (clk_i                => clk      
-    ,cke_i                => cpu_ics  
-    ,address_i            => cpu_iaddr
-    ,instruction_o        => cpu_idata
-    );
-
-  -----------------------------------------------------------------------------
-  -- Interconnect
-  -- From 1 Initiator to N Target
-  -----------------------------------------------------------------------------
-  ins_sbi_icn1 : sbi_icn
-    generic map
-    (NAME                   => "ICN1_user"
-    ,NB_MASTER              => ICN1_NB_MASTER
-    ,MASTER_SEL             => ICN_MASTER_SEL
-    ,NB_TARGET              => ICN1_NB_TARGET
-    ,TARGET_SEL             => ICN_TARGET_SEL
-    ,TARGET_ID              => ICN1_TARGET_ID
-    ,TARGET_ADDR_WIDTH      => ICN1_TARGET_ADDR_WIDTH
-    ,TARGET_ADDR_ENCODING   => ICN1_TARGET_ADDR_ENCODING
-    ,INTERNAL_DEFAULT_SLAVE => false
-      )
-    port map
-    (clk_i                  => clk      
-    ,cke_i                  => '1'         
-    ,arst_b_i               => arst_b      
-    ,sbi_inis_i             => icn1_sbi_inim
-    ,sbi_tgts_o             => icn1_sbi_tgtm
-    ,sbi_inis_o             => icn1_sbi_inis
-    ,sbi_tgts_i             => icn1_sbi_tgts
-    );
-
-  icn2_sbi_inim(0)                <= icn1_sbi_inis(ICN1_TARGET_ICN2);
-  icn1_sbi_tgts(ICN1_TARGET_ICN2) <= icn2_sbi_tgtm(0);
-
+      port map
+      (clk_i                => clk         
+      ,arst_b_i             => arst_b      
+      ,sbi_ini_i            => icn1_sbi_inis(i)(ICN1_TARGET_RAM1)
+      ,sbi_tgt_o            => icn1_sbi_tgts(i)(ICN1_TARGET_RAM1)
+      );
+  
+  end generate;
 
   -----------------------------------------------------------------------------
   -- Interconnect
@@ -479,26 +527,6 @@ begin  -- architecture rtl
      );
 
   -----------------------------------------------------------------------------
-  -- GIC - Interruption Vector
-  -----------------------------------------------------------------------------
-  gic_it_vector(GIC_IT_USER) <= it_i   ;
-  gic_it_vector(GIC_UART   ) <= uart_it;
-  gic_it_vector(GIC_TIMER  ) <= timer_it;
-
-  ins_sbi_gic : sbi_GIC
-    generic map
-    (ITS_SYNC_ENABLE      => GIC_ITS_SYNC_ENABLE
-     )
-    port map
-    (clk_i                => clk         
-    ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_GIC)
-    ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_GIC)
-    ,its_i                => gic_it_vector
-    ,itm_o                => cpu_it_val
-    );
-
-  -----------------------------------------------------------------------------
   -- Timer
   -----------------------------------------------------------------------------
   timer_disable <= '0';
@@ -566,21 +594,6 @@ begin  -- architecture rtl
      ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_MAILBOX)
       );
 
-  -----------------------------------------------------------------------------
-  -- RAM1
-  -----------------------------------------------------------------------------
-  ins_sbi_ram1 : sbi_ram
-    generic map
-    (DEPTH                => RAM1_DEPTH
-    ,SYNC_READ            => true   
-   )
-    port map
-    (clk_i                => clk         
-    ,arst_b_i             => arst_b      
-    ,sbi_ini_i            => icn1_sbi_inis(ICN1_TARGET_RAM1)
-    ,sbi_tgt_o            => icn1_sbi_tgts(ICN1_TARGET_RAM1)
-    );
-    
   -----------------------------------------------------------------------------
   -- RAM2
   -----------------------------------------------------------------------------

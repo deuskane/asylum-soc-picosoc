@@ -29,7 +29,8 @@ use     asylum.WardRV_pkg.all;
 
 entity cpu_wrapper is
   generic (
-    CPU_MODEL        : string   := "OpenBlaze8" 
+    CPU_MODEL        : string   := "OpenBlaze8"
+   ;HARTID           : std_logic_vector(31 downto 0) := x"00000000"
   );
   port   (
     clk_i            : in    std_logic;
@@ -90,7 +91,7 @@ end generate gen_OpenBlaze8;
 gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
   cpu_WardRV_fsm : entity asylum.sbi_WardRV_fsm
     generic map (
-      HARTID               => x"00000000",
+      HARTID               => HARTID,
       RESET_ADDR           => x"00000000",
       IADDR_WIDTH          => iaddr_o'length,
       IADDR_ALIGN_BITS     => 2 -- Word-aligned instructions
