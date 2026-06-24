@@ -47,6 +47,18 @@ ISR_FCT
 {
 }
 
+/**
+ * @brief Generates an 8-bit pseudo-random number
+ * @return uint8_t A number between 0 and 255
+ */
+uint8_t rand8(uint8_t seed) {
+    // LCG Formula: X = (a * X + c) % m
+    // Here, a = 137, c = 187, and the natural overflow of uint8_t handles the "% 256" (m)
+    seed = (137 * seed) + 187;
+    return seed;
+}
+
+
 //--------------------------------------
 // Application Setup
 //--------------------------------------
@@ -88,9 +100,11 @@ void setup()
 void main()
 {
   uint32_t cpu_id;
+  uint8_t seed; 
 
   // Read the CPU ID
   cpu_id = read_mhartid();
+  seed   = (uint8_t)cpu_id;
 
   while (spinlock_try_lock(SPINLOCK,0) != 0);
 
@@ -116,22 +130,34 @@ void main()
       uint8_t  cpt_byte0;
 
       // Acquire the lock, wait until it is available
-      while (spinlock_try_lock(SPINLOCK,0) != 0);
+      while (spinlock_try_lock(SPINLOCK,0) != 0)
+        {
+
+          uint8_t wait_cpt = seed;
+          seed = rand8(seed);
+
+          while (wait_cpt-- != 0)
+          {
+             // __asm__ volatile tells the compiler: "Do not touch, optimize, or move this"
+            __asm__ volatile ("nop"); 
+          }
+
+        }
 
       putchar('C');
       putchar('P');
       putchar('U');
       putchar(' ');
       
-      cpt       = app_data.cpt;
-	    cpt_byte3 = (cpu_id>>24)&0xFF;
-	    cpt_byte2 = (cpu_id>>16)&0xFF;
-	    cpt_byte1 = (cpu_id>> 8)&0xFF;
-	    cpt_byte0 = (cpu_id>> 0)&0xFF;
+      cpt       = cpu_id;
+	    //cpt_byte3 = (cpt>>24)&0xFF;
+	    //cpt_byte2 = (cpt>>16)&0xFF;
+	    //cpt_byte1 = (cpt>> 8)&0xFF;
+	    cpt_byte0 = (cpt>> 0)&0xFF;
 
-      puthex (cpt_byte3);
-   	  puthex (cpt_byte2);
-   	  puthex (cpt_byte1);
+      //puthex (cpt_byte3);
+   	  //puthex (cpt_byte2);
+   	  //puthex (cpt_byte1);
    	  puthex (cpt_byte0);
 
       putchar(' ');
