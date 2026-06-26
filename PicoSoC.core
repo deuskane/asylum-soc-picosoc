@@ -1884,6 +1884,34 @@ targets:
 
 
   #---------------------------------------
+  sim_soc1x2_wardrv_fsm_c_hello_uart:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
+    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
+    toplevel     : tb_PicoSoC_run
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_NB_CPU=2
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=500000
+      - HAVE_SPI_MEMORY=False
+
+  #---------------------------------------
   sim_soc1x4_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
@@ -1908,14 +1936,14 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=1000000
+      - TB_WATCHDOG=500000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------
-  sim_soc1x16_wardrv_fsm_c_hello_uart:
+  sim_soc1x6_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 16 CPUs
+    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
     toplevel     : tb_PicoSoC_run
     parameters   :
@@ -1924,7 +1952,7 @@ targets:
       - FSYS_INT=12500000
 
       # SoC User Configuration
-      - USER_NB_CPU=16
+      - USER_NB_CPU=6
       - USER_BAUD_RATE=921600
       
       # Platform Configuration
@@ -1936,7 +1964,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=1000000
+      - TB_WATCHDOG=500000
       - HAVE_SPI_MEMORY=False
 
   #---------------------------------------

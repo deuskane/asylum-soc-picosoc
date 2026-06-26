@@ -36,8 +36,9 @@ sim_soc1_wardrv_fsm_c_user_modbus_rtu          : Simulation of the test esw/user
 sim_soc1_wardrv_fsm_c_user_uart                : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_user_uart_spi            : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_user_uart_spi_mem        : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-sim_soc1x16_wardrv_fsm_c_hello_uart            : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 16 CPUs
+sim_soc1x2_wardrv_fsm_c_hello_uart             : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
 sim_soc1x4_wardrv_fsm_c_hello_uart             : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
+sim_soc1x6_wardrv_fsm_c_hello_uart             : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
 sim_soc2_openblaze8_c_user                     : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_openblaze8_c_user_modbus_rtu          : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_openblaze8_c_user_uart                : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
