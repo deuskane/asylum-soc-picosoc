@@ -12,20 +12,14 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-06-14  1.0      mrosiere Created
+// 2026-06-26  1.1      mrosiere Use include from regtool
 //-----------------------------------------------------------------------------
 
 #ifndef _uart_h_
 #define _uart_h_
 
+#include "UART_csr.h"
 
-#define UART_ISR                0x0
-#define UART_IMR                0x1
-#define UART_DATA               0x2
-#define UART_RESERVED3          0x3
-#define UART_CTRL_TX            0x4
-#define UART_CTRL_RX            0x5
-#define UART_CNT_LSB            0x6
-#define UART_CNT_MSB            0x7
 
 #define UART_IT_RX_FULL         3
 #define UART_IT_RX_EMPTY_B      2
@@ -48,8 +42,8 @@ do {                                                         \
  uint16_t cnt=(((_CLOCK_FREQ_)/(_BAUD_RATE_))-1);            \
   PORT_WR(_BA_  ,UART_CTRL_TX   ,0x11 );                     \
   PORT_WR(_BA_  ,UART_CTRL_RX   ,0x11 | (_LOOPBACK_)<<3);    \
-  PORT_WR(_BA_  ,UART_CNT_LSB,cnt&0xFF);                     \
-  PORT_WR(_BA_  ,UART_CNT_MSB,(cnt>>8)&0xFF);                \
+  PORT_WR(_BA_  ,UART_BAUD_TICK_CNT_MAX_LSB,cnt&0xFF);                     \
+  PORT_WR(_BA_  ,UART_BAUD_TICK_CNT_MAX_MSB,(cnt>>8)&0xFF);                \
  } while (0)
 
 #define uart_wr(_BA_,_DATA_) PORT_WR(_BA_,UART_DATA,_DATA_)

@@ -12,15 +12,13 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-06-14  1.0      mrosiere Created
+// 2026-06-26  1.1      mrosiere Use include from regtool
 //-----------------------------------------------------------------------------
 
 #ifndef _gpio_h_
 #define _gpio_h_
 
-#define GPIO_DATA           0x0
-#define GPIO_DATA_OE        0x1
-#define GPIO_DATA_IN        0x2
-#define GPIO_DATA_OUT       0x3
+#include "GPIO_csr.h"
 
 #define GPIO_OUTPUT         0xFF
 #define GPIO_INPUT          0x00

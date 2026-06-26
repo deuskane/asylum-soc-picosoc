@@ -13,14 +13,13 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2026-05-31  1.0      mrosiere Created
+// 2026-06-26  1.1      mrosiere Use include from regtool
 //-----------------------------------------------------------------------------
 
 #ifndef _mailbox_h_
 #define _mailbox_h_
 
-// FIFO Addresses
-#define MAILBOX_FIFO0      0x0
-#define MAILBOX_FIFO1      0x2
+#include "mailbox_csr.h"
 
 // Push: Writes data to the specified FIFO (_ID_: 0 or 1)
 #define mailbox_push(_BA_, _ID_, _VAL_) PORT_WR(_BA_, MAILBOX_FIFO##_ID_, _VAL_)

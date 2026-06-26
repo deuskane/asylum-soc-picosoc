@@ -12,13 +12,13 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-06-14  1.0      mrosiere Created
+// 2026-06-26  1.1      mrosiere Use include from regtool
 //-----------------------------------------------------------------------------
 
 #ifndef _gic_h_
 #define _gic_h_
 
-#define GIC_ISR            0x0
-#define GIC_IMR            0x1
+#include "GIC_csr.h"
 
 #define gic_it_enable(_BA_,_VALUE_)    PORT_WR(_BA_,GIC_IMR,( (_VALUE_)|PORT_RD(_BA_,GIC_IMR)))
 #define gic_it_disable(_BA_,_VALUE_)   PORT_WR(_BA_,GIC_IMR,(~(_VALUE_)&PORT_RD(_BA_,GIC_IMR)))

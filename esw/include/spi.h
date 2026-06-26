@@ -12,16 +12,14 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-06-14  1.0      mrosiere Created
+// 2026-06-26  1.1      mrosiere Use include from regtool
 //-----------------------------------------------------------------------------
 
 #ifndef _spi_h_
 #define _spi_h_
 
-#define SPI_DATA                  0x0
-#define SPI_CMD                   0x1
-#define SPI_CFG                   0x2
-#define SPI_PRESCALER             0x3
-			          
+#include "SPI_csr.h"
+ 
 #define SPI_SINGLE_READ           0x03
 #define SPI_SFDP                  0x5A
 #define SPI_PAGE_PROGRAM          0x02
