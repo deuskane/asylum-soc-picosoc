@@ -30,8 +30,8 @@ sp                  EQU       sF
 ; ;------------------------------------
 ; ; directives pour le simulateur:  definition des  E/S
 ; ;------------------------------------
-switch_id           EQU       $00
-led_id              EQU       $04
+switch_id           EQU       $04
+led_id              EQU       $08
 
 switch              DSIN      switch_id
 led                 DSOUT     led_id
