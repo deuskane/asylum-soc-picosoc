@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2026-05-25
+-- Last update: 2026-07-20
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -31,6 +31,7 @@
 -- 2026-05-16  3.6      mrosiere Add RAM
 -- 2026-05-25  3.7      mrosiere Add Spinlock and mailbox
 -- 2026-06-17  3.8      mrosiere Add RAM2
+-- 2026-08-01  3.9      mrosiere Use GPIO_irq instead of GPIO
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -43,7 +44,7 @@ use     asylum.sbi_pkg.all;
 use     asylum.logic_pkg.all;
 use     asylum.math_pkg.all;
 -- CSR Package
-use     asylum.GPIO_csr_pkg.all;
+use     asylum.GPIO_irq_csr_pkg.all;
 use     asylum.UART_csr_pkg.all;
 use     asylum.SPI_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
@@ -188,9 +189,9 @@ architecture rtl of PicoSoC_user is
       );
 
   constant ICN2_TARGET_ADDR_WIDTH     : naturals_t    (ICN2_NB_TARGET-1 downto 0) :=
-    ( ICN2_TARGET_SWITCH              => GPIO_ADDR_WIDTH
-     ,ICN2_TARGET_LED0                => GPIO_ADDR_WIDTH
-     ,ICN2_TARGET_LED1                => GPIO_ADDR_WIDTH
+    ( ICN2_TARGET_SWITCH              => GPIO_IRQ_ADDR_WIDTH
+     ,ICN2_TARGET_LED0                => GPIO_IRQ_ADDR_WIDTH
+     ,ICN2_TARGET_LED1                => GPIO_IRQ_ADDR_WIDTH
      ,ICN2_TARGET_UART                => UART_ADDR_WIDTH
      ,ICN2_TARGET_SPI                 => SPI_ADDR_WIDTH
      ,ICN2_TARGET_TIMER               => TIMER_ADDR_WIDTH
@@ -420,12 +421,13 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- GPIO 0 - Switch
   -----------------------------------------------------------------------------
-  ins_sbi_switch : sbi_GPIO
+  ins_sbi_switch : sbi_GPIO_irq
     generic map
     (NAME                 => "SWITCH"
     ,NB_IO                => NB_SWITCH
     ,DATA_OE_INIT         => CST0(8-1 downto 0)
-    ,IT_ENABLE            => false
+    ,IRQ_POSEDGE          => X"FF"
+    ,IRQ_NEGEDGE          => X"FF"
     )
     port map
     (clk_i                => clk           
@@ -435,20 +437,20 @@ begin  -- architecture rtl
     ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_SWITCH)   
     ,data_i               => switch_i      
     ,data_o               => open          
-    ,data_oe_o            => open          
-    ,interrupt_o          => open          
-    ,interrupt_ack_i      => '0'
+    ,data_oe_o            => open   
+    ,it_o                 => open       
     );
 
   -----------------------------------------------------------------------------
   -- GPIO 1 - LED
   -----------------------------------------------------------------------------
-  ins_sbi_led0 : sbi_GPIO
+  ins_sbi_led0 : sbi_GPIO_irq
     generic map
     (NAME                 => "LED0"
     ,NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
-    ,IT_ENABLE            => false
+    ,IRQ_POSEDGE          => X"00"
+    ,IRQ_NEGEDGE          => X"00"
     )
     port map
     (clk_i                => clk         
@@ -459,19 +461,19 @@ begin  -- architecture rtl
     ,data_i               => X"00"       
     ,data_o               => led0_o      
     ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
+    ,it_o                 => open       
     );
 
   -----------------------------------------------------------------------------
   -- GPIO 2 - LED
   -----------------------------------------------------------------------------
-  ins_sbi_led1 : sbi_GPIO
+  ins_sbi_led1 : sbi_GPIO_irq
     generic map
     (NAME                 => "LED1"
     ,NB_IO                => NB_LED1 
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
-    ,IT_ENABLE            => false
+    ,IRQ_POSEDGE          => X"00"
+    ,IRQ_NEGEDGE          => X"00"
     )
     port map
     (clk_i                => clk         
@@ -482,8 +484,7 @@ begin  -- architecture rtl
     ,data_i               => X"00"       
     ,data_o               => led1_o      
     ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
+    ,it_o                 => open       
     );
 
   -----------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2017-03-30
--- Last update: 2026-05-25
+-- Last update: 2026-07-20
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 -- 2025-04-02  1.1      mrosiere Add ICN
 -- 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 -- 2026-05-17  1.3      mrosiere Add RAM
+-- 2026-08-01  1.4      mrosiere Use GPIO_irq instead of GPIO
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -31,7 +32,7 @@ library asylum;
 use     asylum.sbi_pkg.all;
 use     asylum.math_pkg.all;
 -- CSR Package
-use     asylum.GPIO_csr_pkg.all;
+use     asylum.GPIO_irq_csr_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
@@ -96,8 +97,8 @@ architecture rtl of PicoSoC_supervisor is
      ,ICN_TARGET_RAM                  => PICOSOC_SUPERVISOR_RAM_BA
       );
   constant ICN_TARGET_ADDR_WIDTH      : naturals_t    (ICN_NB_TARGET-1 downto 0) :=
-    ( ICN_TARGET_LED0                 => GPIO_ADDR_WIDTH
-     ,ICN_TARGET_LED1                 => GPIO_ADDR_WIDTH
+    ( ICN_TARGET_LED0                 => GPIO_IRQ_ADDR_WIDTH
+     ,ICN_TARGET_LED1                 => GPIO_IRQ_ADDR_WIDTH
      ,ICN_TARGET_GIC                  => GIC_ADDR_WIDTH
      ,ICN_TARGET_RAM                  => log2(RAM_DEPTH)
       );
@@ -204,13 +205,14 @@ begin  -- architecture rtl
   -- GPIO 0 - LED
   -- Used as resetb for soc user
   -----------------------------------------------------------------------------
-  ins_sbi_led0 : sbi_GPIO
+  ins_sbi_led0 : sbi_GPIO_irq
     generic map
     (NAME                 => "USER_ARST"
     ,NB_IO                => NB_LED0
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
-    ,IT_ENABLE            => false
-    )
+    ,IRQ_POSEDGE          => X"00"
+    ,IRQ_NEGEDGE          => X"00"
+   )
     port map
     (clk_i                => clk         
     ,cke_i                => '1'         
@@ -219,20 +221,20 @@ begin  -- architecture rtl
     ,sbi_tgt_o            => icn_sbi_tgts(ICN_TARGET_LED0)
     ,data_i               => CST0(NB_LED0-1 downto 0)
     ,data_o               => led0        
-    ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
+    ,data_oe_o            => open   
+    ,it_o                 => open       
     );
 
   -----------------------------------------------------------------------------
   -- GPIO 1 - LED
   -----------------------------------------------------------------------------
-  ins_sbi_led1 : sbi_GPIO
+  ins_sbi_led1 : sbi_GPIO_irq
     generic map
     (NAME                 => "LED_DIFF"
     ,NB_IO                => NB_LED1
     ,DATA_OE_INIT         => CST1(8-1 downto 0)
-    ,IT_ENABLE            => false
+    ,IRQ_POSEDGE          => X"00"
+    ,IRQ_NEGEDGE          => X"00"
     )
     port map
     (clk_i                => clk         
@@ -243,8 +245,7 @@ begin  -- architecture rtl
     ,data_i               => CST0(NB_LED1-1 downto 0)
     ,data_o               => led1        
     ,data_oe_o            => open        
-    ,interrupt_o          => open        
-    ,interrupt_ack_i      => '0'
+    ,it_o                 => open       
     );
 
   -----------------------------------------------------------------------------

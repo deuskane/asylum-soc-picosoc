@@ -57,10 +57,11 @@ CAPI=2:
 # 2026-06-06  3.2.1    mrosiere Rename LED
 #                               Add name
 # 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
+# 2026-08-01  3.2.3    mrosiere Use GPIO_irq instead of GPIO
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.2.2
-description : SoC with OpenBlaze8, switch, led, UART, SPI, GIC, Timer, RAM and CRC
+name        : asylum:soc:PicoSoC:3.2.3
+description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
 generate:
