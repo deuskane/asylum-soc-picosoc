@@ -25,6 +25,7 @@ use     ieee.numeric_std.all;
 use     std.textio.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.gpio_irq_csr_pkg.all;
 library work;
 
 library uvvm_util;
@@ -135,7 +136,9 @@ architecture tb of tb_PicoSoC_modbus_rtu is
 
   -- =====[ SOC ADDRMAP ]=========================
   constant C_SWITCH_BA             : std_logic_vector(8-1 downto 0) := PICOSOC_USER_SWITCH_BA;
+  constant C_SWITCH_DATA           : std_logic_vector(8-1 downto 0) := std_logic_vector(unsigned(PICOSOC_USER_SWITCH_BA) + resize(GPIO_IRQ_DATA, 8));
   constant C_LED0_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_LED0_BA  ;
+  constant C_LED0_DATA             : std_logic_vector(8-1 downto 0) := std_logic_vector(unsigned(PICOSOC_USER_LED0_BA  ) + resize(GPIO_IRQ_DATA, 8));
   constant C_LED1_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_LED1_BA  ;
   constant C_UART_BA               : std_logic_vector(8-1 downto 0) := PICOSOC_USER_UART_BA  ;
   constant C_SPI_BA                : std_logic_vector(8-1 downto 0) := PICOSOC_USER_SPI_BA   ;
@@ -399,49 +402,49 @@ begin  -- architecture tb
           
       -- Write LED0 and check if led switch have the expected value
       wait for 35 us;
-      modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
+      modbus_write(C_LED0_DATA  ,x"21",        "Write LED0 Data <= 0x21");
       await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
 
       -- Read LED0 and check if it's the expected value
       wait for 35 us;
-      modbus_read (C_LED0_BA  ,(0 => x"21"), "Read  LED0 Data");
+      modbus_read (C_LED0_DATA  ,(0 => x"21"), "Read  LED0 Data");
 
       -- Change Switch and check if it's the expected value
       wait for 35 us;
       switch_i <= x"5A";
-      modbus_read (C_SWITCH_BA,(0 => x"5A"), "Read  SWITCH Data");
+      modbus_read (C_SWITCH_DATA,(0 => x"5A"), "Read  SWITCH Data");
 
       -- Change Switch and check if it's the expected value
       wait for 35 us;
       switch_i <= x"3C";
-      modbus_read (C_SWITCH_BA,(0 => x"3C"), "Read  SWITCH Data");
+      modbus_read (C_SWITCH_DATA,(0 => x"3C"), "Read  SWITCH Data");
 
       -- Change Switch and check if it's the expected value
       wait for 35 us;
       switch_i <= x"1E";
-      modbus_read (C_SWITCH_BA,(0 => x"1E"), "Read  SWITCH Data");
+      modbus_read (C_SWITCH_DATA,(0 => x"1E"), "Read  SWITCH Data");
 
       -- Write LED0 with another ID and check that the LED0 don't change
       wait for 35 us;
-      modbus_write(C_LED0_BA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
+      modbus_write(C_LED0_DATA  ,x"23",        "Write LED0 Data <= 0x23, with another ID"
                    ,id => not C_MODBUS_SLAVE_ID
                    );
       await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
       
       wait for 35 us;
-      modbus_read (C_LED0_BA  ,(0 => x"21",
+      modbus_read (C_LED0_DATA  ,(0 => x"21",
                                 1 => x"FF"), "Read  LED0 Data & OE");
       await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
       
       -- Write LED0 with broadcast Address and check that the LED0 change
       wait for 35 us;
-      modbus_write(C_LED0_BA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
+      modbus_write(C_LED0_DATA  ,x"15",        "Write LED0 Data <= 0x15, with broadcast address"
                    ,id => x"00"
                    );
       await_value (led_switch, x"15", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x15", C_SCOPE);
 
       wait for 35 us;
-      modbus_read (C_LED0_BA  ,(0 => x"15"), "Read  LED0 Data");
+      modbus_read (C_LED0_DATA  ,(0 => x"15"), "Read  LED0 Data");
     end if;
       
     -- Check ERROR
@@ -455,7 +458,7 @@ begin  -- architecture tb
 
         wait for C_RESET_LATENCY;
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"DE",        "Write LED0 Data <= 0xDE"
+        modbus_write(C_LED0_DATA  ,x"DE",        "Write LED0 Data <= 0xDE"
                      );
         await_value (led_switch, x"DE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xDE", C_SCOPE);
 
@@ -468,7 +471,7 @@ begin  -- architecture tb
 
         wait for C_RESET_LATENCY;
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"AD",        "Write LED0 Data <= 0xAD"
+        modbus_write(C_LED0_DATA  ,x"AD",        "Write LED0 Data <= 0xAD"
                      );
         await_value (led_switch, x"AD", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xAD", C_SCOPE);
 
@@ -489,7 +492,7 @@ begin  -- architecture tb
         wait for C_RESET_LATENCY;
 
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"CA",        "Write LED0 Data <= 0xCA");
+        modbus_write(C_LED0_DATA  ,x"CA",        "Write LED0 Data <= 0xCA");
         await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU0", C_SCOPE);
@@ -500,7 +503,7 @@ begin  -- architecture tb
         await_value (led_switch, x"CA", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xCA (CPU0)", C_SCOPE);
 
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"FE",        "Write LED0 Data <= 0xFE");
+        modbus_write(C_LED0_DATA  ,x"FE",        "Write LED0 Data <= 0xFE");
         await_value (led_switch, x"FE", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xFE", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU1", C_SCOPE);
@@ -513,7 +516,7 @@ begin  -- architecture tb
         wait for C_RESET_LATENCY;
 
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"ED",        "Write LED0 Data <= 0xED");
+        modbus_write(C_LED0_DATA  ,x"ED",        "Write LED0 Data <= 0xED");
         await_value (led_switch, x"ED", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0xED", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU2", C_SCOPE);
@@ -533,7 +536,7 @@ begin  -- architecture tb
         wait for C_RESET_LATENCY;
 
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"21",        "Write LED0 Data <= 0x21");
+        modbus_write(C_LED0_DATA  ,x"21",        "Write LED0 Data <= 0x21");
         await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU1", C_SCOPE);
@@ -544,7 +547,7 @@ begin  -- architecture tb
         await_value (led_switch, x"21", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x21 (CPU1)", C_SCOPE);
 
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,x"04",        "Write LED0 Data <= 0x04");
+        modbus_write(C_LED0_DATA  ,x"04",        "Write LED0 Data <= 0x04");
         await_value (led_switch, x"04", 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x04", C_SCOPE);
 
         log(NO_ID, "Inject error in CPU2", C_SCOPE);
@@ -567,9 +570,9 @@ begin  -- architecture tb
         switch_i    <= x"00";
         switch_i(i) <= '1';
         wait for 35 us;
-        modbus_read (C_SWITCH_BA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
+        modbus_read (C_SWITCH_DATA,(0 => switch_i), "Read  SWITCH Data - 0x" & to_hstring(switch_i));
         wait for 35 us;
-        modbus_write(C_LED0_BA  ,switch_i       , "Write LED0 Data - 0x" & to_hstring(switch_i));
+        modbus_write(C_LED0_DATA  ,switch_i       , "Write LED0 Data - 0x" & to_hstring(switch_i));
         await_value (led_switch, switch_i, 0 ns, C_CLK_PERIOD, ERROR, "LED0 <= 0x" & to_hstring(switch_i), C_SCOPE);
 
       end loop;  -- i
