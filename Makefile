@@ -34,9 +34,9 @@ VLNV             = $(IP_VENDOR):$(IP_LIBRARY):$(IP_NAME):$(IP_VERSION)
 
 TARGETS_FILTER  ?= .
 
-TARGETS_SIM     := $(shell grep sim_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
-TARGETS_EMU     := $(shell grep emu_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
-TARGETS_LINT    := $(shell grep lint_ $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
+TARGETS_SIM     := $(shell grep -e ^sim_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
+TARGETS_EMU     := $(shell grep -e ^emu_  $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
+TARGETS_LINT    := $(shell grep -e ^lint_ $(FILE_TARGETS) | grep -e $(TARGETS_FILTER) | cut -d ':' -f1 | tr -d ' ')
 
 PATH_BUILD      ?= $(CURDIR)/build
 
