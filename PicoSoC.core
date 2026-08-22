@@ -56,11 +56,12 @@ CAPI=2:
 # 2026-06-05  3.2.0    mrosiere Use ICN with NB_MASTER
 # 2026-06-06  3.2.1    mrosiere Rename LED
 #                               Add name
-# 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
+# 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
 # 2026-08-01  3.2.3    mrosiere Use GPIO_irq instead of GPIO
+# 2026-08-22  3.3.0    mrosiere Update SPI controller
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.2.3
+name        : asylum:soc:PicoSoC:3.3.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -395,6 +396,8 @@ filesets:
       - sim/tb_PicoSoC.vhd
       - sim/tb_PicoSoC_modbus_rtu.vhd
       - sim/tb_PicoSoC_run.vhd
+      - sim/mem/memory.mem         : {file_type : user, copyto : memory.mem   }
+      - sim/mem/memoryOTP.mem      : {file_type : user, copyto : memoryOTP.mem}
     file_type : vhdlSource
     depend :
       - fmf:memory:flash_nor

@@ -232,6 +232,11 @@ architecture rtl of PicoSoC_user is
   signal   timer_clear                : std_logic;
   signal   timer_it                   : std_logic;
   
+  -- SPI
+  signal   spi_io_o                   : std_logic_vector(8-1 downto 0);
+  signal   spi_io_i                   : std_logic_vector(8-1 downto 0);
+  signal   spi_io_oe_o                : std_logic_vector(8-1 downto 0);
+
   -- Signals Safety
 begin  -- architecture rtl
 
@@ -519,7 +524,8 @@ begin  -- architecture rtl
     ,PRESCALER_RATIO      => x"00"
     ,DEPTH_CMD            => SPI_DEPTH_CMD
     ,DEPTH_TX             => SPI_DEPTH_TX 
-    ,DEPTH_RX             => SPI_DEPTH_RX 
+    ,DEPTH_RX             => SPI_DEPTH_RX
+    ,HANDLE_HOLD_WP       => true
      )
     port map
     (clk_i                => clk           
@@ -530,10 +536,14 @@ begin  -- architecture rtl
     ,sclk_oe_o            => open
     ,cs_b_o               => spi_cs_b_o   
     ,cs_b_oe_o            => open
-    ,mosi_o               => spi_mosi_o   
-    ,mosi_oe_o            => open
-    ,miso_i               => spi_miso_i   
+    ,io_o                 => spi_io_o
+    ,io_i                 => spi_io_i
+    ,io_oe_o              => spi_io_oe_o
      );
+
+    spi_mosi_o  <= spi_io_o(SPI_IO_MOSI);
+    spi_io_i    <= (SPI_IO_MISO => spi_miso_i,
+                    others      => '0');
 
   -----------------------------------------------------------------------------
   -- Timer

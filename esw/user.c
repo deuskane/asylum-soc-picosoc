@@ -112,7 +112,7 @@ void spi_sfdp()
 {
   // Execute instruction SFDP with @0 and get 4 bytes
   spi_inst24(SPI,SPI_SFDP,0x000000,SPI_CONTINUE);
-  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,4-1);
+  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,SPI_CMD_SIZE_SINGLE,4-1);
 
   // SFDP_HEADER[0] : SFDP Signature
   putchar(spi_rx(SPI)); // 7:0
@@ -134,7 +134,7 @@ void spi_wait_device_ready()
   do
     {
       spi_inst  (SPI,SPI_READ_SR1,SPI_CONTINUE);
-      spi_cmd   (SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,1-1);
+      spi_cmd   (SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_LAST,SPI_CMD_SIZE_SINGLE,1-1);
       byte = spi_rx(SPI);     
     }
   while((byte&0x01)==0x01);
@@ -150,7 +150,8 @@ void spi_write()
 {
   spi_inst  (SPI,SPI_WRITE_ENABLE,SPI_LAST);
   spi_inst24(SPI,SPI_PAGE_PROGRAM,0x000000,SPI_CONTINUE);
-  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_DISABLE,SPI_LAST,14-1);
+  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_DISABLE,SPI_CONTINUE,SPI_CMD_SIZE_SINGLE,4-1);
+  spi_cmd2(SPI,SPI_LAST,10-1);
   spi_tx (SPI,'H');
   spi_tx (SPI,'e');
   spi_tx (SPI,'l');
@@ -182,13 +183,13 @@ void spi_read()
 
   do
     {
-      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,1-1);
+      spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,SPI_CMD_SIZE_SINGLE,1-1);
       rx = spi_rx(SPI);
       putchar(rx);
     }
   while (rx != '\0');
 
-  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_DISABLE,SPI_LAST,1-1);
+  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_DISABLE,SPI_LAST,SPI_CMD_SIZE_SINGLE,1-1);
         
   putchar('\r');
   putchar('\n');
@@ -293,9 +294,9 @@ void main()
 	  // ... if spi memory, read 1 byte from memory
 	  // ... if no spi memory, write cpt_byte0 and read with spi loopback
 #ifdef HAVE_SPI_MEMORY
-	  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,0);
+	  spi_cmd(SPI,SPI_TX_DISABLE,SPI_RX_ENABLE,SPI_CONTINUE,SPI_CMD_SIZE_SINGLE,0);
 #else
-	  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,0);
+	  spi_cmd(SPI,SPI_TX_ENABLE,SPI_RX_ENABLE,SPI_LAST,SPI_CMD_SIZE_SINGLE,0);
 	  spi_tx (SPI,cpt_byte0);
 #endif       
 

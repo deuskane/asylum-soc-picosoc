@@ -41,24 +41,35 @@
 #define spi_setup(_BA_,_CPOL_,_CPHA_,_LOOPBACK_) \
   do { \
   PORT_WR(_BA_   ,SPI_CFG     ,(0 \
-                             | ((_LOOPBACK_)<<3) \
-                             | ((_CPHA_    )<<2) \
-                             | ((_CPOL_    )<<1) \
-                             | (0           <<0))); \
+                             | ((_LOOPBACK_)<<SPI_CFG_LOOPBACK  ) \
+                             | ((_CPHA_    )<<SPI_CFG_CPHA      ) \
+                             | ((_CPOL_    )<<SPI_CFG_CPOL      ) \
+                             | (0           <<SPI_CFG_SPI_ENABLE))); \
   PORT_WR(_BA_  ,SPI_CFG     ,(0 \
-                             | ((_LOOPBACK_)<<3) \
-                             | ((_CPHA_    )<<2) \
-                             | ((_CPOL_    )<<1) \
-                             | (1           <<0))); \
+                             | ((_LOOPBACK_)<<SPI_CFG_LOOPBACK  ) \
+                             | ((_CPHA_    )<<SPI_CFG_CPHA      ) \
+                             | ((_CPOL_    )<<SPI_CFG_CPOL      ) \
+                             | (1           <<SPI_CFG_SPI_ENABLE))); \
   } while (0)
 
-#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_)		\
+#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_SIZE_,_LEN_)		\
   do { \
   PORT_WR(_BA_    ,SPI_CMD ,(0 \
-			    | ((_TX_  )<<7)\
-			    | ((_RX_  )<<6)\
-			    | ((_LAST_)<<5)\
-			    | ((_LEN_ )<<0)\
+			    | ((_TX_  )<<SPI_CMD_ENABLE_TX)\
+			    | ((_RX_  )<<SPI_CMD_ENABLE_RX)\
+			    | ((_LAST_)<<SPI_CMD_LAST     )\
+          | ((_SIZE_)<<SPI_CMD_SIZE     )\
+			    | ((_LEN_ )<<SPI_CMD_NB_BYTES )\
+          | SPI_CMD_CFG_CONFIG_RAW \
+			    ));\
+  } while (0)
+
+#define spi_cmd2(_BA_,_LAST_,_LEN_)		\
+  do { \
+  PORT_WR(_BA_    ,SPI_CMD ,(0 \
+			    | ((_LAST_)<<SPI_CMD_LAST     )\
+ 			    | ((_LEN_ )<<SPI_CMD_NB_BYTES )\
+          | SPI_CMD_CFG_KEEP_RAW \
 			    ));\
   } while (0)
 
@@ -67,13 +78,13 @@
 
 #define spi_inst(_BA_,_INSTRUCTION_,_LAST_) \
   do { \
-  spi_cmd(_BA_,1,0,_LAST_,0);\
+  spi_cmd(_BA_,1,0,_LAST_,SPI_CMD_SIZE_SINGLE,0);\
   spi_tx(_BA_ ,_INSTRUCTION_);\
   } while (0)
 
 #define spi_inst24(_BA_,_INSTRUCTION_,_ADDR_,_LAST_) \
   do { \
-  spi_cmd(_BA_,1,0,_LAST_,3);\
+  spi_cmd(_BA_,1,0,_LAST_,SPI_CMD_SIZE_SINGLE,3);\
   spi_tx(_BA_ ,_INSTRUCTION_);\
   spi_tx(_BA_ ,_ADDR_>>16);\
   spi_tx(_BA_ ,_ADDR_>>8);\
@@ -84,10 +95,11 @@
 #else
 
 #define spi_setup(_BA_,_CPOL_,_CPHA_,_LOOPBACK_)     do {} while (0)
-#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_)	     do {} while (0)
+#define spi_cmd(_BA_,_TX_,_RX_,_LAST_,_LEN_,_SIZE_)  do {} while (0)
+#define spi_cmd2(_BA_,_LAST_,_LEN_)                  do {} while (0)
 #define spi_inst(_BA_,_INSTRUCTION_,_LAST_)          do {} while (0)
 #define spi_inst24(_BA_,_INSTRUCTION_,_ADDR_,_LAST_) do {} while (0)
-#define spi_tx(_BA_,_DATA_)	                     do {} while (0)
+#define spi_tx(_BA_,_DATA_)	                         do {} while (0)
 #define spi_rx(_BA_) 0
 
 #endif
