@@ -882,7 +882,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=20000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_openblaze8_c_identity:
@@ -908,7 +908,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=20000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user:
@@ -934,7 +934,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=20000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart:
@@ -960,7 +960,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart_spi:
@@ -986,7 +986,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart_spi_mem:
@@ -1012,7 +1012,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=true
+      - SPI_MODEL=m25p40
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_modbus_rtu:
@@ -1064,7 +1064,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -1090,7 +1090,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_modbus_rtu:
@@ -1142,7 +1142,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc3_openblaze8_c_user_modbus_rtu:
@@ -1194,7 +1194,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc3_openblaze8_fault_c_user_modbus_rtu:
@@ -1246,7 +1246,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc4_openblaze8_fault_c_user_uart:
@@ -1272,7 +1272,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc4_openblaze8_fault_c_user_modbus_rtu:
@@ -1727,7 +1727,7 @@ targets:
 #
 #      # Test Bench Configuration
 #      - TB_WATCHDOG=20000
-#      - HAVE_SPI_MEMORY=False
+#      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_identity:
@@ -1753,7 +1753,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=20000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_identity:
@@ -1779,7 +1779,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=20000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart:
@@ -1805,7 +1805,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart_spi:
@@ -1831,7 +1831,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart_spi_mem:
@@ -1857,7 +1857,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=true
+      - SPI_MODEL=m25p40
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_modbus_rtu:
@@ -1913,7 +1913,7 @@ targets:
       # Test Bench Configuration
       - TEST_SUITE=none
       - TB_WATCHDOG=500000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1x4_wardrv_fsm_c_hello_uart:
@@ -1942,7 +1942,7 @@ targets:
       # Test Bench Configuration
       - TEST_SUITE=none
       - TB_WATCHDOG=500000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc1x6_wardrv_fsm_c_hello_uart:
@@ -1971,7 +1971,7 @@ targets:
       # Test Bench Configuration
       - TEST_SUITE=none
       - TB_WATCHDOG=500000
-      - HAVE_SPI_MEMORY=False
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user:
@@ -1997,7 +1997,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user_uart:
@@ -2023,7 +2023,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user_modbus_rtu:
@@ -2075,7 +2075,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_c_user_modbus_rtu:
@@ -2127,7 +2127,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu:
@@ -2179,7 +2179,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user_uart:
@@ -2205,7 +2205,7 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-      - HAVE_SPI_MEMORY=false
+      - SPI_MODEL=none
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu:
@@ -2351,6 +2351,18 @@ parameters :
     default     : false
     paramtype   : generic
 
+  CPU_MODEL :
+    description : CPU Model (OpenBlaze8 / WardRV_fsm)
+    datatype    : str
+    default     : OpenBlaze8
+    paramtype   : generic
+
+  SPI_MODEL :
+    description : SPI Model (m25p40 / s25fl512s)
+    datatype    : str
+    default     : m25p40
+    paramtype   : generic
+
   TB_WATCHDOG :
     description : Testbench Watchdog
     datatype    : int
@@ -2369,8 +2381,3 @@ parameters :
     default     : default
     paramtype   : generic
 
-  CPU_MODEL :
-    description : CPU Model (OpenBlaze8 / WardRV_fsm)
-    datatype    : str
-    default     : OpenBlaze8
-    paramtype   : generic

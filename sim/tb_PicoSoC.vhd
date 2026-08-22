@@ -26,6 +26,7 @@ use     ieee.numeric_std.all;
 use     std.textio.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.spi_pkg.all;
 library work;
   
 entity tb_PicoSoC is
@@ -52,9 +53,10 @@ entity tb_PicoSoC is
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
-    ;TEST_SUITE            : string   := "default" -- "default"/"none" 
+    ;TEST_SUITE            : string   := "default"   -- "default"/"none" 
     ;TB_WATCHDOG           : natural  := 10_000
-    ;HAVE_SPI_MEMORY       : boolean  := False
+    ;SPI_MODEL             : string   := "none"      -- "none" / "m25p40" / "s25fl512s"
+
      );
   
 end entity tb_PicoSoC;
@@ -86,6 +88,10 @@ architecture tb of tb_PicoSoC is
   signal  spi_cs_b_o               : std_logic;
   signal  spi_mosi_o               : std_logic;
   signal  spi_miso_i               : std_logic;
+  signal  spi_io_o                 : std_logic_vector(             8-1 downto 0);
+  signal  spi_io_i                 : std_logic_vector(             8-1 downto 0);
+  signal  spi_io_oe_o              : std_logic_vector(             8-1 downto 0);
+
 
   signal  RSTNeg                   : std_logic;
   signal  WPNeg                    : std_logic;
@@ -173,13 +179,17 @@ begin  -- architecture tb
     ,uart_rts_b_o     => open
     ,spi_sclk_o       => spi_sclk_o 
     ,spi_cs_b_o       => spi_cs_b_o 
-    ,spi_mosi_o       => spi_mosi_o 
-    ,spi_miso_i       => spi_miso_i
+    ,spi_io_i         => spi_io_i
+    ,spi_io_o         => spi_io_o
+    ,spi_io_oe_o      => spi_io_oe_o
     ,debug_mux_i      => "000"
     ,debug_o          => open 
     ,debug_uart_tx_o  => open
     );
 
+  spi_mosi_o  <= spi_io_o(SPI_IO_MOSI);
+  spi_io_i    <= (SPI_IO_MISO => spi_miso_i,
+                  others      => '0');
   -----------------------------------------------------------------------------
   -- Clock Tree
   -----------------------------------------------------------------------------
@@ -191,7 +201,7 @@ begin  -- architecture tb
   RSTNeg  <= '1';
   WPNeg   <= '1';
   HOLDNeg <= '1';
-  SNeg    <= spi_cs_b_o when HAVE_SPI_MEMORY = true else
+  SNeg    <= spi_cs_b_o when SPI_MODEL /= "none" else
              '1';
   
   mem : entity work.m25p40(vhdl_behavioral)
@@ -248,7 +258,7 @@ begin  -- architecture tb
       report "[TESTBENCH] Reset Sequence"; 
       arst_b_i       <= '0';
 
-      if HAVE_SPI_MEMORY = true
+      if SPI_MODEL /= "none"
       then
         wait for 10 ms;
       end if;
