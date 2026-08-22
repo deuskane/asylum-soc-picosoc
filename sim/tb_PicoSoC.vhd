@@ -32,6 +32,7 @@ entity tb_PicoSoC is
   generic
     (FSYS                  : positive := 50_000_000
     ;FSYS_INT              : positive := 50_000_000
+    ;USER_NB_CPU           : positive := 1
     ;USER_BAUD_RATE        : integer  := 115200
   --;USER_UART_DEPTH_TX    : natural  := 0
   --;USER_UART_DEPTH_RX    : natural  := 0
@@ -51,6 +52,7 @@ entity tb_PicoSoC is
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
+    ;TEST_SUITE            : string   := "default" -- "default"/"none" 
     ;TB_WATCHDOG           : natural  := 10_000
     ;HAVE_SPI_MEMORY       : boolean  := False
      );
@@ -143,6 +145,7 @@ begin  -- architecture tb
     generic map
     (FSYS                  => FSYS            
     ,FSYS_INT              => FSYS_INT        
+    ,USER_NB_CPU           => USER_NB_CPU
     ,USER_BAUD_RATE        => USER_BAUD_RATE
     ,USER_NB_SWITCH        => USER_NB_SWITCH       
     ,USER_NB_LED0          => USER_NB_LED0        
@@ -221,6 +224,8 @@ begin  -- architecture tb
     end loop;
 
     wait for TB_WATCHDOG_TIME;
+
+    run(1);
     
     assert (test_done = '1') report "[TESTBENCH] Test KO : Maximum cycle is reached" severity failure;
 
@@ -252,145 +257,156 @@ begin  -- architecture tb
 
       test_begin     <= '1';
       arst_b_i       <= '1';
-      
-      report "[TESTBENCH] Change Switch" ;
-      switch_i       <= (others => '0');
-      for i in USER_NB_SWITCH-1 downto 0 loop
-        report "[TESTBENCH]   Switch " & integer'image(i);
-        switch_i(i)    <= '1';
-        wait until (led_switch = switch_i) ;
-        
-      end loop;  -- i
 
-      report "[TESTBENCH] User Interruption" ;
-      run(1,"neg");
-      it_user_i        <= '1';
-      run(1,"neg");
-      it_user_i        <= '0';
-      run(1000);
-
-      run(1,"neg");
-      it_user_i        <= '1';
-      run(100);
-      run(1,"neg");
-      it_user_i        <= '0';
-      run(1000);
-      
-      if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="lock-step")
+      if TEST_SUITE = "default"
       then
-        report "[TESTBENCH] Inject error (lock-step)" ;
-        assert led_diff = "000" report "Bad value of led_diff" severity failure;
+      
+        report "[TESTBENCH] Change Switch" ;
+        switch_i       <= (others => '0');
+        for i in USER_NB_SWITCH-1 downto 0 loop
+          report "[TESTBENCH]   Switch " & integer'image(i);
+          switch_i(i)    <= '1';
+          wait until (led_switch = switch_i) ;
+          
+        end loop;  -- i
+  
+        report "[TESTBENCH] User Interruption" ;
+        run(1,"neg");
+        it_user_i        <= '1';
+        run(1,"neg");
+        it_user_i        <= '0';
+        run(1000);
+  
+        run(1,"neg");
+        it_user_i        <= '1';
+        run(100);
+        run(1,"neg");
+        it_user_i        <= '0';
+        run(1000);
         
-        report "[TESTBENCH] Inject error in CPU0" ;
-        inject_error_i(0) <= '1';
-        run(100);
-        inject_error_i(0) <= '0';
-
-        while (not (led_switch /= switch_i))
-        loop
-          run(1);
-        end loop;
-        while (not (led_switch  = switch_i))
-        loop
-          run(1);
-        end loop;
-
-        report "[TESTBENCH] Inject error in CPU1" ;
-        inject_error_i(1) <= '1';
-        run(100);
-        inject_error_i(1) <= '0';
-
-        while (not (led_switch /= switch_i))
-        loop
-          run(1);
-        end loop;
-        while (not (led_switch  = switch_i))
-        loop
-          run(1);
-        end loop;
-
-        report "[TESTBENCH] Inject error in CPU0 in continue" ;
-        inject_error_i(1) <= '1';
-        run(100);
-        inject_error_i(1) <= '0';
+        if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="lock-step")
+        then
+          report "[TESTBENCH] Inject error (lock-step)" ;
+          assert led_diff = "000" report "Bad value of led_diff" severity failure;
+          
+          report "[TESTBENCH] Inject error in CPU0" ;
+          inject_error_i(0) <= '1';
+          run(100);
+          inject_error_i(0) <= '0';
+  
+          while (not (led_switch /= switch_i))
+          loop
+            run(1);
+          end loop;
+          while (not (led_switch  = switch_i))
+          loop
+            run(1);
+          end loop;
+  
+          report "[TESTBENCH] Inject error in CPU1" ;
+          inject_error_i(1) <= '1';
+          run(100);
+          inject_error_i(1) <= '0';
+  
+          while (not (led_switch /= switch_i))
+          loop
+            run(1);
+          end loop;
+          while (not (led_switch  = switch_i))
+          loop
+            run(1);
+          end loop;
+  
+          report "[TESTBENCH] Inject error in CPU0 in continue" ;
+          inject_error_i(1) <= '1';
+          run(100);
+          inject_error_i(1) <= '0';
+  
+        end if;
+  
+        if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="tmr")
+        then
+          report "[TESTBENCH] Inject error (TMR)" ;
+          assert led_diff = "000" report "Bad value of led_diff" severity failure;
+          
+          report "[TESTBENCH] Inject error in CPU0" ;
+          inject_error_i(0) <= '1';
+          run(100);
+          inject_error_i(0) <= '0';
+  
+          run(100);
+          assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
+          assert led_diff    = "000"    report "Bad value of led_diff"   severity failure;
+  
+          report "[TESTBENCH] Inject error in CPU1" ;
+          inject_error_i(1) <= '1';
+          run(100);
+          inject_error_i(1) <= '0';
+  
+          while (not (led_switch /= switch_i))
+          loop
+            run(1);
+          end loop;
+          while (not (led_switch  = switch_i))
+          loop
+            run(1);
+          end loop;
+  
+          assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
+          assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
+  
+          report "[TESTBENCH] Inject error in CPU2" ;
+          inject_error_i(2) <= '1';
+          run(100);
+          inject_error_i(2) <= '0';
+  
+          run(100);
+          assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
+          assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
+  
+          report "[TESTBENCH] Inject error in CPU2" ;
+          inject_error_i(2) <= '1';
+          run(100);
+          inject_error_i(2) <= '0';
+  
+          run(100);
+          assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
+          assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
+          
+          report "[TESTBENCH] Inject error in CPU1" ;
+          inject_error_i(1) <= '1';
+          run(100);
+          inject_error_i(1) <= '0';
+  
+          while (not (led_switch /= switch_i))
+          loop
+            run(1);
+          end loop;
+          while (not (led_switch  = switch_i))
+          loop
+            run(1);
+          end loop;
+  
+          assert led_diff    = "010"    report "Bad value of led_diff"   severity failure;
+          
+          report "[TESTBENCH] Inject error in CPU0 in continue" ;
+          inject_error_i(1) <= '1';
+          run(100);
+          inject_error_i(1) <= '0';
+  
+          assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
+          assert led_diff    = "010"    report "Bad value of led_diff"   severity failure;
+  
+        end if;
+      end if;
+        
+      if TEST_SUITE = "none"
+      then
+        -- just run
+        wait for TB_WATCHDOG_TIME;
 
       end if;
 
-      if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="tmr")
-      then
-        report "[TESTBENCH] Inject error (TMR)" ;
-        assert led_diff = "000" report "Bad value of led_diff" severity failure;
-        
-        report "[TESTBENCH] Inject error in CPU0" ;
-        inject_error_i(0) <= '1';
-        run(100);
-        inject_error_i(0) <= '0';
-
-        run(100);
-        assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
-        assert led_diff    = "000"    report "Bad value of led_diff"   severity failure;
-
-        report "[TESTBENCH] Inject error in CPU1" ;
-        inject_error_i(1) <= '1';
-        run(100);
-        inject_error_i(1) <= '0';
-
-        while (not (led_switch /= switch_i))
-        loop
-          run(1);
-        end loop;
-        while (not (led_switch  = switch_i))
-        loop
-          run(1);
-        end loop;
-
-        assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
-        assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
-
-        report "[TESTBENCH] Inject error in CPU2" ;
-        inject_error_i(2) <= '1';
-        run(100);
-        inject_error_i(2) <= '0';
-
-        run(100);
-        assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
-        assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
-
-        report "[TESTBENCH] Inject error in CPU2" ;
-        inject_error_i(2) <= '1';
-        run(100);
-        inject_error_i(2) <= '0';
-
-        run(100);
-        assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
-        assert led_diff    = "001"    report "Bad value of led_diff"   severity failure;
-        
-        report "[TESTBENCH] Inject error in CPU1" ;
-        inject_error_i(1) <= '1';
-        run(100);
-        inject_error_i(1) <= '0';
-
-        while (not (led_switch /= switch_i))
-        loop
-          run(1);
-        end loop;
-        while (not (led_switch  = switch_i))
-        loop
-          run(1);
-        end loop;
-
-        assert led_diff    = "010"    report "Bad value of led_diff"   severity failure;
-        
-        report "[TESTBENCH] Inject error in CPU0 in continue" ;
-        inject_error_i(1) <= '1';
-        run(100);
-        inject_error_i(1) <= '0';
-
-        assert led_switch  = switch_i report "Bad value of led_switch" severity failure;
-        assert led_diff    = "010"    report "Bad value of led_diff"   severity failure;
-
-      end if;
-        
       report "[TESTBENCH] Test OK";
       test_done <= '1';
       wait;

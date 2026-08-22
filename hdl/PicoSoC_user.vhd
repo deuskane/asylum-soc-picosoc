@@ -109,8 +109,9 @@ entity PicoSoC_user is
     -- SPI Interface
     ;spi_sclk_o            : out std_logic
     ;spi_cs_b_o            : out std_logic
-    ;spi_mosi_o            : out std_logic
-    ;spi_miso_i            : in  std_logic
+    ;spi_io_o              : out std_logic_vector(        8-1 downto 0)
+    ;spi_io_i              : in  std_logic_vector(        8-1 downto 0)
+    ;spi_io_oe_o           : out std_logic_vector(        8-1 downto 0)
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
@@ -232,11 +233,6 @@ architecture rtl of PicoSoC_user is
   signal   timer_clear                : std_logic;
   signal   timer_it                   : std_logic;
   
-  -- SPI
-  signal   spi_io_o                   : std_logic_vector(8-1 downto 0);
-  signal   spi_io_i                   : std_logic_vector(8-1 downto 0);
-  signal   spi_io_oe_o                : std_logic_vector(8-1 downto 0);
-
   -- Signals Safety
 begin  -- architecture rtl
 
@@ -540,10 +536,6 @@ begin  -- architecture rtl
     ,io_i                 => spi_io_i
     ,io_oe_o              => spi_io_oe_o
      );
-
-    spi_mosi_o  <= spi_io_o(SPI_IO_MOSI);
-    spi_io_i    <= (SPI_IO_MISO => spi_miso_i,
-                    others      => '0');
 
   -----------------------------------------------------------------------------
   -- Timer

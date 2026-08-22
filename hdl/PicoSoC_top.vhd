@@ -27,6 +27,7 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
+use     asylum.spi_pkg.all;
 
 entity PicoSoC_top is
   generic
@@ -128,6 +129,11 @@ architecture rtl of PicoSoC_top is
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
   
+  -- SPI
+  signal   spi_io_o                     : std_logic_vector(8-1 downto 0);
+  signal   spi_io_i                     : std_logic_vector(8-1 downto 0);
+  signal   spi_io_oe_o                  : std_logic_vector(8-1 downto 0);
+
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
@@ -243,10 +249,15 @@ begin  -- architecture rtl
     ,debug_o              => debug_user
     ,spi_sclk_o           => spi_sclk_o 
     ,spi_cs_b_o           => spi_cs_b_o 
-    ,spi_mosi_o           => spi_mosi_o 
-    ,spi_miso_i           => spi_miso_i 
+    ,spi_io_i             => spi_io_i
+    ,spi_io_o             => spi_io_o
+    ,spi_io_oe_o          => spi_io_oe_o
     );
 
+  spi_mosi_o  <= spi_io_o(SPI_IO_MOSI);
+  spi_io_i    <= (SPI_IO_MISO => spi_miso_i,
+                  others      => '0');
+                    
   uart_tx_o    <= uart_tx   ;
   uart_rx      <= uart_rx_i ;
   uart_rts_b_o <= uart_rts_b;

@@ -247,8 +247,9 @@ component PicoSoC_user is
     -- SPI Interface
     ;spi_sclk_o            : out std_logic
     ;spi_cs_b_o            : out std_logic
-    ;spi_mosi_o            : out std_logic
-    ;spi_miso_i            : in  std_logic
+    ;spi_io_o              : out std_logic_vector(        8-1 downto 0)
+    ;spi_io_i              : in  std_logic_vector(        8-1 downto 0)
+    ;spi_io_oe_o           : out std_logic_vector(        8-1 downto 0)
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)

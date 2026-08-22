@@ -395,7 +395,6 @@ filesets:
     files:
       - sim/tb_PicoSoC.vhd
       - sim/tb_PicoSoC_modbus_rtu.vhd
-      - sim/tb_PicoSoC_run.vhd
       - sim/mem/memory.mem         : {file_type : user, copyto : memory.mem   }
       - sim/mem/memoryOTP.mem      : {file_type : user, copyto : memoryOTP.mem}
     file_type : vhdlSource
@@ -1893,7 +1892,7 @@ targets:
     << : *sim
     description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC_run
+    toplevel     : tb_PicoSoC
     parameters   :
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -1912,6 +1911,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
+      - TEST_SUITE=none
       - TB_WATCHDOG=500000
       - HAVE_SPI_MEMORY=False
 
@@ -1921,7 +1921,7 @@ targets:
     << : *sim
     description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC_run
+    toplevel     : tb_PicoSoC
     parameters   :
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -1940,6 +1940,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
+      - TEST_SUITE=none
       - TB_WATCHDOG=500000
       - HAVE_SPI_MEMORY=False
 
@@ -1949,7 +1950,7 @@ targets:
     << : *sim
     description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC_run
+    toplevel     : tb_PicoSoC
     parameters   :
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -1968,6 +1969,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
+      - TEST_SUITE=none
       - TB_WATCHDOG=500000
       - HAVE_SPI_MEMORY=False
 
@@ -2359,6 +2361,12 @@ parameters :
     description : The Testbench have an spi memory
     datatype    : bool
     default     : false
+    paramtype   : generic
+
+  TEST_SUITE :
+    description : Test Suite
+    datatype    : str
+    default     : default
     paramtype   : generic
 
   CPU_MODEL :
