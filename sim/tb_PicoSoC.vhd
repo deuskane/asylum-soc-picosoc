@@ -69,6 +69,7 @@ architecture tb of tb_PicoSoC is
   constant USER_NB_SWITCH          : positive :=  8;
   constant USER_NB_LED0            : positive :=  8;
   constant USER_NB_LED1            : positive :=  8;
+  constant USER_SPI_NB_IO          : positive :=  8;
 
   constant RESET_POLARITY          : string   := "low";  -- "high" / "low"
   constant USER_IT_POLARITY        : string   := "high"; -- "high" / "low"
@@ -88,9 +89,9 @@ architecture tb of tb_PicoSoC is
   signal  spi_cs_b_o               : std_logic;
   signal  spi_mosi_o               : std_logic;
   signal  spi_miso_i               : std_logic;
-  signal  spi_io_o                 : std_logic_vector(             8-1 downto 0);
-  signal  spi_io_i                 : std_logic_vector(             8-1 downto 0);
-  signal  spi_io_oe_o              : std_logic_vector(             8-1 downto 0);
+  signal  spi_io_o                 : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
+  signal  spi_io_i                 : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
+  signal  spi_io_oe_o              : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
 
 
   signal  RSTNeg                   : std_logic;
@@ -155,7 +156,8 @@ begin  -- architecture tb
     ,USER_BAUD_RATE        => USER_BAUD_RATE
     ,USER_NB_SWITCH        => USER_NB_SWITCH       
     ,USER_NB_LED0          => USER_NB_LED0        
-    ,USER_NB_LED1          => USER_NB_LED1        
+    ,USER_NB_LED1          => USER_NB_LED1   
+    ,USER_SPI_NB_IO        => USER_SPI_NB_IO     
     ,RESET_POLARITY        => RESET_POLARITY  
     ,SUPERVISOR            => SUPERVISOR      
     ,USER_SAFETY           => USER_SAFETY          

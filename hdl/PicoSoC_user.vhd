@@ -108,7 +108,9 @@ entity PicoSoC_user is
                           
     -- SPI Interface
     ;spi_sclk_o            : out std_logic
+    ;spi_sclk_oe_o         : out std_logic
     ;spi_cs_b_o            : out std_logic
+    ;spi_cs_b_oe_o         : out std_logic
     ;spi_io_o              : out std_logic_vector(        8-1 downto 0)
     ;spi_io_i              : in  std_logic_vector(        8-1 downto 0)
     ;spi_io_oe_o           : out std_logic_vector(        8-1 downto 0)
@@ -529,9 +531,9 @@ begin  -- architecture rtl
     ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_SPI)   
     ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_SPI)   
     ,sclk_o               => spi_sclk_o   
-    ,sclk_oe_o            => open
+    ,sclk_oe_o            => spi_sclk_oe_o
     ,cs_b_o               => spi_cs_b_o   
-    ,cs_b_oe_o            => open
+    ,cs_b_oe_o            => spi_cs_b_oe_o
     ,io_o                 => spi_io_o
     ,io_i                 => spi_io_i
     ,io_oe_o              => spi_io_oe_o

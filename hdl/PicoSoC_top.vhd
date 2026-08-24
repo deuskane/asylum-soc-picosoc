@@ -52,6 +52,7 @@ entity PicoSoC_top is
     ;USER_SPI_DEPTH_CMD          : natural  := 0
     ;USER_SPI_DEPTH_TX           : natural  := 0
     ;USER_SPI_DEPTH_RX           : natural  := 0
+    ;USER_SPI_NB_IO              : natural  := 8
     ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_LOCK_STEP_DEPTH        : natural  := 2
     ;USER_FAULT_INJECTION        : boolean  := True  
@@ -87,16 +88,16 @@ entity PicoSoC_top is
     -- SPI Interface
     ;spi_sclk_o       : out std_logic
     ;spi_cs_b_o       : out std_logic
-    ;spi_io_o         : out std_logic_vector(        8-1 downto 0)
-    ;spi_io_i         : in  std_logic_vector(        8-1 downto 0)
-    ;spi_io_oe_o      : out std_logic_vector(        8-1 downto 0)
+    ;spi_io_o         : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_io_i         : in  std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_io_oe_o      : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
      
     -- Error Injection Interface
-    ;inject_error_i   : in  std_logic_vector(        3-1 downto 0)
+    ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_mux_i      : in  std_logic_vector(        3-1 downto 0)
-    ;debug_o          : out std_logic_vector(        8-1 downto 0)
+    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
+    ;debug_o          : out std_logic_vector(             8-1 downto 0)
     ;debug_uart_tx_o  : out std_logic
      
     );
@@ -132,7 +133,11 @@ architecture rtl of PicoSoC_top is
   signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
-  
+
+  signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
+  signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
+  signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
+
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -243,12 +248,18 @@ begin  -- architecture rtl
     ,inject_error_i       => inject_error
     ,debug_o              => debug_user
     ,spi_sclk_o           => spi_sclk_o 
+    ,spi_sclk_oe_o        => open
     ,spi_cs_b_o           => spi_cs_b_o 
-    ,spi_io_i             => spi_io_i
-    ,spi_io_o             => spi_io_o
-    ,spi_io_oe_o          => spi_io_oe_o
+    ,spi_cs_b_oe_o        => open
+    ,spi_io_i             => spi_io_i_user
+    ,spi_io_o             => spi_io_o_user
+    ,spi_io_oe_o          => spi_io_oe_o_user
     );
-                   
+
+  spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
+  spi_io_oe_o  <= spi_io_oe_o_user(spi_io_oe_o'range);
+  spi_io_i_user<= std_logic_vector(resize(unsigned(spi_io_i),8));
+
   uart_tx_o    <= uart_tx   ;
   uart_rx      <= uart_rx_i ;
   uart_rts_b_o <= uart_rts_b;

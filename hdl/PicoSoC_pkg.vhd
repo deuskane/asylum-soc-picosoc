@@ -155,6 +155,7 @@ component PicoSoC_top is
     ;USER_SPI_DEPTH_CMD          : natural  := 0
     ;USER_SPI_DEPTH_TX           : natural  := 0
     ;USER_SPI_DEPTH_RX           : natural  := 0
+    ;USER_SPI_NB_IO              : natural  := 8
     ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_LOCK_STEP_DEPTH        : natural  := 2
     ;USER_FAULT_INJECTION        : boolean  := True  
@@ -190,16 +191,16 @@ component PicoSoC_top is
     -- SPI Interface
     ;spi_sclk_o       : out std_logic
     ;spi_cs_b_o       : out std_logic
-    ;spi_io_o         : out std_logic_vector(        8-1 downto 0)
-    ;spi_io_i         : in  std_logic_vector(        8-1 downto 0)
-    ;spi_io_oe_o      : out std_logic_vector(        8-1 downto 0)
+    ;spi_io_o         : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_io_i         : in  std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_io_oe_o      : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
      
     -- Error Injection Interface
-    ;inject_error_i   : in  std_logic_vector(        3-1 downto 0)
+    ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_mux_i      : in  std_logic_vector(        3-1 downto 0)
-    ;debug_o          : out std_logic_vector(        8-1 downto 0)
+    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
+    ;debug_o          : out std_logic_vector(             8-1 downto 0)
     ;debug_uart_tx_o  : out std_logic
      
     );
@@ -247,7 +248,9 @@ component PicoSoC_user is
                           
     -- SPI Interface
     ;spi_sclk_o            : out std_logic
+    ;spi_sclk_oe_o         : out std_logic
     ;spi_cs_b_o            : out std_logic
+    ;spi_cs_b_oe_o         : out std_logic
     ;spi_io_o              : out std_logic_vector(        8-1 downto 0)
     ;spi_io_i              : in  std_logic_vector(        8-1 downto 0)
     ;spi_io_oe_o           : out std_logic_vector(        8-1 downto 0)

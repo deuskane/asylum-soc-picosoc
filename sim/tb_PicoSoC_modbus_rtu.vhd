@@ -212,8 +212,9 @@ begin  -- architecture tb
     ,uart_rts_b_o     => open
     ,spi_sclk_o       => open
     ,spi_cs_b_o       => open
-    ,spi_mosi_o       => open
-    ,spi_miso_i       => '0'
+    ,spi_io_i         => x"00"
+    ,spi_io_o         => open
+    ,spi_io_oe_o      => open
     ,debug_mux_i      => "000"
     ,debug_o          => open 
     ,debug_uart_tx_o  => open
