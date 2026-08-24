@@ -189,11 +189,9 @@ component PicoSoC_top is
     ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
 
     -- SPI Interface
-    ;spi_sclk_o       : out std_logic
-    ;spi_cs_b_o       : out std_logic
-    ;spi_io_o         : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
-    ;spi_io_i         : in  std_logic_vector(USER_SPI_NB_IO-1 downto 0)
-    ;spi_io_oe_o      : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_sclk_io      : inout std_logic
+    ;spi_cs_b_io      : inout std_logic
+    ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)

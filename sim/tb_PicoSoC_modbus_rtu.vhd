@@ -210,11 +210,9 @@ begin  -- architecture tb
     ,uart_rx_i        => uart_rx_i
     ,uart_cts_b_i     => '0'
     ,uart_rts_b_o     => open
-    ,spi_sclk_o       => open
-    ,spi_cs_b_o       => open
-    ,spi_io_i         => x"00"
-    ,spi_io_o         => open
-    ,spi_io_oe_o      => open
+    ,spi_sclk_io      => open
+    ,spi_cs_b_io      => open
+    ,spi_io_io        => open
     ,debug_mux_i      => "000"
     ,debug_o          => open 
     ,debug_uart_tx_o  => open

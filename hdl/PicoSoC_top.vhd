@@ -86,11 +86,9 @@ entity PicoSoC_top is
     ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
 
     -- SPI Interface
-    ;spi_sclk_o       : out std_logic
-    ;spi_cs_b_o       : out std_logic
-    ;spi_io_o         : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
-    ;spi_io_i         : in  std_logic_vector(USER_SPI_NB_IO-1 downto 0)
-    ;spi_io_oe_o      : out std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;spi_sclk_io      : inout std_logic
+    ;spi_cs_b_io      : inout std_logic
+    ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
@@ -134,6 +132,13 @@ architecture rtl of PicoSoC_top is
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
 
+  signal   spi_sclk_o                   : std_logic;
+  signal   spi_sclk_oe_o                : std_logic;
+  signal   spi_cs_b_o                   : std_logic;
+  signal   spi_cs_b_oe_o                : std_logic;
+  signal   spi_io_o                     : std_logic_vector(8-1 downto 0);
+  signal   spi_io_i                     : std_logic_vector(8-1 downto 0);
+  signal   spi_io_oe_o                  : std_logic_vector(8-1 downto 0);
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
@@ -248,9 +253,9 @@ begin  -- architecture rtl
     ,inject_error_i       => inject_error
     ,debug_o              => debug_user
     ,spi_sclk_o           => spi_sclk_o 
-    ,spi_sclk_oe_o        => open
+    ,spi_sclk_oe_o        => spi_sclk_oe_o
     ,spi_cs_b_o           => spi_cs_b_o 
-    ,spi_cs_b_oe_o        => open
+    ,spi_cs_b_oe_o        => spi_cs_b_oe_o
     ,spi_io_i             => spi_io_i_user
     ,spi_io_o             => spi_io_o_user
     ,spi_io_oe_o          => spi_io_oe_o_user
@@ -326,6 +331,36 @@ begin  -- architecture rtl
   generate
     inject_error <=     inject_error_i;
   end generate gen_inject_error;
+
+  -----------------------------------------------------------------------------
+  -- SPI PAD
+  -----------------------------------------------------------------------------
+  PAD_SPI_SCLK : obuf
+    port map
+     (buf_io     => spi_sclk_io
+     ,d_i        => spi_sclk_o
+     ,oe_i       => spi_sclk_oe_o
+     );
+
+  PAD_SPI_CS_B : obuf
+    port map
+     (buf_io     => spi_cs_b_io
+     ,d_i        => spi_cs_b_o
+     ,oe_i       => spi_cs_b_oe_o
+     );
+
+  gen_pad_spi_io:
+  for i in 0 to USER_SPI_NB_IO-1 
+  generate
+    PAD_SPI_IO : iobuf
+      port map
+       (buf_io     => spi_io_io   (i)
+       ,d_i        => spi_io_o    (i)
+       ,d_o        => spi_io_i    (i)
+       ,oe_i       => spi_io_oe_o (i)
+       ,ie_i       => '1'
+       );
+  end generate;
 
   -----------------------------------------------------------------------------
   -- Debug

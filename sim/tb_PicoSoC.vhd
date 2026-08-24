@@ -85,13 +85,11 @@ architecture tb of tb_PicoSoC is
   signal  it_user_i                : std_logic;
   signal  inject_error_i           : std_logic_vector(             3-1 downto 0);
 
-  signal  spi_sclk_o               : std_logic;
-  signal  spi_cs_b_o               : std_logic;
+  signal  spi_sclk_io              : std_logic;
+  signal  spi_cs_b_io              : std_logic;
+  signal  spi_io_io                : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
   signal  spi_mosi_o               : std_logic;
   signal  spi_miso_i               : std_logic;
-  signal  spi_io_o                 : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal  spi_io_i                 : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal  spi_io_oe_o              : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
 
 
   signal  RSTNeg                   : std_logic;
@@ -179,19 +177,17 @@ begin  -- architecture tb
     ,uart_rx_i        => '1'
     ,uart_cts_b_i     => '0'
     ,uart_rts_b_o     => open
-    ,spi_sclk_o       => spi_sclk_o 
-    ,spi_cs_b_o       => spi_cs_b_o 
-    ,spi_io_i         => spi_io_i
-    ,spi_io_o         => spi_io_o
-    ,spi_io_oe_o      => spi_io_oe_o
+    ,spi_sclk_io      => spi_sclk_io
+    ,spi_cs_b_io      => spi_cs_b_io
+    ,spi_io_io        => spi_io_io
     ,debug_mux_i      => "000"
     ,debug_o          => open 
     ,debug_uart_tx_o  => open
     );
 
-  spi_mosi_o  <= spi_io_o(SPI_IO_MOSI);
-  spi_io_i    <= (SPI_IO_MISO => spi_miso_i,
-                  others      => '0');
+  spi_mosi_o  <= spi_io_io(SPI_IO_MOSI);
+  spi_io_io   <= (SPI_IO_MISO => spi_miso_i,
+                  others      => 'Z');
   -----------------------------------------------------------------------------
   -- Clock Tree
   -----------------------------------------------------------------------------
@@ -203,7 +199,7 @@ begin  -- architecture tb
   RSTNeg  <= '1';
   WPNeg   <= '1';
   HOLDNeg <= '1';
-  SNeg    <= spi_cs_b_o when SPI_MODEL /= "none" else
+  SNeg    <= spi_cs_b_io when SPI_MODEL /= "none" else
              '1';
   
   mem : entity work.m25p40(vhdl_behavioral)
@@ -217,9 +213,9 @@ begin  -- architecture tb
       ,LongTimming       => False
        )
       port map
-      (D             => spi_mosi_o -- serial data input/IO0
-      ,Q             => spi_miso_i -- serial data output/IO1
-      ,C             => spi_sclk_o -- serial clock input
+      (D             => spi_mosi_o  -- serial data input/IO0
+      ,Q             => spi_miso_i  -- serial data output/IO1
+      ,C             => spi_sclk_io -- serial clock input
       ,SNeg          => SNeg   -- chip select input
       ,WNeg          => WPNeg  -- write protect input/IO2
       ,HOLDNeg       => HOLDNeg-- hold input/IO3
