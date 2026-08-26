@@ -88,14 +88,8 @@ architecture tb of tb_PicoSoC is
   signal  spi_sclk_io              : std_logic;
   signal  spi_cs_b_io              : std_logic;
   signal  spi_io_io                : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal  spi_mosi_o               : std_logic;
-  signal  spi_miso_i               : std_logic;
-
 
   signal  RSTNeg                   : std_logic;
-  signal  WPNeg                    : std_logic;
-  signal  HOLDNeg                  : std_logic;
-  signal  SNeg                     : std_logic;
   
   alias   led_switch               : std_logic_vector(USER_NB_SWITCH-1 downto 0) is led0_o(USER_NB_SWITCH-1 downto  0);
   alias   led_it                   : std_logic_vector(USER_NB_LED1  -1 downto 0) is led1_o;
@@ -185,9 +179,6 @@ begin  -- architecture tb
     ,debug_uart_tx_o  => open
     );
 
-  spi_mosi_o  <= spi_io_io(SPI_IO_MOSI);
-  spi_io_io   <= (SPI_IO_MISO => spi_miso_i,
-                  others      => 'Z');
   -----------------------------------------------------------------------------
   -- Clock Tree
   -----------------------------------------------------------------------------
@@ -197,29 +188,54 @@ begin  -- architecture tb
   -- Memory Model
   -----------------------------------------------------------------------------
   RSTNeg  <= '1';
-  WPNeg   <= '1';
-  HOLDNeg <= '1';
-  SNeg    <= spi_cs_b_io when SPI_MODEL /= "none" else
-             '1';
-  
-  mem : entity work.m25p40(vhdl_behavioral)
-      generic map
-      (mem_file_name     => "memory.mem"
-      ,UserPreload       => True
-      ,DebugInfo         => True
-      ,TimingChecksOn    => True
-      ,MsgOn             => True
-      ,XOn               => True
-      ,LongTimming       => False
-       )
+
+  gen_m25p40:
+  if SPI_MODEL = "m25p40" 
+  generate
+    mem : entity work.m25p40(vhdl_behavioral)
+      generic map 
+      (mem_file_name  => "memory.mem"
+      ,UserPreload    => true
+      ,DebugInfo      => true
+      ,TimingChecksOn => true
+      ,MsgOn          => true
+      ,XOn            => true
+      ,LongTimming    => False
+      )
       port map
-      (D             => spi_mosi_o  -- serial data input/IO0
-      ,Q             => spi_miso_i  -- serial data output/IO1
-      ,C             => spi_sclk_io -- serial clock input
-      ,SNeg          => SNeg   -- chip select input
-      ,WNeg          => WPNeg  -- write protect input/IO2
-      ,HOLDNeg       => HOLDNeg-- hold input/IO3
-       );
+      (D             => spi_io_io(SPI_IO_MOSI)
+      ,Q             => spi_io_io(SPI_IO_MISO)
+      ,C             => spi_sclk_io
+      ,SNeg          => spi_cs_b_io
+      ,WNeg          => spi_io_io(SPI_IO_WP_B)
+      ,HOLDNeg       => spi_io_io(SPI_IO_HOLD_B)
+      );
+  end generate;
+
+  gen_s25fl512s:
+  if SPI_MODEL = "s25fl512s" 
+  generate
+    mem : entity work.s25fl512s(vhdl_behavioral_static_memory_allocation)
+      generic map
+      (mem_file_name  => "memory.mem"
+      ,otp_file_name  => "none"
+      ,UserPreload    => true
+      ,TimingChecksOn => true
+      ,MsgOn          => true
+      ,XOn            => true
+      ,TimingModel    => "S25FL512SAGMFI010_F_30pF"
+      ,LongTimming    => false
+      )
+      PORT MAP
+      (SI            => spi_io_io(SPI_IO_MOSI)
+      ,SO            => spi_io_io(SPI_IO_MISO)
+      ,SCK           => spi_sclk_io
+      ,CSNeg         => spi_cs_b_io
+      ,WPNeg         => spi_io_io(SPI_IO_WP_B)
+      ,HOLDNeg       => spi_io_io(SPI_IO_HOLD_B)
+      ,RSTNeg        => RSTNeg
+      );
+  end generate;
   
   -----------------------------------------------------------------------------
   -- Watchdog
