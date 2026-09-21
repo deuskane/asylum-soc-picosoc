@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
--- Last update: 2026-01-17
+-- Last update: 2026-09-21
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -265,17 +265,10 @@ begin  -- architecture rtl
   spi_io_oe_o  <= spi_io_oe_o_user(spi_io_oe_o'range);
   spi_io_i_user<= std_logic_vector(resize(unsigned(spi_io_i),8));
 
-  uart_tx_o    <= uart_tx   ;
-  uart_rx      <= uart_rx_i ;
-  uart_rts_b_o <= uart_rts_b;
-  
-  ins_uart_cts_b : sync2dffrn
-    port map
-    (clk_i                => clk     
-    ,arst_b_i             => arst_b_user(0)
-    ,d_i                  => uart_cts_b_i
-    ,q_o                  => uart_cts_b
-    );
+  uart_tx_o    <= uart_tx     ;
+  uart_rx      <= uart_rx_i   ;
+  uart_rts_b_o <= uart_rts_b  ;
+  uart_cts_b   <= uart_cts_b_i;
 
   -----------------------------------------------------------------------------
   -- SoC Supervisor
