@@ -1,3 +1,5 @@
+[![CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml/badge.svg)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml)
+
 # PicoSoC - System-on-Chip with Safety Features
 
 ## Overview
