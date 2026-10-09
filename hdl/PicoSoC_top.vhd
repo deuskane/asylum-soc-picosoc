@@ -18,6 +18,8 @@
 -- Date        Version  Author   Description
 -- 2025-01-15  1.0      mrosiere Created
 -- 2025-07-15  2.0      mrosiere Add FIFO depth for UART and SPI
+-- 2026-10-05  2.1      mrosiere CPU_MODEL default "OpenBlaze8" (was "WardRV", invalid)
+--                               Document debug_mux_i (unused, kept for pads)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -35,7 +37,7 @@ entity PicoSoC_top is
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True
  
-    ;CPU_MODEL                   : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
@@ -94,6 +96,8 @@ entity PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
+    -- debug_mux_i is not used : the debug selection is switch_i(2 downto 0)
+    -- (since 2025-05-08). The port is kept for the board pad files.
     ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
     ;debug_o          : out std_logic_vector(             8-1 downto 0)
     ;debug_uart_tx_o  : out std_logic
@@ -361,6 +365,7 @@ begin  -- architecture rtl
   gen_debug:
   if DEBUG_ENABLE = True
   generate
+    -- Debug selection from the switches (debug_mux_i is not used)
     debug_mux      <= unsigned(switch_i(2 downto 0));
     debug_o        <= led0_user                                      when debug_mux = 0 else
                       std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else

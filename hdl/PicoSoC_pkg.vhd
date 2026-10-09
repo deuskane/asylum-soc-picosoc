@@ -12,6 +12,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2025-04-14  1.0      mrosiere Created
+-- 2026-10-05  1.1      mrosiere PicoSoC_top component : CPU_MODEL default "OpenBlaze8"
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -138,7 +139,7 @@ component PicoSoC_top is
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True
  
-    ;CPU_MODEL                   : string   := "WardRV"    -- "OpenBlaze8" / "WardRV_fsm"
+    ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1

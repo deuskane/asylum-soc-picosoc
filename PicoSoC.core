@@ -59,9 +59,15 @@ CAPI=2:
 # 2026-06-17  3.2.2    mrosiere Add RAM2 for shared memories
 # 2026-08-01  3.2.3    mrosiere Use GPIO_irq instead of GPIO
 # 2026-08-22  3.3.0    mrosiere Update SPI controller
+# 2026-10-05  3.3.1    mrosiere Fix default toplevel (PicoSoC_top), remove duplicated target,
+#                               fix USER_SPI_DEPTH_* names in emu targets,
+#                               rename emu_ng_medium_soc1_*_c_user to emu_ng_medium_soc4_*_fault_spi,
+#                               emu_basys WardRV target uses user_identity.c (rvcc_gen has no psm),
+#                               PicoSoC_top CPU_MODEL default, OR of diff_o with NB_CPU > 1,
+#                               add missing gen_*_user_c_uart_9600 generators
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.3.0
+name        : asylum:soc:PicoSoC:3.3.1
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -112,6 +118,15 @@ generate:
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_picoblaze3_user_c_uart_9600 :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/user.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
       logical_name : asylum
 
   gen_picoblaze3_user_c_uart_9600_spi :
@@ -204,15 +219,6 @@ generate:
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
       logical_name : asylum
 
-  gen_rv32i_user_asm_identity:
-    generator : rvcc_gen
-    parameters:
-      file         : esw/user_identity.psm
-      type         : pblazeide
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose
-      logical_name : asylum
-      
   gen_rv32i_user_c_identity_inverted:
     generator : rvcc_gen
     parameters:
@@ -247,6 +253,15 @@ generate:
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_rv32i_user_c_uart_9600 :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/user.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
       logical_name : asylum
 
   gen_rv32i_user_c_uart_9600_spi :
@@ -433,7 +448,7 @@ targets:
     description     : Default Target (DON'T RUN)
     filesets        :
       - files_hdl
-    toplevel        : PicoSoC
+    toplevel        : PicoSoC_top
     default_tool    : ghdl
 
   #---------------------------------------
@@ -484,9 +499,9 @@ targets:
     toplevel : asylum.PicoSoC_top
 
   #---------------------------------------
-  emu_ng_medium_soc1_openblaze8_c_user: &emu_ng_medium_default
+  emu_ng_medium_soc4_openblaze8_fault_spi: &emu_ng_medium_default
   #---------------------------------------
-    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
@@ -508,9 +523,9 @@ targets:
       - USER_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
-      - USER_USER_SPI_DEPTH_CMD=4
-      - USER_USER_SPI_DEPTH_TX=4
-      - USER_USER_SPI_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -549,9 +564,9 @@ targets:
       - USER_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
-      - USER_USER_SPI_DEPTH_CMD=4
-      - USER_USER_SPI_DEPTH_TX=4
-      - USER_USER_SPI_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -582,9 +597,9 @@ targets:
       - USER_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
-      - USER_USER_SPI_DEPTH_CMD=4
-      - USER_USER_SPI_DEPTH_TX=4
-      - USER_USER_SPI_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1301,15 +1316,15 @@ targets:
       - TB_WATCHDOG=200000
 
   #---------------------------------------
-  emu_basys_soc1_wardrv_fsm_asm_identity:
+  emu_basys_soc1_wardrv_fsm_c_identity:
   #---------------------------------------
-    description  : Synthesis for Digilent Basys board of the test esw/user_identity.psm
+    description  : Synthesis for Digilent Basys board of the test esw/user_identity.c
     default_tool : ise
     filesets     :
       - files_hdl
       - files_basys 
       - pbcc_dep
-    generate : [gen_rv32i_user_asm_identity,gen_rv32i_supervisor_c_dummy]
+    generate : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
       - FSYS=50000000
@@ -1329,9 +1344,9 @@ targets:
     toplevel : asylum.PicoSoC_top
 
   #---------------------------------------
-  emu_ng_medium_soc1_wardrv_fsm_c_user:
+  emu_ng_medium_soc4_wardrv_fsm_fault_spi:
   #---------------------------------------
-    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
     default_tool : nxmap
     filesets     :
       - files_hdl
@@ -1703,58 +1718,6 @@ targets:
       # Debug
       - DEBUG_ENABLE=false
       
-#  #---------------------------------------
-#  sim_soc1_wardrv_fsm_asm_identity:
-#  #---------------------------------------
-#    << : *sim
-#    description  : Simulation of the test esw/user_identity.psm
-#    generate     : [gen_rv32i_user_asm_identity,gen_rv32i_supervisor_c_dummy]
-#    parameters   :
-#      - CPU_MODEL=WardRV_fsm
-#      - FSYS=25000000
-#      - FSYS_INT=12500000
-#
-#      # SoC User Configuration
-#      - USER_BAUD_RATE=921600
-#      
-#      # Platform Configuration
-#      - SUPERVISOR=false
-#      - USER_SAFETY=none
-#      - USER_FAULT_INJECTION=false
-#
-#      # Debug
-#      - DEBUG_ENABLE=false
-#
-#      # Test Bench Configuration
-#      - TB_WATCHDOG=20000
-#      - SPI_MODEL=none
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_identity:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/user_identity.c
-    generate     : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=20000
-      - SPI_MODEL=none
-
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_identity:
   #---------------------------------------

@@ -32,6 +32,8 @@
 -- 2026-05-25  3.7      mrosiere Add Spinlock and mailbox
 -- 2026-06-17  3.8      mrosiere Add RAM2
 -- 2026-08-01  3.9      mrosiere Use GPIO_irq instead of GPIO
+-- 2026-10-05  3.10     mrosiere diff_o : OR of the diff of all CPU clusters
+--                               (was driven by every cluster when NB_CPU > 1)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -236,6 +238,8 @@ architecture rtl of PicoSoC_user is
   signal   timer_it                   : std_logic;
   
   -- Signals Safety
+  type     diff_vector_t              is array (natural range <>) of std_logic_vector(3-1 downto 0);
+  signal   cpu_diff                   : diff_vector_t(NB_CPU-1 downto 0); -- diff of each CPU cluster
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -244,6 +248,19 @@ begin  -- architecture rtl
   clk    <= clk_i;
   arst_b <= arst_b_i;
   
+  -----------------------------------------------------------------------------
+  -- Safety difference : OR of all CPU clusters
+  -----------------------------------------------------------------------------
+  p_diff : process (cpu_diff) is
+    variable v_diff : std_logic_vector(3-1 downto 0);
+  begin  -- process p_diff
+    v_diff := (others => '0');
+    for i in cpu_diff'range loop
+      v_diff := v_diff or cpu_diff(i);
+    end loop;
+    diff_o <= v_diff;
+  end process p_diff;
+
   -----------------------------------------------------------------------------
   -- CPU with Safety Logic
   -----------------------------------------------------------------------------
@@ -311,7 +328,7 @@ begin  -- architecture rtl
       ,interrupt_i          => cpu_it_val
       ,interrupt_ack_o      => cpu_it_ack
       ,inject_error_i       => inject_error_i
-      ,diff_o               => diff_o
+      ,diff_o               => cpu_diff(i)
       );
 
     icn1_sbi_inim(0)    <= cpu_sbi_ini;

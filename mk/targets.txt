@@ -1,11 +1,9 @@
 default                                        : Default Target (DON'T RUN)
 emu_basys_soc1_openblaze8_asm_identity         : Synthesis for Digilent Basys board of the test esw/user_identity.psm
-emu_basys_soc1_wardrv_fsm_asm_identity         : Synthesis for Digilent Basys board of the test esw/user_identity.psm
+emu_basys_soc1_wardrv_fsm_c_identity           : Synthesis for Digilent Basys board of the test esw/user_identity.c
 emu_ng_medium_soc1_openblaze8                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-emu_ng_medium_soc1_openblaze8_c_user           : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc1_openblaze8_modbus_rtu       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_wardrv_fsm                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
-emu_ng_medium_soc1_wardrv_fsm_c_user           : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc1_wardrv_fsm_modbus_rtu       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc2_openblaze8                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
 emu_ng_medium_soc2_openblaze8_fault            : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
@@ -21,8 +19,10 @@ emu_ng_medium_soc3_wardrv_fsm_fault            : NanoXplore NG_MEDIUM Board of t
 emu_ng_medium_soc3_wardrv_fsm_fault_modbus_rtu : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
 emu_ng_medium_soc4_openblaze8_fault            : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc4_openblaze8_fault_modbus_rtu : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+emu_ng_medium_soc4_openblaze8_fault_spi        : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc4_wardrv_fsm_fault            : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc4_wardrv_fsm_fault_modbus_rtu : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+emu_ng_medium_soc4_wardrv_fsm_fault_spi        : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
 sim                                            : default rule to sim (DON'T RUN)
 sim_soc1_openblaze8_asm_identity               : Simulation of the test esw/user_identity.psm
 sim_soc1_openblaze8_c_identity                 : Simulation of the test esw/user_identity.c

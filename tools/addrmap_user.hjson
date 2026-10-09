@@ -1,35 +1,54 @@
-
+# User SoC address map (8-bit SBI address), read by modbus_server*.py
+# Mirror of the PICOSOC_USER_*_BA constants of hdl/PicoSoC_pkg.vhd
+# (and of esw/include/addrmap_user.h) : keep them aligned.
+# gic and ram1 are private to each CPU cluster (ICN1), the others are shared (ICN2).
 [
   {
-    name : "switch",
+    name : "gic"
     base : 0x00
   }
-  {	 
+  {
+    name : "spinlock"
+    base : 0x02
+  }
+  {
+    name : "switch"
+    base : 0x04
+  }
+  {
     name : "led0"
+    base : 0x08
+  }
+  {
+    name : "led1"
+    base : 0x0C
+  }
+  {
+    name : "crc"
     base : 0x10
   }
-  {	 
-    name : "led1"
+  {
+    name : "mailbox"
+    base : 0x14
+  }
+  {
+    name : "spi"
+    base : 0x18
+  }
+  {
+    name : "uart"
     base : 0x20
   }
-  {	 
-    name : "uart"
-    base : 0x30
+  {
+    name : "timer"
+    base : 0x28
   }
-  {	 
-    name : "spi"
+  {
+    name : "ram2"
     base : 0x40
   }
-  {	 
-    name : "gic"
-    base : 0x50
-  }
-  {	 
-    name : "timer"
-    base : 0x60
-  }
-  {	 
-    name : "crc"
-    base : 0x70
+  {
+    name : "ram1"
+    base : 0x80
   }
 ]
