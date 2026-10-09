@@ -78,7 +78,7 @@ PicoSoC is the reference system of the Asylum project. It integrates the Asylum 
 
 ## Block Diagram
 
-Diagram: [doc/PicoSoC.drawio](doc/PicoSoC.drawio) (open with diagrams.net or the VS Code Draw.io extension). The detailed hand-drawn views are in [doc/assets/picosoc.drawio](doc/assets/picosoc.drawio) (see [Design Notes](#design-notes)).
+Diagram: [doc/PicoSoC.drawio](doc/PicoSoC.drawio) (open with diagrams.net or the VS Code Draw.io extension). The detailed hand-drawn views are in [doc/picosoc.drawio](doc/picosoc.drawio) (see [Design Notes](#design-notes)).
 
 - `PicoSoC_top` resynchronises the reset (`sync2dffrn`), divides `clk_i` by `FSYS/FSYS_INT` (`clock_divider`), adapts the input polarities and instantiates `PicoSoC_user`, `PicoSoC_supervisor` (if `SUPERVISOR`) and the SPI pads (`obuf`, `iobuf`).
 - In each user CPU cluster, `cpu_safety` fetches from `ROM_user` and accesses ICN1: GIC (`0x00`) and RAM1 (`0x80`) are local, every other address goes to ICN2.
