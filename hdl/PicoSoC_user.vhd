@@ -159,7 +159,7 @@ architecture rtl of PicoSoC_user is
   constant ICN1_TARGET_ADDR_WIDTH     : naturals_t    (ICN1_NB_TARGET-1 downto 0) :=
     ( ICN1_TARGET_GIC                 => GIC_ADDR_WIDTH
      ,ICN1_TARGET_RAM1                => log2(RAM1_DEPTH)
-     ,ICN1_TARGET_ICN2                => CPU_DMEM_DATA_WIDTH
+     ,ICN1_TARGET_ICN2                => CPU_DMEM_ADDR_WIDTH
       );
 
   -- ICN2 (System) Configuration
