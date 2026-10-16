@@ -229,7 +229,9 @@ architecture rtl of PicoSoC_user is
 
   constant GIC_WIDTH                  : positive := 3;
 
-  constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '0',
+  -- it_i comes from a pad (push button), asynchronous to clk_i : resynchronize it in the GIC
+  -- UART and Timer interruptions are already synchronous
+  constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '1',
                                                                                    others      => '0');
 
   -- Timer
