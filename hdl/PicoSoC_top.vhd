@@ -140,9 +140,9 @@ architecture rtl of PicoSoC_top is
   signal   spi_sclk_oe_o                : std_logic;
   signal   spi_cs_b_o                   : std_logic;
   signal   spi_cs_b_oe_o                : std_logic;
-  signal   spi_io_o                     : std_logic_vector(8-1 downto 0);
-  signal   spi_io_i                     : std_logic_vector(8-1 downto 0);
-  signal   spi_io_oe_o                  : std_logic_vector(8-1 downto 0);
+  signal   spi_io_o                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
+  signal   spi_io_i                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
+  signal   spi_io_oe_o                  : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
@@ -267,7 +267,12 @@ begin  -- architecture rtl
 
   spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
   spi_io_oe_o  <= spi_io_oe_o_user(spi_io_oe_o'range);
+  -- Only USER_SPI_NB_IO lines have a pad : the other inputs of the SPI are tied to 0
   spi_io_i_user<= std_logic_vector(resize(unsigned(spi_io_i),8));
+
+  assert USER_SPI_NB_IO <= 8
+    report "PicoSoC_top : USER_SPI_NB_IO ("&integer'image(USER_SPI_NB_IO)&") must be <= 8"
+    severity failure;
 
   uart_tx_o    <= uart_tx     ;
   uart_rx      <= uart_rx_i   ;
