@@ -53,7 +53,7 @@ entity tb_PicoSoC is
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
 
     -- TB Parameters
-    ;TEST_SUITE            : string   := "default"   -- "default"/"none" 
+    ;TEST_SUITE            : string   := "default"   -- "default"/"none"/"hello"
     ;TB_WATCHDOG           : natural  := 10_000
     ;SPI_MODEL             : string   := "none"      -- "none" / "m25p40" / "s25fl512s"
 
@@ -249,8 +249,7 @@ begin  -- architecture tb
 
     wait for TB_WATCHDOG_TIME;
 
-    run(1);
-    
+    -- No clock edge to wait for : the clock is stopped when the test is done
     assert (test_done = '1') report "[TESTBENCH] Test KO : Maximum cycle is reached" severity failure;
 
     -- end of process
@@ -433,6 +432,23 @@ begin  -- architecture tb
         -- just run
         wait for TB_WATCHDOG_TIME;
 
+      end if;
+
+      -------------------------------------------------------------------------
+      if TEST_SUITE = "hello"
+      -------------------------------------------------------------------------
+      then
+        -- esw/user_hello.c : under the spinlock, each CPU increments the shared
+        -- loop counter (displayed on LED0) and sets its bit in LED1.
+        -- Success : every CPU has taken the lock and the counter has progressed,
+        -- else the watchdog fails (deadlock or starvation)
+        report "[TESTBENCH] Wait all CPUs (hello)";
+        while (unsigned(led1_o) /= 2**USER_NB_CPU-1) or
+              (unsigned(led0_o) <  4*USER_NB_CPU)
+        loop
+          run(1);
+        end loop;
+        report "[TESTBENCH] LED0 (loop counter) = "&to_hstring(led0_o)&", LED1 (CPUs) = "&to_hstring(led1_o);
       end if;
 
       report "[TESTBENCH] Test OK";

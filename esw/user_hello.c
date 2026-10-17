@@ -31,6 +31,7 @@ static inline uint32_t read_mhartid(void)
 typedef struct
 {
   uint32_t cpt;
+  uint8_t  cpu_mask; // CPUs that have taken the lock
 } app_data_t;
 
 #define app_data (*(volatile app_data_t *)RAM_GLO)
@@ -113,7 +114,8 @@ void main()
     {
       setup();
 
-      app_data.cpt = 0;
+      app_data.cpt      = 0;
+      app_data.cpu_mask = 0;
     }
   spinlock_unlock(SPINLOCK,0);
 
@@ -188,7 +190,24 @@ void main()
       // Increase loop counter
       app_data.cpt++;
 
+      // Progress for the testbench : loop counter on LED0, CPUs that have taken the lock on LED1
+      app_data.cpu_mask |= (uint8_t)(1 << cpu_id);
+      gpio_wr(LED0, (uint8_t)app_data.cpt);
+      gpio_wr(LED1, app_data.cpu_mask);
+
       // Release the lock
       spinlock_unlock(SPINLOCK,0);
+
+      // Back off before trying again : neither the spinlock nor the ICN arbitration is fair,
+      // without this delay the CPU that releases the lock takes it again and starves the others
+      {
+        uint8_t wait_cpt = seed;
+        seed = rand8(seed);
+
+        while (wait_cpt-- != 0)
+          {
+            __asm__ volatile ("nop");
+          }
+      }
     }
 }

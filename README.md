@@ -375,7 +375,7 @@ Firmware ([esw/](esw/), drivers in [esw/include/](esw/include/)):
 | `user_identity.c` / `user_identity.psm` | Copies the switches to LED0 (`-DINVERT_SWITCH` variant), C and pBlazIDE assembler versions |
 | `user.c` | GPIO, GIC and interrupt test; optional UART (`HAVE_UART`), SPI with loopback (`HAVE_SPI`) or with the SPI flash model (`HAVE_SPI_MEMORY`) |
 | `user_modbus_rtu.c` | Modbus RTU server over the UART (hardware CRC) |
-| `user_hello.c` | Multi-core test (WardRV): CPUs synchronise with the spinlock, one initialises the SoC, all print `CPU <hartid>` on the UART |
+| `user_hello.c` | Multi-core test (WardRV): CPUs synchronise with the spinlock, one initialises the SoC, all print `CPU <hartid>` on the UART and show the shared loop counter on LED0 and the CPUs that have taken the lock on LED1 |
 | `user_xmodem.c` | XModem receiver (generators defined, no target uses it) |
 | `supervisor.c` | Supervisor: enables the GIC, on mismatch pulses `USER_ARST` and increments `LED_DIFF`; with `-DSAFETY_TMR` the first error is only masked |
 | `dummy.c` | Empty program (supervisor ROM when the supervisor is not used) |
@@ -392,7 +392,7 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `sim_soc1_openblaze8_asm_identity`, `sim_soc1_{openblaze8,wardrv_fsm}_c_identity` (3) | `tb_PicoSoC` | Identity firmware, soc1, watchdog 20000 |
 | `sim_soc1_openblaze8_c_user` (1) | `tb_PicoSoC` | `user.c`, soc1, watchdog 20000 |
 | `sim_soc1_<cpu>_c_user_uart`, `_uart_spi`, `_uart_spi_mem` (6) | `tb_PicoSoC` | `user.c` with UART 921600 baud, + SPI loopback, + SPI flash (`SPI_MODEL=m25p40`), soc1 |
-| `sim_soc1x{2,4,6}_wardrv_fsm_c_hello_uart` (3) | `tb_PicoSoC` | `user_hello.c`, `USER_NB_CPU` = 2 / 4 / 6, `TEST_SUITE=none`, watchdog 500000 |
+| `sim_soc1x{2,4,6}_wardrv_fsm_c_hello_uart` (3) | `tb_PicoSoC` | `user_hello.c`, `USER_NB_CPU` = 2 / 4 / 6, `TEST_SUITE=hello` (every CPU takes the spinlock and the shared counter progresses, shown on LED1 / LED0), watchdog 500000 |
 | `sim_soc2_<cpu>_c_user`, `sim_soc2_<cpu>_c_user_uart` (4) | `tb_PicoSoC` | `user.c` (+ UART), lock-step without supervisor |
 | `sim_soc3_<cpu>_c_user`, `sim_soc3_<cpu>_fault_c_user` (4) | `tb_PicoSoC` | `user.c`, supervisor + lock-step, without / with fault injection |
 | `sim_soc4_<cpu>_fault_c_user`, `sim_soc4_<cpu>_fault_c_user_uart` (4) | `tb_PicoSoC` | `user.c`, supervisor (`supervisor.c -DSAFETY_TMR`) + TMR; the `_uart` variants set `USER_FAULT_INJECTION=false` |
