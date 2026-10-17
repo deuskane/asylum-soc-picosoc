@@ -53,10 +53,10 @@ sim_soc3_wardrv_fsm_c_user                     : Simulation of the test esw/user
 sim_soc3_wardrv_fsm_c_user_modbus_rtu          : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc3_wardrv_fsm_fault_c_user               : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
 sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu    : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+sim_soc4_openblaze8_c_user_uart                : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
 sim_soc4_openblaze8_fault_c_user               : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 sim_soc4_openblaze8_fault_c_user_modbus_rtu    : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-sim_soc4_openblaze8_fault_c_user_uart          : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+sim_soc4_wardrv_fsm_c_user_uart                : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
 sim_soc4_wardrv_fsm_fault_c_user               : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu    : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-sim_soc4_wardrv_fsm_fault_c_user_uart          : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
 

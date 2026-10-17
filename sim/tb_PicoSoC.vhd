@@ -28,6 +28,11 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.spi_pkg.all;
 library work;
+
+library uvvm_util;
+context uvvm_util.uvvm_util_context;
+library bitvis_vip_uart;
+use     bitvis_vip_uart.uart_bfm_pkg.all;
   
 entity tb_PicoSoC is
   generic
@@ -56,6 +61,9 @@ entity tb_PicoSoC is
     ;TEST_SUITE            : string   := "default"   -- "default"/"none" 
     ;TB_WATCHDOG           : natural  := 10_000
     ;SPI_MODEL             : string   := "none"      -- "none" / "m25p40" / "s25fl512s"
+    ;TEST_IT               : boolean  := false       -- Check the user interruption (LED1 counter of esw/user.c)
+    ;TEST_UART             : string   := "none"      -- Check the UART output of esw/user.c (HAVE_UART) :
+                                                     -- "none" / "user" / "user_spi" (SPI loopback) / "user_spi_mem" (SPI memory)
 
      );
   
@@ -90,6 +98,7 @@ architecture tb of tb_PicoSoC is
   signal  spi_io_io                : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
 
   signal  RSTNeg                   : std_logic;
+  signal  uart_tx_o                : std_logic;
   
   alias   led_switch               : std_logic_vector(USER_NB_SWITCH-1 downto 0) is led0_o(USER_NB_SWITCH-1 downto  0);
   alias   led_it                   : std_logic_vector(USER_NB_LED1  -1 downto 0) is led1_o;
@@ -98,6 +107,36 @@ architecture tb of tb_PicoSoC is
   -- =====[ Test Signals ]========================
   signal  test_begin               : std_logic := '0';
   signal  test_done                : std_logic := '0';
+
+  -- =====[ User Interruption ]===================
+  constant C_CLK_RATIO             : positive := FSYS/FSYS_INT;           -- clk_i cycles per internal clock cycle
+  constant C_IT_PULSE_SHORT        : positive :=     4*C_CLK_RATIO;       -- short pulse : one interruption
+  constant C_IT_PULSE_LONG         : positive :=   100;                    -- long  pulse : at least one interruption
+  constant C_IT_TIMEOUT            : positive := 20000*C_CLK_RATIO;       -- max latency of the interruption routine
+  constant C_IT_SETTLE             : positive :=   500*C_CLK_RATIO;       -- LED1 must not change after the interruption
+
+  -- =====[ UART Checker ]========================
+  -- Bit time of the DUT : the baud tick counter divides the internal clock by FSYS_INT/USER_BAUD_RATE
+  constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
+  constant C_UART_MIN_LOOP         : positive := 2;                        -- Minimum number of "Loop" lines
+  constant C_UART_BFM_CONFIG       : t_uart_bfm_config := (
+    bit_time                              => C_UART_BIT_TIME,
+    num_data_bits                         => 8,
+    idle_state                            => '1',
+    num_stop_bits                         => STOP_BITS_ONE,
+    parity                                => PARITY_NONE,
+    timeout                               => 0 ns,
+    timeout_severity                      => error,
+    num_bytes_to_log_before_expected_data => 10,
+    match_strictness                      => MATCH_EXACT,
+    id_for_bfm                            => ID_NEVER,
+    id_for_bfm_wait                       => ID_NEVER,
+    id_for_bfm_poll                       => ID_NEVER,
+    id_for_bfm_poll_summary               => ID_NEVER,
+    error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
+    );
+  signal  uart_check_end           : std_logic := '0';
+  signal  uart_check_done          : std_logic := '0';
   
   -- =====[ Functions ]===========================
   
@@ -167,7 +206,7 @@ begin  -- architecture tb
     ,led_diff_o       => led_diff_o
     ,it_user_i        => it_user_i     
     ,inject_error_i   => inject_error_i
-    ,uart_tx_o        => open
+    ,uart_tx_o        => uart_tx_o
     ,uart_rx_i        => '1'
     ,uart_cts_b_i     => '0'
     ,uart_rts_b_o     => open
@@ -238,6 +277,112 @@ begin  -- architecture tb
   end generate;
   
   -----------------------------------------------------------------------------
+  -- UART Checker (esw/user.c with HAVE_UART)
+  -- * "Welcome Back, Commander" after each reset of the user SoC
+  -- * then one line per loop iteration while switch(5) is set :
+  --   "Loop CCCCCCCC-SS-PP Lock 00 FF MB0 00 01 02 03 04 05 06 07 "
+  --   CCCCCCCC : loop counter, SS : switches (bit 5 set),
+  --   PP       : SPI byte (00 without SPI, CC(7:0) with the SPI loopback,
+  --              byte CCCCCCCC of memory.mem with the SPI memory)
+  -- The check stops when uart_check_end is set
+  -----------------------------------------------------------------------------
+  gen_uart_check: if TEST_UART /= "none"
+  generate
+    p_uart_check: process is
+      constant C_BANNER     : string  := "Welcome Back, Commander";
+      variable v_byte       : std_logic_vector(8-1 downto 0);
+      variable v_line       : string(1 to 128);
+      variable v_len        : natural;
+      variable v_cpt        : natural := 0; -- expected loop counter
+      variable v_nb_banner  : natural := 0;
+      variable v_nb_loop    : natural := 0;
+      variable v_spi        : std_logic_vector(8-1 downto 0);
+      variable v_sw         : std_logic_vector(8-1 downto 0);
+
+      function hex (value : natural; width : positive) return string is
+      begin
+        return to_hstring(std_logic_vector(to_unsigned(value,4*width)));
+      end function hex;
+
+      impure function hex2slv (str : string) return std_logic_vector is
+        variable v_res : std_logic_vector(4*str'length-1 downto 0);
+        variable v_dig : natural;
+      begin
+        for i in 0 to str'length-1 loop
+          case str(str'left+i) is
+            when '0' to '9' => v_dig := character'pos(str(str'left+i)) - character'pos('0');
+            when 'A' to 'F' => v_dig := character'pos(str(str'left+i)) - character'pos('A') + 10;
+            when others     => v_dig := 0;
+                               assert false report "[TESTBENCH] UART : bad hexadecimal digit in "&str severity failure;
+          end case;
+          v_res(v_res'left-4*i downto v_res'left-4*i-3) := std_logic_vector(to_unsigned(v_dig,4));
+        end loop;
+        return v_res;
+      end function hex2slv;
+    begin
+      set_alert_stop_limit(ERROR,1);
+
+      wait until test_begin = '1';
+      if uart_tx_o /= '1'
+      then
+        wait until uart_tx_o = '1';
+      end if;
+
+      while uart_check_end = '0'
+      loop
+        -- Receive one line
+        v_len := 0;
+        loop
+          uart_receive(v_byte, "UART TX", uart_tx_o, uart_check_end, C_UART_BFM_CONFIG);
+          exit when uart_check_end = '1' or v_byte = x"0A";
+          assert v_len < v_line'length report "[TESTBENCH] UART : line too long : "&v_line severity failure;
+          if v_byte /= x"0D"
+          then
+            v_len         := v_len+1;
+            v_line(v_len) := character'val(to_integer(unsigned(v_byte)));
+          end if;
+        end loop;
+        exit when uart_check_end = '1';
+
+        report "[TESTBENCH] UART : "&v_line(1 to v_len);
+
+        if v_line(1 to v_len) = C_BANNER
+        then
+          -- (re)start of the firmware
+          v_cpt       := 0;
+          v_nb_banner := v_nb_banner+1;
+        else
+          assert v_nb_banner > 0 and v_len >= 16 and v_line(1 to 5) = "Loop "
+            report "[TESTBENCH] UART : unexpected line : "&v_line(1 to v_len) severity failure;
+
+          v_sw := hex2slv(v_line(15 to 16));
+          assert v_sw(5) = '1'
+            report "[TESTBENCH] UART : switch(5) not set in "&v_line(1 to v_len) severity failure;
+
+          if    TEST_UART = "user_spi"     then v_spi := std_logic_vector(to_unsigned(v_cpt mod 256,8));
+          elsif TEST_UART = "user_spi_mem" then v_spi := std_logic_vector(to_unsigned(v_cpt+1,8)) when v_cpt < 15 else x"FF";
+          else                                  v_spi := x"00";
+          end if;
+
+          assert v_line(1 to v_len) = "Loop "&hex(v_cpt,8)&"-"&v_line(15 to 16)&"-"&to_hstring(v_spi)&
+                                      " Lock 00 FF MB0 00 01 02 03 04 05 06 07 "
+            report "[TESTBENCH] UART : bad line : "&v_line(1 to v_len)&" (loop "&integer'image(v_cpt)&")" severity failure;
+
+          v_cpt     := v_cpt    +1;
+          v_nb_loop := v_nb_loop+1;
+        end if;
+      end loop;
+
+      assert v_nb_banner > 0 and v_nb_loop >= C_UART_MIN_LOOP
+        report "[TESTBENCH] UART : "&integer'image(v_nb_banner)&" banner and "&integer'image(v_nb_loop)&" loop lines received" severity failure;
+
+      report "[TESTBENCH] UART : "&integer'image(v_nb_loop)&" loop lines checked";
+      uart_check_done <= '1';
+      wait;
+    end process p_uart_check;
+  end generate gen_uart_check;
+
+  -----------------------------------------------------------------------------
   -- Watchdog
   -----------------------------------------------------------------------------
   p_watchdog: process is
@@ -261,6 +406,8 @@ begin  -- architecture tb
   -- Test suite
   -----------------------------------------------------------------------------
   process is
+    variable v_led_it : unsigned(USER_NB_LED1-1 downto 0);
+    variable v_cycle  : natural;
   begin  -- process
 
       run(10);
@@ -296,20 +443,64 @@ begin  -- architecture tb
           
         end loop;  -- i
   
+        -- esw/user.c increments LED1 in the interruption routine of it_user_i
+        -- * short pulses : exactly one interruption each
+        -- * long  pulse  : at least one interruption (the GIC input is level sensitive)
         report "[TESTBENCH] User Interruption" ;
-        run(1,"neg");
-        it_user_i        <= '1';
-        run(1,"neg");
-        it_user_i        <= '0';
-        run(1000);
-  
-        run(1,"neg");
-        it_user_i        <= '1';
-        run(100);
-        run(1,"neg");
-        it_user_i        <= '0';
-        run(1000);
-        
+        for i in 0 to 2
+        loop
+          v_led_it         := unsigned(led_it);
+          run(1,"neg");
+          it_user_i        <= '1';
+          if i < 2
+          then
+            run(C_IT_PULSE_SHORT);
+          else
+            run(C_IT_PULSE_LONG);
+          end if;
+          run(1,"neg");
+          it_user_i        <= '0';
+
+          if TEST_IT
+          then
+            v_cycle := 0;
+            while (unsigned(led_it) = v_led_it) and (v_cycle < C_IT_TIMEOUT)
+            loop
+              run(1);
+              v_cycle := v_cycle+1;
+            end loop;
+            run(C_IT_SETTLE);
+
+            if i < 2
+            then
+              assert unsigned(led_it) = v_led_it+1
+                report "[TESTBENCH] User Interruption (short pulse) : LED1 = "&to_hstring(led_it)&", expected "&to_hstring(v_led_it+1)
+                severity failure;
+            else
+              assert unsigned(led_it) > v_led_it
+                report "[TESTBENCH] User Interruption (long pulse) : LED1 = "&to_hstring(led_it)&", expected > "&to_hstring(v_led_it)
+                severity failure;
+            end if;
+
+            -- No other interruption
+            v_led_it := unsigned(led_it);
+            run(C_IT_SETTLE);
+            assert unsigned(led_it) = v_led_it
+              report "[TESTBENCH] User Interruption : LED1 changed without interruption"
+              severity failure;
+          else
+            run(1000);
+          end if;
+        end loop;
+
+        if TEST_UART /= "none"
+        then
+          report "[TESTBENCH] End of the UART check";
+          uart_check_end <= '1';
+          wait until uart_check_done = '1' for 1 ms;
+          assert uart_check_done = '1' report "[TESTBENCH] UART check not done" severity failure;
+        end if;
+
         if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="lock-step")
         then
           report "[TESTBENCH] Inject error (lock-step)" ;
@@ -344,10 +535,26 @@ begin  -- architecture tb
           end loop;
   
           report "[TESTBENCH] Inject error in CPU0 in continue" ;
-          inject_error_i(1) <= '1';
+          inject_error_i(0) <= '1';
           run(100);
-          inject_error_i(1) <= '0';
+          inject_error_i(0) <= '0';
   
+          -- The supervisor resets the user SoC, then the firmware copies again the switches into LED0
+          v_cycle := 0;
+          while (not (led_switch /= switch_i)) and (v_cycle < TB_WATCHDOG)
+          loop
+            run(1);
+            v_cycle := v_cycle+1;
+          end loop;
+          assert led_switch /= switch_i report "[TESTBENCH] No reset of the user SoC after the error in CPU0" severity failure;
+          v_cycle := 0;
+          while (not (led_switch  = switch_i)) and (v_cycle < TB_WATCHDOG)
+          loop
+            run(1);
+            v_cycle := v_cycle+1;
+          end loop;
+          assert led_switch  = switch_i report "[TESTBENCH] Bad value of led_switch after the reset of the user SoC" severity failure;
+
         end if;
   
         if (USER_FAULT_INJECTION and SUPERVISOR and USER_SAFETY="tmr")
