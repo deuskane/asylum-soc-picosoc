@@ -397,13 +397,12 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `sim_soc3_<cpu>_c_user`, `sim_soc3_<cpu>_fault_c_user` (4) | `tb_PicoSoC` | `user.c`, supervisor + lock-step, without / with fault injection |
 | `sim_soc4_<cpu>_fault_c_user`, `sim_soc4_<cpu>_fault_c_user_uart` (4) | `tb_PicoSoC` | `user.c`, supervisor (`supervisor.c -DSAFETY_TMR`) + TMR; the `_uart` variants set `USER_FAULT_INJECTION=false` |
 | `sim_soc{1,2,3,4}_<cpu>[_fault]_c_user_modbus_rtu` (10) | `tb_PicoSoC_modbus_rtu` | `user_modbus_rtu.c` at 921600 baud: soc1, soc2, soc3, soc3_fault, soc4_fault for each CPU |
-| `emu_basys_soc1_openblaze8_asm_identity`, `emu_basys_soc1_wardrv_fsm_c_identity` (2) | `asylum.PicoSoC_top` | Xilinx ISE, Spartan3E `xc3s100e-5tq144` (Digilent Basys, [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)), flag `TARGET=XILINX_UNISIM`, 50 MHz, 8 switches, 4 + 1 LEDs, `RESET_POLARITY=high`; firmware `user_identity.psm` (OpenBlaze8, `pbcc_gen`) / `user_identity.c` (WardRV, `rvcc_gen` has no PicoBlaze assembler input) |
 | `emu_ng_medium_soc1_<cpu>` (2) | `PicoSoC_top` | NanoXplore nxmap NG-MEDIUM (`program: True`, [boards/NanoXplore-DK625V0/](boards/NanoXplore-DK625V0/)), flag `TARGET=NANOXPLORE_NG_MEDIUM`, 25 / 12.5 MHz, UART 9600 baud, `user.c` with SPI flash, soc1 |
 | `emu_ng_medium_soc4_<cpu>_fault_spi` (2) | `PicoSoC_top` | Same board, `user.c` with UART 9600 + SPI, supervisor + TMR + fault injection (soc4; formerly `emu_ng_medium_soc1_<cpu>_c_user`) |
 | `emu_ng_medium_soc2_<cpu>`, `_soc2_<cpu>_fault`, `_soc3_<cpu>_fault`, `_soc4_<cpu>_fault` (8) | `PicoSoC_top` | `user.c` with UART, soc2 / soc2 + fault / soc3 + fault / soc4 + fault |
 | `emu_ng_medium_soc{1,2,2_fault,3_fault,4_fault}` with `_modbus_rtu` for each CPU (10) | `PicoSoC_top` | `user_modbus_rtu.c`, 9600 baud, `FSYS_INT=6.25 MHz` |
 
-Totals: 35 `sim_soc*` targets (17 OpenBlaze8, 18 WardRV) and 24 `emu_*` targets (2 Basys, 22 NG-MEDIUM), plus `default` and `sim`. There is no `sim_soc1_wardrv_fsm_c_user` / `_asm_identity` target. Every parameter passed by a target is declared in the `parameters` section of the core and every `generate` entry is defined.
+Totals: 35 `sim_soc*` targets (17 OpenBlaze8, 18 WardRV) and 22 `emu_*` targets (NG-MEDIUM), plus `default` and `sim`. There is no `sim_soc1_wardrv_fsm_c_user` / `_asm_identity` target. Every parameter passed by a target is declared in the `parameters` section of the core and every `generate` entry is defined.
 
 ### How to Run
 
@@ -424,14 +423,14 @@ Equivalent FuseSoC command:
 fusesoc --cores-root . run --build-root build --target sim_soc4_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:3.3.1
 ```
 
-Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap or Xilinx ISE. Outside CI, GHDL writes a waveform `dut.fst`.
+Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap. Outside CI, GHDL writes a waveform `dut.fst`.
 
 Host tools: [tools/modbus_server.py](tools/modbus_server.py) (pymodbus RTU client) and [tools/modbus_server_debug.py](tools/modbus_server_debug.py) (raw serial frames) talk to the Modbus firmware on the board.
 
 ## Synthesis
 
 - **NanoXplore NG-MEDIUM** (`emu_ng_medium_*`, tool nxmap, `program: True`): pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py) (6 switches, push buttons for `arst_i` / `it_user_i`, ...), options in `options.py` (`ManageAsynchronousReadPort`, `AllowUnconfiguredIOs`) and `features.py`; techmap flag `NANOXPLORE_NG_MEDIUM`.
-- **Digilent Basys** (`emu_basys_*`, tool ISE, Spartan3E xc3s100e, tq144, -5): constraints in [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf) (clock P54, LEDs, switches, `arst_i` on BTN0); techmap flag `XILINX_UNISIM`.
+- **Digilent Basys**: the constraints are kept in [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf) but there is no `emu_basys_*` target any more: the Spartan3E is only supported by ISE, whose XST does not support the VHDL-2008 constructs used by the design (unconstrained record elements, `process (all)`, `else generate`), and `target_techmap` has no Xilinx branch.
 - Fault tolerance is selected at build time (`SUPERVISOR`, `USER_SAFETY`, `USER_FAULT_INJECTION`, `USER_LOCK_STEP_DEPTH`).
 - `cpu_safety` contains `report` processes (configuration and mismatch messages) that are not enclosed in `synthesis translate_off`.
 

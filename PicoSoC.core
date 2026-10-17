@@ -418,13 +418,6 @@ filesets:
       - bitvis:verification:uvvm
 
   #---------------------------------------
-  files_basys:
-  #---------------------------------------
-    files:
-      - boards/Digilent-Basys1/pads.ucf : {file_type : UCF}
-    file_type : vhdlSource
-
-  #---------------------------------------
   files_ng_medium:
   #---------------------------------------
     files:
@@ -469,34 +462,6 @@ targets:
       ghdl :
         analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
-
-  #---------------------------------------
-  emu_basys_soc1_openblaze8_asm_identity:
-  #---------------------------------------
-    description  : Synthesis for Digilent Basys board of the test esw/user_identity.psm
-    default_tool : ise
-    filesets     :
-      - files_hdl
-      - files_basys 
-      - pbcc_dep
-    generate : [gen_picoblaze3_user_asm_identity,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=50000000
-      - FSYS_INT=50000000
-      - USER_NB_SWITCH=8
-      - USER_NB_LED0=4
-      - USER_NB_LED1=1
-      - RESET_POLARITY=high
-    flags:
-      TARGET  : XILINX_UNISIM
-    tools:
-      ise:
-        family  : Spartan3E
-        device  : xc3s100e
-        package : tq144
-        speed   : -5
-    toplevel : asylum.PicoSoC_top
 
   #---------------------------------------
   emu_ng_medium_soc4_openblaze8_fault_spi: &emu_ng_medium_default
@@ -1314,34 +1279,6 @@ targets:
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
-
-  #---------------------------------------
-  emu_basys_soc1_wardrv_fsm_c_identity:
-  #---------------------------------------
-    description  : Synthesis for Digilent Basys board of the test esw/user_identity.c
-    default_tool : ise
-    filesets     :
-      - files_hdl
-      - files_basys 
-      - pbcc_dep
-    generate : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=50000000
-      - FSYS_INT=50000000
-      - USER_NB_SWITCH=8
-      - USER_NB_LED0=4
-      - USER_NB_LED1=1
-      - RESET_POLARITY=high
-    flags:
-      TARGET  : XILINX_UNISIM
-    tools:
-      ise:
-        family  : Spartan3E
-        device  : xc3s100e
-        package : tq144
-        speed   : -5
-    toplevel : asylum.PicoSoC_top
 
   #---------------------------------------
   emu_ng_medium_soc4_wardrv_fsm_fault_spi:

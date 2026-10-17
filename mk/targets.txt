@@ -1,6 +1,4 @@
 default                                        : Default Target (DON'T RUN)
-emu_basys_soc1_openblaze8_asm_identity         : Synthesis for Digilent Basys board of the test esw/user_identity.psm
-emu_basys_soc1_wardrv_fsm_c_identity           : Synthesis for Digilent Basys board of the test esw/user_identity.c
 emu_ng_medium_soc1_openblaze8                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_openblaze8_modbus_rtu       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_wardrv_fsm                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
