@@ -128,6 +128,21 @@ architecture rtl of cpu_safety is
 
   signal diff                         : std_logic_vector(3-1 downto 0); -- Instantaneous      difference signals
   signal diff_r                       : std_logic_vector(3-1 downto 0); -- Registered/Latched difference signals
+
+  -- Difference between the data bus requests of two CPU
+  -- cs, re and we are always compared, addr only when cs = '1' and wdata only when we = '1'
+  -- (their value is meaningless outside an access)
+  function sbi_ini_diff
+    (a : sbi_ini_t
+    ;b : sbi_ini_t
+    ) return boolean is
+  begin
+    return (a.cs /= b.cs) or
+           (a.re /= b.re) or
+           (a.we /= b.we) or
+           ((a.cs = '1')                  and (a.addr  /= b.addr )) or
+           ((a.cs = '1') and (a.we = '1') and (a.wdata /= b.wdata));
+  end function sbi_ini_diff;
 begin
 
   -----------------------------------------------------------------------------
@@ -207,7 +222,7 @@ begin
     diff(DIFF_CPU0_VS_CPU1) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
                                          or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
                                          or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
-                                       --or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
+                                         or sbi_ini_diff(cpu0_sbi_ini (LOCK_STEP_DEPTH_INT), cpu1_sbi_ini)
                                             ) else
                                '0';
     
@@ -259,14 +274,14 @@ begin
     diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
                                          or (cpu1_iaddr   /= cpu2_iaddr        )
                                          or (cpu1_it_ack  /= cpu2_it_ack       )
-                                       --or (cpu1_sbi_ini /= cpu2_sbi_ini      )
+                                         or sbi_ini_diff(cpu1_sbi_ini, cpu2_sbi_ini        )
                                          ) else
                                '0';
       
     diff(DIFF_CPU2_VS_CPU0) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
                                          or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
                                          or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
-                                       --or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
+                                         or sbi_ini_diff(cpu2_sbi_ini, cpu0_sbi_ini (0)    )
                                         ) else
                                '0';
     
