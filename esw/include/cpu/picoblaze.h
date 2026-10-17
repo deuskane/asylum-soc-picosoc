@@ -14,6 +14,7 @@
 // 2025-06-14  1.0      mrosiere Created
 // 2026-05-14  1.1      mrosiere Support others picoblaze cores 
 //                               (but keep the same interface)
+// 2026-11-19  1.2      mrosiere Add cpu_nop
 //-----------------------------------------------------------------------------
 
 #ifndef _picoblaze_h_
@@ -30,6 +31,14 @@ extern volatile uint8_t PBLAZEPORT[];
 
 #define PORT_WR(_BA_,_OFFSET_,_DATA_) PBLAZEPORT[(_BA_)+(_OFFSET_)] = (_DATA_)
 #define PORT_RD(_BA_,_OFFSET_)        PBLAZEPORT[(_BA_)+(_OFFSET_)]
+
+//--------------------------------------
+// Instruction
+//--------------------------------------
+
+// No operation : the PicoBlaze has no NOP instruction, LOAD s0, s0 changes nothing
+// (macro : inlined, no code when unused)
+#define cpu_nop() __asm LOAD s0, s0 __endasm
 
 //--------------------------------------
 // Interruption
