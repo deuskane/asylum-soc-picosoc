@@ -375,7 +375,7 @@ filesets:
   pbcc_dep:
   #---------------------------------------
     depend:
-      - ">=asylum:utils:generators:2.8.0"
+      - ">=asylum:utils:generators:1.0.0"      
 
   #---------------------------------------
   files_hdl:
@@ -435,6 +435,13 @@ filesets:
       - boards/NanoXplore-DK625V0/features.py: {file_type : nx_features}
     file_type : vhdlSource
 
+  #---------------------------------------
+  syn:
+  #---------------------------------------
+    # ghdl_synth.sh / ghdl_synth.mk (pre_run hook of lint_ghdl_synth_*)
+    depend       :
+      - asylum:utils:ghdl_synth
+
   # Next line is a pragma, don't modify
   #<FILESETS_BEGIN>
   #<FILESETS_END>
@@ -461,7 +468,7 @@ targets:
     << : *default
     description     : Lint with GHDL (-Wall analysis and elaboration of PicoSoC_top)
     toplevel        : asylum.PicoSoC_top
-    filesets_append : [pbcc_dep]
+    filesets_append : [pbcc_dep,syn]
     generate        : [gen_picoblaze3_user_c_identity,gen_picoblaze3_supervisor_c_dummy]
     default_tool    : ghdl
     tools :
@@ -471,7 +478,7 @@ targets:
   #---------------------------------------
   # Synthesis check : -Wall analysis, ghdl --synth -Wall and elaboration
   # (no simulation) of PicoSoC_top with the generics of the target.
-  # The pre_run hook (ghdl_synth.sh of asylum:utils:generators) adds
+  # The pre_run hook (ghdl_synth.sh of asylum:utils:ghdl_synth) adds
   # ghdl_synth.mk to the edalize Makefile.
   # FuseSoC merges tools in depth : analyze_options comes from lint_ghdl.
   # OpenBlaze8 : firmware of lint_ghdl (pbcc_gen)
