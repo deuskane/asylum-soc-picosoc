@@ -12,6 +12,7 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-10-18  1.0      mrosiere Created
+// 2026-11-15  1.1      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
 //-----------------------------------------------------------------------------
 
 //#include <intr.h>
@@ -457,8 +458,10 @@ void setup()
   // UART
   // * Setup the clock frequency and the target Baud Rate
   // * Configurae the Uart RX Loopback
+  // * Clear the old events (the ISR also records the masked sources)
   // * Enable the Interruption UART RX Empty interuption
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
+  gic_clr      (UART,UART_IT_RX_EMPTY_B_MSK);
   gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
 
   // TIMER
@@ -466,7 +469,10 @@ void setup()
   //   Char = 1 START + 8 DATA + 1 STOP -> 10b
   //   Tchar = 10*CLOCK_FREQ/BAUD_RATE
   timer_cnt = (3.5 * 10 * CLOCK_FREQ)/(BAUD_RATE);
+  // * Clear the done event recorded since the reset (counter at 0 until
+  //   timer_wr loads it) : modbus_wait polls this ISR bit
   timer_wr(TIMER,timer_cnt);
+  gic_clr      (TIMER,TIMER_IT_DONE_MSK);
   gic_it_enable(TIMER,TIMER_IT_DONE_MSK);
   
   // Setup the interruption handler address in the CPU

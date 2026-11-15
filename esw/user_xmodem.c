@@ -14,6 +14,7 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2025-07-31  1.0      mrosiere Created
+// 2026-11-15  1.1      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -137,9 +138,12 @@ void setup()
   gpio_wr   (LED1  ,0);
 
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,1);
+  // Clear the old events before unmasking (the ISR also records the masked sources)
+  gic_clr      (UART,UART_IT_RX_EMPTY_B_MSK);
   gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
   
 //spi_setup(SPI,0,0,SPI_LOOPBACK);
+  gic_clr      (GIC,GIC_IT_USER_MSK);
   gic_it_enable(GIC,GIC_IT_USER_MSK);
 //gic_it_enable(GIC,GIC_UART_MSK);
   

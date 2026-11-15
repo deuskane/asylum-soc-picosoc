@@ -16,6 +16,7 @@
 // 2017-03-30  1.0      mrosiere Created
 // 2025-01-06  1.1      mrosiere Add comments
 // 2025-07-05  1.2      mrosiere Use GIC instead GPIO
+// 2026-11-15  1.3      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
 //-----------------------------------------------------------------------------
 #include "addrmap_supervisor.h"
 
@@ -43,8 +44,11 @@ ISR_FCT
   else
     {
       // Not the first error
+      // The user CPUs are held in reset : every diff line is inactive, clear
+      // all the old events (the ISR also records the lines masked at the
+      // first error) before unmasking them
       gpio_wr       (RST,0);
-      gic_clr       (GIC,it_vector);
+      gic_clr       (GIC,VECTOR_MASK_DEFAULT);
       gic_it_enable (GIC,VECTOR_MASK_DEFAULT);
       gpio_wr       (LED,gpio_rd(LED)+1);
       gpio_wr       (RST,1);
@@ -78,7 +82,8 @@ void main()
   gpio_wr       (RST,0);
   gpio_wr       (LED,0);
 
-  // Mask Enable
+  // Mask Enable (user CPUs in reset : clear the old events first)
+  gic_clr       (GIC,VECTOR_MASK_DEFAULT);
   gic_it_enable (GIC,VECTOR_MASK_DEFAULT);
 
   // Setup the interruption handler address in the CPU
