@@ -65,9 +65,11 @@ CAPI=2:
 #                               emu_basys WardRV target uses user_identity.c (rvcc_gen has no psm),
 #                               PicoSoC_top CPU_MODEL default, OR of diff_o with NB_CPU > 1,
 #                               add missing gen_*_user_c_uart_9600 generators
+# 2026-11-15  3.3.2    mrosiere esw : clear the ISR before unmasking (asylum:system:GIC 2.0.0
+#                               records the masked sources too)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.3.1
+name        : asylum:soc:PicoSoC:3.3.2
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
