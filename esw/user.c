@@ -16,6 +16,7 @@
 // 2017-03-30  1.0      mrosiere Created
 // 2025-01-06  1.1      mrosiere Add comments
 // 2025-06-13  1.2      mrosiere Add SPI
+// 2026-11-15  1.3      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -83,8 +84,10 @@ void setup()
   // UART
   // * Setup the clock frequency and the target Baud Rate
   // * Configurae the Uart RX Loopback
+  // * Clear the old events (the ISR also records the masked sources)
   // * Enable the Interruption UART RX Empty interuption
   uart_setup(UART,CLOCK_FREQ,BAUD_RATE,UART_RX_LOOPBACK);
+  gic_clr      (UART,UART_IT_RX_EMPTY_B_MSK);
   gic_it_enable(UART,UART_IT_RX_EMPTY_B_MSK);
 
   // SPI
@@ -93,8 +96,10 @@ void setup()
   spi_setup(SPI,0,0,SPI_LOOPBACK);
 
   // GIC
+  // * Clear the old events (the ISR also records the masked lines)
   // * Enable the interruption User
   // * Enable Interruption from UART
+  gic_clr      (GIC,GIC_IT_USER_MSK|GIC_UART_MSK);
   gic_it_enable(GIC,GIC_IT_USER_MSK);
   gic_it_enable(GIC,GIC_UART_MSK);
 
