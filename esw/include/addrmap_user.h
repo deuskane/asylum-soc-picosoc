@@ -15,6 +15,7 @@
 // 2025-11-02  1.1      mrosiere Add Timer
 // 2026-05-29  1.2      mrosiere Add SPINLOCK and MAILBOX
 // 2026-11-16  1.3      mrosiere Add GIC_MAILBOX0_MSK and GIC_MAILBOX1_MSK
+//                               GIC_TIMER_MSK is bit 2 (0x04, was 0x03)
 //-----------------------------------------------------------------------------
 
 #ifndef _addrmap_user_h_
@@ -55,7 +56,7 @@
 //--------------------------------------
 #define GIC_IT_USER_MSK     0x01
 #define GIC_UART_MSK        0x02
-#define GIC_TIMER_MSK       0x03
+#define GIC_TIMER_MSK       0x04
 #define GIC_MAILBOX0_MSK    0x08 // Data available in the mailbox fifo0
 #define GIC_MAILBOX1_MSK    0x10 // Data available in the mailbox fifo1
 
