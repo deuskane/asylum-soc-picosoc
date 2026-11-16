@@ -398,7 +398,7 @@ filesets:
       - ">=asylum:communication:uart:1.0.0"
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
-      - ">=asylum:system:GIC:1.0.0"
+      - ">=asylum:system:GIC:2.0.0"
       - ">=asylum:system:spinlock:1.0.0"
       - ">=asylum:system:mailbox:1.1.0"
       - ">=asylum:component:fifo:1.0.0"
