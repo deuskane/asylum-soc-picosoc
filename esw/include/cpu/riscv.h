@@ -12,6 +12,7 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2026-05-17  1.0      mrosiere Created
+// 2026-11-19  1.1      mrosiere Add cpu_nop
 //-----------------------------------------------------------------------------
 
 #ifndef _riscv_h_
@@ -26,6 +27,13 @@
 
 #define PORT_WR(_BA_,_OFFSET_,_DATA_) DMEM[(_BA_)+(_OFFSET_)] = (_DATA_)
 #define PORT_RD(_BA_,_OFFSET_)        DMEM[(_BA_)+(_OFFSET_)]
+
+//--------------------------------------
+// Instruction
+//--------------------------------------
+
+// No operation (macro : inlined, no code when unused)
+#define cpu_nop() __asm__ volatile ("nop")
 
 //--------------------------------------
 // Interruption

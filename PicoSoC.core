@@ -2026,7 +2026,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=none
+      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
 
@@ -2055,7 +2055,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=none
+      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
 
@@ -2084,7 +2084,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=none
+      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
 
