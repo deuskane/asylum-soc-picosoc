@@ -115,7 +115,7 @@ It is also the toplevel of the `default` target of [PicoSoC.core](PicoSoC.core) 
 | `USER_SPI_DEPTH_CMD` | natural | `0` | SPI command FIFO depth |
 | `USER_SPI_DEPTH_TX` | natural | `0` | SPI TX FIFO depth |
 | `USER_SPI_DEPTH_RX` | natural | `0` | SPI RX FIFO depth |
-| `USER_SPI_NB_IO` | natural | `8` | Number of SPI IO pads (`spi_io_io`) |
+| `USER_SPI_NB_IO` | natural | `8` | Number of SPI IO pads (`spi_io_io`), up to 8; the SPI inputs without pad are tied to `0` (`emu_ng_medium_*`: `2`, MOSI and MISO) |
 | `USER_SAFETY` | string | `"lock-step"` | `"none"` / `"lock-step"` / `"tmr"` |
 | `USER_LOCK_STEP_DEPTH` | natural | `2` | Delay (cycles) between CPU0 and CPU1 in lock-step mode |
 | `USER_FAULT_INJECTION` | boolean | `True` | Enable `inject_error_i` |
@@ -391,7 +391,7 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `lint_ghdl` | `asylum.PicoSoC_top` | Lint: GHDL `-Wall -fsynopsys -frelaxed` analysis and elaboration (empty simulation) with the default generics (OpenBlaze8, supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) |
 | `lint_ghdl_synth_default` | `asylum.PicoSoC_top` | Synthesis check (see below), OpenBlaze8, default generics (supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) of `lint_ghdl` |
 | `lint_ghdl_synth_soc1` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc1 (no supervisor, no safety): `SUPERVISOR=false`, `USER_SAFETY=none`, `USER_FAULT_INJECTION=false`, `DEBUG_ENABLE=false` |
-| `lint_ghdl_synth_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics (`FSYS=25000000`, `FSYS_INT=12500000`, 6 switches, 9600 baud, FIFO depths 4) |
+| `lint_ghdl_synth_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics (`FSYS=25000000`, `FSYS_INT=12500000`, 6 switches, 9600 baud, FIFO depths 4, `USER_SPI_NB_IO=2`) |
 | `lint_ghdl_synth_basys` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (`emu_basys_*`), fails: `USER_NB_LED0` / `USER_NB_LED1` other than 8 are not supported (`data_i => X"00"` of the LED GPIOs in `PicoSoC_user`, `debug_o <= led0_user` in `PicoSoC_top`): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
 | `lint_ghdl_synth_wardrv_soc1` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm (`CPU_MODEL=WardRV_fsm`, firmware `user_identity.c` / `dummy.c` with `rvcc_gen`: the ROMs depend on the CPU), soc1 |
 | `lint_ghdl_synth_wardrv_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc4 with the NG-MEDIUM generics |

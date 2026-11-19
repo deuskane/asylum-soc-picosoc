@@ -523,6 +523,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
 
   #---------------------------------------
   lint_ghdl_synth_basys :
@@ -568,6 +569,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
 
   #---------------------------------------
   lint_ghdl_synth_wardrv_soc1x4 :
@@ -657,6 +659,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -698,6 +701,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -731,6 +735,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -764,6 +769,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -797,6 +803,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -830,6 +837,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -863,6 +871,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -896,6 +905,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -929,6 +939,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -962,6 +973,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -995,6 +1007,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -1517,6 +1530,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -1558,6 +1572,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1591,6 +1606,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1624,6 +1640,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1657,6 +1674,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1690,6 +1708,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1723,6 +1742,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=false
@@ -1756,6 +1776,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -1789,6 +1810,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -1822,6 +1844,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -1855,6 +1878,7 @@ targets:
       - USER_SPI_DEPTH_CMD=4
       - USER_SPI_DEPTH_TX=4
       - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
       
       # Platform Configuration
       - SUPERVISOR=true
@@ -2422,6 +2446,12 @@ parameters :
     description : SPI RX Depth FIFO
     datatype    : int
     default     : 0
+    paramtype   : generic
+
+  USER_SPI_NB_IO :
+    description : SPI IO lines with a pad (MOSI, MISO, WP#, HOLD#, ...), up to 8
+    datatype    : int
+    default     : 8
     paramtype   : generic
 
   USER_NB_SWITCH :

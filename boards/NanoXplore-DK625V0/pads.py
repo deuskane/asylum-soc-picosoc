@@ -48,10 +48,11 @@ p.addPad('led1_o[7]'          ,{'location':'USER_DATA_OE'}) # USER_* have predef
 #------------------------------------------------------------------
 # SPI Flash
 #------------------------------------------------------------------
-p.addPad('spi_sclk_o'        ,{'location':'USER_D9'     }) # USER_* have predefined parameters
-p.addPad('spi_cs_b_o'        ,{'location':'USER_D8'     }) # USER_* have predefined parameters
-p.addPad('spi_mosi_o'        ,{'location':'USER_D11'    }) # USER_* have predefined parameters
-p.addPad('spi_miso_i'        ,{'location':'USER_D10'    }) # USER_* have predefined parameters
+# Only SCLK, CS#, MOSI (spi_io_io[0]) and MISO (spi_io_io[1]) are wired : USER_SPI_NB_IO=2
+p.addPad('spi_sclk_io'       ,{'location':'USER_D9'     }) # USER_* have predefined parameters
+p.addPad('spi_cs_b_io'       ,{'location':'USER_D8'     }) # USER_* have predefined parameters
+p.addPad('spi_io_io[0]'      ,{'location':'USER_D11'    }) # USER_* have predefined parameters (MOSI)
+p.addPad('spi_io_io[1]'      ,{'location':'USER_D10'    }) # USER_* have predefined parameters (MISO)
                                                         
 # Bank5 spare I/Os                                      
 p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left
