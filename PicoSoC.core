@@ -395,7 +395,7 @@ filesets:
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
       - ">=asylum:component:crc:1.0.0"
-      - ">=asylum:communication:uart:1.0.0"
+      - ">=asylum:communication:uart:3.0.0"
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
       - ">=asylum:system:GIC:2.0.0"

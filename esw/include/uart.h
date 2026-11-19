@@ -13,6 +13,8 @@
 // Date        Version  Author   Description
 // 2025-06-14  1.0      mrosiere Created
 // 2026-06-26  1.1      mrosiere Use include from regtool
+// 2026-11-19  1.2      mrosiere Interrupt sources of asylum:communication:uart
+//                               3.0.0 : bit 0 is TX FIFO empty, RX errors 7:4
 //-----------------------------------------------------------------------------
 
 #ifndef _uart_h_
@@ -21,15 +23,25 @@
 #include "UART_csr.h"
 
 
-#define UART_IT_RX_FULL         3
-#define UART_IT_RX_EMPTY_B      2
-#define UART_IT_TX_FULL         1
-#define UART_IT_TX_EMPTY_B      0
+// Interrupt sources (bits of isr / imr, asylum:communication:uart >= 3.0.0)
+// Bits 3:0 are levels (FIFO state), bits 7:4 are events (write 1 in isr to clear)
+#define UART_IT_RX_BREAK        7 // RX break (all bits of a frame at 0)
+#define UART_IT_RX_PARITY       6 // RX parity error
+#define UART_IT_RX_FRAMING      5 // RX framing error (stop bit at 0)
+#define UART_IT_RX_OVERRUN      4 // RX overrun (a received byte was dropped)
+#define UART_IT_RX_FULL         3 // RX FIFO full
+#define UART_IT_RX_EMPTY_B      2 // RX FIFO not empty
+#define UART_IT_TX_FULL         1 // TX FIFO full
+#define UART_IT_TX_EMPTY        0 // TX FIFO empty (TX FIFO not empty up to uart 2.0.0)
 
+#define UART_IT_RX_BREAK_MSK    0x80
+#define UART_IT_RX_PARITY_MSK   0x40
+#define UART_IT_RX_FRAMING_MSK  0x20
+#define UART_IT_RX_OVERRUN_MSK  0x10
 #define UART_IT_RX_FULL_MSK     0x08
 #define UART_IT_RX_EMPTY_B_MSK  0x04
 #define UART_IT_TX_FULL_MSK     0x02
-#define UART_IT_TX_EMPTY_B_MSK  0x01
+#define UART_IT_TX_EMPTY_MSK    0x01
 
 //--------------------------------------
 // putchar : send char into uart

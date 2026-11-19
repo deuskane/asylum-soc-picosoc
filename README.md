@@ -536,7 +536,7 @@ asylum-soc-picosoc/
 | `asylum:component:clock_divider` | `files_hdl` | Internal clock generation |
 | `asylum:component:GPIO` | `files_hdl` | `sbi_GPIO_irq` |
 | `asylum:component:crc` | `files_hdl` | `sbi_crc` |
-| `asylum:communication:uart` | `files_hdl` | `sbi_uart` |
+| `asylum:communication:uart` (`>=3.0.0`) | `files_hdl` | `sbi_uart` (interrupt sources of `esw/include/uart.h`) |
 | `asylum:communication:SPI` | `files_hdl` | `sbi_spi` |
 | `asylum:infrastructure:icn` | `files_hdl` | `sbi_icn` |
 | `asylum:system:GIC` (`>=2.0.0`) | `files_hdl` | `sbi_GIC` (its `isr` register records the masked sources: polled by `user.c`) |
