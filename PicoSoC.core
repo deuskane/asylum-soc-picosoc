@@ -390,6 +390,7 @@ filesets:
     file_type    : vhdlSource
     logical_name : asylum
     depend       :
+      - ">=asylum:utils:pkg:1.9.0"
       - ">=asylum:target:techmap:1.0.0"
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
