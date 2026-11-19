@@ -107,8 +107,8 @@ It is also the toplevel of the `default` target of [PicoSoC.core](PicoSoC.core) 
 | `USER_RAM1_DEPTH` | natural | `128` | Local RAM1 size in bytes (up to 128) |
 | `USER_RAM2_DEPTH` | natural | `64` | Shared RAM2 size in bytes (up to 64) |
 | `USER_NB_SWITCH` | positive | `8` | Width of `switch_i` |
-| `USER_NB_LED0` | positive | `8` | Width of `led0_o` |
-| `USER_NB_LED1` | positive | `8` | Width of `led1_o` |
+| `USER_NB_LED0` | positive | `8` | Width of `led0_o` (1 to 8) |
+| `USER_NB_LED1` | positive | `8` | Width of `led1_o` (1 to 8) |
 | `USER_BAUD_RATE` | integer | `115200` | UART baud rate |
 | `USER_UART_DEPTH_TX` | natural | `0` | UART TX FIFO depth |
 | `USER_UART_DEPTH_RX` | natural | `0` | UART RX FIFO depth |
@@ -392,7 +392,7 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `lint_ghdl_synth_default` | `asylum.PicoSoC_top` | Synthesis check (see below), OpenBlaze8, default generics (supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) of `lint_ghdl` |
 | `lint_ghdl_synth_soc1` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc1 (no supervisor, no safety): `SUPERVISOR=false`, `USER_SAFETY=none`, `USER_FAULT_INJECTION=false`, `DEBUG_ENABLE=false` |
 | `lint_ghdl_synth_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics (`FSYS=25000000`, `FSYS_INT=12500000`, 6 switches, 9600 baud, FIFO depths 4, `USER_SPI_NB_IO=2`) |
-| `lint_ghdl_synth_basys` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (`emu_basys_*`), fails: `USER_NB_LED0` / `USER_NB_LED1` other than 8 are not supported (`data_i => X"00"` of the LED GPIOs in `PicoSoC_user`, `debug_o <= led0_user` in `PicoSoC_top`): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
+| `lint_ghdl_synth_basys` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (`emu_basys_*`): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
 | `lint_ghdl_synth_wardrv_soc1` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm (`CPU_MODEL=WardRV_fsm`, firmware `user_identity.c` / `dummy.c` with `rvcc_gen`: the ROMs depend on the CPU), soc1 |
 | `lint_ghdl_synth_wardrv_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc4 with the NG-MEDIUM generics |
 | `lint_ghdl_synth_wardrv_soc1x4` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc1 with 4 user CPUs (`USER_NB_CPU=4`) |
