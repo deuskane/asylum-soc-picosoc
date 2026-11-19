@@ -67,9 +67,20 @@ CAPI=2:
 #                               add missing gen_*_user_c_uart_9600 generators
 # 2026-11-15  3.3.2    mrosiere esw : clear the ISR before unmasking (asylum:system:GIC 2.0.0
 #                               records the masked sources too)
+# 2026-11-19  4.0.0    mrosiere it_user_i resynchronized in the user GIC, data bus compared
+#                               in lock-step / TMR (asylum:utils:pkg >= 1.9.0), ICN2 address
+#                               width, NG-MEDIUM SPI pads (USER_SPI_NB_IO = 2, inputs
+#                               without pad tied to 0), USER_NB_LED0 / 1 other than 8,
+#                               mailbox "data available" sources 3 / 4 on the user GIC
+#                               (mailbox >= 1.1.0, GIC >= 2.0.0), esw uart.h for uart 3.0.0
+#                               (UART_IT_TX_EMPTY), cpu_nop; tb_PicoSoC checks the user
+#                               interruption, the UART output and the multi-CPU progress;
+#                               targets: emu_basys_* removed, lint_ghdl_synth_basys renamed
+#                               lint_ghdl_synth_4leds_reset_high, sim_soc4_*_fault_c_user_uart
+#                               renamed sim_soc4_*_c_user_uart
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:3.3.2
+name        : asylum:soc:PicoSoC:4.0.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================

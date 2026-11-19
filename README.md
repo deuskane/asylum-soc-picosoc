@@ -40,7 +40,7 @@
 
 **Small SoC with OpenBlaze8 or WardRV CPU(s), SBI interconnect, GPIO, UART, SPI, GIC, timer, CRC, spinlock, mailbox and RAMs, plus an optional supervisor SoC and lock-step / TMR CPU safety.**
 
-VLNV: `asylum:soc:PicoSoC:3.3.2`
+VLNV: `asylum:soc:PicoSoC:4.0.0`
 
 ## Table of Contents
 
@@ -450,7 +450,7 @@ make clean                                 # remove build/ and log/
 Equivalent FuseSoC command:
 
 ```bash
-fusesoc --cores-root . run --build-root build --target sim_soc4_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:3.3.2
+fusesoc --cores-root . run --build-root build --target sim_soc4_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:4.0.0
 ```
 
 Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap. Outside CI, GHDL writes a waveform `dut.fst`.
