@@ -16,6 +16,8 @@
 -- Date        Version  Author   Description
 -- 2026-05-20  1.0      mrosiere Created
 -- 2026-05-21  1.1      mrosiere Cosmetics
+-- 2026-11-19  1.2      mrosiere Compare the data bus requests ("/=" of sbi_pkg :
+--                               addr when cs = '1', wdata when we = '1')
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -207,7 +209,7 @@ begin
     diff(DIFF_CPU0_VS_CPU1) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
                                          or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
                                          or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
-                                       --or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
+                                         or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
                                             ) else
                                '0';
     
@@ -259,14 +261,14 @@ begin
     diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
                                          or (cpu1_iaddr   /= cpu2_iaddr        )
                                          or (cpu1_it_ack  /= cpu2_it_ack       )
-                                       --or (cpu1_sbi_ini /= cpu2_sbi_ini      )
+                                         or (cpu1_sbi_ini /= cpu2_sbi_ini      )
                                          ) else
                                '0';
       
     diff(DIFF_CPU2_VS_CPU0) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
                                          or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
                                          or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
-                                       --or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
+                                         or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
                                         ) else
                                '0';
     

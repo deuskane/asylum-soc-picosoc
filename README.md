@@ -68,7 +68,7 @@ PicoSoC is the reference system of the Asylum project. It integrates the Asylum 
 
 - CPU selection per build: `OpenBlaze8` (`sbi_OpenBlaze8`) or `WardRV_fsm` (`sbi_WardRV_fsm`) through `cpu_wrapper`
 - Multi-core user SoC (`USER_NB_CPU`), each CPU with its own ROM, GIC and RAM1, `mhartid` = CPU index (WardRV)
-- Safety wrapper `cpu_safety`: `"none"`, `"lock-step"` (CPU1 delayed by `LOCK_STEP_DEPTH` cycles and compared) or `"tmr"` (3 CPUs, majority vote); sticky mismatch flags `diff_o`
+- Safety wrapper `cpu_safety`: `"none"`, `"lock-step"` (CPU1 delayed by `LOCK_STEP_DEPTH` cycles and compared) or `"tmr"` (3 CPUs, majority vote); the comparison covers the instruction bus, the interrupt acknowledge and the data bus requests (`"/="` of `sbi_pkg` >= 1.9.0: `addr` only when `cs = '1'`, `wdata` only when `we = '1'`); sticky mismatch flags `diff_o`
 - Fault injection: one instruction bit of each redundant CPU can be flipped from `inject_error_i`
 - Supervisor SoC reacting to mismatches by resetting the user SoC (firmware [esw/supervisor.c](esw/supervisor.c), TMR-aware variant)
 - Peripherals: 3 x `sbi_GPIO_irq`, `sbi_uart` (CTS/RTS, configurable FIFOs), `sbi_spi` (up to 8 IO lanes, pads), `sbi_timer`, `sbi_crc` (CRC16 Modbus, polynomial `0xA001`), `sbi_spinlock`, `sbi_mailbox`, `sbi_GIC`, `sbi_ram`
@@ -520,6 +520,7 @@ asylum-soc-picosoc/
 
 | Core | Used by (fileset) | Purpose |
 |------|-------------------|---------|
+| `asylum:utils:pkg` (`>=1.9.0`) | `files_hdl` | `sbi_pkg` (SBI records, `"/="` of the lock-step / TMR comparison) |
 | `asylum:target:techmap` | `files_hdl` | `sync2dffrn`, `obuf`, `iobuf` (`techmap_pkg`) |
 | `asylum:component:clock_divider` | `files_hdl` | Internal clock generation |
 | `asylum:component:GPIO` | `files_hdl` | `sbi_GPIO_irq` |
