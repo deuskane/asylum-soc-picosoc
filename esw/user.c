@@ -17,6 +17,7 @@
 // 2025-01-06  1.1      mrosiere Add comments
 // 2025-06-13  1.2      mrosiere Add SPI
 // 2026-11-15  1.3      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
+// 2026-11-16  1.4      mrosiere Mailbox test : check the GIC sources "data available"
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -224,6 +225,24 @@ void printf(char * x)
 }
 
 //--------------------------------------
+// Mailbox Interruption Check
+//
+// The GIC records "data available" in the mailbox fifo0 / fifo1 (level
+// sources, masked : read in the ISR). Compare them with expected, else
+// print KO and stop : LED0 no longer follows the switches and the
+// testbench fails on its watchdog
+//--------------------------------------
+void mailbox_it_check(uint8_t expected)
+{
+  if ((gic_isr(GIC)&(GIC_MAILBOX0_MSK|GIC_MAILBOX1_MSK)) != expected)
+    {
+      putchar('K');
+      putchar('O');
+      while (1);
+    }
+}
+
+//--------------------------------------
 // Main
 //--------------------------------------
 // Arduino Style, Don't modify
@@ -350,6 +369,9 @@ void main()
 
     {
       // Test Mailbox
+      // * fifo0 : push 8 bytes, pop and print them
+      // * GIC   : the source "data available" of a channel is set while the
+      //   channel has data; its ISR bit is cleared only once it is empty
       uint8_t mb;
       uint8_t i;
 
@@ -362,12 +384,22 @@ void main()
         {
           mailbox_push(MAILBOX,0,i);
         }
+      // fifo0 has data, fifo1 is empty
+      mailbox_it_check(GIC_MAILBOX0_MSK);
+      mailbox_push    (MAILBOX,1,cpt_byte0);
       for (i=0; i<8; i++)
         {
           mb = mailbox_pop(MAILBOX,0);
           puthex(mb);
           putchar(' ');
         }
+      // fifo0 is empty, fifo1 has data
+      gic_clr         (GIC,GIC_MAILBOX0_MSK);
+      mailbox_it_check(GIC_MAILBOX1_MSK);
+      // Both channels are empty
+      mb = mailbox_pop(MAILBOX,1);
+      gic_clr         (GIC,GIC_MAILBOX1_MSK);
+      mailbox_it_check(0);
     }
 
 	  putchar('\r');

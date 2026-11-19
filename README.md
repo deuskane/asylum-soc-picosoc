@@ -83,7 +83,7 @@ Diagram: [doc/PicoSoC.drawio](doc/PicoSoC.drawio) (open with diagrams.net or the
 - `PicoSoC_top` resynchronises the reset (`sync2dffrn`), divides `clk_i` by `FSYS/FSYS_INT` (`clock_divider`), adapts the input polarities and instantiates `PicoSoC_user`, `PicoSoC_supervisor` (if `SUPERVISOR`) and the SPI pads (`obuf`, `iobuf`).
 - In each user CPU cluster, `cpu_safety` fetches from `ROM_user` and accesses ICN1: GIC (`0x00`) and RAM1 (`0x80`) are local, every other address goes to ICN2.
 - ICN2 decodes the shared peripherals: SWITCH, LED0, LED1, CRC, mailbox, SPI, UART, timer, spinlock and RAM2.
-- The local GIC collects `it_user_i`, the UART and the timer interrupts and drives the CPU interrupt.
+- The local GIC collects `it_user_i`, the UART and the timer interrupts and the "data available" flags of the two mailbox channels, and drives the CPU interrupt.
 - `cpu_safety.diff_o` (3 sticky mismatch flags, OR-ed over the `NB_CPU` clusters into `PicoSoC_user.diff_o`) drives the supervisor GIC; the supervisor GPIO `USER_ARST` (LED0) is the user SoC reset and its `LED_DIFF` bank (LED1) is output on `led_diff_o`. Without supervisor, `diff` goes directly to `led_diff_o`.
 
 ## Top-Level
@@ -344,7 +344,19 @@ This IP has no register bank of its own. The SoC address maps (8-bit SBI address
 | `0x40`-`0x7F` | `RAM2_DEPTH` (64) | RAM2 (shared) | `sbi_ram` (synchronous read) | ICN2 | - |
 | `0x80`-`0xFF` | `RAM1_DEPTH` (128) | RAM1 (local) | `sbi_ram` (synchronous read) | ICN1 | - |
 
-ICN1 (one per CPU, `INTERNAL_DEFAULT_SLAVE = false`) decodes GIC and RAM1 and forwards every other address to ICN2; ICN2 (`NB_CPU` masters, internal default slave) decodes the shared targets. Address encoding: `"binary"`. GIC inputs: 0 = `it_user_i`, 1 = UART interrupt, 2 = timer interrupt. The SWITCH, LED0 and LED1 GPIO interrupt outputs are not connected.
+ICN1 (one per CPU, `INTERNAL_DEFAULT_SLAVE = false`) decodes GIC and RAM1 and forwards every other address to ICN2; ICN2 (`NB_CPU` masters, internal default slave) decodes the shared targets. Address encoding: `"binary"`. The SWITCH, LED0 and LED1 GPIO interrupt outputs are not connected.
+
+Interrupt sources of the user GIC (same vector for the GIC of every CPU cluster, `GIC_WIDTH = 5`, no resynchronizer: `ITS_SYNC_ENABLE` = 0):
+
+| GIC input | Source | HDL constant (`PicoSoC_pkg`) | C mask (`addrmap_user.h`) |
+|-----------|--------|------------------------------|---------------------------|
+| 0 | `it_user_i` (`it_i` of `PicoSoC_user`) | `PICOSOC_USER_GIC_IT_USER` | `GIC_IT_USER_MSK` (`0x01`) |
+| 1 | UART `it_o` | `PICOSOC_USER_GIC_UART` | `GIC_UART_MSK` (`0x02`) |
+| 2 | Timer `it_o` | `PICOSOC_USER_GIC_TIMER` | `GIC_TIMER_MSK` (`0x04`) |
+| 3 | Mailbox fifo0 has data: `not fifo_empty_o(0)` of `sbi_mailbox` (level) | `PICOSOC_USER_GIC_MAILBOX0` | `GIC_MAILBOX0_MSK` (`0x08`) |
+| 4 | Mailbox fifo1 has data: `not fifo_empty_o(1)` of `sbi_mailbox` (level) | `PICOSOC_USER_GIC_MAILBOX1` | `GIC_MAILBOX1_MSK` (`0x10`) |
+
+The mailbox sources are levels: an `isr` bit cleared while its channel still has data is set again on the next cycle, so pop the channel before clearing the bit. `fifo_full_o` of `sbi_mailbox` is not connected. The supervisor GIC only sees the `diff` flags: the mailbox is not on the supervisor interconnect.
 
 ### Supervisor SoC
 
@@ -373,7 +385,7 @@ Firmware ([esw/](esw/), drivers in [esw/include/](esw/include/)):
 | File | Description |
 |------|-------------|
 | `user_identity.c` / `user_identity.psm` | Copies the switches to LED0 (`-DINVERT_SWITCH` variant), C and pBlazIDE assembler versions |
-| `user.c` | GPIO, GIC and interrupt test; optional UART (`HAVE_UART`), SPI with loopback (`HAVE_SPI`) or with the SPI flash model (`HAVE_SPI_MEMORY`) |
+| `user.c` | GPIO, GIC and interrupt test, spinlock and mailbox test (the mailbox sources are read in the GIC `isr` register around the accesses; on a mismatch the firmware prints `KO` and stops, so LED0 no longer follows the switches and the testbench watchdog fails); optional UART (`HAVE_UART`), SPI with loopback (`HAVE_SPI`) or with the SPI flash model (`HAVE_SPI_MEMORY`) |
 | `user_modbus_rtu.c` | Modbus RTU server over the UART (hardware CRC) |
 | `user_hello.c` | Multi-core test (WardRV): CPUs synchronise with the spinlock, one initialises the SoC, all print `CPU <hartid>` on the UART and show the shared loop counter on LED0 and the CPUs that have taken the lock on LED1 |
 | `user_xmodem.c` | XModem receiver (generators defined, no target uses it) |
@@ -527,9 +539,9 @@ asylum-soc-picosoc/
 | `asylum:communication:uart` | `files_hdl` | `sbi_uart` |
 | `asylum:communication:SPI` | `files_hdl` | `sbi_spi` |
 | `asylum:infrastructure:icn` | `files_hdl` | `sbi_icn` |
-| `asylum:system:GIC` | `files_hdl` | `sbi_GIC` |
+| `asylum:system:GIC` (`>=2.0.0`) | `files_hdl` | `sbi_GIC` (its `isr` register records the masked sources: polled by `user.c`) |
 | `asylum:system:spinlock` | `files_hdl` | `sbi_spinlock` |
-| `asylum:system:mailbox` | `files_hdl` | `sbi_mailbox` |
+| `asylum:system:mailbox` (`>=1.1.0`) | `files_hdl` | `sbi_mailbox` (`fifo_empty_o`: GIC sources) |
 | `asylum:component:fifo` | `files_hdl` | FIFOs of the peripherals |
 | `asylum:component:timer` (`>=2.0.0`) | `files_hdl` | `sbi_timer` |
 | `asylum:component:ram` (`>=1.2.0`) | `files_hdl` | `sbi_ram` |

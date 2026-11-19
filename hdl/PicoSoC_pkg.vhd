@@ -13,6 +13,7 @@
 -- Date        Version  Author   Description
 -- 2025-04-14  1.0      mrosiere Created
 -- 2026-10-05  1.1      mrosiere PicoSoC_top component : CPU_MODEL default "OpenBlaze8"
+-- 2026-11-16  1.2      mrosiere GIC map : mailbox fifo0 / fifo1 "data available"
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -57,6 +58,8 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_GIC_IT_USER            : natural  := 0;
   constant PICOSOC_USER_GIC_UART               : natural  := 1;
   constant PICOSOC_USER_GIC_TIMER              : natural  := 2;
+  constant PICOSOC_USER_GIC_MAILBOX0           : natural  := 3; -- data available in mailbox fifo0
+  constant PICOSOC_USER_GIC_MAILBOX1           : natural  := 4; -- data available in mailbox fifo1
   
   constant PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1 : natural  := 0;
   constant PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2 : natural  := 1;

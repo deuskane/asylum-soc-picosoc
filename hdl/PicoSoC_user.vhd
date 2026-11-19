@@ -35,6 +35,8 @@
 -- 2026-10-05  3.10     mrosiere diff_o : OR of the diff of all CPU clusters
 -- 2026-11-19  3.11     mrosiere LED GPIO data_i sized with NB_LED0 / NB_LED1
 --                               (was driven by every cluster when NB_CPU > 1)
+-- 2026-11-16  3.11     mrosiere Mailbox : "data available" in fifo0 / fifo1
+--                               (not fifo_empty_o) as user GIC sources 3 / 4
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -224,11 +226,13 @@ architecture rtl of PicoSoC_user is
   signal   uart_it                    : std_logic;
   
   -- Interruption Vector
-  constant GIC_IT_USER                : natural  := PICOSOC_USER_GIC_IT_USER;
-  constant GIC_UART                   : natural  := PICOSOC_USER_GIC_UART   ;
-  constant GIC_TIMER                  : natural  := PICOSOC_USER_GIC_TIMER  ;
+  constant GIC_IT_USER                : natural  := PICOSOC_USER_GIC_IT_USER ;
+  constant GIC_UART                   : natural  := PICOSOC_USER_GIC_UART    ;
+  constant GIC_TIMER                  : natural  := PICOSOC_USER_GIC_TIMER   ;
+  constant GIC_MAILBOX0               : natural  := PICOSOC_USER_GIC_MAILBOX0;
+  constant GIC_MAILBOX1               : natural  := PICOSOC_USER_GIC_MAILBOX1;
 
-  constant GIC_WIDTH                  : positive := 3;
+  constant GIC_WIDTH                  : positive := 5;
 
   -- it_i comes from a pad (push button), asynchronous to clk_i : resynchronize it in the GIC
   -- UART and Timer interruptions are already synchronous
@@ -239,6 +243,10 @@ architecture rtl of PicoSoC_user is
   signal   timer_disable              : std_logic;
   signal   timer_clear                : std_logic;
   signal   timer_it                   : std_logic;
+
+  -- Mailbox
+  signal   mailbox_empty              : std_logic_vector(2-1 downto 0);
+  signal   mailbox_it                 : std_logic_vector(2-1 downto 0);
   
   -- Signals Safety
   type     diff_vector_t              is array (natural range <>) of std_logic_vector(3-1 downto 0);
@@ -381,9 +389,11 @@ begin  -- architecture rtl
     -- GIC - Interruption Vector
     -----------------------------------------------------------------------------
     -- Same interruptions for all CPUs
-    gic_it_vector(GIC_IT_USER) <= it_i   ;
-    gic_it_vector(GIC_UART   ) <= uart_it;
-    gic_it_vector(GIC_TIMER  ) <= timer_it;
+    gic_it_vector(GIC_IT_USER ) <= it_i         ;
+    gic_it_vector(GIC_UART    ) <= uart_it      ;
+    gic_it_vector(GIC_TIMER   ) <= timer_it     ;
+    gic_it_vector(GIC_MAILBOX0) <= mailbox_it(0);
+    gic_it_vector(GIC_MAILBOX1) <= mailbox_it(1);
   
     ins_sbi_gic : sbi_GIC
       generic map
@@ -612,6 +622,7 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- mailbox
+  -- Interruption of fifo<n> : data available (level, synchronous to clk)
   -----------------------------------------------------------------------------
   ins_sbi_mailbox : sbi_mailbox
     generic map
@@ -625,7 +636,11 @@ begin  -- architecture rtl
      ,arst_b_i             => arst_b      
      ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_MAILBOX)
      ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_MAILBOX)
+     ,fifo_empty_o         => mailbox_empty
+     ,fifo_full_o          => open
       );
+
+  mailbox_it <= not mailbox_empty;
 
   -----------------------------------------------------------------------------
   -- RAM2
