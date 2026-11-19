@@ -1,6 +1,4 @@
 default                                        : Default Target (DON'T RUN)
-emu_basys_soc1_openblaze8_asm_identity         : Synthesis for Digilent Basys board of the test esw/user_identity.psm
-emu_basys_soc1_wardrv_fsm_c_identity           : Synthesis for Digilent Basys board of the test esw/user_identity.c
 emu_ng_medium_soc1_openblaze8                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_openblaze8_modbus_rtu       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_wardrv_fsm                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
@@ -24,7 +22,7 @@ emu_ng_medium_soc4_wardrv_fsm_fault            : NanoXplore NG_MEDIUM Board of t
 emu_ng_medium_soc4_wardrv_fsm_fault_modbus_rtu : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
 emu_ng_medium_soc4_wardrv_fsm_fault_spi        : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
 lint_ghdl                                      : Lint with GHDL (-Wall analysis and elaboration of PicoSoC_top)
-lint_ghdl_synth_basys                          : Synthesis check of PicoSoC_top, OpenBlaze8, 4 + 1 LEDs and reset active high (emu_basys)
+lint_ghdl_synth_4leds_reset_high               : Synthesis check of PicoSoC_top, OpenBlaze8, 4 + 1 LEDs and reset active high
 lint_ghdl_synth_default                        : Synthesis check of PicoSoC_top, OpenBlaze8, default generics
 lint_ghdl_synth_soc1                           : Synthesis check of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
 lint_ghdl_synth_soc4_ng_medium                 : Synthesis check of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics

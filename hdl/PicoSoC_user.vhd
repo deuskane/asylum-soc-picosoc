@@ -33,6 +33,7 @@
 -- 2026-06-17  3.8      mrosiere Add RAM2
 -- 2026-08-01  3.9      mrosiere Use GPIO_irq instead of GPIO
 -- 2026-10-05  3.10     mrosiere diff_o : OR of the diff of all CPU clusters
+-- 2026-11-19  3.11     mrosiere LED GPIO data_i sized with NB_LED0 / NB_LED1
 --                               (was driven by every cluster when NB_CPU > 1)
 -------------------------------------------------------------------------------
 
@@ -480,7 +481,7 @@ begin  -- architecture rtl
     ,arstn_i              => arst_b       
     ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_LED0) 
     ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_LED0) 
-    ,data_i               => X"00"       
+    ,data_i               => CST0(NB_LED0-1 downto 0)
     ,data_o               => led0_o      
     ,data_oe_o            => open        
     ,it_o                 => open       
@@ -503,7 +504,7 @@ begin  -- architecture rtl
     ,arstn_i              => arst_b       
     ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_LED1) 
     ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_LED1) 
-    ,data_i               => X"00"       
+    ,data_i               => CST0(NB_LED1-1 downto 0)
     ,data_o               => led1_o      
     ,data_oe_o            => open        
     ,it_o                 => open       

@@ -74,7 +74,7 @@ PicoSoC is the reference system of the Asylum project. It integrates the Asylum 
 - Peripherals: 3 x `sbi_GPIO_irq`, `sbi_uart` (CTS/RTS, configurable FIFOs), `sbi_spi` (up to 8 IO lanes, pads), `sbi_timer`, `sbi_crc` (CRC16 Modbus, polynomial `0xA001`), `sbi_spinlock`, `sbi_mailbox`, `sbi_GIC`, `sbi_ram`
 - Two-level SBI interconnect (`sbi_icn`): ICN1 local to each CPU, ICN2 global with `NB_CPU` masters
 - Firmware: GPIO identity, full peripheral test (`user.c`), Modbus RTU server, multi-core hello world with spinlock, XModem, supervisor
-- Simulation with GHDL (generic and UVVM Modbus testbenches, optional SPI flash model), FPGA builds for NanoXplore NG-MEDIUM (nxmap) and Digilent Basys (ISE)
+- Simulation with GHDL (generic and UVVM Modbus testbenches, optional SPI flash model), FPGA builds for NanoXplore NG-MEDIUM (nxmap)
 
 ## Block Diagram
 
@@ -107,8 +107,8 @@ It is also the toplevel of the `default` target of [PicoSoC.core](PicoSoC.core) 
 | `USER_RAM1_DEPTH` | natural | `128` | Local RAM1 size in bytes (up to 128) |
 | `USER_RAM2_DEPTH` | natural | `64` | Shared RAM2 size in bytes (up to 64) |
 | `USER_NB_SWITCH` | positive | `8` | Width of `switch_i` |
-| `USER_NB_LED0` | positive | `8` | Width of `led0_o` |
-| `USER_NB_LED1` | positive | `8` | Width of `led1_o` |
+| `USER_NB_LED0` | positive | `8` | Width of `led0_o` (1 to 8) |
+| `USER_NB_LED1` | positive | `8` | Width of `led1_o` (1 to 8) |
 | `USER_BAUD_RATE` | integer | `115200` | UART baud rate |
 | `USER_UART_DEPTH_TX` | natural | `0` | UART TX FIFO depth |
 | `USER_UART_DEPTH_RX` | natural | `0` | UART RX FIFO depth |
@@ -392,7 +392,7 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `lint_ghdl_synth_default` | `asylum.PicoSoC_top` | Synthesis check (see below), OpenBlaze8, default generics (supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) of `lint_ghdl` |
 | `lint_ghdl_synth_soc1` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc1 (no supervisor, no safety): `SUPERVISOR=false`, `USER_SAFETY=none`, `USER_FAULT_INJECTION=false`, `DEBUG_ENABLE=false` |
 | `lint_ghdl_synth_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics (`FSYS=25000000`, `FSYS_INT=12500000`, 6 switches, 9600 baud, FIFO depths 4, `USER_SPI_NB_IO=2`) |
-| `lint_ghdl_synth_basys` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (`emu_basys_*`), fails: `USER_NB_LED0` / `USER_NB_LED1` other than 8 are not supported (`data_i => X"00"` of the LED GPIOs in `PicoSoC_user`, `debug_o <= led0_user` in `PicoSoC_top`): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
+| `lint_ghdl_synth_4leds_reset_high` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (configuration of the former Basys targets): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
 | `lint_ghdl_synth_wardrv_soc1` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm (`CPU_MODEL=WardRV_fsm`, firmware `user_identity.c` / `dummy.c` with `rvcc_gen`: the ROMs depend on the CPU), soc1 |
 | `lint_ghdl_synth_wardrv_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc4 with the NG-MEDIUM generics |
 | `lint_ghdl_synth_wardrv_soc1x4` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc1 with 4 user CPUs (`USER_NB_CPU=4`) |
@@ -405,7 +405,6 @@ Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor,
 | `sim_soc3_<cpu>_c_user`, `sim_soc3_<cpu>_fault_c_user` (4) | `tb_PicoSoC` | `user.c`, supervisor + lock-step, without / with fault injection |
 | `sim_soc4_<cpu>_fault_c_user`, `sim_soc4_<cpu>_c_user_uart` (4) | `tb_PicoSoC` | `user.c`, supervisor (`supervisor.c -DSAFETY_TMR`) + TMR; with fault injection / with UART and without fault injection |
 | `sim_soc{1,2,3,4}_<cpu>[_fault]_c_user_modbus_rtu` (10) | `tb_PicoSoC_modbus_rtu` | `user_modbus_rtu.c` at 921600 baud: soc1, soc2, soc3, soc3_fault, soc4_fault for each CPU |
-| `emu_basys_soc1_openblaze8_asm_identity`, `emu_basys_soc1_wardrv_fsm_c_identity` (2) | `asylum.PicoSoC_top` | Xilinx ISE, Spartan3E `xc3s100e-5tq144` (Digilent Basys, [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)), flag `TARGET=XILINX_UNISIM`, 50 MHz, 8 switches, 4 + 1 LEDs, `RESET_POLARITY=high`; firmware `user_identity.psm` (OpenBlaze8, `pbcc_gen`) / `user_identity.c` (WardRV, `rvcc_gen` has no PicoBlaze assembler input) |
 | `emu_ng_medium_soc1_<cpu>` (2) | `PicoSoC_top` | NanoXplore nxmap NG-MEDIUM (`program: True`, [boards/NanoXplore-DK625V0/](boards/NanoXplore-DK625V0/)), flag `TARGET=NANOXPLORE_NG_MEDIUM`, 25 / 12.5 MHz, UART 9600 baud, `user.c` with SPI flash, soc1 |
 | `emu_ng_medium_soc4_<cpu>_fault_spi` (2) | `PicoSoC_top` | Same board, `user.c` with UART 9600 + SPI, supervisor + TMR + fault injection (soc4; formerly `emu_ng_medium_soc1_<cpu>_c_user`) |
 | `emu_ng_medium_soc2_<cpu>`, `_soc2_<cpu>_fault`, `_soc3_<cpu>_fault`, `_soc4_<cpu>_fault` (8) | `PicoSoC_top` | `user.c` with UART, soc2 / soc2 + fault / soc3 + fault / soc4 + fault |
@@ -418,7 +417,7 @@ A `lint_ghdl_synth_*` target is `lint_ghdl` with the generics of its configurati
 
 To add a configuration, add a target with its `parameters` (the generics are declared in the `parameters` section of `PicoSoC.core`).
 
-Totals: 35 `sim_soc*` targets (17 OpenBlaze8, 18 WardRV) and 24 `emu_*` targets (2 Basys, 22 NG-MEDIUM), plus `default`, `sim` and the 8 `lint_ghdl*` targets. There is no `sim_soc1_wardrv_fsm_c_user` / `_asm_identity` target. Every parameter passed by a target is declared in the `parameters` section of the core and every `generate` entry is defined.
+Totals: 35 `sim_soc*` targets (17 OpenBlaze8, 18 WardRV) and 22 `emu_*` targets (NG-MEDIUM), plus `default`, `sim` and the 8 `lint_ghdl*` targets. There is no `sim_soc1_wardrv_fsm_c_user` / `_asm_identity` target. Every parameter passed by a target is declared in the `parameters` section of the core and every `generate` entry is defined.
 
 ### How to Run
 
@@ -442,14 +441,14 @@ Equivalent FuseSoC command:
 fusesoc --cores-root . run --build-root build --target sim_soc4_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:3.3.2
 ```
 
-Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap or Xilinx ISE. Outside CI, GHDL writes a waveform `dut.fst`.
+Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap. Outside CI, GHDL writes a waveform `dut.fst`.
 
 Host tools: [tools/modbus_server.py](tools/modbus_server.py) (pymodbus RTU client) and [tools/modbus_server_debug.py](tools/modbus_server_debug.py) (raw serial frames) talk to the Modbus firmware on the board.
 
 ## Synthesis
 
 - **NanoXplore NG-MEDIUM** (`emu_ng_medium_*`, tool nxmap, `program: True`): pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py) (6 switches, push buttons for `arst_i` / `it_user_i`, ...), options in `options.py` (`ManageAsynchronousReadPort`, `AllowUnconfiguredIOs`) and `features.py`; techmap flag `NANOXPLORE_NG_MEDIUM`.
-- **Digilent Basys** (`emu_basys_*`, tool ISE, Spartan3E xc3s100e, tq144, -5): constraints in [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf) (clock P54, LEDs, switches, `arst_i` on BTN0); techmap flag `XILINX_UNISIM`.
+- **Digilent Basys**: the constraints are kept in [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf) but there is no `emu_basys_*` target any more: the Spartan3E is only supported by ISE, whose XST does not support the VHDL-2008 constructs used by the design (unconstrained record elements, `process (all)`, `else generate`), and `target_techmap` has no Xilinx branch.
 - **GHDL synthesis check** (`lint_ghdl_synth_*`): `ghdl --synth -Wall` of `PicoSoC_top`, one target per configuration (4 OpenBlaze8, 3 WardRV_fsm `lint_ghdl_synth_wardrv_*`: the firmware ROMs generated by the target must match `CPU_MODEL`); writes `PicoSoC_top_synth.vhd` / `.log` in the work root, fails on a synthesis error or an inferred latch.
 - Fault tolerance is selected at build time (`SUPERVISOR`, `USER_SAFETY`, `USER_FAULT_INJECTION`, `USER_LOCK_STEP_DEPTH`).
 - `cpu_safety` contains `report` processes (configuration and mismatch messages) that are not enclosed in `synthesis translate_off`.

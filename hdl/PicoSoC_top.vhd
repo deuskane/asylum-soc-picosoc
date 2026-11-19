@@ -19,6 +19,7 @@
 -- 2025-01-15  1.0      mrosiere Created
 -- 2025-07-15  2.0      mrosiere Add FIFO depth for UART and SPI
 -- 2026-10-05  2.1      mrosiere CPU_MODEL default "OpenBlaze8" (was "WardRV", invalid)
+-- 2026-11-19  2.2      mrosiere debug_o : LED0 resized to 8 bits (USER_NB_LED0 /= 8)
 --                               Document debug_mux_i (unused, kept for pads)
 -------------------------------------------------------------------------------
 
@@ -372,7 +373,7 @@ begin  -- architecture rtl
   generate
     -- Debug selection from the switches (debug_mux_i is not used)
     debug_mux      <= unsigned(switch_i(2 downto 0));
-    debug_o        <= led0_user                                      when debug_mux = 0 else
+    debug_o        <= std_logic_vector(resize(unsigned(led0_user),8)) when debug_mux = 0 else
                       std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
                       (0      => debug_user      .arst_b,
                        1      => debug_supervisor.arst_b,
