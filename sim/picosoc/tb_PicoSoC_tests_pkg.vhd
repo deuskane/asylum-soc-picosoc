@@ -1,0 +1,145 @@
+-------------------------------------------------------------------------------
+-- Title      : tb_PicoSoC_tests_pkg
+-- Project    : PicoSoC
+-------------------------------------------------------------------------------
+-- File       : tb_PicoSoC_tests_pkg.vhd
+-- Author     : Mathieu Rosiere
+-------------------------------------------------------------------------------
+-- Description: Scenarios of tb_PicoSoC : names (valid items of TESTS_LIST),
+--              firmware and configurations where each one applies, and
+--              dispatch (run_test) to the package of each scenario
+--              (tb_PicoSoC_<name>_pkg)
+-------------------------------------------------------------------------------
+-- Copyright (c) 2026
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author   Description
+-- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
+-------------------------------------------------------------------------------
+
+library ieee;
+use     ieee.std_logic_1164.all;
+
+library uvvm_util;
+context uvvm_util.uvvm_util_context;
+
+library asylum;
+use     asylum.string_pkg.all;
+
+library work;
+use     work.tb_PicoSoC_bfm_pkg.all;
+
+package tb_PicoSoC_tests_pkg is
+
+  -- Names of the scenarios (valid items of TESTS_LIST)
+  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hello";
+
+  -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
+  constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,hello";
+
+  -- True when the scenario name applies to the firmware and the configuration
+  function test_applies
+    (name       : string
+    ;firmware   : string
+    ;supervisor : boolean
+    ;safety     : string
+    ;fault      : boolean
+    ) return boolean;
+
+  -- SPI byte of the "Loop" lines printed by the firmware
+  function to_spi_byte
+    (firmware   : string
+    ) return t_spi_byte;
+
+  -- Run the scenario name
+  procedure run_test
+    (constant name     : in    string
+    ;constant cfg      : in    t_tb_cfg
+    ;signal   clk      : in    std_logic
+    ;signal   switch   : out   std_logic_vector
+    ;signal   it_user  : out   std_logic
+    ;signal   inject   : out   std_logic_vector
+    ;signal   led0     : in    std_logic_vector
+    ;signal   led1     : in    std_logic_vector
+    ;signal   led_diff : in    std_logic_vector
+    ;signal   uart_rx  : inout std_logic
+    ;signal   uart_tx  : in    std_logic
+    );
+
+end package tb_PicoSoC_tests_pkg;
+
+package body tb_PicoSoC_tests_pkg is
+
+  function test_applies
+    (name       : string
+    ;firmware   : string
+    ;supervisor : boolean
+    ;safety     : string
+    ;fault      : boolean
+    ) return boolean is
+    -- esw/user.c, with or without UART
+    constant C_USER : boolean := list_contains("user,user_uart,user_uart_spi,user_uart_spi_mem", firmware);
+    constant C_UART : boolean := list_contains(     "user_uart,user_uart_spi,user_uart_spi_mem", firmware);
+  begin
+    if    string_eq(name, "switch"         ) then return not string_eq(firmware, "hello");
+    elsif string_eq(name, "it_user"        ) then return C_USER;
+    elsif string_eq(name, "uart"           ) then return C_UART;
+    elsif string_eq(name, "fault_lock_step") then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
+    elsif string_eq(name, "fault_tmr"      ) then return C_USER and supervisor and fault and string_eq(safety, "tmr");
+    elsif string_eq(name, "fault_diff"     ) then return C_USER and not supervisor and fault and not string_eq(safety, "none");
+    elsif string_eq(name, "hello"          ) then return string_eq(firmware, "hello");
+    else                                          return false;
+    end if;
+  end function;
+
+  function to_spi_byte
+    (firmware   : string
+    ) return t_spi_byte is
+  begin
+    if    string_eq(firmware, "user_uart_spi"    ) then return SPI_LOOPBACK;
+    elsif string_eq(firmware, "user_uart_spi_mem") then return SPI_MEMORY;
+    else                                                return SPI_NONE;
+    end if;
+  end function;
+
+  procedure run_test
+    (constant name     : in    string
+    ;constant cfg      : in    t_tb_cfg
+    ;signal   clk      : in    std_logic
+    ;signal   switch   : out   std_logic_vector
+    ;signal   it_user  : out   std_logic
+    ;signal   inject   : out   std_logic_vector
+    ;signal   led0     : in    std_logic_vector
+    ;signal   led1     : in    std_logic_vector
+    ;signal   led_diff : in    std_logic_vector
+    ;signal   uart_rx  : inout std_logic
+    ;signal   uart_tx  : in    std_logic
+    ) is
+  begin
+    if    string_eq(name, "switch")
+    then
+      work.tb_PicoSoC_switch_pkg.run(cfg, clk, switch, led0, led_diff);
+    elsif string_eq(name, "it_user")
+    then
+      work.tb_PicoSoC_it_user_pkg.run(cfg, clk, switch, it_user, led0, led1, led_diff);
+    elsif string_eq(name, "uart")
+    then
+      work.tb_PicoSoC_uart_pkg.run(cfg, clk, switch, it_user, led0, led1, uart_rx, uart_tx);
+    elsif string_eq(name, "fault_lock_step")
+    then
+      work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+    elsif string_eq(name, "fault_tmr")
+    then
+      work.tb_PicoSoC_fault_tmr_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+    elsif string_eq(name, "fault_diff")
+    then
+      work.tb_PicoSoC_fault_diff_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+    elsif string_eq(name, "hello")
+    then
+      work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, uart_tx);
+    else
+      alert(TB_ERROR, "Unknown test " & name, C_TB_SCOPE);
+    end if;
+  end procedure;
+
+end package body tb_PicoSoC_tests_pkg;

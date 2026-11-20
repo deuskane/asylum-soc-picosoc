@@ -422,12 +422,28 @@ filesets:
   files_sim:
   #---------------------------------------
     files:
-      - sim/tb_PicoSoC.vhd
-      - sim/tb_PicoSoC_modbus_rtu.vhd
+      - sim/picosoc/tb_PicoSoC_bfm_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_switch_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_it_user_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_uart_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_hello_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
+      - sim/picosoc/tb_PicoSoC.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_basic_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_fault_lock_step_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_fault_tmr_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_sequence_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_tests_pkg.vhd
+      - sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd
       - sim/mem/memory.mem         : {file_type : user, copyto : memory.mem   }
       - sim/mem/memoryOTP.mem      : {file_type : user, copyto : memoryOTP.mem}
-    file_type : vhdlSource
+    file_type : vhdlSource-2008
     depend :
+      - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
 
@@ -1018,17 +1034,19 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=20000
       - SPI_MODEL=none
+      - FIRMWARE=identity
+      - TESTS_LIST=switch
 
   #---------------------------------------
   sim_soc1_openblaze8_c_identity:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_identity.c
+    description  : Simulation of the test esw/user_identity.c, SoC clock = clk_i (no division)
     generate     : [gen_picoblaze3_user_c_identity,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
       - FSYS=25000000
-      - FSYS_INT=12500000
+      - FSYS_INT=25000000
 
       # SoC User Configuration
       - USER_BAUD_RATE=921600
@@ -1044,6 +1062,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=20000
       - SPI_MODEL=none
+      - FIRMWARE=identity
+      - TESTS_LIST=switch
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user:
@@ -1070,7 +1090,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=20000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart:
@@ -1097,8 +1118,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart_spi:
@@ -1125,8 +1146,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user_spi
+      - FIRMWARE=user_uart_spi
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_uart_spi_mem:
@@ -1153,8 +1174,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=m25p40
-      - TEST_IT=true
-      - TEST_UART=user_spi_mem
+      - FIRMWARE=user_uart_spi_mem
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_openblaze8_c_user_modbus_rtu:
@@ -1180,7 +1201,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user:
@@ -1207,7 +1228,36 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user
+
+  #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection
+    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user,fault_diff
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -1234,8 +1284,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_modbus_rtu:
@@ -1261,7 +1311,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
   #---------------------------------------
   sim_soc3_openblaze8_c_user:
@@ -1288,7 +1338,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user
 
   #---------------------------------------
   sim_soc3_openblaze8_c_user_modbus_rtu:
@@ -1314,7 +1365,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
   #---------------------------------------
   sim_soc3_openblaze8_fault_c_user:
@@ -1341,7 +1392,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user,fault_lock_step
 
   #---------------------------------------
   sim_soc3_openblaze8_fault_c_user_modbus_rtu:
@@ -1367,13 +1419,13 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,fault_lock_step,sequence
 
   #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user:
+  sim_soc4_openblaze8_fault_c_user: &sim_soc4_openblaze8_fault_c_user
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_<test>)
     generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_tmr]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1394,7 +1446,65 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_switch:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user
+    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario switch
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=switch
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_it_user:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user
+    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario it_user
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=it_user
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_fault_tmr:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user
+    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=fault_tmr
 
   #---------------------------------------
   sim_soc4_openblaze8_c_user_uart:
@@ -1421,14 +1531,14 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu:
+  sim_soc4_openblaze8_fault_c_user_modbus_rtu: &sim_soc4_openblaze8_fault_c_user_modbus_rtu
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_modbus_rtu_<test>)
     generate     : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_tmr]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
@@ -1448,7 +1558,55 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
+    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario basic
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TESTS_LIST=basic
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
+    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TESTS_LIST=fault_tmr
+
+  #---------------------------------------
+  sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence:
+  #---------------------------------------
+    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
+    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario sequence
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - TESTS_LIST=sequence
 
   #---------------------------------------
   emu_ng_medium_soc4_wardrv_fsm_fault_spi:
@@ -1861,12 +2019,14 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=20000
       - SPI_MODEL=none
+      - FIRMWARE=identity
+      - TESTS_LIST=switch
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, reset active high
     generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -1887,8 +2047,9 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - RESET_POLARITY=high
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart_spi:
@@ -1915,8 +2076,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user_spi
+      - FIRMWARE=user_uart_spi
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart_spi_mem:
@@ -1943,8 +2104,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=m25p40
-      - TEST_IT=true
-      - TEST_UART=user_spi_mem
+      - FIRMWARE=user_uart_spi_mem
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_modbus_rtu:
@@ -1970,7 +2131,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
 
   #---------------------------------------
@@ -1998,9 +2159,10 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
+      - FIRMWARE=hello
+      - TESTS_LIST=hello
 
   #---------------------------------------
   sim_soc1x4_wardrv_fsm_c_hello_uart:
@@ -2027,9 +2189,10 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
+      - FIRMWARE=hello
+      - TESTS_LIST=hello
 
   #---------------------------------------
   sim_soc1x6_wardrv_fsm_c_hello_uart:
@@ -2056,9 +2219,10 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TEST_SUITE=hello
       - TB_WATCHDOG=500000
       - SPI_MODEL=none
+      - FIRMWARE=hello
+      - TESTS_LIST=hello
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user:
@@ -2085,7 +2249,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user_uart:
@@ -2112,8 +2277,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_c_user_modbus_rtu:
@@ -2139,7 +2304,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_c_user:
@@ -2166,7 +2331,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_c_user_modbus_rtu:
@@ -2192,7 +2358,7 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,sequence
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user:
@@ -2219,7 +2385,8 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user,fault_lock_step
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu:
@@ -2245,13 +2412,13 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - TESTS_LIST=basic,fault_lock_step,sequence
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
     generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_tmr]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2272,7 +2439,10 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
+      - FIRMWARE=user
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TESTS_LIST=switch,it_user,fault_tmr
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_c_user_uart:
@@ -2299,14 +2469,14 @@ targets:
       # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - TEST_IT=true
-      - TEST_UART=user
+      - FIRMWARE=user_uart
+      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+    description  : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
     generate     : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_tmr]
     toplevel     : tb_PicoSoC_modbus_rtu
     parameters   :
@@ -2326,7 +2496,9 @@ targets:
       - DEBUG_ENABLE=false
 
       # Test Bench Configuration
-      - TB_WATCHDOG=200000
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TESTS_LIST=basic,fault_tmr,sequence
 
 #=========================================
 scripts:
@@ -2474,33 +2646,20 @@ parameters :
     default     : m25p40
     paramtype   : generic
 
-  TEST_IT :
-    description : Testbench checks the user interruption (LED1 counter of esw/user.c)
-    datatype    : bool
-    default     : false
+  TESTS_LIST :
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, hello / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    datatype    : str
     paramtype   : generic
 
-  TEST_UART :
-    description : Testbench checks the UART output of esw/user.c (none / user / user_spi / user_spi_mem)
+  FIRMWARE :
+    description : Program of the user ROM for tb_PicoSoC (identity / user / user_uart / user_uart_spi / user_uart_spi_mem / hello)
     datatype    : str
-    default     : none
+    default     : user
     paramtype   : generic
 
   TB_WATCHDOG :
-    description : Testbench Watchdog
+    description : Testbench timeout of one wait (clk_i cycles)
     datatype    : int
     default     : 10000
-    paramtype   : generic
-
-  HAVE_SPI_MEMORY :
-    description : The Testbench have an spi memory
-    datatype    : bool
-    default     : false
-    paramtype   : generic
-
-  TEST_SUITE :
-    description : Test Suite
-    datatype    : str
-    default     : default
     paramtype   : generic
 
