@@ -2,11 +2,16 @@
 # Variables
 #===================================================================
 # Configuration
-DRAWIO_APP          = drawio
+DRAWIO_APP         ?= drawio
 SCALE               = 2
 FORMAT              = png
 
 SOURCES             = $(wildcard *.drawio)
+
+# Timing diagrams : WaveDrom source <name>.json, rendered <name>.svg
+WAVEDROM_APP       ?= wavedrompy
+WAVE_SOURCES        = $(wildcard *.json)
+WAVE_TARGETS        = $(WAVE_SOURCES:.json=.svg)
 
 RULE_IMAGE_TARGETS := $(shell \
 	for f in $(SOURCES); do \
@@ -46,7 +51,14 @@ endef
 $(foreach tgt,$(RULE_IMAGE_TARGETS),$(eval $(call GEN_RULE,$(shell echo "$(tgt)" | cut -d'#' -f1),$(shell echo "$(tgt)" | cut -d'#' -f3),$(shell echo "$(tgt)" | cut -d'#' -f2))))
 
 #-------------------------------------------------------------------
-all: $(IMAGE_TARGETS)
+# Timing diagram of a WaveDrom source
+%.svg: %.json
+#-------------------------------------------------------------------
+	$(WAVEDROM_APP) -i "$<" -s "$@"
+	@sed -i '0,/<svg[^>]*>/s##&<rect width="100%" height="100%" fill="white"/>#' "$@"
+
+#-------------------------------------------------------------------
+all: $(IMAGE_TARGETS) $(WAVE_TARGETS)
 #-------------------------------------------------------------------
 	@echo "--- Toutes les images sont à jour ---"
 
@@ -55,6 +67,6 @@ all: $(IMAGE_TARGETS)
 #-------------------------------------------------------------------
 clean:
 #-------------------------------------------------------------------
-	rm $(IMAGE_TARGETS)
+	rm -f $(IMAGE_TARGETS) $(WAVE_TARGETS)
 
 .PHONY: clean
