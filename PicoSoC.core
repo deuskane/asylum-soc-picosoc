@@ -463,6 +463,13 @@ filesets:
     depend       :
       - asylum:utils:ghdl_synth
 
+  #---------------------------------------
+  syn_yosys:
+  #---------------------------------------
+    # yosys_synth.sh / yosys_synth.mk / yosys_synth.py (pre_run hook of syn_*)
+    depend       :
+      - asylum:utils:yosys_synth
+
   # Next line is a pragma, don't modify
   #<FILESETS_BEGIN>
   #<FILESETS_END>
@@ -603,6 +610,86 @@ targets:
       - USER_FAULT_INJECTION=false
       - DEBUG_ENABLE=false
       - USER_NB_CPU=4
+
+  #---------------------------------------
+  # Synthesis : size of PicoSoC_top with the generics of the target,
+  # Xilinx Artix-7 (LUT, FF, BRAM, DSP) and sky130 (area), by Yosys and
+  # its GHDL plugin. Two configurations of each lint_ghdl_synth_* CPU :
+  # the smallest SoC (soc1) and the NG-MEDIUM board SoC (soc4 : supervisor,
+  # TMR). The user ROM holds the firmware of lint_ghdl (user_identity.c).
+  # The pre_run hook (yosys_synth.sh of asylum:utils:yosys_synth) adds
+  # yosys_synth.mk to the edalize Makefile.
+  #---------------------------------------
+  syn_soc1 : &syn
+    << : *lint_ghdl
+    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
+    filesets_append : [pbcc_dep, syn, syn_yosys]
+    tools :
+      ghdl :
+        run_options     : ["--no-run"]
+    hooks :
+      pre_run : [yosys_synth]
+    parameters      :
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+      - DEBUG_ENABLE=false
+
+  #---------------------------------------
+  syn_soc4_ng_medium :
+  #---------------------------------------
+    << : *syn
+    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics
+    parameters      :
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_NB_SWITCH=6
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
+
+  #---------------------------------------
+  syn_wardrv_soc1 : &syn_wardrv
+  #---------------------------------------
+    << : *syn
+    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc1 (no supervisor, no safety)
+    generate        : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
+    parameters      :
+      - CPU_MODEL=WardRV_fsm
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+      - DEBUG_ENABLE=false
+
+  #---------------------------------------
+  syn_wardrv_soc4_ng_medium :
+  #---------------------------------------
+    << : *syn_wardrv
+    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc4 (supervisor, TMR) with the NG-MEDIUM generics
+    parameters      :
+      - CPU_MODEL=WardRV_fsm
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=false
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_NB_SWITCH=6
+      - USER_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
 
   #---------------------------------------
   sim: &sim
@@ -2509,6 +2596,12 @@ scripts:
   #---------------------------------------
   ghdl_synth :
     cmd : [bash, ghdl_synth.sh]
+
+  #---------------------------------------
+  # pre_run hook of syn_* (cwd = work_root)
+  #---------------------------------------
+  yosys_synth :
+    cmd : [bash, yosys_synth.sh]
 
 #=========================================
 parameters :
