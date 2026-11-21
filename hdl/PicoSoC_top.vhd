@@ -27,6 +27,8 @@
 -- 2026-11-21  2.4      mrosiere debug_o and debug_mux_i removed (pads freed)
 -- 2026-11-21  2.5      mrosiere Add I2C pads
 -- 2026-11-21  2.6      mrosiere Add PWM output
+-- 2026-11-21  2.7      mrosiere DEBUG_ENABLE : HWLA on the user CPU bus,
+--                               captures on debug_uart_tx_o (UART 115200)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -36,6 +38,9 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
+use     asylum.ROM_user_pkg.all;
+use     asylum.hwla_pkg.all;
+use     asylum.uart_pkg.all;
 
 entity PicoSoC_top is
   generic
@@ -110,7 +115,7 @@ entity PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART 115200 8N1 (DEBUG_ENABLE), else 1
      
     );
 end PicoSoC_top;
@@ -429,10 +434,102 @@ begin  -- architecture rtl
      );
 
   -----------------------------------------------------------------------------
-  -- Debug
+  -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
+  -- * Trigger : a difference between the redundant CPUs (OR of diff)
+  -- * Captures sent byte per byte on debug_uart_tx_o : UART 115200 baud,
+  --   8 bits, no parity, 1 stop bit (tools/hwla2vcd.py of asylum-debug-hwla)
+  -- * One clock (clk) and the reset of the supervisor : a capture survives
+  --   the reset of the user SoC by the supervisor
   -----------------------------------------------------------------------------
-  -- Copy of the UART output on a second pad (e.g. to a logic analyzer)
-  debug_uart_tx_o <= uart_tx when DEBUG_ENABLE = True else
-                     '0';
-    
+  gen_debug: if DEBUG_ENABLE = True
+  generate
+    -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
+    -- data, read data), then instruction bus (address, instruction)
+    constant HWLA_NB_PROBE       : positive := 4 + 3*8 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH;
+    -- Baud tick every FSYS_INT/115200 cycles of clk
+    constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/115200-1, 16));
+
+    signal   hwla_probe          : std_logic_vector(HWLA_NB_PROBE-1 downto 0);
+    signal   hwla_trigger        : std_logic;
+    signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
+    signal   hwla_tvalid         : std_logic;
+    signal   hwla_tready         : std_logic;
+    signal   hwla_baud_tick      : std_logic;
+  begin
+    hwla_probe   <= debug_user.cpu_idata
+                  & debug_user.cpu_iaddr
+                  & debug_user.cpu_drdata
+                  & debug_user.cpu_dwdata
+                  & debug_user.cpu_daddr
+                  & debug_user.cpu_dready
+                  & debug_user.cpu_dwe
+                  & debug_user.cpu_dre
+                  & debug_user.cpu_dcs;
+
+    hwla_trigger <= '1' when diff /= "000" else
+                    '0';
+
+    ins_hwla : hwla
+      generic map
+      (NB_PROBE             => HWLA_NB_PROBE
+      ,DEPTH                => 64    -- Small RAM (64 x 72 or 86 bits) : a few tens of instructions
+      ,PRE_TRIGGER          => 32    -- Half of the capture before the trigger
+      ,TIMESTAMP_WIDTH      => 16    -- A sample at least every 65536 cycles
+      ,CHANGE_ONLY          => true  -- A CPU waiting on the bus fills no sample
+      ,TDATA_WIDTH          => 8     -- One byte per beat, for the UART
+      )
+      port map
+      (trig_clk_i           => clk
+      ,trig_arst_b_i        => arst_b_supervisor
+      ,arm_i                => '1'   -- A new capture after each extraction
+      ,trigger_i            => hwla_trigger
+      ,probe_i              => hwla_probe
+      ,armed_o              => open
+      ,triggered_o          => open
+      ,extract_clk_i        => clk
+      ,extract_arst_b_i     => arst_b_supervisor
+      ,m_axis_tdata_o       => hwla_tdata
+      ,m_axis_tvalid_o      => hwla_tvalid
+      ,m_axis_tready_i      => hwla_tready
+      ,m_axis_tlast_o       => open
+      );
+
+    ins_uart_baud_rate_gen : uart_baud_rate_gen
+      generic map
+      (BAUD_TICK_CNT_WIDTH     => 16
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,baud_tick_en_i          => '1'
+      ,baud_tick_o             => hwla_baud_tick
+      ,baud_tick_half_o        => open
+      ,cfg_baud_tick_cnt_max_i => HWLA_BAUD_TICK_MAX
+      );
+
+    -- Transmitter only : no parity, CTS ignored
+    ins_uart_tx_axis : uart_tx_axis
+      generic map
+      (WIDTH                => 8
+      )
+      port map
+      (clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,s_axis_tdata_i       => hwla_tdata
+      ,s_axis_tvalid_i      => hwla_tvalid
+      ,s_axis_tready_o      => hwla_tready
+      ,uart_tx_o            => debug_uart_tx_o
+      ,uart_cts_b_i         => '0'
+      ,baud_tick_i          => hwla_baud_tick
+      ,parity_enable_i      => '0'
+      ,parity_odd_i         => '0'
+      ,debug_o              => open
+      );
+  end generate gen_debug;
+
+  gen_debug_b: if DEBUG_ENABLE = False
+  generate
+    debug_uart_tx_o <= '1';  -- UART idle level
+  end generate gen_debug_b;
+
 end architecture rtl;
