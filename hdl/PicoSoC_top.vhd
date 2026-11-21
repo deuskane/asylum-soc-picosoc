@@ -449,12 +449,18 @@ begin  -- architecture rtl
 
     -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
     -- data, read data), then instruction bus (address, instruction).
-    -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i
+    -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i.
+    -- One term per field ('length does not exist on the std_logic fields)
     signal   hwla_probe          : std_logic_vector(debug_user.cpu_idata 'length +
                                                     debug_user.cpu_iaddr 'length +
                                                     debug_user.cpu_drdata'length +
                                                     debug_user.cpu_dwdata'length +
-                                                    debug_user.cpu_daddr 'length + 4-1 downto 0); -- 4 : cs, re, we, ready
+                                                    debug_user.cpu_daddr 'length +
+                                                    1 +                             -- cpu_dready
+                                                    1 +                             -- cpu_dwe
+                                                    1 +                             -- cpu_dre
+                                                    1                               -- cpu_dcs
+                                                    -1 downto 0);
     signal   hwla_trigger        : std_logic;
     signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
     signal   hwla_tvalid         : std_logic;
