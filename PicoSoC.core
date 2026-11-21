@@ -223,6 +223,15 @@ generate:
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_picoblaze3_user_test_spi :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/test_spi.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
+      logical_name : asylum
+
   gen_picoblaze3_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -383,6 +392,15 @@ generate:
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_rv32i_user_test_spi :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/test_spi.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
       logical_name : asylum
 
   gen_rv32i_supervisor_c :
@@ -2795,6 +2813,62 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=test_uart
       - TESTS_LIST=test_uart
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_test_spi:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+    generate     : [gen_rv32i_user_test_spi,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=m25p40
+      - FIRMWARE=test_spi
+      - TESTS_LIST=test_spi
+
+  #---------------------------------------
+  sim_soc1_openblaze8_c_test_spi:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+    generate     : [gen_picoblaze3_user_test_spi,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=m25p40
+      - FIRMWARE=test_spi
+      - TESTS_LIST=test_spi
 
 #=========================================
 scripts:
