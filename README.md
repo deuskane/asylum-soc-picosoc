@@ -71,7 +71,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 - Fault injection: one instruction bit of each redundant CPU flipped from a pin (`inject_error_i`)
 - Supervisor SoC: resets the user SoC on a difference and counts the errors on `led_diff_o`; with TMR, a first error is only masked
 - Peripherals: switches and 2 LED banks (`sbi_GPIO_irq`), UART with CTS/RTS, SPI master with pads, GIC, timer, CRC16 (Modbus polynomial), spinlock, mailbox, RAMs
-- Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available"
+- Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available", switch edges
 - Firmware in C (and one assembler example): switch / LED identity, full peripheral test with UART output, Modbus RTU server, multi-core hello with spinlock, supervisor
 - Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
@@ -266,6 +266,7 @@ Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 | 2 | Timer `it_o` | `PICOSOC_USER_GIC_TIMER` | `GIC_TIMER_MSK` (`0x04`) |
 | 3 | Mailbox fifo0 not empty (level) | `PICOSOC_USER_GIC_MAILBOX0` | `GIC_MAILBOX0_MSK` (`0x08`) |
 | 4 | Mailbox fifo1 not empty (level) | `PICOSOC_USER_GIC_MAILBOX1` | `GIC_MAILBOX1_MSK` (`0x10`) |
+| 5 | SWITCH GPIO `it_o` (edge on a switch) | `PICOSOC_USER_GIC_SWITCH` | `GIC_SWITCH_MSK` (`0x20`) |
 
 ### Supervisor SoC
 
@@ -323,7 +324,7 @@ Each cluster has a local interconnect ICN1 (one master): GIC at `0x00`, RAM1 at 
 
 ### Interrupts
 
-The user GIC of each cluster collects the 5 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The interrupt outputs of the three GPIOs are not connected: the edges of the switches are read in the `isr` register of the SWITCH GPIO by polling ([esw/test_gpio.c](esw/test_gpio.c)). The supervisor GIC receives the 3 difference flags.
+The user GIC of each cluster collects the 6 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The edges of the switches are recorded in the `isr` register of the SWITCH GPIO, whose `it_o` is source 5 ([esw/test_gpio.c](esw/test_gpio.c)); the interrupt outputs of LED0 and LED1 are not connected. The supervisor GIC receives the 3 difference flags.
 
 ### Multi-core
 
@@ -373,7 +374,7 @@ One small firmware per peripheral of the user SoC, the reference example of its 
 
 | Firmware | What it checks |
 |----------|----------------|
-| [esw/test_gpio.c](esw/test_gpio.c) | GPIO: reset directions and values, LED0 / LED1 registers read back and seen on the pins, switches set by the testbench read back, their rising / falling edges recorded in the `isr` of SWITCH (polled), direction register (an input reads its pin) |
+| [esw/test_gpio.c](esw/test_gpio.c) | GPIO: reset directions and values, LED0 / LED1 registers read back and seen on the pins, switches set by the testbench read back, their rising / falling edges recorded in the `isr` of SWITCH and taken by interrupt (SWITCH -> GIC source 5 -> CPU), direction register (an input reads its pin) |
 | [esw/test_uart.c](esw/test_uart.c) | UART: reset values (disabled, baud rate of the generics), setup read back, TX (every line), RX polled on the "RX FIFO not empty" source, RX by interrupt (UART source -> GIC source 1 -> CPU) |
 | [esw/test_spi.c](esw/test_spi.c) | SPI with the flash model of the testbench: reset values, prescaler and configuration read back, flash status register (write enable latch set / cleared), read of 4 bytes, page program of 2 bytes polled on the write-in-progress bit, read back |
 | [esw/test_timer.c](esw/test_timer.c) | Timer: reset values, 32-bit initial value read back, periodic interrupt (autostart, GIC source 2) counted on LED0, period of 2000 SoC cycles measured by the testbench, no interrupt after the timer is stopped |

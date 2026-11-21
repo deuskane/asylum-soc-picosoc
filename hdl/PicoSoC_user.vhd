@@ -37,6 +37,7 @@
 --                               (was driven by every cluster when NB_CPU > 1)
 -- 2026-11-16  3.11     mrosiere Mailbox : "data available" in fifo0 / fifo1
 --                               (not fifo_empty_o) as user GIC sources 3 / 4
+-- 2026-11-21  3.12     mrosiere Switch edges as user GIC source 5
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -224,6 +225,7 @@ architecture rtl of PicoSoC_user is
 
   -- UART
   signal   uart_it                    : std_logic;
+  signal   switch_it                  : std_logic;
   
   -- Interruption Vector
   constant GIC_IT_USER                : natural  := PICOSOC_USER_GIC_IT_USER ;
@@ -231,11 +233,12 @@ architecture rtl of PicoSoC_user is
   constant GIC_TIMER                  : natural  := PICOSOC_USER_GIC_TIMER   ;
   constant GIC_MAILBOX0               : natural  := PICOSOC_USER_GIC_MAILBOX0;
   constant GIC_MAILBOX1               : natural  := PICOSOC_USER_GIC_MAILBOX1;
+  constant GIC_SWITCH                 : natural  := PICOSOC_USER_GIC_SWITCH  ;
 
-  constant GIC_WIDTH                  : positive := 5;
+  constant GIC_WIDTH                  : positive := 6;
 
   -- it_i comes from a pad (push button), asynchronous to clk_i : resynchronize it in the GIC
-  -- UART and Timer interruptions are already synchronous
+  -- UART, Timer, Mailbox and Switch interruptions are already synchronous
   constant GIC_ITS_SYNC_ENABLE        : std_logic_vector(GIC_WIDTH-1 downto 0) := (GIC_IT_USER => '1',
                                                                                    others      => '0');
 
@@ -394,6 +397,7 @@ begin  -- architecture rtl
     gic_it_vector(GIC_TIMER   ) <= timer_it     ;
     gic_it_vector(GIC_MAILBOX0) <= mailbox_it(0);
     gic_it_vector(GIC_MAILBOX1) <= mailbox_it(1);
+    gic_it_vector(GIC_SWITCH  ) <= switch_it    ;
   
     ins_sbi_gic : sbi_GIC
       generic map
@@ -471,7 +475,7 @@ begin  -- architecture rtl
     ,data_i               => switch_i      
     ,data_o               => open          
     ,data_oe_o            => open   
-    ,it_o                 => open       
+    ,it_o                 => switch_it
     );
 
   -----------------------------------------------------------------------------
