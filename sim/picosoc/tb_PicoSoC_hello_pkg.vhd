@@ -15,6 +15,9 @@
 --              * every CPU takes the lock (LED1 = all CPUs) and the counter
 --                progresses (LED0 >= 4 x USER_NB_CPU) : no deadlock, no
 --                starvation
+--              * led_diff_o stays 0 : with lock-step / TMR, the redundant
+--                CPUs of each cluster read the same mhartid and stay equal
+--                (no difference flag, no error counted by the supervisor)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -40,6 +43,7 @@ package tb_PicoSoC_hello_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   led0     : in    std_logic_vector
     ;signal   led1     : in    std_logic_vector
+    ;signal   led_diff : in    std_logic_vector
     ;signal   uart_tx  : in    std_logic
     );
 
@@ -51,6 +55,7 @@ package body tb_PicoSoC_hello_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   led0     : in    std_logic_vector
     ;signal   led1     : in    std_logic_vector
+    ;signal   led_diff : in    std_logic_vector
     ;signal   uart_tx  : in    std_logic
     ) is
     constant C_NB_LINE : positive := 4*cfg.nb_cpu;
@@ -59,7 +64,9 @@ package body tb_PicoSoC_hello_pkg is
     variable v_line    : string(1 to 128);
     variable v_len     : natural;
     variable v_ok      : boolean;
+    variable v_start   : time;
   begin
+    v_start := now;
     log(ID_SEQUENCER, "hello : " & integer'image(cfg.nb_cpu) & " CPUs share the spinlock and the loop counter", C_TB_SCOPE);
 
     for cpt in 0 to C_NB_LINE-1 loop
@@ -73,6 +80,10 @@ package body tb_PicoSoC_hello_pkg is
 
     wait_value (led1, C_ALL_CPU, cfg, "LED1 : every CPU has taken the lock");
     check_value(unsigned(led0) >= C_NB_LINE, ERROR, "LED0 : loop counter >= " & integer'image(C_NB_LINE) & " (0x" & to_hstring(led0) & ")", C_TB_SCOPE);
+
+    -- No fault : the redundant CPUs of every cluster stay equal (mhartid read by each CPU)
+    check_stable(led_diff, now - v_start, ERROR, "led_diff : no difference flag, no error counted by the supervisor", C_TB_SCOPE);
+    check_value (led_diff, "000"        , ERROR, "led_diff = 0", C_TB_SCOPE);
   end procedure;
 
 end package body tb_PicoSoC_hello_pkg;

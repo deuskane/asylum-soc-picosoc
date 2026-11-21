@@ -136,7 +136,7 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_fault_diff_pkg.run(cfg, clk, switch, inject, led0, led_diff);
     elsif string_eq(name, "hello")
     then
-      work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, uart_tx);
+      work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);
     else
       alert(TB_ERROR, "Unknown test " & name, C_TB_SCOPE);
     end if;

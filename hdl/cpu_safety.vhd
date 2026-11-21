@@ -18,6 +18,8 @@
 -- 2026-05-21  1.1      mrosiere Cosmetics
 -- 2026-11-19  1.2      mrosiere Compare the data bus requests ("/=" of sbi_pkg :
 --                               addr when cs = '1', wdata when we = '1')
+-- 2026-11-21  1.3      mrosiere HARTID of the redundant CPUs (the copies of a
+--                               hart read the same mhartid as CPU0)
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -187,6 +189,7 @@ begin
     ins_cpu_1 : entity asylum.cpu_wrapper
       generic map
       (CPU_MODEL       => CPU_MODEL
+      ,HARTID          => HARTID
       )
       port map
       (clk_i           => clk_i
@@ -239,6 +242,7 @@ begin
     ins_cpu_2 : entity asylum.cpu_wrapper
       generic map
       (CPU_MODEL       => CPU_MODEL
+      ,HARTID          => HARTID
       )
       port map
       (clk_i           => clk_i

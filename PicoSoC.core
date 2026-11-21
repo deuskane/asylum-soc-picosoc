@@ -2312,6 +2312,65 @@ targets:
       - TESTS_LIST=hello
 
   #---------------------------------------
+  sim_soc3x2_wardrv_fsm_c_hello_uart:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs
+    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c]
+    toplevel     : tb_PicoSoC
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_NB_CPU=2
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=500000
+      - SPI_MODEL=none
+      - FIRMWARE=hello
+      - TESTS_LIST=hello
+
+  #---------------------------------------
+  sim_soc4x2_wardrv_fsm_c_hello_uart:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
+    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_tmr]
+    toplevel     : tb_PicoSoC
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_NB_CPU=2
+      - USER_BAUD_RATE=921600
+      
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=500000
+      - SPI_MODEL=none
+      - FIRMWARE=hello
+      - TESTS_LIST=hello
+  #---------------------------------------
   sim_soc2_wardrv_fsm_c_user:
   #---------------------------------------
     << : *sim

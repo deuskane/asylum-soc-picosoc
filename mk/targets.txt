@@ -60,6 +60,7 @@ sim_soc3_wardrv_fsm_c_user                            : Simulation of the test e
 sim_soc3_wardrv_fsm_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc3_wardrv_fsm_fault_c_user                      : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
 sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu           : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+sim_soc3x2_wardrv_fsm_c_hello_uart                    : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs
 sim_soc4_openblaze8_c_user_uart                       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
 sim_soc4_openblaze8_fault_c_user                      : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_<test>)
 sim_soc4_openblaze8_fault_c_user_fault_tmr            : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
@@ -72,6 +73,7 @@ sim_soc4_openblaze8_fault_c_user_switch               : Simulation of the test e
 sim_soc4_wardrv_fsm_c_user_uart                       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
 sim_soc4_wardrv_fsm_fault_c_user                      : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
 sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu           : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
+sim_soc4x2_wardrv_fsm_c_hello_uart                    : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
 syn_soc1                                              : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
 syn_soc4_ng_medium                                    : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics
 syn_wardrv_soc1                                       : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc1 (no supervisor, no safety)
