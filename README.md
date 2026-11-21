@@ -1,553 +1,527 @@
 <!--
-  README GENERATION INSTRUCTIONS (for the next regeneration run)
+  README MODEL (common to every Asylum IP, keep the same headings)
   ----------------------------------------------------------------
-  This README follows the common Asylum IP model. Regenerate it from the
-  sources, never from the previous README text alone.
-
-  Sources of truth (in priority order):
-    1. hdl/*.vhd            : entities, generics, ports, packages
-    2. hdl/csr/*.hjson      : register map (regtool); *_csr.md/.h are generated
-    3. <IP>.core            : VLNV (name), filesets, targets, depends, revisions
-    4. mk/targets.txt       : target list shown by `make help`; mk/defs.mk
-    5. sim/, syn/, esw/, boards/ : testbenches, constraints, software
-  Section order (keep it, same headings in every IP):
-    CI badge / Title + one-line description + VLNV / Table of Contents /
-    Introduction (Key Features) / Block Diagram / Top-Level (Parameters,
-    Ports, Instantiation Example) / HDL Modules / Register Map /
-    Verification / Synthesis / Design Notes (optional) /
-    Directory Structure / Dependencies
+  Regenerate from the sources, never from the previous README text alone:
+    hdl/*.vhd (entities, generics, ports), <IP>.core (VLNV, targets, depends),
+    mk/targets.txt, sim/, esw/, boards/, doc/.
+  Sections, in this order (variant of a SoC: Memory Map instead of Registers):
+    badges / title + one-line pitch / Overview / Features / Block Diagram /
+    Getting Started / Hardware Interfaces / Configuration / Memory Map /
+    Resources / Theory of Operation / Programmer's Guide /
+    Design Verification / Dependencies and Related IPs / License
   Rules:
-    - Language: English. Tables: Parameters = Name|Type|Default|Description,
-      Ports = Name|Direction|Type|Description (grouped by interface).
-    - Register Map: link to the generated hdl/csr/<X>_csr.md (plus the
-      .hjson source and _csr.h header); never copy register tables here.
-    - Top-Level = sbi_* wrapper if present, else the entity used by the
-      `default` target, else the main entity (libraries: list packages).
-    - Write "This IP has no software-visible registers." / "No dedicated
-      synthesis target ..." instead of removing a section.
-    - Keep still-accurate hand-written content (ISA tables, results,
-      images) in "Design Notes"; drop anything not backed by the sources.
-    - Block diagram: doc/<NAME>.drawio (NAME = 4th field of the VLNV),
-      top entity box with generics on top, inputs left, outputs right,
-      bus interfaces as bold arrows, internal blocks colour-coded
-      (CSR yellow, FIFO/memory green, core logic blue, external grey).
-      Update it whenever ports/generics/sub-blocks change.
-    - Do not edit generated files (hdl/csr/*_csr.*) or the CI badge URL.
+    - English, short and factual: every statement backed by the sources.
+    - No VLNV line: the version badge shows it.
+    - Badges: first line version, license; second line CI, lint, sim, syn.
+    - Block diagram: doc/picosoc.drawio (owner's diagram, pages overview,
+      cpu_safety-lock_step, cpu_safety-TMR), exported to doc/picosoc-<page>.png
+      (make -C doc); the root README of asylum-project links doc/picosoc-overview.png.
+    - A SoC README may name its CPUs.
+    - Memory Map: link to the generated <X>_csr.md of each peripheral, never copy
+      the register tables.
+    - Tables: Configuration = Name|Type|Default|Description,
+      Hardware Interfaces = Name|Direction|Type|Description, grouped by interface.
 -->
+[![Version](https://img.shields.io/github/v/tag/deuskane/asylum-soc-picosoc?filter=asylum-soc-PicoSoC-*&label=version&color=blue)](https://github.com/deuskane/asylum-soc-picosoc/tags)
+[![License](https://img.shields.io/github/license/deuskane/asylum-soc-picosoc)](LICENSE)
+
 [![CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml/badge.svg)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml)
+[![lint](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdeuskane%2Fasylum-soc-picosoc%2Fbadges%2Flint.json)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml)
+[![sim](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdeuskane%2Fasylum-soc-picosoc%2Fbadges%2Fsim.json)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml)
+[![syn](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fdeuskane%2Fasylum-soc-picosoc%2Fbadges%2Fsyn.json)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml)
 
-# asylum-soc-picosoc
+# PicoSoC
 
-**Small SoC with OpenBlaze8 or WardRV CPU(s), SBI interconnect, GPIO, UART, SPI, GIC, timer, CRC, spinlock, mailbox and RAMs, plus an optional supervisor SoC and lock-step / TMR CPU safety.**
+**A small SoC in VHDL around OpenBlaze8 or WardRV CPUs: switches, LEDs, UART, SPI, GIC, timer, CRC, spinlock, mailbox and RAMs, with multi-core, lock-step / TMR safety and a supervisor, programmed in C.**
 
-VLNV: `asylum:soc:PicoSoC:4.0.0`
+Part of the [Asylum project](https://github.com/deuskane/asylum-project), a collection of small IP cores, written to be read and learned from.
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Block Diagram](#block-diagram)
-3. [Top-Level](#top-level)
-4. [HDL Modules](#hdl-modules)
-5. [Register Map](#register-map)
-6. [Verification](#verification)
-7. [Synthesis](#synthesis)
-8. [Design Notes](#design-notes)
-9. [Directory Structure](#directory-structure)
-10. [Dependencies](#dependencies)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Block Diagram](#block-diagram)
+4. [Getting Started](#getting-started)
+5. [Hardware Interfaces](#hardware-interfaces)
+6. [Configuration](#configuration)
+7. [Memory Map](#memory-map)
+8. [Resources](#resources)
+9. [Theory of Operation](#theory-of-operation)
+10. [Programmer's Guide](#programmers-guide)
+11. [Design Verification](#design-verification)
+12. [Dependencies and Related IPs](#dependencies-and-related-ips)
+13. [License](#license)
 
-## Introduction
+## Overview
 
-PicoSoC is the reference system of the Asylum project. It integrates the Asylum IPs around one CPU model selected by the `CPU_MODEL` generic (`"OpenBlaze8"`, the 8-bit PicoBlaze-3 clone, or `"WardRV_fsm"`, the RV32I processor), with an 8-bit SBI bus and a 256-byte address space. It is split in two domains:
+PicoSoC is the reference system of the Asylum project: it connects the Asylum IPs around a CPU and runs C firmware on them. The CPU is chosen at build time with `CPU_MODEL`: `OpenBlaze8` (8-bit, a PicoBlaze-3 clone) or `WardRV_fsm` (RV32I). Every peripheral sits on the SBI bus (the simple bus of Asylum: 8-bit address, 8-bit data).
 
-- the **user SoC** (`PicoSoC_user`): 1 to `NB_CPU` CPU clusters (CPU with its safety wrapper, program ROM, local interconnect, local GIC and local RAM) sharing a global interconnect with the peripherals (switches, two LED banks, UART, SPI, timer, CRC16, spinlock, mailbox, shared RAM);
-- the **supervisor SoC** (`PicoSoC_supervisor`, optional with `SUPERVISOR`): a single CPU that receives the safety mismatch flags of the user CPU through its GIC, and controls the user SoC reset and a status LED bank.
+The SoC has two parts:
 
-`PicoSoC_top` adds the board level: reset polarity and resynchronisation, clock divider (`FSYS` to `FSYS_INT`), input polarities, SPI IO pads and a debug output multiplexer. The firmware of both domains is compiled from [esw/](esw/) by FuseSoC generators into `ROM_user` / `ROM_supervisor`.
+- the **user SoC** (`PicoSoC_user`): 1 to `USER_NB_CPU` CPU clusters (CPU, program ROM, local interconnect, GIC and RAM) sharing the peripherals through a global interconnect;
+- the **supervisor SoC** (`PicoSoC_supervisor`, optional): one CPU that watches the differences between the redundant user CPUs (lock-step or TMR) and resets the user SoC on an error.
 
-### Key Features
+The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, SPI pads and a debug output. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
 
-- CPU selection per build: `OpenBlaze8` (`sbi_OpenBlaze8`) or `WardRV_fsm` (`sbi_WardRV_fsm`) through `cpu_wrapper`
-- Multi-core user SoC (`USER_NB_CPU`), each CPU with its own ROM, GIC and RAM1, `mhartid` = CPU index (WardRV)
-- Safety wrapper `cpu_safety`: `"none"`, `"lock-step"` (CPU1 delayed by `LOCK_STEP_DEPTH` cycles and compared) or `"tmr"` (3 CPUs, majority vote); the comparison covers the instruction bus, the interrupt acknowledge and the data bus requests (`"/="` of `sbi_pkg` >= 1.9.0: `addr` only when `cs = '1'`, `wdata` only when `we = '1'`); sticky mismatch flags `diff_o`
-- Fault injection: one instruction bit of each redundant CPU can be flipped from `inject_error_i`
-- Supervisor SoC reacting to mismatches by resetting the user SoC (firmware [esw/supervisor.c](esw/supervisor.c), TMR-aware variant)
-- Peripherals: 3 x `sbi_GPIO_irq`, `sbi_uart` (CTS/RTS, configurable FIFOs), `sbi_spi` (up to 8 IO lanes, pads), `sbi_timer`, `sbi_crc` (CRC16 Modbus, polynomial `0xA001`), `sbi_spinlock`, `sbi_mailbox`, `sbi_GIC`, `sbi_ram`
-- Two-level SBI interconnect (`sbi_icn`): ICN1 local to each CPU, ICN2 global with `NB_CPU` masters
-- Firmware: GPIO identity, full peripheral test (`user.c`), Modbus RTU server, multi-core hello world with spinlock, XModem, supervisor
-- Simulation with GHDL (generic and UVVM Modbus testbenches, optional SPI flash model), FPGA builds for NanoXplore NG-MEDIUM (nxmap)
+## Features
+
+- CPU per build: `OpenBlaze8` or `WardRV_fsm` (`cpu_wrapper`), same SoC and same C drivers
+- Multi-core user SoC: `USER_NB_CPU` clusters, each with its own ROM, GIC and local RAM; `mhartid` = cluster index (WardRV); spinlock, mailbox and shared RAM for the inter-CPU communication
+- CPU safety (`cpu_safety`): `none`, `lock-step` (CPU1 runs `USER_LOCK_STEP_DEPTH` cycles after CPU0 and is compared with it) or `tmr` (3 CPUs, majority vote); sticky difference flags
+- Fault injection: one instruction bit of each redundant CPU flipped from a pin (`inject_error_i`)
+- Supervisor SoC: resets the user SoC on a difference and counts the errors on `led_diff_o`; with TMR, a first error is only masked
+- Peripherals: switches and 2 LED banks (`sbi_GPIO_irq`), UART with CTS/RTS, SPI master with pads, GIC, timer, CRC16 (Modbus polynomial), spinlock, mailbox, RAMs
+- Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available"
+- Firmware in C (and one assembler example): switch / LED identity, full peripheral test with UART output, Modbus RTU server, multi-core hello with spinlock, supervisor
+- Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
 ## Block Diagram
 
-Diagram: [doc/PicoSoC.drawio](doc/PicoSoC.drawio) (open with diagrams.net or the VS Code Draw.io extension). The detailed hand-drawn views are in [doc/picosoc.drawio](doc/picosoc.drawio) (see [Design Notes](#design-notes)).
+![Block diagram of PicoSoC](doc/picosoc-overview.png)
 
-- `PicoSoC_top` resynchronises the reset (`sync2dffrn`), divides `clk_i` by `FSYS/FSYS_INT` (`clock_divider`), adapts the input polarities and instantiates `PicoSoC_user`, `PicoSoC_supervisor` (if `SUPERVISOR`) and the SPI pads (`obuf`, `iobuf`).
-- In each user CPU cluster, `cpu_safety` fetches from `ROM_user` and accesses ICN1: GIC (`0x00`) and RAM1 (`0x80`) are local, every other address goes to ICN2.
-- ICN2 decodes the shared peripherals: SWITCH, LED0, LED1, CRC, mailbox, SPI, UART, timer, spinlock and RAM2.
-- The local GIC collects `it_user_i`, the UART and the timer interrupts and the "data available" flags of the two mailbox channels, and drives the CPU interrupt.
-- `cpu_safety.diff_o` (3 sticky mismatch flags, OR-ed over the `NB_CPU` clusters into `PicoSoC_user.diff_o`) drives the supervisor GIC; the supervisor GPIO `USER_ARST` (LED0) is the user SoC reset and its `LED_DIFF` bank (LED1) is output on `led_diff_o`. Without supervisor, `diff` goes directly to `led_diff_o`.
+Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)).
 
-## Top-Level
+`PicoSoC_top` (not drawn) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, and puts IO buffers on the SPI signals.
 
-Top-level entity: **`PicoSoC_top`** ([hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd)), library `asylum`, component declared in `asylum.PicoSoC_pkg`. It is the toplevel of all `emu_*` targets and the DUT of both testbenches.
+## Getting Started
 
-It is also the toplevel of the `default` target of [PicoSoC.core](PicoSoC.core) (marked "DON'T RUN": the ROMs come from the firmware generators).
+The cores of the Asylum IPs are published in the FuseSoC library [asylum-cores](https://github.com/deuskane/asylum-cores) (with UVVM and the flash models used by the testbenches). The firmware is compiled at the setup of each target by the generators of [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators): `pbcc_gen` (SDCC with the PicoBlaze back-end and picoasm) for OpenBlaze8, `rvcc_gen` (`riscv64-unknown-elf-gcc`) for WardRV. GHDL, FuseSoC, UVVM, Yosys and both toolchains are in the [asylum-env](https://github.com/deuskane/asylum-ci) image used by the CI.
 
-### Parameters
+### Simulation
 
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| `FSYS` | positive | `50_000_000` | Frequency of `clk_i` (Hz) |
-| `FSYS_INT` | positive | `50_000_000` | Internal frequency (Hz); clock divider ratio `FSYS/FSYS_INT`; UART `CLOCK_FREQ` |
-| `RESET_POLARITY` | string | `"low"` | Polarity of `arst_i`: `"high"` / `"low"` |
-| `DEBUG_ENABLE` | boolean | `True` | `True`: debug multiplexer on `debug_o` and UART TX copy on `debug_uart_tx_o`; `False`: UART RX state on `debug_o` |
-| `CPU_MODEL` | string | `"OpenBlaze8"` | `"OpenBlaze8"` or `"WardRV_fsm"` (any other value fails the `cpu_wrapper` assertion); same default as the core parameter and the sub-entities |
-| `USER_NB_CPU` | natural | `1` | Number of CPU clusters in the user SoC |
-| `USER_ICN_TARGET_SEL` | string | `"or"` | User ICN response selection: `"or"` / `"mux"` |
-| `USER_ICN_MASTER_SEL` | string | `"fix"` | User ICN2 arbitration: `"fix"` / `"roundrobin"` |
-| `USER_RAM1_DEPTH` | natural | `128` | Local RAM1 size in bytes (up to 128) |
-| `USER_RAM2_DEPTH` | natural | `64` | Shared RAM2 size in bytes (up to 64) |
-| `USER_NB_SWITCH` | positive | `8` | Width of `switch_i` |
-| `USER_NB_LED0` | positive | `8` | Width of `led0_o` (1 to 8) |
-| `USER_NB_LED1` | positive | `8` | Width of `led1_o` (1 to 8) |
-| `USER_BAUD_RATE` | integer | `115200` | UART baud rate |
-| `USER_UART_DEPTH_TX` | natural | `0` | UART TX FIFO depth |
-| `USER_UART_DEPTH_RX` | natural | `0` | UART RX FIFO depth |
-| `USER_SPI_DEPTH_CMD` | natural | `0` | SPI command FIFO depth |
-| `USER_SPI_DEPTH_TX` | natural | `0` | SPI TX FIFO depth |
-| `USER_SPI_DEPTH_RX` | natural | `0` | SPI RX FIFO depth |
-| `USER_SPI_NB_IO` | natural | `8` | Number of SPI IO pads (`spi_io_io`), up to 8; the SPI inputs without pad are tied to `0` (`emu_ng_medium_*`: `2`, MOSI and MISO) |
-| `USER_SAFETY` | string | `"lock-step"` | `"none"` / `"lock-step"` / `"tmr"` |
-| `USER_LOCK_STEP_DEPTH` | natural | `2` | Delay (cycles) between CPU0 and CPU1 in lock-step mode |
-| `USER_FAULT_INJECTION` | boolean | `True` | Enable `inject_error_i` |
-| `USER_FAULT_POLARITY` | string | `"low"` | Polarity of `inject_error_i` |
-| `USER_IT_POLARITY` | string | `"low"` | Polarity of `it_user_i` |
-| `USER_MAILBOX_FIFO0_DEPTH_TX` | natural | `4` | Mailbox FIFO0 TX depth |
-| `USER_MAILBOX_FIFO0_DEPTH_RX` | natural | `4` | Mailbox FIFO0 RX depth |
-| `USER_MAILBOX_FIFO1_DEPTH_TX` | natural | `4` | Mailbox FIFO1 TX depth |
-| `USER_MAILBOX_FIFO1_DEPTH_RX` | natural | `4` | Mailbox FIFO1 RX depth |
-| `SUPERVISOR` | boolean | `True` | Instantiate the supervisor SoC |
-| `SUPERVISOR_ICN_TARGET_SEL` | string | `"or"` | Supervisor ICN response selection |
-| `SUPERVISOR_ICN_MASTER_SEL` | string | `"fix"` | Supervisor ICN arbitration |
-| `SUPERVISOR_RAM_DEPTH` | natural | `128` | Supervisor RAM size in bytes (up to 128) |
+```bash
+pip install fusesoc
+fusesoc library add https://github.com/deuskane/asylum-cores
+fusesoc run --target sim_soc1_wardrv_fsm_c_user_uart asylum:soc:PicoSoC   # GHDL + RISC-V toolchain
+```
 
-### Ports
+From a clone of [asylum-project](https://github.com/deuskane/asylum-project), in `ip/asylum-soc-picosoc`: `make help`, `make sim_soc3_openblaze8_fault_c_user`, `make nonreg_sim` (see [How to Run](#how-to-run)).
 
-#### Clock & Reset
+### Firmware
 
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `clk_i` | in | std_logic | Board clock (`FSYS`) |
-| `arst_i` | in | std_logic | Asynchronous reset, polarity `RESET_POLARITY` |
+A target names its firmware with its `generate` entries (see [PicoSoC.core](PicoSoC.core)): for example `gen_rv32i_user_c_uart_921600` compiles [esw/user.c](esw/user.c) with `-DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600` into the entity `ROM_user`, and `gen_rv32i_supervisor_c_tmr` compiles [esw/supervisor.c](esw/supervisor.c) with `-DSAFETY_TMR` into `ROM_supervisor`. To run another program, add a generator entry with its file and flags and a target that uses it. `CLOCK_FREQ` and `BAUD_RATE` of the firmware must match `FSYS_INT` and `USER_BAUD_RATE` of the target.
 
-#### GPIO & Interrupts
+### Board
 
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `switch_i` | in | std_logic_vector(USER_NB_SWITCH-1 downto 0) | Switches (user GPIO SWITCH); bits 2..0 also select the debug output |
-| `led0_o` | out | std_logic_vector(USER_NB_LED0-1 downto 0) | User GPIO LED0 |
-| `led1_o` | out | std_logic_vector(USER_NB_LED1-1 downto 0) | User GPIO LED1 |
-| `led_diff_o` | out | std_logic_vector(2 downto 0) | Supervisor LED_DIFF bank, or the raw mismatch flags when `SUPERVISOR = False` |
-| `it_user_i` | in | std_logic | External user interrupt (GIC input 0), polarity `USER_IT_POLARITY` |
+The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK625V0) with NXmap and program it (`program: True`); pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py): 25 MHz clock, 6 switches, push buttons on `arst_i`, `it_user_i` and `inject_error_i` (active low), 8 + 8 + 3 LEDs, UART and SPI flash (`USER_SPI_NB_IO = 2`). NXmap is not in the asylum-env image: these targets are not run by the CI.
 
-#### UART
+```bash
+make emu_ng_medium_soc4_wardrv_fsm_fault      # TOOL=nxmap (mk/defs.mk)
+```
 
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `uart_tx_o` | out | std_logic | UART transmit |
-| `uart_rx_i` | in | std_logic | UART receive |
-| `uart_cts_b_i` | in | std_logic | Clear To Send, active low |
-| `uart_rts_b_o` | out | std_logic | Request To Send, active low |
+[tools/modbus_server.py](tools/modbus_server.py) and [tools/modbus_server_debug.py](tools/modbus_server_debug.py) talk to the Modbus firmware on the board through the serial port.
 
-#### SPI
-
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `spi_sclk_io` | inout | std_logic | SPI clock pad (`obuf` with output enable) |
-| `spi_cs_b_io` | inout | std_logic | Chip select pad, active low |
-| `spi_io_io` | inout | std_logic_vector(USER_SPI_NB_IO-1 downto 0) | Data lanes (0 = MOSI, 1 = MISO, 2 = WP#, 3 = HOLD# in single mode), `iobuf` |
-
-#### Safety
-
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `inject_error_i` | in | std_logic_vector(2 downto 0) | Bit `i` flips one instruction bit of CPU `i` (if `USER_FAULT_INJECTION`), polarity `USER_FAULT_POLARITY` |
-
-#### Debug
-
-| Name | Direction | Type | Description |
-|------|-----------|------|-------------|
-| `debug_mux_i` | in | std_logic_vector(2 downto 0) | Not used: since 2025-05-08 the debug selection is taken from `switch_i(2 downto 0)`; the port is kept because the NG-MEDIUM pad file still assigns it (pull-up pins) |
-| `debug_o` | out | std_logic_vector(7 downto 0) | Debug output (see [Design Notes](#design-notes)) |
-| `debug_uart_tx_o` | out | std_logic | Copy of `uart_tx_o` when `DEBUG_ENABLE`, else `'0'` |
-
-### Instantiation Example
+To use PicoSoC in another design, instantiate `PicoSoC_top` (library `asylum`, component in `asylum.PicoSoC_pkg`) and generate the two ROMs as the targets do (`ROM_user_pkg` is used by `PicoSoC_pkg`):
 
 ```vhdl
 library asylum;
 use     asylum.PicoSoC_pkg.all;
 
-  ins_soc : entity asylum.PicoSoC_top
+  ins_soc : PicoSoC_top
     generic map
-    ( FSYS                        => 25_000_000
-     ,FSYS_INT                    => 12_500_000
-     ,RESET_POLARITY              => "low"
-     ,DEBUG_ENABLE                => false
-     ,CPU_MODEL                   => "WardRV_fsm"
-     ,USER_NB_CPU                 => 1
-     ,USER_ICN_TARGET_SEL         => "or"
-     ,USER_ICN_MASTER_SEL         => "fix"
-     ,USER_RAM1_DEPTH             => 128
-     ,USER_RAM2_DEPTH             => 64
-     ,USER_NB_SWITCH              => 6
-     ,USER_NB_LED0                => 8
-     ,USER_NB_LED1                => 8
-     ,USER_BAUD_RATE              => 9600
-     ,USER_UART_DEPTH_TX          => 4
-     ,USER_UART_DEPTH_RX          => 4
-     ,USER_SPI_DEPTH_CMD          => 4
-     ,USER_SPI_DEPTH_TX           => 4
-     ,USER_SPI_DEPTH_RX           => 4
-     ,USER_SPI_NB_IO              => 4
-     ,USER_SAFETY                 => "tmr"
-     ,USER_LOCK_STEP_DEPTH        => 2
-     ,USER_FAULT_INJECTION        => true
-     ,USER_FAULT_POLARITY         => "low"
-     ,USER_IT_POLARITY            => "low"
-     ,USER_MAILBOX_FIFO0_DEPTH_TX => 4
-     ,USER_MAILBOX_FIFO0_DEPTH_RX => 4
-     ,USER_MAILBOX_FIFO1_DEPTH_TX => 4
-     ,USER_MAILBOX_FIFO1_DEPTH_RX => 4
-     ,SUPERVISOR                  => true
-     ,SUPERVISOR_ICN_TARGET_SEL   => "or"
-     ,SUPERVISOR_ICN_MASTER_SEL   => "fix"
-     ,SUPERVISOR_RAM_DEPTH        => 128
+    (FSYS                 => 25_000_000
+    ,FSYS_INT             => 12_500_000
+    ,CPU_MODEL            => "WardRV_fsm"
+    ,USER_BAUD_RATE       => 9600
+    ,USER_SAFETY          => "tmr"
+    ,USER_FAULT_INJECTION => true
+    ,SUPERVISOR           => true
     )
     port map
-    ( clk_i           => clk
-     ,arst_i          => arst_b
-     ,switch_i        => switch
-     ,led0_o          => led0
-     ,led1_o          => led1
-     ,led_diff_o      => led_diff
-     ,it_user_i       => button_it_b
-     ,uart_tx_o       => uart_tx
-     ,uart_rx_i       => uart_rx
-     ,uart_cts_b_i    => uart_cts_b
-     ,uart_rts_b_o    => uart_rts_b
-     ,spi_sclk_io     => spi_sclk
-     ,spi_cs_b_io     => spi_cs_b
-     ,spi_io_io       => spi_io           -- (3 downto 0)
-     ,inject_error_i  => inject_error_b
-     ,debug_mux_i     => (others => '0')
-     ,debug_o         => debug
-     ,debug_uart_tx_o => debug_uart_tx
+    (clk_i            => clk
+    ,arst_i           => arst_b
+    ,switch_i         => switch
+    ,led0_o           => led0
+    ,led1_o           => led1
+    ,led_diff_o       => led_diff
+    ,it_user_i        => button_b
+    ,uart_tx_o        => uart_tx
+    ,uart_rx_i        => uart_rx
+    ,uart_cts_b_i     => '0'
+    ,uart_rts_b_o     => open
+    ,spi_sclk_io      => spi_sclk
+    ,spi_cs_b_io      => spi_cs_b
+    ,spi_io_io        => spi_io           -- (7 downto 0)
+    ,inject_error_i   => inject_error_b
+    ,debug_mux_i      => (others => '0')
+    ,debug_o          => open
+    ,debug_uart_tx_o  => open
     );
 ```
 
-The design needs the generated `ROM_user` / `ROM_supervisor` entities and their packages (`ROM_user_pkg` is used by `PicoSoC_pkg`), produced by the `pbcc_gen` (OpenBlaze8) or `rvcc_gen` (WardRV) generators of `asylum:utils:generators` in every simulation / emulation target.
+## Hardware Interfaces
 
-## HDL Modules
+Top-level entity: **`PicoSoC_top`** ([hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd)), component in `asylum.PicoSoC_pkg`. It is the DUT of the testbenches and the toplevel of the `lint_*`, `syn_*` and `emu_*` targets.
 
-| File | Unit | Kind | Role |
-|------|------|------|------|
-| [hdl/PicoSoC_pkg.vhd](hdl/PicoSoC_pkg.vhd) | `PicoSoC_pkg` | package | Address maps (user / supervisor base addresses, encoding), GIC input indexes, debug records `PicoSoC_user_debug_t` / `PicoSoC_supervisor_debug_t`, components of all PicoSoC entities |
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | entity | Top-level: clock / reset, polarities, user + supervisor SoCs, SPI pads, debug |
-| [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | entity | User SoC: CPU clusters, ICN1 / ICN2, peripherals |
-| [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | entity | Supervisor SoC: CPU, ROM, ICN, 2 GPIO, GIC, RAM |
-| [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | entity | CPU redundancy (none / lock-step / TMR), mismatch detection, fault injection |
-| [hdl/cpu_wrapper.vhd](hdl/cpu_wrapper.vhd) | `cpu_wrapper` | entity | Selects `sbi_OpenBlaze8` or `sbi_WardRV_fsm` from `CPU_MODEL` |
-| (generated) | `ROM_user`, `ROM_supervisor` (+ `_pkg`) | entity / package | Program ROMs produced by `pbcc_gen` / `rvcc_gen` from `esw/` |
+### Clock and Reset
 
-### PicoSoC_user
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `clk_i` | in | std_logic | Board clock (`FSYS`), divided by `FSYS/FSYS_INT` for the SoC |
+| `arst_i` | in | std_logic | Asynchronous reset, active level `RESET_POLARITY`, resynchronized inside |
 
-| Kind | Name | Type | Default / Description |
-|------|------|------|-----------------------|
-| generic | `CLOCK_FREQ` | integer | `50000000`, UART clock frequency |
-| generic | `BAUD_RATE` | integer | `115200` |
-| generic | `UART_DEPTH_TX`, `UART_DEPTH_RX` | natural | `0` |
-| generic | `SPI_DEPTH_CMD`, `SPI_DEPTH_TX`, `SPI_DEPTH_RX` | natural | `0` |
-| generic | `NB_SWITCH`, `NB_LED0`, `NB_LED1` | positive | `8` |
-| generic | `SAFETY` | string | `"lock-step"` |
-| generic | `LOCK_STEP_DEPTH` | natural | `2` |
-| generic | `FAULT_INJECTION` | boolean | `False` |
-| generic | `ICN_TARGET_SEL` / `ICN_MASTER_SEL` | string | `"or"` / `"fix"` |
-| generic | `NB_CPU` | natural | `1` |
-| generic | `CPU_MODEL` | string | `"OpenBlaze8"` |
-| generic | `RAM1_DEPTH` / `RAM2_DEPTH` | natural | `128` / `64` |
-| generic | `MAILBOX_FIFO0_DEPTH_TX/RX`, `MAILBOX_FIFO1_DEPTH_TX/RX` | natural | `4` |
-| in | `clk_i`, `arst_b_i` | std_logic | Clock, reset (active low) |
-| in | `switch_i` | std_logic_vector(NB_SWITCH-1 downto 0) | SWITCH GPIO input |
-| out | `led0_o`, `led1_o` | std_logic_vector(NB_LEDx-1 downto 0) | LED0 / LED1 GPIO outputs |
-| in/out | `uart_tx_o`, `uart_rx_i`, `uart_cts_b_i`, `uart_rts_b_o` | std_logic | UART |
-| out | `spi_sclk_o`, `spi_sclk_oe_o`, `spi_cs_b_o`, `spi_cs_b_oe_o` | std_logic | SPI clock / chip select and output enables |
-| out / in / out | `spi_io_o`, `spi_io_i`, `spi_io_oe_o` | std_logic_vector(7 downto 0) | SPI data lanes |
-| in | `it_i` | std_logic | User interrupt (GIC input 0) |
-| in | `inject_error_i` | std_logic_vector(2 downto 0) | Fault injection |
-| out | `diff_o` | std_logic_vector(2 downto 0) | Mismatch flags: bit 0 CPU0 vs CPU1, bit 1 CPU1 vs CPU2, bit 2 CPU2 vs CPU0; OR of the flags of all `NB_CPU` clusters |
-| out | `debug_o` | PicoSoC_user_debug_t | Reset, CPU0 instruction / data bus, peripheral `cs` / `ready`, UART debug |
+### Switches, LEDs and Interrupt
 
-### PicoSoC_supervisor
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `switch_i` | in | std_logic_vector(USER_NB_SWITCH-1 downto 0) | Switches (user GPIO `SWITCH`, resynchronized in the GPIO); bits 2..0 also select `debug_o` |
+| `led0_o` | out | std_logic_vector(USER_NB_LED0-1 downto 0) | User GPIO `LED0` |
+| `led1_o` | out | std_logic_vector(USER_NB_LED1-1 downto 0) | User GPIO `LED1` |
+| `led_diff_o` | out | std_logic_vector(2 downto 0) | Supervisor GPIO `LED_DIFF` (error counter of [esw/supervisor.c](esw/supervisor.c)); without supervisor, the difference flags |
+| `it_user_i` | in | std_logic | User interrupt (user GIC source 0, resynchronized in the GIC), active level `USER_IT_POLARITY` |
 
-| Kind | Name | Type | Default / Description |
-|------|------|------|-----------------------|
-| generic | `NB_LED0` / `NB_LED1` | positive | `8` / `8` (`PicoSoC_top` uses 1 and 3) |
-| generic | `ICN_TARGET_SEL` / `ICN_MASTER_SEL` | string | `"or"` / `"fix"` |
-| generic | `NB_CPU` | natural | `1` (only master 0 is connected) |
-| generic | `CPU_MODEL` | string | `"OpenBlaze8"` |
-| generic | `RAM_DEPTH` | natural | `128` |
-| in | `clk_i`, `arst_b_i` | std_logic | Clock, reset (active low) |
-| out | `led0_o` | std_logic_vector(NB_LED0-1 downto 0) | GPIO `USER_ARST`: user SoC reset (active low) |
-| out | `led1_o` | std_logic_vector(NB_LED1-1 downto 0) | GPIO `LED_DIFF`: error counter display |
-| in | `diff_i` | std_logic_vector(2 downto 0) | Mismatch flags (GIC inputs) |
-| out | `debug_o` | PicoSoC_supervisor_debug_t | Reset |
+### UART
 
-### cpu_safety
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `uart_tx_o` | out | std_logic | Transmit |
+| `uart_rx_i` | in | std_logic | Receive |
+| `uart_cts_b_i` | in | std_logic | Clear To Send, active low |
+| `uart_rts_b_o` | out | std_logic | Request To Send, active low |
 
-| Kind | Name | Type | Default / Description |
-|------|------|------|-----------------------|
-| generic | `SAFETY` | string | `"lock-step"`: `"none"` / `"lock-step"` / `"tmr"` |
-| generic | `LOCK_STEP_DEPTH` | natural | `2` (used in lock-step mode only) |
-| generic | `FAULT_INJECTION` | boolean | `False` |
-| generic | `CPU_MODEL` | string | `"OpenBlaze8"` |
-| generic | `HARTID` | std_logic_vector(31 downto 0) | `x"00000000"` (CPU0 only) |
-| generic | `IMEM_ADDR_WIDTH` / `IMEM_DATA_WIDTH` | positive | `12` / `18` |
-| generic | `DMEM_ADDR_WIDTH` / `DMEM_DATA_WIDTH` | positive | `SBI_ADDR_WIDTH` / `SBI_DATA_WIDTH` (8 / 8) |
-| in | `clk_i`, `cke_i`, `arst_b_i` | std_logic | Clock, clock enable, reset |
-| out / out / in | `ics_o`, `iaddr_o`, `idata_i` | std_logic / std_logic_vector | Instruction interface |
-| out / in | `sbi_ini_o`, `sbi_tgt_i` | sbi_ini_t / sbi_tgt_t | Data bus |
-| in / out | `interrupt_i`, `interrupt_ack_o` | std_logic | Interrupt |
-| in | `inject_error_i` | std_logic_vector(2 downto 0) | Fault injection (bit 17/16/15 of the instruction for OpenBlaze8, bit 0/1/2 for WardRV_fsm) |
-| out | `diff_o` | std_logic_vector(2 downto 0) | Sticky mismatch flags |
+### SPI
 
-### cpu_wrapper
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `spi_sclk_io` | inout | std_logic | SPI clock (`obuf` with output enable) |
+| `spi_cs_b_io` | inout | std_logic | Chip select, active low (`obuf`) |
+| `spi_io_io` | inout | std_logic_vector(USER_SPI_NB_IO-1 downto 0) | Data lanes (`iobuf`): 0 = MOSI, 1 = MISO, 2 = WP#, 3 = HOLD# in single mode; the SPI inputs without pad read 0 |
 
-Generics `CPU_MODEL : string := "OpenBlaze8"`, `HARTID : std_logic_vector(31 downto 0) := x"00000000"`. Ports `clk_i`, `cke_i`, `arst_b_i`, `ics_o`, `iaddr_o` / `idata_i` (unconstrained), `sbi_ini_o`, `sbi_tgt_i`, `interrupt_i`, `interrupt_ack_o` (same as the CPU SBI wrappers). `OpenBlaze8` is instantiated with `RAM_DEPTH => 256`, `REGFILE_SYNC_READ => true`; `WardRV_fsm` with `HARTID`, `RESET_ADDR => x"00000000"`, `IADDR_WIDTH => iaddr_o'length`, `IADDR_ALIGN_BITS => 2`. Any other value fails an assertion.
+### Safety
 
-## Register Map
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `inject_error_i` | in | std_logic_vector(2 downto 0) | Bit `i` flips one instruction bit of CPU `i` of every cluster (`USER_FAULT_INJECTION`), active level `USER_FAULT_POLARITY` |
 
-This IP has no register bank of its own. The SoC address maps (8-bit SBI address, constants of [hdl/PicoSoC_pkg.vhd](hdl/PicoSoC_pkg.vhd), mirrored in [esw/include/addrmap_user.h](esw/include/addrmap_user.h) and [esw/include/addrmap_supervisor.h](esw/include/addrmap_supervisor.h)) are given below; the register descriptions are in each peripheral repository.
+### Debug
+
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `debug_mux_i` | in | std_logic_vector(2 downto 0) | Not used (the selection is `switch_i(2 downto 0)`); kept for the pad files |
+| `debug_o` | out | std_logic_vector(7 downto 0) | `DEBUG_ENABLE = true`, by `switch_i(2 downto 0)`: 0 LED0, 1 switches, 2 user / supervisor resets, 3 CPU0 `iaddr(7:0)`, 4 CPU0 `idata(17:10)`, 5 data bus `cs`, `re`, `we`, `ready`, `addr(7:4)`, 6 data address, 7 `cs` / `ready` of SWITCH, LED0, LED1, UART. `false`: SoC clock, UART RX bit counter and state, `uart_rx`, `uart_tx` |
+| `debug_uart_tx_o` | out | std_logic | Copy of `uart_tx_o` (`DEBUG_ENABLE = true`), else `'0'` |
+
+## Configuration
+
+Generics of `PicoSoC_top`:
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `FSYS` | positive | `50_000_000` | Frequency of `clk_i` (Hz) |
+| `FSYS_INT` | positive | `50_000_000` | Frequency of the SoC (Hz): clock divider ratio `FSYS/FSYS_INT`, UART clock |
+| `RESET_POLARITY` | string | `"low"` | Active level of `arst_i`: `"high"` / `"low"` |
+| `DEBUG_ENABLE` | boolean | `True` | Debug multiplexer on `debug_o` (see [Debug](#debug)) |
+| `CPU_MODEL` | string | `"OpenBlaze8"` | `"OpenBlaze8"` or `"WardRV_fsm"`, for the user and supervisor CPUs; the ROMs of the target must be built for this CPU |
+| `USER_NB_CPU` | natural | `1` | Number of CPU clusters of the user SoC |
+| `USER_ICN_TARGET_SEL` | string | `"or"` | Response selection of the user interconnects: `"or"` / `"mux"` |
+| `USER_ICN_MASTER_SEL` | string | `"fix"` | Arbitration of ICN2 between the clusters: `"fix"` / `"roundrobin"` |
+| `USER_RAM1_DEPTH` | natural | `128` | Local RAM1 of each cluster (bytes, up to 128) |
+| `USER_RAM2_DEPTH` | natural | `64` | Shared RAM2 (bytes, up to 64) |
+| `USER_NB_SWITCH` | positive | `8` | Width of `switch_i` |
+| `USER_NB_LED0` | positive | `8` | Width of `led0_o` (1 to 8) |
+| `USER_NB_LED1` | positive | `8` | Width of `led1_o` (1 to 8) |
+| `USER_BAUD_RATE` | integer | `115200` | UART baud rate (reset value of the baud counter) |
+| `USER_UART_DEPTH_TX` / `_RX` | natural | `0` | UART FIFO depths |
+| `USER_SPI_DEPTH_CMD` / `_TX` / `_RX` | natural | `0` | SPI FIFO depths |
+| `USER_SPI_NB_IO` | natural | `8` | SPI data pads (up to 8) |
+| `USER_SAFETY` | string | `"lock-step"` | `"none"` / `"lock-step"` / `"tmr"` |
+| `USER_LOCK_STEP_DEPTH` | natural | `2` | Delay of CPU1 behind CPU0 in lock-step (cycles) |
+| `USER_FAULT_INJECTION` | boolean | `True` | Connect `inject_error_i` |
+| `USER_FAULT_POLARITY` | string | `"low"` | Active level of `inject_error_i` |
+| `USER_IT_POLARITY` | string | `"low"` | Active level of `it_user_i` |
+| `USER_MAILBOX_FIFO0_DEPTH_TX` / `_RX`, `USER_MAILBOX_FIFO1_DEPTH_TX` / `_RX` | natural | `4` | Mailbox FIFO depths |
+| `SUPERVISOR` | boolean | `True` | Instantiate the supervisor SoC |
+| `SUPERVISOR_ICN_TARGET_SEL` / `_MASTER_SEL` | string | `"or"` / `"fix"` | Supervisor interconnect |
+| `SUPERVISOR_RAM_DEPTH` | natural | `128` | Supervisor RAM (bytes, up to 128) |
+
+The configurations used by the targets are named after their safety: `soc1` = no supervisor, no safety; `soc2` = lock-step without supervisor; `soc3` = supervisor and lock-step; `soc4` = supervisor and TMR; `_fault` = with fault injection; `socKxN` = N user CPU clusters (each with the safety of `socK`).
+
+## Memory Map
+
+PicoSoC has no register of its own: the software sees the registers of its peripherals at the base addresses of [hdl/PicoSoC_pkg.vhd](hdl/PicoSoC_pkg.vhd) (`PICOSOC_USER_*_BA`, `PICOSOC_SUPERVISOR_*_BA`), mirrored in [esw/include/addrmap_user.h](esw/include/addrmap_user.h) and [esw/include/addrmap_supervisor.h](esw/include/addrmap_supervisor.h). Address encoding `"binary"`: a target answers to its base address and its own address bits.
 
 ### User SoC
 
-| Address | Size | Target | Instance | Interconnect | Registers |
-|---------|------|--------|----------|--------------|-----------|
-| `0x00`-`0x01` | 2 | GIC (local) | `sbi_GIC` | ICN1 | [GIC_csr.md](../asylum-system-gic/hdl/csr/GIC_csr.md) |
-| `0x02`-`0x03` | 2 | Spinlock | `sbi_spinlock` | ICN2 | [spinlock_csr.md](../asylum-system-spinlock/hdl/csr/spinlock_csr.md) |
-| `0x04`-`0x07` | 4 | SWITCH | `sbi_GPIO_irq` (`NAME = "SWITCH"`, input, IRQ on both edges) | ICN2 | [GPIO_irq_csr.md](../asylum-component-gpio/hdl/csr/GPIO_irq_csr.md) |
-| `0x08`-`0x0B` | 4 | LED0 | `sbi_GPIO_irq` (`NAME = "LED0"`, output) | ICN2 | [GPIO_irq_csr.md](../asylum-component-gpio/hdl/csr/GPIO_irq_csr.md) |
-| `0x0C`-`0x0F` | 4 | LED1 | `sbi_GPIO_irq` (`NAME = "LED1"`, output) | ICN2 | [GPIO_irq_csr.md](../asylum-component-gpio/hdl/csr/GPIO_irq_csr.md) |
-| `0x10`-`0x13` | 4 | CRC | `sbi_crc` (`NAME = "CRC16"`, 16-bit CRC, 8-bit data, polynomial `0xA001`, LSB first) | ICN2 | [crc_csr.md](../asylum-component-crc/hdl/csr/crc_csr.md) |
-| `0x14`-`0x17` | 4 | Mailbox | `sbi_mailbox` | ICN2 | [mailbox_csr.md](../asylum-system-mailbox/hdl/csr/mailbox_csr.md) |
-| `0x18`-`0x1B` | 4 | SPI | `sbi_spi` (software prescaler, reset ratio `0x00`, `HANDLE_HOLD_WP = true`) | ICN2 | [SPI_csr.md](../asylum-communication-spi/hdl/csr/SPI_csr.md) |
-| `0x20`-`0x27` | 8 | UART | `sbi_uart` | ICN2 | [UART_csr.md](../asylum-communication-uart/hdl/csr/UART_csr.md) |
-| `0x28`-`0x2F` | 8 | Timer | `sbi_timer` | ICN2 | [timer_csr.md](../asylum-component-timer/hdl/csr/timer_csr.md) |
-| `0x40`-`0x7F` | `RAM2_DEPTH` (64) | RAM2 (shared) | `sbi_ram` (synchronous read) | ICN2 | - |
-| `0x80`-`0xFF` | `RAM1_DEPTH` (128) | RAM1 (local) | `sbi_ram` (synchronous read) | ICN1 | - |
+| Address | Target | Instance | Interconnect | Registers |
+|---------|--------|----------|--------------|-----------|
+| `0x00`-`0x01` | GIC (one per cluster) | `sbi_GIC` | ICN1 | [GIC_csr.md](https://github.com/deuskane/asylum-system-gic/blob/main/hdl/csr/GIC_csr.md) |
+| `0x02`-`0x03` | Spinlock | `sbi_spinlock` | ICN2 | [spinlock_csr.md](https://github.com/deuskane/asylum-system-spinlock/blob/main/hdl/csr/spinlock_csr.md) |
+| `0x04`-`0x07` | SWITCH | `sbi_GPIO_irq` (inputs) | ICN2 | [GPIO_irq_csr.md](https://github.com/deuskane/asylum-component-gpio/blob/main/hdl/csr/GPIO_irq_csr.md) |
+| `0x08`-`0x0B` | LED0 | `sbi_GPIO_irq` (outputs) | ICN2 | [GPIO_irq_csr.md](https://github.com/deuskane/asylum-component-gpio/blob/main/hdl/csr/GPIO_irq_csr.md) |
+| `0x0C`-`0x0F` | LED1 | `sbi_GPIO_irq` (outputs) | ICN2 | [GPIO_irq_csr.md](https://github.com/deuskane/asylum-component-gpio/blob/main/hdl/csr/GPIO_irq_csr.md) |
+| `0x10`-`0x13` | CRC | `sbi_crc` (CRC16, polynomial `0xA001`, LSB first) | ICN2 | [crc_csr.md](https://github.com/deuskane/asylum-component-crc/blob/main/hdl/csr/crc_csr.md) |
+| `0x14`-`0x17` | Mailbox | `sbi_mailbox` | ICN2 | [mailbox_csr.md](https://github.com/deuskane/asylum-system-mailbox/blob/main/hdl/csr/mailbox_csr.md) |
+| `0x18`-`0x1B` | SPI | `sbi_spi` (software prescaler, WP# / HOLD# handled) | ICN2 | [SPI_csr.md](https://github.com/deuskane/asylum-communication-spi/blob/main/hdl/csr/SPI_csr.md) |
+| `0x20`-`0x27` | UART | `sbi_uart` | ICN2 | [UART_csr.md](https://github.com/deuskane/asylum-communication-uart/blob/main/hdl/csr/UART_csr.md) |
+| `0x28`-`0x2F` | Timer | `sbi_timer` | ICN2 | [timer_csr.md](https://github.com/deuskane/asylum-component-timer/blob/main/hdl/csr/timer_csr.md) |
+| `0x40`-`0x7F` | RAM2 (shared) | `sbi_ram`, `USER_RAM2_DEPTH` bytes | ICN2 | - |
+| `0x80`-`0xFF` | RAM1 (one per cluster) | `sbi_ram`, `USER_RAM1_DEPTH` bytes | ICN1 | - |
 
-ICN1 (one per CPU, `INTERNAL_DEFAULT_SLAVE = false`) decodes GIC and RAM1 and forwards every other address to ICN2; ICN2 (`NB_CPU` masters, internal default slave) decodes the shared targets. Address encoding: `"binary"`. The SWITCH, LED0 and LED1 GPIO interrupt outputs are not connected.
+Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 
-Interrupt sources of the user GIC (same vector for the GIC of every CPU cluster, `GIC_WIDTH = 5`, no resynchronizer: `ITS_SYNC_ENABLE` = 0):
-
-| GIC input | Source | HDL constant (`PicoSoC_pkg`) | C mask (`addrmap_user.h`) |
-|-----------|--------|------------------------------|---------------------------|
-| 0 | `it_user_i` (`it_i` of `PicoSoC_user`) | `PICOSOC_USER_GIC_IT_USER` | `GIC_IT_USER_MSK` (`0x01`) |
+| GIC source | Source | HDL constant | C mask |
+|------------|--------|--------------|--------|
+| 0 | `it_user_i` (resynchronized: `ITS_SYNC_ENABLE` bit 0) | `PICOSOC_USER_GIC_IT_USER` | `GIC_IT_USER_MSK` (`0x01`) |
 | 1 | UART `it_o` | `PICOSOC_USER_GIC_UART` | `GIC_UART_MSK` (`0x02`) |
 | 2 | Timer `it_o` | `PICOSOC_USER_GIC_TIMER` | `GIC_TIMER_MSK` (`0x04`) |
-| 3 | Mailbox fifo0 has data: `not fifo_empty_o(0)` of `sbi_mailbox` (level) | `PICOSOC_USER_GIC_MAILBOX0` | `GIC_MAILBOX0_MSK` (`0x08`) |
-| 4 | Mailbox fifo1 has data: `not fifo_empty_o(1)` of `sbi_mailbox` (level) | `PICOSOC_USER_GIC_MAILBOX1` | `GIC_MAILBOX1_MSK` (`0x10`) |
-
-The mailbox sources are levels: an `isr` bit cleared while its channel still has data is set again on the next cycle, so pop the channel before clearing the bit. `fifo_full_o` of `sbi_mailbox` is not connected. The supervisor GIC only sees the `diff` flags: the mailbox is not on the supervisor interconnect.
+| 3 | Mailbox fifo0 not empty (level) | `PICOSOC_USER_GIC_MAILBOX0` | `GIC_MAILBOX0_MSK` (`0x08`) |
+| 4 | Mailbox fifo1 not empty (level) | `PICOSOC_USER_GIC_MAILBOX1` | `GIC_MAILBOX1_MSK` (`0x10`) |
 
 ### Supervisor SoC
 
-| Address | Size | Target | Instance | Registers |
-|---------|------|--------|----------|-----------|
-| `0x10`-`0x13` | 4 | USER_ARST (`RST` in firmware) | `sbi_GPIO_irq`, output = user SoC reset | [GPIO_irq_csr.md](../asylum-component-gpio/hdl/csr/GPIO_irq_csr.md) |
-| `0x20`-`0x23` | 4 | LED_DIFF (`LED`) | `sbi_GPIO_irq`, output = `led_diff_o` | [GPIO_irq_csr.md](../asylum-component-gpio/hdl/csr/GPIO_irq_csr.md) |
-| `0x40`-`0x41` | 2 | GIC | `sbi_GIC`, inputs = `diff[2:0]` | [GIC_csr.md](../asylum-system-gic/hdl/csr/GIC_csr.md) |
-| `0x80`-`0xFF` | `RAM_DEPTH` (128) | RAM | `sbi_ram` (synchronous read) | - |
+| Address | Target | Instance | Registers |
+|---------|--------|----------|-----------|
+| `0x10`-`0x13` | `RST` (GPIO `USER_ARST`): reset of the user SoC, active low | `sbi_GPIO_irq` | [GPIO_irq_csr.md](https://github.com/deuskane/asylum-component-gpio/blob/main/hdl/csr/GPIO_irq_csr.md) |
+| `0x20`-`0x23` | `LED` (GPIO `LED_DIFF`): `led_diff_o` | `sbi_GPIO_irq` | [GPIO_irq_csr.md](https://github.com/deuskane/asylum-component-gpio/blob/main/hdl/csr/GPIO_irq_csr.md) |
+| `0x40`-`0x41` | GIC, sources = difference flags (0 CPU0 vs CPU1, 1 CPU1 vs CPU2, 2 CPU2 vs CPU0) | `sbi_GIC` | [GIC_csr.md](https://github.com/deuskane/asylum-system-gic/blob/main/hdl/csr/GIC_csr.md) |
+| `0x80`-`0xFF` | RAM | `sbi_ram`, `SUPERVISOR_RAM_DEPTH` bytes | - |
 
-[tools/addrmap_user.hjson](tools/addrmap_user.hjson) (read by the Python Modbus tools) is a copy of the user map above (`PICOSOC_USER_*_BA` of `PicoSoC_pkg`, base addresses only): keep it aligned with the HDL and `esw/include/addrmap_user.h`.
+[tools/addrmap_user.hjson](tools/addrmap_user.hjson) (read by the Modbus tools) repeats the user base addresses: keep it aligned with `PicoSoC_pkg` and `addrmap_user.h`.
 
-## Verification
+## Resources
+
+Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `PicoSoC_top` with the generics of each configuration, synthesized by Yosys and its GHDL plugin; the reports are in the build directory of each target. The user ROM holds [esw/user_identity.c](esw/user_identity.c) (the firmware of `lint_ghdl`), the supervisor ROM [esw/dummy.c](esw/dummy.c): a bigger program needs a bigger ROM. `soc1`: no supervisor, no safety, default FIFOs (0); `soc4_ng_medium`: supervisor and TMR (3 user CPUs) with the generics of the NG-MEDIUM board (6 switches, FIFOs of 4, 2 SPI pads).
+
+| Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
+|---|---|---|---|---|---|---|---|---|---|
+| `syn_soc1` (OpenBlaze8) | 1496 | 108 | 620 | 48 | 125 | 0.5 | 0 | 183822.55 | 48.972 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 2308 | 304 | 840 | 116 | 90 | 1 | 0 | 484422.10 | 129.055 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 3276 | 104 | 1020 | 53 | 501 | 1 | 0 | 164924.43 | 43.938 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 9447 | 304 | 2415 | 136 | 1692 | 2 | 0 | 405022.20 | 107.902 |
+
+¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. The SPI pads (`inout`) are not synthesized by the GHDL plugin of Yosys (warning "no assignment for port"): the SPI output enables and output registers that only drive them may be removed.
+
+² SkyWater sky130 `sky130_fd_sc_hd`, typical corner (tt, 25 °C, 1.80 V), Yosys 0.33 `synth` + `dfflibmap` + `abc -liberty`: standard-cell area only, no timing constraint, no buffering, clock tree or placement; the ROMs, RAMs and FIFOs become flip-flops and logic (no ROM or SRAM macro), which explains most of the area.
+
+³ Area in thousands of NAND2 gate equivalents (`sky130_fd_sc_hd__nand2_1` = 3.7536 µm²).
+
+The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the asylum-env image: no figure for this FPGA.
+
+## Theory of Operation
+
+### Hierarchy
+
+| File | Unit | Role |
+|------|------|------|
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI pads, debug multiplexer |
+| [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
+| [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
+| [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection |
+| [hdl/cpu_wrapper.vhd](hdl/cpu_wrapper.vhd) | `cpu_wrapper` | `sbi_OpenBlaze8` or `sbi_WardRV_fsm` from `CPU_MODEL` |
+| [hdl/PicoSoC_pkg.vhd](hdl/PicoSoC_pkg.vhd) | `PicoSoC_pkg` | Address maps, GIC source indexes, debug records, components |
+| (generated) | `ROM_user`, `ROM_supervisor` | Program ROMs built from [esw/](esw/) by `pbcc_gen` / `rvcc_gen` |
+
+### Clock and boot
+
+`arst_i` (after its polarity) goes through two `sync2dffrn` resynchronizers: the first one, on `clk_i`, resets the clock divider; the second one, on the divided clock, resets the supervisor SoC. Without supervisor, it is also the reset of the user SoC. With the supervisor, the user SoC stays in reset until [esw/supervisor.c](esw/supervisor.c) has set up its GIC and writes 1 to its `RST` GPIO.
+
+Every CPU starts at address 0 of its ROM: the firmware sets up the GPIO directions, the UART baud rate, the GIC masks and the CPU interrupt, then runs its main loop.
+
+### Interconnect
+
+Each cluster has a local interconnect ICN1 (one master): GIC at `0x00`, RAM1 at `0x80`, every other address forwarded to ICN2. ICN2 has `USER_NB_CPU` masters (arbitration `USER_ICN_MASTER_SEL`) and the shared targets; its internal default slave answers to an unmapped address. Code is not on the bus: each CPU fetches from its own ROM.
+
+### Interrupts
+
+The user GIC of each cluster collects the 5 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The supervisor GIC receives the 3 difference flags.
+
+### Multi-core
+
+With `USER_NB_CPU > 1`, the clusters run the same ROM content and share ICN2. WardRV gives each one its index in `mhartid`: [esw/user_hello.c](esw/user_hello.c) uses it, the spinlock for mutual exclusion (lock 0 for the shared data, lock 1 to elect the CPU that sets up the SoC) and RAM2 for the shared loop counter. Neither the spinlock nor the ICN arbitration is fair: the firmware backs off a random time after releasing the lock.
+
+Safety and multi-core combine: the redundancy is inside each cluster (its `cpu_safety` holds the 2 or 3 copies of the cluster CPU, compared or voted together), the clusters are different harts. Every copy of a cluster gets the same `HARTID`, so the copies read the same `mhartid` and stay equal; the difference flags of all clusters are ORed for the supervisor.
+
+### CPU safety
+
+![cpu_safety lock-step](doc/picosoc-cpu_safety-lock_step.png)
+
+Lock-step: CPU0 drives the SoC. Its inputs (reset, instruction, bus response, interrupt) go through `USER_LOCK_STEP_DEPTH` registers to CPU1; the outputs of CPU1 (`ics`, `iaddr`, interrupt acknowledge, bus request) are compared with the delayed outputs of CPU0. The bus requests are compared with the `"/="` of `sbi_pkg`: the address only when `cs = '1'`, the data only when `we = '1'`. A difference sets `diff_o(0)` until the reset.
+
+![cpu_safety TMR](doc/picosoc-cpu_safety-TMR.png)
+
+TMR: 3 CPUs get the same inputs; `ics`, `iaddr`, the bus request and the interrupt acknowledge are majority-voted bit by bit. `diff_o` bits 0, 1, 2 latch the differences CPU0 / CPU1, CPU1 / CPU2 and CPU2 / CPU0.
+
+Fault injection: `inject_error_i(i)` XORs one instruction bit of CPU `i` (bit 17 / 16 / 15 for OpenBlaze8, bit 0 / 1 / 2 for WardRV). The difference flags of all clusters are ORed into `PicoSoC_user.diff_o`.
+
+### Supervisor
+
+[esw/supervisor.c](esw/supervisor.c) enables the 3 sources of its GIC, then releases the user SoC. On an interrupt:
+
+- lock-step (default build): it holds the user SoC in reset (`RST = 0`), clears its GIC, increments `LED` (`led_diff_o`) and releases the reset;
+- TMR (`-DSAFETY_TMR`): on the first error (all sources still enabled) it only masks the sources that fired: the voter already hides the faulty CPU. On a second error (an unmasked pair differs) it resets the user SoC as above, unmasks every source and increments `LED`.
+
+The user SoC restarts from its reset: the firmware runs its setup again.
+
+## Programmer's Guide
+
+### Firmware structure
+
+| File | Description |
+|------|-------------|
+| [esw/user_identity.c](esw/user_identity.c), [esw/user_identity.psm](esw/user_identity.psm) | Copies the switches into LED0 (C, and assembler for OpenBlaze8); `-DINVERT_SWITCH` inverts them |
+| [esw/user.c](esw/user.c) | Peripheral test: LED0 = switches, LED1 counts the `it_user_i` interrupts, UART echo in the interrupt routine; while switch 5 is set, one UART line per loop with the loop counter, an SPI byte (loopback or flash, `HAVE_SPI` / `HAVE_SPI_MEMORY`), a spinlock test and a mailbox test that also checks the mailbox sources of the GIC (prints `KO` and stops on a mismatch) |
+| [esw/user_modbus_rtu.c](esw/user_modbus_rtu.c) | Modbus RTU server on the UART (slave id `0x5A`, functions `0x03` read and `0x06` write of a SoC address, CRC16 by the CRC IP) |
+| [esw/user_hello.c](esw/user_hello.c) | Multi-core test (WardRV): each CPU prints `CPU <hartid> - Loop <counter>` under the spinlock, shows the shared counter on LED0 and the CPUs seen on LED1 |
+| [esw/user_xmodem.c](esw/user_xmodem.c) | XModem receiver (generators defined, no target uses it) |
+| [esw/supervisor.c](esw/supervisor.c) | Supervisor (see [Supervisor](#supervisor)) |
+| [esw/dummy.c](esw/dummy.c) | Empty program (supervisor ROM when the SoC has no supervisor) |
+
+### Drivers
+
+The drivers in [esw/include/](esw/include/) are macros on `PORT_WR(base, offset, data)` / `PORT_RD(base, offset)` (8-bit accesses, [cpu/picoblaze.h](esw/include/cpu/picoblaze.h) or [cpu/riscv.h](esw/include/cpu/riscv.h) from `cpu.h`) and on the register offsets of the regtool headers of each peripheral (`<X>_csr.h`, on the include path of the generators): `gpio.h`, `uart.h` (`putchar`, `puthex`, `getchar`, empty without `HAVE_UART`), `spi.h` (flash commands), `gic.h`, `timer.h`, `crc.h`, `spinlock.h`, `mailbox.h`, `modbus_rtu.h`. `cpu.h` also gives `ISR_FCT` (the interrupt routine `isr`), `interrupt_setup`, `interrupt_enable` / `interrupt_disable` and `cpu_nop`. The base addresses are those of `addrmap_user.h` / `addrmap_supervisor.h`.
+
+### Example: switches to LEDs, interrupt counter
+
+```c
+#include <stdint.h>
+#include "addrmap_user.h"
+
+// Interruption routine : count the it_user_i interruptions on LED1
+ISR_FCT
+{
+  if (gic_isr(GIC) & GIC_IT_USER_MSK)
+    {
+      gpio_wr(LED1, gpio_rd(LED1)+1);
+      gic_clr(GIC, GIC_IT_USER_MSK);     // acknowledge (rw1c)
+    }
+}
+
+void main()
+{
+  gpio_setup(SWITCH, INPUT);
+  gpio_setup(LED0  , OUTPUT);
+  gpio_setup(LED1  , OUTPUT);
+  gpio_wr   (LED1  , 0);
+
+  gic_clr      (GIC, GIC_IT_USER_MSK);   // old events : the ISR also records the masked sources
+  gic_it_enable(GIC, GIC_IT_USER_MSK);
+  interrupt_setup(isr);
+  interrupt_enable();
+
+  while (1)
+    gpio_wr(LED0, gpio_rd(SWITCH));      // LED0 = switches
+}
+```
+
+Clear the old events of a GIC source before unmasking it: the `isr` register also records the masked sources.
+
+## Design Verification
 
 ### Testbenches
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/tb_PicoSoC.vhd](sim/tb_PicoSoC.vhd) | `PicoSoC_top` | Generic testbench (`RESET_POLARITY = "low"`, IT / fault polarities `"high"`, 8 switches / LEDs / SPI IOs). `TEST_SUITE = "default"`: sets the switches one by one and waits for `led0_o` to follow, pulses `it_user_i` (`TEST_IT`: checks that `user.c` increments `led1_o` once per short pulse), checks the UART output of `user.c` (`TEST_UART` = `"user"`, `"user_spi"` or `"user_spi_mem"`: banner, then loop lines with counter, SPI byte, spinlock and mailbox results), then with fault injection checks `led_diff_o` after injecting errors in CPU0 / CPU1 / CPU2 (lock-step and TMR sequences). `TEST_SUITE = "none"`: runs until `TB_WATCHDOG`. `SPI_MODEL = "m25p40"` or `"s25fl512s"` connects an FMF flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem). Ends with `Test OK` or fails on timeout (`TB_WATCHDOG` cycles) |
-| [sim/tb_PicoSoC_modbus_rtu.vhd](sim/tb_PicoSoC_modbus_rtu.vhd) | `PicoSoC_top` | UVVM testbench with the UART BFM acting as Modbus RTU master (slave ID `0x5A`, functions `0x03` read / `0x06` write, CRC16 `0xA001`): writes / reads LED0, reads SWITCH, frames for another ID and broadcast, and, with fault injection, checks the reset of the user SoC by the supervisor |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i`, `inject_error_i` and `uart_rx_i`, checks LED0, LED1, `led_diff_o` and the UART lines (UART VIP). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd) |
+| [sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd](sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd) | `PicoSoC_top` | UVVM testbench of [esw/user_modbus_rtu.c](esw/user_modbus_rtu.c): the UART VIP is the Modbus RTU master (CRC16 computed by the bench) and reads / writes the SoC addresses. Scenarios in `tb_PicoSoC_modbus_rtu_<name>_pkg`, dispatch in [tb_PicoSoC_modbus_rtu_tests_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_tests_pkg.vhd), Modbus frames in [tb_PicoSoC_modbus_rtu_bfm_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd) |
 
 Waveform setups: [sim/wave/waves.gtkw](sim/wave/waves.gtkw), [sim/wave/cpus.gtkw](sim/wave/cpus.gtkw).
 
-Firmware ([esw/](esw/), drivers in [esw/include/](esw/include/)):
+### Scenarios (`TESTS_LIST`)
 
-| File | Description |
-|------|-------------|
-| `user_identity.c` / `user_identity.psm` | Copies the switches to LED0 (`-DINVERT_SWITCH` variant), C and pBlazIDE assembler versions |
-| `user.c` | GPIO, GIC and interrupt test, spinlock and mailbox test (the mailbox sources are read in the GIC `isr` register around the accesses; on a mismatch the firmware prints `KO` and stops, so LED0 no longer follows the switches and the testbench watchdog fails); optional UART (`HAVE_UART`), SPI with loopback (`HAVE_SPI`) or with the SPI flash model (`HAVE_SPI_MEMORY`) |
-| `user_modbus_rtu.c` | Modbus RTU server over the UART (hardware CRC) |
-| `user_hello.c` | Multi-core test (WardRV): CPUs synchronise with the spinlock, one initialises the SoC, all print `CPU <hartid>` on the UART and show the shared loop counter on LED0 and the CPUs that have taken the lock on LED1 |
-| `user_xmodem.c` | XModem receiver (generators defined, no target uses it) |
-| `supervisor.c` | Supervisor: enables the GIC, on mismatch pulses `USER_ARST` and increments `LED_DIFF`; with `-DSAFETY_TMR` the first error is only masked |
-| `dummy.c` | Empty program (supervisor ROM when the supervisor is not used) |
-| `include/` | `addrmap_user.h`, `addrmap_supervisor.h`, `cpu.h` (+ `cpu/picoblaze.h`, `cpu/riscv.h`), `gpio.h`, `uart.h`, `spi.h`, `gic.h`, `timer.h`, `crc.h`, `spinlock.h`, `mailbox.h`, `modbus_rtu.h` |
+The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space, a name may be repeated. The sequencer first checks every name (an unknown name, or a scenario that does not apply to the firmware and the configuration, is a `TB_ERROR` before any scenario runs), then for each scenario puts the inputs to their inactive level, drives a reset pulse, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset, so the firmware runs its setup again. The empty list only compiles and elaborates the testbench. Checks are counted as the `=> OK` lines of the log.
+
+`tb_PicoSoC`:
+
+| Name | Checks | Applies to | Description |
+|------|--------|------------|-------------|
+| `switch` | 11 | every firmware but `hello` | Switches set one by one from bit 7 to bit 0, then `0x5A` and `0xA5`: LED0 follows; `led_diff_o = 0` (no difference between the redundant CPUs) |
+| `it_user` | 10 | `user*` | With switch 5 set (the loop also runs the spinlock / mailbox code): two short `it_user_i` pulses give exactly one interrupt each (LED1 + 1), a long pulse at least one, LED1 stable without interrupt; LED0 still follows the switches afterwards |
+| `uart` | 9 | `user_uart*` | Banner `Welcome Back, Commander`; a byte sent on `uart_rx_i` is echoed by the interrupt routine (UART source of the GIC); with switch 5 set, 6 `Loop` lines checked character by character (counter, switches, SPI byte of the loopback or of the flash, spinlock, mailbox); one `it_user_i` pulse during the lines |
+| `fault_lock_step` | 13 | `user*`, supervisor, lock-step, fault injection | Errors in CPU0, CPU1, CPU0: after each one the user SoC is reset (LED0 = 0, then the switches again) and `led_diff_o` counts the errors; one reset per error |
+| `fault_tmr` | 24 | `user*`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Errors in CPU0 (voted out: no reset, LED0 still follows the switches), CPU1 (second error: reset, `led_diff_o` = 1), CPU2 (voted out), CPU2 again (its sources already masked), CPU1 (reset, 2), CPU1 (voted out) |
+| `fault_diff` | 4 | `user*`, no supervisor, lock-step or TMR, fault injection | Without supervisor `led_diff_o` shows the difference flags: an error in CPU0 sets them (lock-step `001`, TMR `101`) and they stay set |
+| `hello` | 4 x `USER_NB_CPU` + 4 | `hello` | The first 4 x `USER_NB_CPU` UART lines are `CPU <id> - Loop <counter>` with a valid id and the counter 0, 1, 2, ... (mutual exclusion, shared counter in RAM2); every CPU takes the lock (LED1) and the counter progresses (LED0); `led_diff_o` stays 0 during the whole scenario: with lock-step or TMR, the copies of every cluster read the same `mhartid` (no difference flag, no error counted by the supervisor) |
+
+`tb_PicoSoC_modbus_rtu`:
+
+| Name | Checks | Applies to | Description |
+|------|--------|------------|-------------|
+| `basic` | 58 | every configuration | LED0 written and read back (data and output enable), switches read, a frame to another slave id is ignored (no answer, LED0 unchanged), broadcast write |
+| `fault_lock_step` | 23 | supervisor, lock-step, fault injection | Errors in CPU0 then CPU1: LED0 written by Modbus, then back to 0 after the reset of the user SoC; `led_diff_o` counts the resets |
+| `fault_tmr` | 64 | supervisor, TMR, fault injection | Errors CPU0 (voted out, LED0 kept and still writable), CPU1 (reset), CPU2 (voted out), CPU0 (reset), CPU1 (voted out), CPU2 (reset); `led_diff_o` counts the resets |
+| `sequence` | 128 | every configuration | Each switch alone: read through Modbus, then written into LED0 |
 
 ### Targets
 
-Families: `soc1` = without supervisor, safety none; `soc2` = without supervisor, lock-step; `soc3` = with supervisor, lock-step; `soc4` = with supervisor, TMR; `_fault` = with fault injection; `soc1xN` = N user CPUs. `<cpu>` is `openblaze8` (generators `gen_picoblaze3_*`, `pbcc_gen`) or `wardrv_fsm` (generators `gen_rv32i_*`, `rvcc_gen`).
+A target is a firmware build: its generators compile the user and supervisor programs into the ROMs, so the program is fixed when the target is built. Each target runs the scenarios that apply to its program and configuration. The reference configurations, `sim_soc4_openblaze8_fault_c_user` (supervisor, TMR, fault injection) and its Modbus counterpart, have a build-only base target and one target per scenario (one CI job per scenario, a failure isolated).
 
 | Target | Toplevel | Description |
 |--------|----------|-------------|
-| `default` | `PicoSoC` (does not exist) | HDL fileset only, "DON'T RUN" |
-| `lint_ghdl` | `asylum.PicoSoC_top` | Lint: GHDL `-Wall -fsynopsys -frelaxed` analysis and elaboration (empty simulation) with the default generics (OpenBlaze8, supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) |
-| `lint_ghdl_synth_default` | `asylum.PicoSoC_top` | Synthesis check (see below), OpenBlaze8, default generics (supervisor, lock-step, fault injection, debug); firmware `user_identity.c` / `dummy.c` (`pbcc_gen`) of `lint_ghdl` |
-| `lint_ghdl_synth_soc1` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc1 (no supervisor, no safety): `SUPERVISOR=false`, `USER_SAFETY=none`, `USER_FAULT_INJECTION=false`, `DEBUG_ENABLE=false` |
-| `lint_ghdl_synth_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics (`FSYS=25000000`, `FSYS_INT=12500000`, 6 switches, 9600 baud, FIFO depths 4, `USER_SPI_NB_IO=2`) |
-| `lint_ghdl_synth_4leds_reset_high` | `asylum.PicoSoC_top` | Synthesis check, OpenBlaze8, 4 + 1 LEDs and reset active high (configuration of the former Basys targets): `USER_NB_LED0=4`, `USER_NB_LED1=1`, `RESET_POLARITY=high` |
-| `lint_ghdl_synth_wardrv_soc1` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm (`CPU_MODEL=WardRV_fsm`, firmware `user_identity.c` / `dummy.c` with `rvcc_gen`: the ROMs depend on the CPU), soc1 |
-| `lint_ghdl_synth_wardrv_soc4_ng_medium` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc4 with the NG-MEDIUM generics |
-| `lint_ghdl_synth_wardrv_soc1x4` | `asylum.PicoSoC_top` | Synthesis check, WardRV_fsm, soc1 with 4 user CPUs (`USER_NB_CPU=4`) |
-| `sim` | `tb_PicoSoC` | Base of the simulation targets, "DON'T RUN" (`CPU_MODEL=OpenBlaze8`, `FSYS=25 MHz`, `FSYS_INT=12.5 MHz`, GHDL `-Wall -fsynopsys -frelaxed --no-vital-checks`) |
-| `sim_soc1_openblaze8_asm_identity`, `sim_soc1_{openblaze8,wardrv_fsm}_c_identity` (3) | `tb_PicoSoC` | Identity firmware, soc1, watchdog 20000 |
-| `sim_soc1_openblaze8_c_user` (1) | `tb_PicoSoC` | `user.c`, soc1, watchdog 20000 |
-| `sim_soc1_<cpu>_c_user_uart`, `_uart_spi`, `_uart_spi_mem` (6) | `tb_PicoSoC` | `user.c` with UART 921600 baud, + SPI loopback, + SPI flash (`SPI_MODEL=m25p40`), soc1 |
-| `sim_soc1x{2,4,6}_wardrv_fsm_c_hello_uart` (3) | `tb_PicoSoC` | `user_hello.c`, `USER_NB_CPU` = 2 / 4 / 6, `TEST_SUITE=hello` (every CPU takes the spinlock and the shared counter progresses, shown on LED1 / LED0), watchdog 500000 |
-| `sim_soc2_<cpu>_c_user`, `sim_soc2_<cpu>_c_user_uart` (4) | `tb_PicoSoC` | `user.c` (+ UART), lock-step without supervisor |
-| `sim_soc3_<cpu>_c_user`, `sim_soc3_<cpu>_fault_c_user` (4) | `tb_PicoSoC` | `user.c`, supervisor + lock-step, without / with fault injection |
-| `sim_soc4_<cpu>_fault_c_user`, `sim_soc4_<cpu>_c_user_uart` (4) | `tb_PicoSoC` | `user.c`, supervisor (`supervisor.c -DSAFETY_TMR`) + TMR; with fault injection / with UART and without fault injection |
-| `sim_soc{1,2,3,4}_<cpu>[_fault]_c_user_modbus_rtu` (10) | `tb_PicoSoC_modbus_rtu` | `user_modbus_rtu.c` at 921600 baud: soc1, soc2, soc3, soc3_fault, soc4_fault for each CPU |
-| `emu_ng_medium_soc1_<cpu>` (2) | `PicoSoC_top` | NanoXplore nxmap NG-MEDIUM (`program: True`, [boards/NanoXplore-DK625V0/](boards/NanoXplore-DK625V0/)), flag `TARGET=NANOXPLORE_NG_MEDIUM`, 25 / 12.5 MHz, UART 9600 baud, `user.c` with SPI flash, soc1 |
-| `emu_ng_medium_soc4_<cpu>_fault_spi` (2) | `PicoSoC_top` | Same board, `user.c` with UART 9600 + SPI, supervisor + TMR + fault injection (soc4; formerly `emu_ng_medium_soc1_<cpu>_c_user`) |
-| `emu_ng_medium_soc2_<cpu>`, `_soc2_<cpu>_fault`, `_soc3_<cpu>_fault`, `_soc4_<cpu>_fault` (8) | `PicoSoC_top` | `user.c` with UART, soc2 / soc2 + fault / soc3 + fault / soc4 + fault |
-| `emu_ng_medium_soc{1,2,2_fault,3_fault,4_fault}` with `_modbus_rtu` for each CPU (10) | `PicoSoC_top` | `user_modbus_rtu.c`, 9600 baud, `FSYS_INT=6.25 MHz` |
+| `sim_soc4_openblaze8_fault_c_user` | `tb_PicoSoC` | Reference configuration of `tb_PicoSoC`: build and elaboration only (`TESTS_LIST` empty) |
+| `sim_soc4_openblaze8_fault_c_user_<name>` | `tb_PicoSoC` | One target per scenario: `_switch`, `_it_user`, `_fault_tmr` |
+| `sim_soc4_openblaze8_fault_c_user_modbus_rtu` | `tb_PicoSoC_modbus_rtu` | Reference configuration of the Modbus testbench: build only |
+| `sim_soc4_openblaze8_fault_c_user_modbus_rtu_<name>` | `tb_PicoSoC_modbus_rtu` | One target per scenario: `_basic`, `_fault_tmr`, `_sequence` |
+| `sim_soc1_openblaze8_asm_identity`, `sim_soc1_<cpu>_c_identity` | `tb_PicoSoC` | `user_identity` (assembler, C): `switch`; `sim_soc1_openblaze8_c_identity` with `FSYS_INT = FSYS` (clock divider ratio 1) |
+| `sim_soc1_openblaze8_c_user`, `sim_soc2_<cpu>_c_user`, `sim_soc3_<cpu>_c_user` | `tb_PicoSoC` | `user.c` without UART: `switch`, `it_user` |
+| `sim_soc2_openblaze8_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_diff` |
+| `sim_soc3_<cpu>_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_lock_step` |
+| `sim_soc4_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_tmr`, with `it_user_i` and `inject_error_i` active low (as on the board) |
+| `sim_soc1_<cpu>_c_user_uart`, `_uart_spi`, `_uart_spi_mem`, `sim_soc2_<cpu>_c_user_uart`, `sim_soc4_<cpu>_c_user_uart` | `tb_PicoSoC` | `user.c` with UART at 921600 baud (+ SPI loopback, + SPI flash model `m25p40`): `switch`, `it_user`, `uart`; `sim_soc1_wardrv_fsm_c_user_uart` with `arst_i` active high |
+| `sim_soc1x2_wardrv_fsm_c_hello_uart`, `sim_soc1x4_...`, `sim_soc1x6_...` | `tb_PicoSoC` | `user_hello.c` on 2, 4, 6 clusters: `hello` |
+| `sim_soc3x2_wardrv_fsm_c_hello_uart`, `sim_soc4x2_wardrv_fsm_c_hello_uart` | `tb_PicoSoC` | `user_hello.c` on 2 clusters with supervisor and lock-step / TMR in each cluster, no fault: `hello` |
+| `sim_soc{1,2,3}_<cpu>_c_user_modbus_rtu`, `sim_soc3_<cpu>_fault_c_user_modbus_rtu`, `sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu` | `tb_PicoSoC_modbus_rtu` | `basic`, `sequence` (+ `fault_lock_step` / `fault_tmr`); the TMR one with the board polarities |
+| `lint_ghdl` | `asylum.PicoSoC_top` | GHDL `-Wall` analysis and elaboration, default generics |
+| `lint_ghdl_synth_<config>` | `asylum.PicoSoC_top` | `ghdl --synth` check (no latch) of 7 configurations: `default`, `soc1`, `soc4_ng_medium`, `4leds_reset_high`, `wardrv_soc1`, `wardrv_soc4_ng_medium`, `wardrv_soc1x4` |
+| `syn_<config>` | `asylum.PicoSoC_top` | Yosys synthesis (see [Resources](#resources)): `syn_soc1`, `syn_soc4_ng_medium`, `syn_wardrv_soc1`, `syn_wardrv_soc4_ng_medium` |
+| `emu_ng_medium_*` | `PicoSoC_top` | NG-MEDIUM board (NXmap, not in the CI): `user.c` and `user_modbus_rtu.c` builds of soc1 to soc4 for each CPU |
 
-A `lint_ghdl_synth_*` target is `lint_ghdl` with the generics of its configuration (FuseSoC `parameters`) and a `pre_run` hook, `ghdl_synth.sh` of `asylum:utils:ghdl_synth`, which adds `include ghdl_synth.mk` to the Makefile generated by edalize. The run step (`make run EXTRA_OPTIONS=<generics>`) then runs, in the build directory:
+`<cpu>` is `openblaze8` (generators `gen_picoblaze3_*`) or `wardrv_fsm` (`gen_rv32i_*`). Every `sim_*`, `lint_*` and `syn_*` target is a job of the [GitHub CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml), run in the [asylum-env](https://github.com/deuskane/asylum-ci) image. The `sim`, `lint` and `syn` badges count the passed and failed targets of the last run on `main`.
 
-1. `ghdl --synth` of the toplevel (rule `ghdl_synth` of `ghdl_synth.mk`), with the options of the target: `STD`, `ANALYZE_OPTIONS` (`-Wall -fsynopsys -frelaxed`), `TOPLEVEL_LIBS`, `TOPLEVEL` and the generics. It writes `PicoSoC_top_synth.vhd` (netlist) and `PicoSoC_top_synth.log`, prints the warnings, and fails on a synthesis error (an inferred latch is one);
-2. `ghdl -r --no-run`: elaboration with the same generics, without simulation.
-
-To add a configuration, add a target with its `parameters` (the generics are declared in the `parameters` section of `PicoSoC.core`).
-
-Totals: 35 `sim_soc*` targets (17 OpenBlaze8, 18 WardRV) and 22 `emu_*` targets (NG-MEDIUM), plus `default`, `sim` and the 8 `lint_ghdl*` targets. There is no `sim_soc1_wardrv_fsm_c_user` / `_asm_identity` target. Every parameter passed by a target is declared in the `parameters` section of the core and every `generate` entry is defined.
+The testbenches were validated with 33 RTL mutants of the SoC glue (address decoding, interrupt routing, lock-step compare, TMR vote, supervisor, reset and clock, multi-core), each scenario run alone: 31 are killed. The 2 survivors are a lock-step compare without the data bus and difference flags that are not sticky: the fault injection flips an instruction bit, which also changes the instruction stream and leaves the two CPUs different, so neither the data bus compare nor the stickiness can be seen with it.
 
 ### How to Run
 
-The defaults of `mk/defs.mk` are `TOOL ?= nxmap` and `TARGET ?= emu_ng_medium_soc1_wardrv_fsm` (used by `make target` / `setup` / `build` / `run`); `make <target>` uses the default tool of the target (GHDL for `sim_*`).
+From a clone of [asylum-project](https://github.com/deuskane/asylum-project) (in the asylum-env image, or with GHDL, FuseSoC and the toolchains installed):
 
 ```bash
-make help                                  # variables, rules and target list (mk/targets.txt)
-make sim_soc1_openblaze8_c_user            # run one target (log in log/)
-make nonreg_sim                            # run every sim_* target
-make lint_ghdl                             # GHDL -Wall lint (make nonreg_lint: every lint_* target)
-make lint_ghdl_synth_default               # GHDL -Wall lint + ghdl --synth -Wall check of one configuration (OpenBlaze8)
-make lint_ghdl_synth_wardrv_soc1           # same with WardRV_fsm (needs the RISC-V toolchain)
-make TARGETS_FILTER=wardrv nonreg_sim      # run a filtered subset
-make nonreg_emu                            # run every emu_* target
-make clean                                 # remove build/ and log/
+make help                                        # variables, rules and targets
+make sim_soc4_openblaze8_fault_c_user_fault_tmr  # one scenario, log in log/
+make sim_soc1_wardrv_fsm_c_user_uart_spi         # every scenario of a firmware build
+make nonreg_sim                                  # every sim_* target
+make nonreg_lint                                 # every lint_* target
+make nonreg_syn                                  # every syn_* target (Yosys, figures of Resources)
+make TARGETS_FILTER=wardrv nonreg_sim
 ```
 
-Equivalent FuseSoC command:
+To run a list of scenarios, build the target once, then run the list without recompiling (same `--build-root` and `--no-export` as the Makefile, so the build is reused; any generic of the target can be overridden after the VLNV):
 
 ```bash
-fusesoc --cores-root . run --build-root build --target sim_soc4_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:4.0.0
+make sim_soc4_openblaze8_fault_c_user           # build and elaboration (TESTS_LIST empty)
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_soc4_openblaze8_fault_c_user asylum:soc:PicoSoC:4.0.0 --TESTS_LIST=fault_tmr,switch
 ```
 
-Prerequisites: OpenBlaze8 firmware is built by `pbcc_gen` (`PBCC_HOME` = SDCC with the PicoBlaze back-end, `PICOASM_HOME` = picoasm), WardRV firmware by `rvcc_gen` (`RISCV_PREFIX`, default `riscv64-unknown-elf-`; `-march=rv32i_zicsr` when supported). The Modbus testbench needs UVVM and the flash models come from `fmf:memory:flash_nor` (`asylum-communication-spi/SPI_models.core`). Emulation needs NanoXplore nxmap. Outside CI, GHDL writes a waveform `dut.fst`.
+To add a scenario: a package `tb_PicoSoC_<name>_pkg` with a procedure `run`, its name in `C_TESTS`, its applicability in `test_applies` and its case in `run_test` of [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), the file in the `files_sim` fileset, the name in the `TESTS_LIST` of the targets it applies to, then `make mk/targets.txt` and `make ci_generate`.
 
-Host tools: [tools/modbus_server.py](tools/modbus_server.py) (pymodbus RTU client) and [tools/modbus_server_debug.py](tools/modbus_server_debug.py) (raw serial frames) talk to the Modbus firmware on the board.
+Outside the CI, GHDL writes a waveform `dut.fst`.
 
-## Synthesis
+## Dependencies and Related IPs
 
-- **NanoXplore NG-MEDIUM** (`emu_ng_medium_*`, tool nxmap, `program: True`): pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py) (6 switches, push buttons for `arst_i` / `it_user_i`, ...), options in `options.py` (`ManageAsynchronousReadPort`, `AllowUnconfiguredIOs`) and `features.py`; techmap flag `NANOXPLORE_NG_MEDIUM`.
-- **Digilent Basys**: the constraints are kept in [boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf) but there is no `emu_basys_*` target any more: the Spartan3E is only supported by ISE, whose XST does not support the VHDL-2008 constructs used by the design (unconstrained record elements, `process (all)`, `else generate`), and `target_techmap` has no Xilinx branch.
-- **GHDL synthesis check** (`lint_ghdl_synth_*`): `ghdl --synth -Wall` of `PicoSoC_top`, one target per configuration (4 OpenBlaze8, 3 WardRV_fsm `lint_ghdl_synth_wardrv_*`: the firmware ROMs generated by the target must match `CPU_MODEL`); writes `PicoSoC_top_synth.vhd` / `.log` in the work root, fails on a synthesis error or an inferred latch.
-- Fault tolerance is selected at build time (`SUPERVISOR`, `USER_SAFETY`, `USER_FAULT_INJECTION`, `USER_LOCK_STEP_DEPTH`).
-- `cpu_safety` contains `report` processes (configuration and mismatch messages) that are not enclosed in `synthesis translate_off`.
+| Core | Repository | Purpose |
+|------|------------|---------|
+| `asylum:utils:pkg` | [asylum-utils-pkg](https://github.com/deuskane/asylum-utils-pkg) | `sbi_pkg` (SBI records, `"/="` of the lock-step / TMR compare, >= 1.9.0), `logic_pkg`, `math_pkg`; the testbenches need >= 1.10.0 (`string_pkg` lists of `TESTS_LIST`) |
+| `asylum:target:techmap` | [asylum-target-techmap](https://github.com/deuskane/asylum-target-techmap) | `sync2dffrn`, `obuf`, `iobuf` |
+| `asylum:component:clock_divider` | [asylum-component-clock_divider](https://github.com/deuskane/asylum-component-clock_divider) | SoC clock |
+| `asylum:component:GPIO` | [asylum-component-gpio](https://github.com/deuskane/asylum-component-gpio) | `sbi_GPIO_irq`: switches, LEDs, supervisor GPIOs |
+| `asylum:communication:uart` | [asylum-communication-uart](https://github.com/deuskane/asylum-communication-uart) | `sbi_uart` (>= 3.0.0) |
+| `asylum:communication:SPI` | [asylum-communication-spi](https://github.com/deuskane/asylum-communication-spi) | `sbi_spi`; `fmf:memory:flash_nor` (flash models of the testbench) |
+| `asylum:system:GIC` | [asylum-system-gic](https://github.com/deuskane/asylum-system-gic) | `sbi_GIC` (>= 2.0.0) |
+| `asylum:component:timer` | [asylum-component-timer](https://github.com/deuskane/asylum-component-timer) | `sbi_timer` |
+| `asylum:component:crc` | [asylum-component-crc](https://github.com/deuskane/asylum-component-crc) | `sbi_crc` |
+| `asylum:system:spinlock` | [asylum-system-spinlock](https://github.com/deuskane/asylum-system-spinlock) | `sbi_spinlock` |
+| `asylum:system:mailbox` | [asylum-system-mailbox](https://github.com/deuskane/asylum-system-mailbox) | `sbi_mailbox` (>= 1.1.0) |
+| `asylum:infrastructure:icn` | [asylum-infrastructure_icn](https://github.com/deuskane/asylum-infrastructure_icn) | `sbi_icn` |
+| `asylum:component:ram` | [asylum-component-ram](https://github.com/deuskane/asylum-component-ram) | `sbi_ram` |
+| `asylum:component:fifo` | [asylum-component-fifo](https://github.com/deuskane/asylum-component-fifo) | FIFOs of the peripherals |
+| `asylum:processor:OpenBlaze8` | [asylum-processor-OpenBlaze8](https://github.com/deuskane/asylum-processor-OpenBlaze8) | `sbi_OpenBlaze8` |
+| `asylum:processor:WardRV` | [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) | `sbi_WardRV_fsm` |
+| `asylum:utils:generators` | [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators) | `pbcc_gen` / `rvcc_gen` (firmware to ROM), regtool of the peripherals |
+| `asylum:utils:ghdl_synth`, `asylum:utils:yosys_synth` | [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators) | `lint_ghdl_synth_*` check, `syn_*` synthesis |
+| `bitvis:verification:uvvm` | [UVVM](https://github.com/UVVM/UVVM) | Verification library and UART VIP |
 
-## Design Notes
+All the IPs: [asylum-project](https://github.com/deuskane/asylum-project).
 
-### Architecture
+## License
 
-![PicoSoC overview](doc/assets/picosoc-overview.png)
+Apache License 2.0, see [LICENSE](LICENSE).
 
-The overview shows the supervisor SoC (top) and the user SoC (bottom) with their address maps. In the user SoC, the dashed box is the CPU cluster replicated `NB_CPU` times (CPU = `cpu_safety`, `ROM_user`, ICN1 local with RAM1 and GIC); ICN2 is shared. The supervisor `LED 0` output is the `arst_b_i` of the user SoC, and the three `diff_o` flags of the user CPU are the supervisor GIC inputs.
-
-Reset: `arst_i` is resynchronised twice; the first stage resets the clock divider, the second one resets the supervisor, which releases the user SoC reset by software (`gpio_wr(RST,1)`). Without supervisor the user SoC uses the second stage directly.
-
-### CPU safety
-
-Lock-step (`SAFETY = "lock-step"`):
-
-![cpu_safety lock-step](doc/assets/picosoc-cpu_safety-lock_step.png)
-
-CPU0 drives the SoC. Its inputs (reset, instruction, SBI response, interrupt) are delayed by `LOCK_STEP_DEPTH` registers and fed to CPU1; CPU1 outputs (`ics`, `iaddr`, `interrupt_ack`) are compared with the delayed CPU0 outputs. A mismatch sets `diff_o(0)` until reset.
-
-TMR (`SAFETY = "tmr"`):
-
-![cpu_safety TMR](doc/assets/picosoc-cpu_safety-TMR.png)
-
-Three CPUs receive the same inputs; `ics_o`, `iaddr_o`, `sbi_ini_o` and `interrupt_ack_o` are majority-voted. `diff_o` bit 0 / 1 / 2 latch the mismatches CPU0 / CPU1, CPU1 / CPU2 and CPU2 / CPU0 (computed on `ics`, `iaddr` and `interrupt_ack`).
-
-Fault injection XORs `inject_error_i(i)` on one instruction bit of CPU `i`. The supervisor firmware resets the user SoC on a mismatch; in TMR it masks the first faulty pair and only resets on a second error.
-
-### Debug output
-
-With `DEBUG_ENABLE = True`, `switch_i(2 downto 0)` selects `debug_o`: 0 LED0, 1 switches, 2 user / supervisor resets, 3 CPU0 `iaddr(7:0)`, 4 CPU0 `idata(17:10)`, 5 data bus `cs`, `re`, `we`, `ready`, `addr(7:4)`, 6 data address, 7 `cs` / `ready` of SWITCH, LED0, LED1, UART. With `DEBUG_ENABLE = False`, `debug_o` = clock, UART RX bit counter and state, `uart_rx`, `uart_tx`.
-
-## Directory Structure
-
-```
-asylum-soc-picosoc/
-├── PicoSoC.core                # FuseSoC core (asylum:soc:PicoSoC)
-├── Makefile                    # Common Asylum Makefile (FuseSoC wrapper)
-├── mk/
-│   ├── defs.mk                 # FILE_CORE, default TARGET and TOOL
-│   └── targets.txt             # Target list (generated from the .core)
-├── doc/
-│   ├── PicoSoC.drawio          # Block diagram
-│   └── assets/                 # picosoc.drawio, picosoc-*.png, Makefile (drawio PNG export)
-├── hdl/
-│   ├── PicoSoC_pkg.vhd
-│   ├── PicoSoC_top.vhd
-│   ├── PicoSoC_user.vhd
-│   ├── PicoSoC_supervisor.vhd
-│   ├── cpu_safety.vhd
-│   └── cpu_wrapper.vhd
-├── esw/                        # user*.c, user_identity.psm, supervisor.c, dummy.c
-│   └── include/                # address maps, drivers, cpu/picoblaze.h, cpu/riscv.h
-├── sim/
-│   ├── tb_PicoSoC.vhd
-│   ├── tb_PicoSoC_modbus_rtu.vhd
-│   ├── mem/                    # memory.mem, memoryOTP.mem (SPI flash preload)
-│   └── wave/                   # waves.gtkw, cpus.gtkw
-├── boards/
-│   ├── Digilent-Basys1/        # pads.ucf
-│   └── NanoXplore-DK625V0/     # pads.py, options.py, features.py
-└── tools/                      # addrmap_user.hjson, modbus_server.py, modbus_server_debug.py
-```
-
-## Dependencies
-
-| Core | Used by (fileset) | Purpose |
-|------|-------------------|---------|
-| `asylum:utils:pkg` (`>=1.9.0`) | `files_hdl` | `sbi_pkg` (SBI records, `"/="` of the lock-step / TMR comparison) |
-| `asylum:target:techmap` | `files_hdl` | `sync2dffrn`, `obuf`, `iobuf` (`techmap_pkg`) |
-| `asylum:component:clock_divider` | `files_hdl` | Internal clock generation |
-| `asylum:component:GPIO` | `files_hdl` | `sbi_GPIO_irq` |
-| `asylum:component:crc` | `files_hdl` | `sbi_crc` |
-| `asylum:communication:uart` (`>=3.0.0`) | `files_hdl` | `sbi_uart` (interrupt sources of `esw/include/uart.h`) |
-| `asylum:communication:SPI` | `files_hdl` | `sbi_spi` |
-| `asylum:infrastructure:icn` | `files_hdl` | `sbi_icn` |
-| `asylum:system:GIC` (`>=2.0.0`) | `files_hdl` | `sbi_GIC` (its `isr` register records the masked sources: polled by `user.c`) |
-| `asylum:system:spinlock` | `files_hdl` | `sbi_spinlock` |
-| `asylum:system:mailbox` (`>=1.1.0`) | `files_hdl` | `sbi_mailbox` (`fifo_empty_o`: GIC sources) |
-| `asylum:component:fifo` | `files_hdl` | FIFOs of the peripherals |
-| `asylum:component:timer` (`>=2.0.0`) | `files_hdl` | `sbi_timer` |
-| `asylum:component:ram` (`>=1.2.0`) | `files_hdl` | `sbi_ram` |
-| `asylum:processor:OpenBlaze8` | `files_hdl` | `sbi_OpenBlaze8` |
-| `asylum:processor:WardRV` (`>=0.0.1`) | `files_hdl` | `sbi_WardRV_fsm` |
-| `fmf:memory:flash_nor` | `files_sim` | SPI flash models (`m25p40`, `s25fl512s`) |
-| `bitvis:verification:uvvm` | `files_sim` | UVVM and UART VIP of the Modbus testbench |
-| `asylum:utils:generators` (`>=1.0.0`) | `pbcc_dep` | `pbcc_gen` / `rvcc_gen` ROM generators |
-| `asylum:utils:ghdl_synth` | `syn` | `ghdl_synth.sh` / `ghdl_synth.mk` (`pre_run` hook of `lint_ghdl_synth_*`) |
+Exception: the SPI flash models (`fmf:memory:flash_nor`, from the [Free Model Foundry](https://www.freemodelfoundry.com), GPL-2.0) are a dependency of the simulation targets only, they are not in this repository and not part of the SoC.
