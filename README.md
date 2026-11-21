@@ -71,7 +71,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 - Fault injection: one instruction bit of each redundant CPU flipped from a pin (`inject_error_i`)
 - Supervisor SoC: resets the user SoC on a difference and counts the errors on `led_diff_o`; with TMR, a first error is only masked
 - Peripherals: switches and 2 LED banks (`sbi_GPIO_irq`), UART with CTS/RTS, SPI master with pads, GIC, timer, CRC16 (Modbus polynomial), spinlock, mailbox, RAMs
-- Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available"
+- Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available", switch edges
 - Firmware in C (and one assembler example): switch / LED identity, full peripheral test with UART output, Modbus RTU server, multi-core hello with spinlock, supervisor
 - Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
@@ -266,6 +266,7 @@ Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 | 2 | Timer `it_o` | `PICOSOC_USER_GIC_TIMER` | `GIC_TIMER_MSK` (`0x04`) |
 | 3 | Mailbox fifo0 not empty (level) | `PICOSOC_USER_GIC_MAILBOX0` | `GIC_MAILBOX0_MSK` (`0x08`) |
 | 4 | Mailbox fifo1 not empty (level) | `PICOSOC_USER_GIC_MAILBOX1` | `GIC_MAILBOX1_MSK` (`0x10`) |
+| 5 | SWITCH GPIO `it_o` (edge on a switch) | `PICOSOC_USER_GIC_SWITCH` | `GIC_SWITCH_MSK` (`0x20`) |
 
 ### Supervisor SoC
 
@@ -284,10 +285,10 @@ Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `Pi
 
 | Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1496 | 108 | 620 | 48 | 125 | 0.5 | 0 | 183822.55 | 48.972 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 2308 | 304 | 840 | 116 | 90 | 1 | 0 | 484422.10 | 129.055 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 3276 | 104 | 1020 | 53 | 501 | 1 | 0 | 164924.43 | 43.938 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 9447 | 304 | 2415 | 136 | 1692 | 2 | 0 | 405022.20 | 107.902 |
+| `syn_soc1` (OpenBlaze8) | 999 | 108 | 622 | 48 | 132 | 0.5 | 0 | 181972.03 | 48.479 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 1715 | 304 | 842 | 116 | 59 | 1 | 0 | 484438.36 | 129.060 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 1820 | 104 | 903 | 42 | 191 | 1 | 0 | 156412.51 | 41.670 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5107 | 304 | 1973 | 92 | 776 | 2 | 0 | 372176.95 | 99.152 |
 
 ¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. The SPI pads (`inout`) are not synthesized by the GHDL plugin of Yosys (warning "no assignment for port"): the SPI output enables and output registers that only drive them may be removed.
 
@@ -313,7 +314,7 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 ### Clock and boot
 
-`arst_i` (after its polarity) goes through two `sync2dffrn` resynchronizers: the first one, on `clk_i`, resets the clock divider; the second one, on the divided clock, resets the supervisor SoC. Without supervisor, it is also the reset of the user SoC. With the supervisor, the user SoC stays in reset until [esw/supervisor.c](esw/supervisor.c) has set up its GIC and writes 1 to its `RST` GPIO.
+`arst_i` (after its polarity) goes through two `sync2dffrn` resynchronizers: the first one, on `clk_i`, resets the clock divider; the second one, on the divided clock, resets the supervisor SoC. The reset of the user SoC is this one without supervisor, or the `RST` GPIO of the supervisor: [esw/supervisor.c](esw/supervisor.c) sets up its GIC, then writes 1 to it. A third `sync2dffrn` on the divided clock resynchronizes it: 2 more cycles of reset with a running clock, so that the registers without reset of the user SoC (input stages of the GPIOs) are loaded before the reset release.
 
 Every CPU starts at address 0 of its ROM: the firmware sets up the GPIO directions, the UART baud rate, the GIC masks and the CPU interrupt, then runs its main loop.
 
@@ -323,7 +324,7 @@ Each cluster has a local interconnect ICN1 (one master): GIC at `0x00`, RAM1 at 
 
 ### Interrupts
 
-The user GIC of each cluster collects the 5 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The interrupt outputs of the three GPIOs are not connected: the edges of the switches are read in the `isr` register of the SWITCH GPIO by polling ([esw/test_gpio.c](esw/test_gpio.c)). The supervisor GIC receives the 3 difference flags.
+The user GIC of each cluster collects the 6 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The edges of the switches are recorded in the `isr` register of the SWITCH GPIO, whose `it_o` is source 5 ([esw/test_gpio.c](esw/test_gpio.c)); the interrupt outputs of LED0 and LED1 are not connected. The supervisor GIC receives the 3 difference flags.
 
 ### Multi-core
 
@@ -373,7 +374,7 @@ One small firmware per peripheral of the user SoC, the reference example of its 
 
 | Firmware | What it checks |
 |----------|----------------|
-| [esw/test_gpio.c](esw/test_gpio.c) | GPIO: reset directions and values, LED0 / LED1 registers read back and seen on the pins, switches set by the testbench read back, their rising / falling edges recorded in the `isr` of SWITCH (polled), direction register (an input reads its pin) |
+| [esw/test_gpio.c](esw/test_gpio.c) | GPIO: reset directions and values, LED0 / LED1 registers read back and seen on the pins, switches set by the testbench read back, their rising / falling edges recorded in the `isr` of SWITCH and taken by interrupt (SWITCH -> GIC source 5 -> CPU), direction register (an input reads its pin) |
 | [esw/test_uart.c](esw/test_uart.c) | UART: reset values (disabled, baud rate of the generics), setup read back, TX (every line), RX polled on the "RX FIFO not empty" source, RX by interrupt (UART source -> GIC source 1 -> CPU) |
 | [esw/test_spi.c](esw/test_spi.c) | SPI with the flash model of the testbench: reset values, prescaler and configuration read back, flash status register (write enable latch set / cleared), read of 4 bytes, page program of 2 bytes polled on the write-in-progress bit, read back |
 | [esw/test_timer.c](esw/test_timer.c) | Timer: reset values, 32-bit initial value read back, periodic interrupt (autostart, GIC source 2) counted on LED0, period of 2000 SoC cycles measured by the testbench, no interrupt after the timer is stopped |
