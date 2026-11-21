@@ -313,7 +313,7 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 ### Clock and boot
 
-`arst_i` (after its polarity) goes through two `sync2dffrn` resynchronizers: the first one, on `clk_i`, resets the clock divider; the second one, on the divided clock, resets the supervisor SoC. Without supervisor, it is also the reset of the user SoC. With the supervisor, the user SoC stays in reset until [esw/supervisor.c](esw/supervisor.c) has set up its GIC and writes 1 to its `RST` GPIO.
+`arst_i` (after its polarity) goes through two `sync2dffrn` resynchronizers: the first one, on `clk_i`, resets the clock divider; the second one, on the divided clock, resets the supervisor SoC. The reset of the user SoC is this one without supervisor, or the `RST` GPIO of the supervisor: [esw/supervisor.c](esw/supervisor.c) sets up its GIC, then writes 1 to it. A third `sync2dffrn` on the divided clock resynchronizes it: 2 more cycles of reset with a running clock, so that the registers without reset of the user SoC (input stages of the GPIOs) are loaded before the reset release.
 
 Every CPU starts at address 0 of its ROM: the firmware sets up the GPIO directions, the UART baud rate, the GIC masks and the CPU interrupt, then runs its main loop.
 

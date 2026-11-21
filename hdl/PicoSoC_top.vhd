@@ -21,6 +21,9 @@
 -- 2026-10-05  2.1      mrosiere CPU_MODEL default "OpenBlaze8" (was "WardRV", invalid)
 -- 2026-11-19  2.2      mrosiere debug_o : LED0 resized to 8 bits (USER_NB_LED0 /= 8)
 --                               Document debug_mux_i (unused, kept for pads)
+-- 2026-11-21  2.3      mrosiere Reset of the user SoC resynchronized on clk
+--                               (2 more cycles : the GPIO input stages are
+--                               loaded before the reset release)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -122,6 +125,7 @@ architecture rtl of PicoSoC_top is
   signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
+  signal   arst_b_user_sync             : std_logic;
            
   signal   diff                         : std_logic_vector(3-1 downto 0);
            
@@ -217,6 +221,18 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
+  -- The reset of the user SoC (from the supervisor or arst_b_sync2) is
+  -- resynchronized on clk : 2 more cycles of reset with a running clock, so
+  -- that the registers without reset (input stages of the GPIOs) are loaded
+  -- before the reset release
+  ins_reset_resynchronizer_user : sync2dffrn
+    port map
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_user(0)
+    ,d_i                  => '1'
+    ,q_o                  => arst_b_user_sync
+    );
+
   ins_soc_user : PicoSoC_user
     generic map
     (CLOCK_FREQ             => FSYS_INT
@@ -245,7 +261,7 @@ begin  -- architecture rtl
     )
   port map
     (clk_i                => clk
-    ,arst_b_i             => arst_b_user(0)
+    ,arst_b_i             => arst_b_user_sync
     ,switch_i             => switch_i
     ,led0_o               => led0_user
     ,led1_o               => led1_user
