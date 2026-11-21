@@ -35,6 +35,7 @@ sim_soc1_openblaze8_c_identity                        : Simulation of the test e
 sim_soc1_openblaze8_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
 sim_soc1_openblaze8_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_openblaze8_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+sim_soc1_openblaze8_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
 sim_soc1_openblaze8_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
 sim_soc1_openblaze8_c_test_uart                       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
 sim_soc1_openblaze8_c_user                            : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
@@ -46,6 +47,7 @@ sim_soc1_wardrv_fsm_c_identity                        : Simulation of the test e
 sim_soc1_wardrv_fsm_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
 sim_soc1_wardrv_fsm_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_wardrv_fsm_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+sim_soc1_wardrv_fsm_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
 sim_soc1_wardrv_fsm_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
 sim_soc1_wardrv_fsm_c_test_uart                       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
 sim_soc1_wardrv_fsm_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
