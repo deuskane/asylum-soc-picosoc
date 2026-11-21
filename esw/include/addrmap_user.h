@@ -18,6 +18,7 @@
 //                               GIC_TIMER_MSK is bit 2 (0x04, was 0x03)
 // 2026-11-21  1.4      mrosiere Add GIC_SWITCH_MSK
 // 2026-11-21  1.5      mrosiere Add I2C
+// 2026-11-21  1.6      mrosiere Add PWM
 //-----------------------------------------------------------------------------
 
 #ifndef _addrmap_user_h_
@@ -37,6 +38,7 @@
 #include "spinlock.h"
 #include "mailbox.h"
 #include "i2c.h"
+#include "pwm.h"
 
 //--------------------------------------
 // Address Map
@@ -52,6 +54,7 @@
 #define UART                0x20
 #define TIMER               0x28
 #define I2C                 0x30
+#define PWM                 0x34
 #define RAM_GLO             0x40
 #define RAM_LOC             0x80
 

@@ -81,7 +81,7 @@ CAPI=2:
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.0.0
-description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, GIC, Timer, RAM, CRC, Spinlock and Mailbox
+description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
 generate:
@@ -281,6 +281,15 @@ generate:
     generator : pbcc_gen
     parameters :
       file         : esw/test_i2c.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_picoblaze3_user_test_pwm :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/test_pwm.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -520,6 +529,15 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_rv32i_user_test_pwm :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/test_pwm.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_rv32i_supervisor_c :
     generator : rvcc_gen
     parameters :
@@ -584,6 +602,7 @@ filesets:
       - ">=asylum:system:spinlock:1.0.0"
       - ">=asylum:system:mailbox:1.1.0"
       - ">=asylum:communication:I2C:1.0.0"
+      - ">=asylum:component:PWM:1.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -608,6 +627,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_test_gic_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_mailbox_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_i2c_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_test_pwm_pkg.vhd
       - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
       - sim/picosoc/tb_PicoSoC.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
@@ -3357,6 +3377,62 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=test_i2c
       - TESTS_LIST=test_i2c
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_test_pwm:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
+    generate     : [gen_rv32i_user_test_pwm,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_pwm
+      - TESTS_LIST=test_pwm
+
+  #---------------------------------------
+  sim_soc1_openblaze8_c_test_pwm:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
+    generate     : [gen_picoblaze3_user_test_pwm,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_pwm
+      - TESTS_LIST=test_pwm
 
 #=========================================
 scripts:

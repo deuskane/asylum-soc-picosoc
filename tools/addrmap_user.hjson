@@ -48,6 +48,10 @@
     base : 0x30
   }
   {
+    name : "pwm"
+    base : 0x34
+  }
+  {
     name : "ram2"
     base : 0x40
   }

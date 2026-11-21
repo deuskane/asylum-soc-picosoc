@@ -39,6 +39,7 @@
 --                               (not fifo_empty_o) as user GIC sources 3 / 4
 -- 2026-11-21  3.12     mrosiere Switch edges as user GIC source 5
 -- 2026-11-21  3.13     mrosiere Add I2C (master and slave)
+-- 2026-11-21  3.14     mrosiere Add PWM
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -60,6 +61,7 @@ use     asylum.crc_csr_pkg.all;
 use     asylum.spinlock_csr_pkg.all;
 use     asylum.mailbox_csr_pkg.all;
 use     asylum.I2C_csr_pkg.all;
+use     asylum.PWM_csr_pkg.all;
 -- Modules Packages
 use     asylum.PicoSoC_pkg.all;
 use     asylum.gpio_pkg.all;
@@ -71,6 +73,7 @@ use     asylum.crc_pkg.all;
 use     asylum.spinlock_pkg.all;
 use     asylum.mailbox_pkg.all;
 use     asylum.i2c_pkg.all;
+use     asylum.pwm_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_user_pkg.all;
@@ -131,6 +134,9 @@ entity PicoSoC_user is
     ;i2c_sda_i             : in  std_logic
     ;i2c_sda_o             : out std_logic
     ;i2c_sda_oe_o          : out std_logic
+
+    -- PWM Interface
+    ;pwm_o                 : out std_logic
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
@@ -193,8 +199,9 @@ architecture rtl of PicoSoC_user is
   constant ICN2_TARGET_MAILBOX        : integer  := 8;
   constant ICN2_TARGET_RAM2           : integer  := 9;
   constant ICN2_TARGET_I2C            : integer  := 10;
+  constant ICN2_TARGET_PWM            : integer  := 11;
   
-  constant ICN2_NB_TARGET             : positive := 11;
+  constant ICN2_NB_TARGET             : positive := 12;
   
   constant ICN2_TARGET_ID             : sbi_addrs_t   (ICN2_NB_TARGET-1 downto 0) :=
     ( ICN2_TARGET_SWITCH              => PICOSOC_USER_SWITCH_BA
@@ -208,6 +215,7 @@ architecture rtl of PicoSoC_user is
      ,ICN2_TARGET_MAILBOX             => PICOSOC_USER_MAILBOX_BA
      ,ICN2_TARGET_RAM2                => PICOSOC_USER_RAM2_BA
      ,ICN2_TARGET_I2C                 => PICOSOC_USER_I2C_BA
+     ,ICN2_TARGET_PWM                 => PICOSOC_USER_PWM_BA
       );
 
   constant ICN2_TARGET_ADDR_WIDTH     : naturals_t    (ICN2_NB_TARGET-1 downto 0) :=
@@ -222,6 +230,7 @@ architecture rtl of PicoSoC_user is
      ,ICN2_TARGET_MAILBOX             => MAILBOX_ADDR_WIDTH
      ,ICN2_TARGET_RAM2                => log2(RAM2_DEPTH)
      ,ICN2_TARGET_I2C                 => I2C_ADDR_WIDTH
+     ,ICN2_TARGET_PWM                 => PWM_ADDR_WIDTH
       );
   
   -- Signals ICN2 - System
@@ -702,6 +711,22 @@ begin  -- architecture rtl
     ,sda_i                => i2c_sda_i
     ,sda_o                => i2c_sda_o
     ,sda_oe_o             => i2c_sda_oe_o
+     );
+
+  -----------------------------------------------------------------------------
+  -- PWM
+  -- One output, prescaler writable by software
+  -----------------------------------------------------------------------------
+  ins_sbi_pwm : sbi_PWM
+    generic map
+    (NAME                 => "PWM"
+     )
+    port map
+    (clk_i                => clk         
+    ,arst_b_i             => arst_b      
+    ,sbi_ini_i            => icn2_sbi_inis(ICN2_TARGET_PWM)
+    ,sbi_tgt_o            => icn2_sbi_tgts(ICN2_TARGET_PWM)
+    ,pwm_o                => pwm_o
      );
 
   -----------------------------------------------------------------------------

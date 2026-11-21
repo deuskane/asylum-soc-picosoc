@@ -162,6 +162,7 @@ begin  -- architecture tb
     ,spi_io_io        => open
     ,i2c_scl_io       => open
     ,i2c_sda_io       => open
+    ,pwm_o            => open
     ,debug_uart_tx_o  => open
     );
 

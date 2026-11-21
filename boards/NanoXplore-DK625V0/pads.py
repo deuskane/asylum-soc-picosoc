@@ -66,7 +66,7 @@ p.addPad('uart_rx_i'         ,{'location':'IOB5_D03N'   , 'standard':'LVCMOS', '
 # pull-ups expected on the I2C bus)
 p.addPad('i2c_scl_io'        ,{'location':'IOB0_D06P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 2  from bottom (I2C SCL, open drain)
 p.addPad('i2c_sda_io'        ,{'location':'IOB0_D07P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 3  from bottom (I2C SDA, open drain)
-#                             {'location':'IOB0_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 4  from bottom
+p.addPad('pwm_o'             ,{'location':'IOB0_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 4  from bottom (PWM)
 #                             {'location':'IOB0_D09P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 5  from bottom
 #                             {'location':'IOB0_D01N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 6  from bottom
 #                             {'location':'IOB0_D08P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 7  from bottom

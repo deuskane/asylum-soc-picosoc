@@ -18,6 +18,7 @@
 -- 2026-11-21  1.4      mrosiere PicoSoC_top component : debug_o and
 --                               debug_mux_i removed
 -- 2026-11-21  1.5      mrosiere Add I2C
+-- 2026-11-21  1.6      mrosiere Add PWM
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -47,6 +48,7 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"20";
   constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"28";
   constant PICOSOC_USER_I2C_BA                 : std_logic_vector(8-1 downto 0) := X"30";
+  constant PICOSOC_USER_PWM_BA                 : std_logic_vector(8-1 downto 0) := X"34";
   constant PICOSOC_USER_RAM2_BA                : std_logic_vector(8-1 downto 0) := X"40";
   constant PICOSOC_USER_RAM1_BA                : std_logic_vector(8-1 downto 0) := X"80";
                                                
@@ -206,6 +208,9 @@ component PicoSoC_top is
     -- I2C Interface (open drain : external pull-ups)
     ;i2c_scl_io       : inout std_logic
     ;i2c_sda_io       : inout std_logic
+
+    -- PWM Interface
+    ;pwm_o            : out std_logic
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
@@ -272,6 +277,9 @@ component PicoSoC_user is
     ;i2c_sda_i             : in  std_logic
     ;i2c_sda_o             : out std_logic
     ;i2c_sda_oe_o          : out std_logic
+
+    -- PWM Interface
+    ;pwm_o                 : out std_logic
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)

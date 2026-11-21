@@ -18,6 +18,7 @@
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
 -- 2026-11-21  1.1      mrosiere Integration scenarios test_<ip>
 -- 2026-11-21  1.2      mrosiere test_i2c
+-- 2026-11-21  1.3      mrosiere test_pwm
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -39,7 +40,7 @@ package tb_PicoSoC_tests_pkg is
 
   -- Integration firmwares (esw/test_<ip>.c) : each one is also the name of
   -- the scenario that checks it
-  constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c";
+  constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hello," & C_INTEGRATION;
@@ -75,6 +76,7 @@ package tb_PicoSoC_tests_pkg is
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
     ;signal   i2c_if   : inout t_i2c_if
+    ;signal   pwm      : in    std_logic
     );
 
 end package tb_PicoSoC_tests_pkg;
@@ -127,6 +129,7 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
     ;signal   i2c_if   : inout t_i2c_if
+    ;signal   pwm      : in    std_logic
     ) is
   begin
     if    string_eq(name, "switch")
@@ -180,6 +183,9 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "test_i2c")
     then
       work.tb_PicoSoC_test_i2c_pkg.run(cfg, clk, switch, led0, i2c_if, uart_tx);
+    elsif string_eq(name, "test_pwm")
+    then
+      work.tb_PicoSoC_test_pwm_pkg.run(cfg, clk, switch, led0, pwm, uart_tx);
     else
       alert(TB_ERROR, "Unknown test " & name, C_TB_SCOPE);
     end if;

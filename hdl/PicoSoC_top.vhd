@@ -26,6 +26,7 @@
 --                               loaded before the reset release)
 -- 2026-11-21  2.4      mrosiere debug_o and debug_mux_i removed (pads freed)
 -- 2026-11-21  2.5      mrosiere Add I2C pads
+-- 2026-11-21  2.6      mrosiere Add PWM output
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -101,6 +102,9 @@ entity PicoSoC_top is
     -- I2C Interface (open drain : external pull-ups)
     ;i2c_scl_io       : inout std_logic
     ;i2c_sda_io       : inout std_logic
+
+    -- PWM Interface
+    ;pwm_o            : out std_logic
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
@@ -159,6 +163,8 @@ architecture rtl of PicoSoC_top is
   signal   i2c_sda_i                    : std_logic;
   signal   i2c_sda_o                    : std_logic;
   signal   i2c_sda_oe_o                 : std_logic;
+
+  signal   pwm                          : std_logic;
 
 begin  -- architecture rtl
 
@@ -294,6 +300,7 @@ begin  -- architecture rtl
     ,i2c_sda_i            => i2c_sda_i
     ,i2c_sda_o            => i2c_sda_o
     ,i2c_sda_oe_o         => i2c_sda_oe_o
+    ,pwm_o                => pwm
     );
 
   spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
@@ -309,6 +316,8 @@ begin  -- architecture rtl
   uart_rx      <= uart_rx_i   ;
   uart_rts_b_o <= uart_rts_b  ;
   uart_cts_b   <= uart_cts_b_i;
+
+  pwm_o        <= pwm;
 
   -----------------------------------------------------------------------------
   -- SoC Supervisor

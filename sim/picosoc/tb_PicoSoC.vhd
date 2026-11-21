@@ -35,6 +35,7 @@
 --                               TEST_IT and TEST_UART, UVVM checks
 -- 2026-11-21  2.1      mrosiere UART console, integration firmwares
 -- 2026-11-21  2.2      mrosiere I2C bus with pull-ups (UVVM I2C BFM slave)
+-- 2026-11-21  2.3      mrosiere pwm_o
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -153,6 +154,8 @@ architecture tb of tb_PicoSoC is
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
 
+  signal  pwm_o                    : std_logic;
+
 begin  -- architecture tb
 
   -----------------------------------------------------------------------------
@@ -195,6 +198,7 @@ begin  -- architecture tb
     ,spi_io_io        => spi_io_io
     ,i2c_scl_io       => i2c_if.scl
     ,i2c_sda_io       => i2c_if.sda
+    ,pwm_o            => pwm_o
     ,debug_uart_tx_o  => open
     );
 
@@ -338,7 +342,7 @@ begin  -- architecture tb
       do_reset(C_RESET_ON, clk_i, arst_i);
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
-      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx_i, uart_tx_o, i2c_if);
+      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx_i, uart_tx_o, i2c_if, pwm_o);
     end loop;
 
     report_alert_counters(FINAL);

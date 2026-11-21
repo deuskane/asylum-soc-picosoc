@@ -36,6 +36,7 @@ sim_soc1_openblaze8_c_test_crc                        : Integration test esw/tes
 sim_soc1_openblaze8_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
 sim_soc1_openblaze8_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_openblaze8_c_test_i2c                        : Integration test esw/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
+sim_soc1_openblaze8_c_test_pwm                        : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
 sim_soc1_openblaze8_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_openblaze8_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
 sim_soc1_openblaze8_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
@@ -50,6 +51,7 @@ sim_soc1_wardrv_fsm_c_test_crc                        : Integration test esw/tes
 sim_soc1_wardrv_fsm_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
 sim_soc1_wardrv_fsm_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_wardrv_fsm_c_test_i2c                        : Integration test esw/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
+sim_soc1_wardrv_fsm_c_test_pwm                        : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
 sim_soc1_wardrv_fsm_c_test_ram                        : Integration test esw/test_ram.c - RAM1 and RAM2 address and data, unmapped address
 sim_soc1_wardrv_fsm_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_wardrv_fsm_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
