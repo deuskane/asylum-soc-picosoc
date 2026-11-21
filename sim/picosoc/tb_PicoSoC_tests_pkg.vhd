@@ -8,13 +8,15 @@
 -- Description: Scenarios of tb_PicoSoC : names (valid items of TESTS_LIST),
 --              firmware and configurations where each one applies, and
 --              dispatch (run_test) to the package of each scenario
---              (tb_PicoSoC_<name>_pkg)
+--              (tb_PicoSoC_<name>_pkg) ; an integration scenario test_<ip>
+--              has the name of its firmware (esw/test_<ip>.c)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
+-- 2026-11-21  1.1      mrosiere Integration scenarios test_<ip>
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -30,6 +32,10 @@ library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
 
 package tb_PicoSoC_tests_pkg is
+
+  -- Integration firmwares (esw/test_<ip>.c) : each one is also the name of
+  -- the scenario that checks it
+  constant C_INTEGRATION : string := "";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hello";
@@ -81,13 +87,14 @@ package body tb_PicoSoC_tests_pkg is
     constant C_USER : boolean := list_contains("user,user_uart,user_uart_spi,user_uart_spi_mem", firmware);
     constant C_UART : boolean := list_contains(     "user_uart,user_uart_spi,user_uart_spi_mem", firmware);
   begin
-    if    string_eq(name, "switch"         ) then return not string_eq(firmware, "hello");
+    if    string_eq(name, "switch"         ) then return not string_eq(firmware, "hello") and not list_contains(C_INTEGRATION, firmware);
     elsif string_eq(name, "it_user"        ) then return C_USER;
     elsif string_eq(name, "uart"           ) then return C_UART;
     elsif string_eq(name, "fault_lock_step") then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
     elsif string_eq(name, "fault_tmr"      ) then return C_USER and supervisor and fault and string_eq(safety, "tmr");
     elsif string_eq(name, "fault_diff"     ) then return C_USER and not supervisor and fault and not string_eq(safety, "none");
     elsif string_eq(name, "hello"          ) then return string_eq(firmware, "hello");
+    elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
   end function;
