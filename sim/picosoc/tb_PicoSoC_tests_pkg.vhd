@@ -35,7 +35,7 @@ package tb_PicoSoC_tests_pkg is
 
   -- Integration firmwares (esw/test_<ip>.c) : each one is also the name of
   -- the scenario that checks it
-  constant C_INTEGRATION : string := "test_gpio";
+  constant C_INTEGRATION : string := "test_gpio,test_uart";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hello," & C_INTEGRATION;
@@ -147,6 +147,9 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "test_gpio")
     then
       work.tb_PicoSoC_test_gpio_pkg.run(cfg, clk, switch, led0, led1, uart_tx);
+    elsif string_eq(name, "test_uart")
+    then
+      work.tb_PicoSoC_test_uart_pkg.run(cfg, led0, led1, uart_rx, uart_tx);
     else
       alert(TB_ERROR, "Unknown test " & name, C_TB_SCOPE);
     end if;
