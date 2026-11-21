@@ -79,7 +79,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 
 ![Block diagram of PicoSoC](doc/picosoc-overview.png)
 
-Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)). The I2C (`0x30`) and the PWM (`0x34`) of ICN2 are not drawn yet.
+Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)).
 
 `PicoSoC_top` (not drawn) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, and puts IO buffers on the SPI and I2C signals.
 
