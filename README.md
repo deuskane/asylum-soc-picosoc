@@ -285,10 +285,10 @@ Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `Pi
 
 | Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1496 | 108 | 620 | 48 | 125 | 0.5 | 0 | 183822.55 | 48.972 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 2308 | 304 | 840 | 116 | 90 | 1 | 0 | 484422.10 | 129.055 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 3276 | 104 | 1020 | 53 | 501 | 1 | 0 | 164924.43 | 43.938 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 9447 | 304 | 2415 | 136 | 1692 | 2 | 0 | 405022.20 | 107.902 |
+| `syn_soc1` (OpenBlaze8) | 999 | 108 | 622 | 48 | 132 | 0.5 | 0 | 181972.03 | 48.479 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 1715 | 304 | 842 | 116 | 59 | 1 | 0 | 484438.36 | 129.060 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 1820 | 104 | 903 | 42 | 191 | 1 | 0 | 156412.51 | 41.670 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5107 | 304 | 1973 | 92 | 776 | 2 | 0 | 372176.95 | 99.152 |
 
 ¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. The SPI pads (`inout`) are not synthesized by the GHDL plugin of Yosys (warning "no assignment for port"): the SPI output enables and output registers that only drive them may be removed.
 
