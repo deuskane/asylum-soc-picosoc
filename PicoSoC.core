@@ -603,7 +603,7 @@ filesets:
       - ">=asylum:system:mailbox:1.1.0"
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
-      - ">=asylum:debug:HWLA:2.0.0"
+      - ">=asylum:debug:HWLA:3.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"

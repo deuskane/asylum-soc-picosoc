@@ -29,6 +29,8 @@
 -- 2026-11-21  2.6      mrosiere Add PWM output
 -- 2026-11-21  2.7      mrosiere DEBUG_ENABLE : HWLA on the user CPU bus,
 --                               captures on debug_uart_tx_o (UART 115200)
+-- 2026-11-21  2.8      mrosiere HWLA 3.0.0 (no NB_PROBE) : probe width from
+--                               the fields of debug_user
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -38,7 +40,6 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
-use     asylum.ROM_user_pkg.all;
 use     asylum.hwla_pkg.all;
 use     asylum.uart_pkg.all;
 
@@ -443,13 +444,17 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_debug: if DEBUG_ENABLE = True
   generate
-    -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
-    -- data, read data), then instruction bus (address, instruction)
-    constant HWLA_NB_PROBE       : positive := 4 + 3*8 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH;
     -- Baud tick every FSYS_INT/115200 cycles of clk
     constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/115200-1, 16));
 
-    signal   hwla_probe          : std_logic_vector(HWLA_NB_PROBE-1 downto 0);
+    -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
+    -- data, read data), then instruction bus (address, instruction).
+    -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i
+    signal   hwla_probe          : std_logic_vector(debug_user.cpu_idata 'length +
+                                                    debug_user.cpu_iaddr 'length +
+                                                    debug_user.cpu_drdata'length +
+                                                    debug_user.cpu_dwdata'length +
+                                                    debug_user.cpu_daddr 'length + 4-1 downto 0); -- 4 : cs, re, we, ready
     signal   hwla_trigger        : std_logic;
     signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
     signal   hwla_tvalid         : std_logic;
@@ -471,8 +476,7 @@ begin  -- architecture rtl
 
     ins_hwla : hwla
       generic map
-      (NB_PROBE             => HWLA_NB_PROBE
-      ,DEPTH                => 64    -- Small RAM (64 x 72 or 86 bits) : a few tens of instructions
+      (DEPTH                => 64    -- Small RAM (64 x 72 or 86 bits) : a few tens of instructions
       ,PRE_TRIGGER          => 32    -- Half of the capture before the trigger
       ,TIMESTAMP_WIDTH      => 16    -- A sample at least every 65536 cycles
       ,CHANGE_ONLY          => true  -- A CPU waiting on the bus fills no sample
