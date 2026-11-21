@@ -259,6 +259,15 @@ generate:
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_picoblaze3_user_test_gic :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/test_gic.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_picoblaze3_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -457,6 +466,15 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_rv32i_user_test_gic :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/test_gic.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_rv32i_supervisor_c :
     generator : rvcc_gen
     parameters :
@@ -541,6 +559,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_test_gic_pkg.vhd
       - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
       - sim/picosoc/tb_PicoSoC.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
@@ -3092,6 +3111,62 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=test_spinlock
       - TESTS_LIST=test_spinlock
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_test_gic:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+    generate     : [gen_rv32i_user_test_gic,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_gic
+      - TESTS_LIST=test_gic
+
+  #---------------------------------------
+  sim_soc1_openblaze8_c_test_gic:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+    generate     : [gen_picoblaze3_user_test_gic,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_gic
+      - TESTS_LIST=test_gic
 
 #=========================================
 scripts:

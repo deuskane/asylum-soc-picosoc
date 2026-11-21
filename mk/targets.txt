@@ -33,6 +33,7 @@ sim                                                   : default rule to sim (DON
 sim_soc1_openblaze8_asm_identity                      : Simulation of the test esw/user_identity.psm
 sim_soc1_openblaze8_c_identity                        : Simulation of the test esw/user_identity.c, SoC clock = clk_i (no division)
 sim_soc1_openblaze8_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+sim_soc1_openblaze8_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
 sim_soc1_openblaze8_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_openblaze8_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_openblaze8_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
@@ -45,6 +46,7 @@ sim_soc1_openblaze8_c_user_uart_spi                   : Simulation of the test e
 sim_soc1_openblaze8_c_user_uart_spi_mem               : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_identity                        : Simulation of the test esw/user_identity.c
 sim_soc1_wardrv_fsm_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+sim_soc1_wardrv_fsm_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
 sim_soc1_wardrv_fsm_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_wardrv_fsm_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_wardrv_fsm_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
