@@ -14,7 +14,7 @@
 // * each byte written with its address in the data (an address decoding
 //   error reads another byte), then with the complement (every data bit
 //   toggles)
-// * the unmapped addresses 0x30 to 0x3F are answered by the default slave
+// * the unmapped addresses 0x38 to 0x3F are answered by the default slave
 //   of ICN2 : a write is ignored, a read returns 0
 // WardRV only : pbcc (OpenBlaze8) miscompiles the variable port address
 // of PORT_WR(base,i,...) in a loop (the high byte of base+i is used)
@@ -25,6 +25,8 @@
 // Revisions  :
 // Date        Version  Author   Description
 // 2026-11-21  1.0      mrosiere Created
+// 2026-11-21  1.1      mrosiere Unmapped addresses from 0x34 (I2C at 0x30)
+// 2026-11-21  1.2      mrosiere Unmapped addresses from 0x38 (PWM at 0x34)
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -37,7 +39,7 @@
 #define UART_RX_LOOPBACK 0
 #define RAM2_SIZE        64   // bytes tested in RAM2 (all)
 #define RAM1_SIZE        96   // bytes tested in RAM1 (not the stack)
-#define UNMAPPED_FIRST   0x30 // no target of ICN2 between 0x30 and 0x3F
+#define UNMAPPED_FIRST   0x38 // no target of ICN2 between 0x38 and 0x3F
 #define UNMAPPED_LAST    0x3F
 
 //--------------------------------------

@@ -24,6 +24,9 @@
 -- 2026-11-21  2.3      mrosiere Reset of the user SoC resynchronized on clk
 --                               (2 more cycles : the GPIO input stages are
 --                               loaded before the reset release)
+-- 2026-11-21  2.4      mrosiere debug_o and debug_mux_i removed (pads freed)
+-- 2026-11-21  2.5      mrosiere Add I2C pads
+-- 2026-11-21  2.6      mrosiere Add PWM output
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -95,16 +98,19 @@ entity PicoSoC_top is
     ;spi_sclk_io      : inout std_logic
     ;spi_cs_b_io      : inout std_logic
     ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+
+    -- I2C Interface (open drain : external pull-ups)
+    ;i2c_scl_io       : inout std_logic
+    ;i2c_sda_io       : inout std_logic
+
+    -- PWM Interface
+    ;pwm_o            : out std_logic
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    -- debug_mux_i is not used : the debug selection is switch_i(2 downto 0)
-    -- (since 2025-05-08). The port is kept for the board pad files.
-    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
-    ;debug_o          : out std_logic_vector(             8-1 downto 0)
-    ;debug_uart_tx_o  : out std_logic
+    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
      
     );
 end PicoSoC_top;
@@ -137,7 +143,6 @@ architecture rtl of PicoSoC_top is
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
   
-  signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
 
@@ -151,6 +156,15 @@ architecture rtl of PicoSoC_top is
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
+
+  signal   i2c_scl_i                    : std_logic;
+  signal   i2c_scl_o                    : std_logic;
+  signal   i2c_scl_oe_o                 : std_logic;
+  signal   i2c_sda_i                    : std_logic;
+  signal   i2c_sda_o                    : std_logic;
+  signal   i2c_sda_oe_o                 : std_logic;
+
+  signal   pwm                          : std_logic;
 
 begin  -- architecture rtl
 
@@ -280,6 +294,13 @@ begin  -- architecture rtl
     ,spi_io_i             => spi_io_i_user
     ,spi_io_o             => spi_io_o_user
     ,spi_io_oe_o          => spi_io_oe_o_user
+    ,i2c_scl_i            => i2c_scl_i
+    ,i2c_scl_o            => i2c_scl_o
+    ,i2c_scl_oe_o         => i2c_scl_oe_o
+    ,i2c_sda_i            => i2c_sda_i
+    ,i2c_sda_o            => i2c_sda_o
+    ,i2c_sda_oe_o         => i2c_sda_oe_o
+    ,pwm_o                => pwm
     );
 
   spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
@@ -295,6 +316,8 @@ begin  -- architecture rtl
   uart_rx      <= uart_rx_i   ;
   uart_rts_b_o <= uart_rts_b  ;
   uart_cts_b   <= uart_cts_b_i;
+
+  pwm_o        <= pwm;
 
   -----------------------------------------------------------------------------
   -- SoC Supervisor
@@ -382,56 +405,34 @@ begin  -- architecture rtl
   end generate;
 
   -----------------------------------------------------------------------------
+  -- I2C PAD
+  -- Open drain : the line is pulled low when the output enable of the I2C is
+  -- set (its output is 0), released ('Z') otherwise : the pull-up of the
+  -- board gives the high level
+  -----------------------------------------------------------------------------
+  PAD_I2C_SCL : iobuf
+    port map
+     (buf_io     => i2c_scl_io
+     ,d_i        => i2c_scl_o
+     ,d_o        => i2c_scl_i
+     ,oe_i       => i2c_scl_oe_o
+     ,ie_i       => '1'
+     );
+
+  PAD_I2C_SDA : iobuf
+    port map
+     (buf_io     => i2c_sda_io
+     ,d_i        => i2c_sda_o
+     ,d_o        => i2c_sda_i
+     ,oe_i       => i2c_sda_oe_o
+     ,ie_i       => '1'
+     );
+
+  -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  gen_debug:
-  if DEBUG_ENABLE = True
-  generate
-    -- Debug selection from the switches (debug_mux_i is not used)
-    debug_mux      <= unsigned(switch_i(2 downto 0));
-    debug_o        <= std_logic_vector(resize(unsigned(led0_user),8)) when debug_mux = 0 else
-                      std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
-                      (0      => debug_user      .arst_b,
-                       1      => debug_supervisor.arst_b,
-                       others => '0')                                when debug_mux = 2 else
-                      debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
-                      debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
---                      (7          => debug_user      .cpu_dcs,
---                       6          => debug_user      .cpu_dre,
---                       5          => debug_user      .cpu_dwe,
---                       4          => debug_user      .cpu_dready,
---                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
-
-                      debug_user      .cpu_dcs   &
-                      debug_user      .cpu_dre   &
-                      debug_user      .cpu_dwe   &
-                      debug_user      .cpu_dready&
-                      debug_user      .cpu_daddr(7 downto 4)         when debug_mux = 5 else
-
-                      debug_user      .cpu_daddr(7 downto 0)         when debug_mux = 6 else
-                      
-                      debug_user      .switch_cs   &
-                      debug_user      .switch_ready&
-                      debug_user      .led0_cs     &
-                      debug_user      .led0_ready  &
-                      debug_user      .led1_cs     &
-                      debug_user      .led1_ready  &
-                      debug_user      .uart_cs     &
-                      debug_user      .uart_ready                    when debug_mux = 7 else
-                      
-                      (others => '0');
-    debug_uart_tx_o<= uart_tx;
-  end generate gen_debug;
-
-  gen_debug_b:
-  if DEBUG_ENABLE = False
-  generate
-    debug_o        <= (clk
-                       & debug_user.uart.uart_rx.bit_cnt(2 downto 0)
-                       & debug_user.uart.uart_rx.state
-                       & uart_rx    
-                       & uart_tx    ); -- output
-    debug_uart_tx_o<= '0';
-  end generate gen_debug_b;
+  -- Copy of the UART output on a second pad (e.g. to a logic analyzer)
+  debug_uart_tx_o <= uart_tx when DEBUG_ENABLE = True else
+                     '0';
     
 end architecture rtl;

@@ -160,8 +160,9 @@ begin  -- architecture tb
     ,spi_sclk_io      => open
     ,spi_cs_b_io      => open
     ,spi_io_io        => open
-    ,debug_mux_i      => "000"
-    ,debug_o          => open
+    ,i2c_scl_io       => open
+    ,i2c_sda_io       => open
+    ,pwm_o            => open
     ,debug_uart_tx_o  => open
     );
 

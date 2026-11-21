@@ -34,6 +34,8 @@
 --                               scenario, FIRMWARE replaces TEST_SUITE,
 --                               TEST_IT and TEST_UART, UVVM checks
 -- 2026-11-21  2.1      mrosiere UART console, integration firmwares
+-- 2026-11-21  2.2      mrosiere I2C bus with pull-ups (UVVM I2C BFM slave)
+-- 2026-11-21  2.3      mrosiere pwm_o
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -45,6 +47,9 @@ context uvvm_util.uvvm_util_context;
 
 library bitvis_vip_uart;
 use     bitvis_vip_uart.uart_bfm_pkg.all;
+
+library bitvis_vip_i2c;
+use     bitvis_vip_i2c.i2c_bfm_pkg.all;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
@@ -146,6 +151,11 @@ architecture tb of tb_PicoSoC is
   signal  uart_tx_o                : std_logic;
   signal  uart_rx_i                : std_logic := '1';
 
+  -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
+  signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
+
+  signal  pwm_o                    : std_logic;
+
 begin  -- architecture tb
 
   -----------------------------------------------------------------------------
@@ -186,8 +196,9 @@ begin  -- architecture tb
     ,spi_sclk_io      => spi_sclk_io
     ,spi_cs_b_io      => spi_cs_b_io
     ,spi_io_io        => spi_io_io
-    ,debug_mux_i      => "000"
-    ,debug_o          => open
+    ,i2c_scl_io       => i2c_if.scl
+    ,i2c_sda_io       => i2c_if.sda
+    ,pwm_o            => pwm_o
     ,debug_uart_tx_o  => open
     );
 
@@ -195,6 +206,10 @@ begin  -- architecture tb
   spi_sclk_io <= 'H';
   spi_cs_b_io <= 'H';
   spi_io_io   <= (others => 'H');
+
+  -- Pull-ups of the I2C bus
+  i2c_if.scl  <= 'H';
+  i2c_if.sda  <= 'H';
 
   -----------------------------------------------------------------------------
   -- Clock
@@ -319,6 +334,7 @@ begin  -- architecture tb
       it_user_i      <= not C_IT_ON;
       inject_error_i <= (others => not C_FAULT_ON);
       uart_rx_i      <= '1';
+      i2c_if         <= init_i2c_if_signals(VOID);
       if (SPI_MODEL /= "none") and (now < C_MEM_POWER_UP)
       then
         wait for C_MEM_POWER_UP - now;
@@ -326,7 +342,7 @@ begin  -- architecture tb
       do_reset(C_RESET_ON, clk_i, arst_i);
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
-      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx_i, uart_tx_o);
+      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx_i, uart_tx_o, i2c_if, pwm_o);
     end loop;
 
     report_alert_counters(FINAL);

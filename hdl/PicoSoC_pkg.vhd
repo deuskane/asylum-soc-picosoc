@@ -15,6 +15,10 @@
 -- 2026-10-05  1.1      mrosiere PicoSoC_top component : CPU_MODEL default "OpenBlaze8"
 -- 2026-11-16  1.2      mrosiere GIC map : mailbox fifo0 / fifo1 "data available"
 -- 2026-11-21  1.3      mrosiere GIC map : switch edges
+-- 2026-11-21  1.4      mrosiere PicoSoC_top component : debug_o and
+--                               debug_mux_i removed
+-- 2026-11-21  1.5      mrosiere Add I2C
+-- 2026-11-21  1.6      mrosiere Add PWM
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -43,6 +47,8 @@ package PicoSoC_pkg is
   constant PICOSOC_USER_SPI_BA                 : std_logic_vector(8-1 downto 0) := X"18";
   constant PICOSOC_USER_UART_BA                : std_logic_vector(8-1 downto 0) := X"20";
   constant PICOSOC_USER_TIMER_BA               : std_logic_vector(8-1 downto 0) := X"28";
+  constant PICOSOC_USER_I2C_BA                 : std_logic_vector(8-1 downto 0) := X"30";
+  constant PICOSOC_USER_PWM_BA                 : std_logic_vector(8-1 downto 0) := X"34";
   constant PICOSOC_USER_RAM2_BA                : std_logic_vector(8-1 downto 0) := X"40";
   constant PICOSOC_USER_RAM1_BA                : std_logic_vector(8-1 downto 0) := X"80";
                                                
@@ -198,14 +204,19 @@ component PicoSoC_top is
     ;spi_sclk_io      : inout std_logic
     ;spi_cs_b_io      : inout std_logic
     ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+
+    -- I2C Interface (open drain : external pull-ups)
+    ;i2c_scl_io       : inout std_logic
+    ;i2c_sda_io       : inout std_logic
+
+    -- PWM Interface
+    ;pwm_o            : out std_logic
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
-    ;debug_o          : out std_logic_vector(             8-1 downto 0)
-    ;debug_uart_tx_o  : out std_logic
+    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
      
     );
 end component PicoSoC_top;
@@ -258,6 +269,17 @@ component PicoSoC_user is
     ;spi_io_o              : out std_logic_vector(        8-1 downto 0)
     ;spi_io_i              : in  std_logic_vector(        8-1 downto 0)
     ;spi_io_oe_o           : out std_logic_vector(        8-1 downto 0)
+
+    -- I2C Interface (open drain : xx_o is 0, xx_oe_o = 1 pulls the line low)
+    ;i2c_scl_i             : in  std_logic
+    ;i2c_scl_o             : out std_logic
+    ;i2c_scl_oe_o          : out std_logic
+    ;i2c_sda_i             : in  std_logic
+    ;i2c_sda_o             : out std_logic
+    ;i2c_sda_oe_o          : out std_logic
+
+    -- PWM Interface
+    ;pwm_o                 : out std_logic
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
