@@ -7,14 +7,16 @@
 -------------------------------------------------------------------------------
 -- Description: Helpers of the tb_PicoSoC scenarios : configuration record,
 --              waits with a timeout, inputs driven on the falling edge of
---              clk_i, reset pulse, UART line receiver (UART VIP) and hexa
---              conversions of the UART lines printed by the firmware
+--              clk_i, reset pulse, UART line receiver (UART VIP), hexa
+--              conversions of the UART lines printed by the firmware and
+--              result line of the integration firmwares (esw/test_<ip>.c)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (helpers of tb_PicoSoC)
+-- 2026-11-21  1.1      mrosiere wait_pass (integration firmwares)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -122,6 +124,14 @@ package tb_PicoSoC_bfm_pkg is
   procedure uart_check
     (constant data     : in    std_logic_vector
     ;constant msg      : in    string
+    ;signal   uart_tx  : in    std_logic
+    ;constant cfg      : in    t_tb_cfg
+    );
+
+  -- Result line of an integration firmware (esw/include/test.h) : "PASS"
+  -- expected ; "FAIL <step>" or no line (UART timeout) is an error
+  procedure wait_pass
+    (constant name     : in    string
     ;signal   uart_tx  : in    std_logic
     ;constant cfg      : in    t_tb_cfg
     );
@@ -284,6 +294,18 @@ package body tb_PicoSoC_bfm_pkg is
                 alert_level    => ERROR,
                 config         => cfg.uart,
                 scope          => C_TB_SCOPE);
+  end procedure;
+
+  procedure wait_pass
+    (constant name     : in    string
+    ;signal   uart_tx  : in    std_logic
+    ;constant cfg      : in    t_tb_cfg
+    ) is
+    variable v_line    : string(1 to 32);
+    variable v_len     : natural;
+  begin
+    uart_get_line(v_line, v_len, uart_tx, cfg);
+    check_value(v_line(1 to v_len) = "PASS", ERROR, name & " : result of the firmware : " & v_line(1 to v_len), C_TB_SCOPE);
   end procedure;
 
   function active_level

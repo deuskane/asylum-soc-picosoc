@@ -17,7 +17,10 @@
 --                           pulse ; "" : build and elaboration only
 --              FIRMWARE   : program of the user ROM (identity, user,
 --                           user_uart, user_uart_spi, user_uart_spi_mem,
---                           hello) : selects the scenarios that apply
+--                           hello, test_<ip>) : selects the scenarios
+--                           that apply
+--              UART console : with an integration firmware, every line
+--                           is logged and "FAIL <step>" is an error at once
 -------------------------------------------------------------------------------
 -- Copyright (c) 2017
 -------------------------------------------------------------------------------
@@ -30,6 +33,7 @@
 --                               tb_PicoSoC_bfm_pkg, reset pulse before each
 --                               scenario, FIRMWARE replaces TEST_SUITE,
 --                               TEST_IT and TEST_UART, UVVM checks
+-- 2026-11-21  2.1      mrosiere UART console, integration firmwares
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -249,6 +253,37 @@ begin  -- architecture tb
       ,RSTNeg        => RSTNeg
       );
   end generate;
+
+  -----------------------------------------------------------------------------
+  -- UART console of the integration firmwares (esw/test_<ip>.c) : logs their
+  -- lines (no timeout : the scenarios check what they expect) and stops on
+  -- "FAIL <step>" (esw/include/test.h), whatever the scenario waits for.
+  -- Other firmwares : off (a reset between two scenarios may cut a byte)
+  -----------------------------------------------------------------------------
+  p_console : process
+    variable v_cfg     : t_tb_cfg := C_CFG;
+    variable v_line    : string(1 to 128);
+    variable v_len     : natural;
+  begin
+    if not list_contains(C_INTEGRATION, FIRMWARE)
+    then
+      wait;
+    end if;
+
+    v_cfg.uart.timeout := 0 ns;
+    if uart_tx_o /= '1'
+    then
+      wait until uart_tx_o = '1'; -- idle after the reset
+    end if;
+    loop
+      uart_get_line(v_line, v_len, uart_tx_o, v_cfg);
+      log(ID_SEQUENCER_SUB, "UART : " & v_line(1 to v_len), C_SCOPE);
+      if v_len >= 4 and v_line(1 to 4) = "FAIL"
+      then
+        alert(ERROR, "Firmware : " & v_line(1 to v_len), C_SCOPE);
+      end if;
+    end loop;
+  end process;
 
   -----------------------------------------------------------------------------
   -- Sequencer

@@ -99,7 +99,7 @@ From a clone of [asylum-project](https://github.com/deuskane/asylum-project), in
 
 ### Firmware
 
-A target names its firmware with its `generate` entries (see [PicoSoC.core](PicoSoC.core)): for example `gen_rv32i_user_c_uart_921600` compiles [esw/user.c](esw/user.c) with `-DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600` into the entity `ROM_user`, and `gen_rv32i_supervisor_c_tmr` compiles [esw/supervisor.c](esw/supervisor.c) with `-DSAFETY_TMR` into `ROM_supervisor`. To run another program, add a generator entry with its file and flags and a target that uses it. `CLOCK_FREQ` and `BAUD_RATE` of the firmware must match `FSYS_INT` and `USER_BAUD_RATE` of the target.
+A target names its firmware with its `generate` entries (see [PicoSoC.core](PicoSoC.core)): for example `gen_rv32i_user_c_uart_921600` compiles [esw/user.c](esw/user.c) with `-DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600` into the entity `ROM_user`, and `gen_rv32i_supervisor_c_tmr` compiles [esw/supervisor.c](esw/supervisor.c) with `-DSAFETY_TMR` into `ROM_supervisor`. To run another program, add a generator entry with its file and flags and a target that uses it. `CLOCK_FREQ` and `BAUD_RATE` of the firmware must match `FSYS_INT` and `USER_BAUD_RATE` of the target. The [integration firmwares](#integration-firmwares) `esw/test_<ip>.c` are short examples of each peripheral driven from C.
 
 ### Board
 
@@ -323,7 +323,7 @@ Each cluster has a local interconnect ICN1 (one master): GIC at `0x00`, RAM1 at 
 
 ### Interrupts
 
-The user GIC of each cluster collects the 5 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The supervisor GIC receives the 3 difference flags.
+The user GIC of each cluster collects the 5 sources of the [table above](#user-soc) and drives the interrupt of its CPU. `it_user_i` comes from a pad: the GIC resynchronizes it (`ITS_SYNC_ENABLE`). The mailbox sources are levels: a channel with data sets its `isr` bit again after a clear, so the firmware pops the channel before clearing the bit. The interrupt routine reads `isr`, serves the sources and clears them (write 1). The interrupt outputs of the three GPIOs are not connected: the edges of the switches are read in the `isr` register of the SWITCH GPIO by polling ([esw/test_gpio.c](esw/test_gpio.c)). The supervisor GIC receives the 3 difference flags.
 
 ### Multi-core
 
@@ -365,6 +365,27 @@ The user SoC restarts from its reset: the firmware runs its setup again.
 | [esw/user_xmodem.c](esw/user_xmodem.c) | XModem receiver (generators defined, no target uses it) |
 | [esw/supervisor.c](esw/supervisor.c) | Supervisor (see [Supervisor](#supervisor)) |
 | [esw/dummy.c](esw/dummy.c) | Empty program (supervisor ROM when the SoC has no supervisor) |
+| [esw/test_&lt;ip&gt;.c](esw/) | Integration firmwares, see below |
+
+### Integration firmwares
+
+One small firmware per peripheral of the user SoC, the reference example of its use from C: registers through the driver of [esw/include/](esw/include/) at the base address of `addrmap_user.h`, the path to the pins (seen by the testbench) and the interrupt through the user GIC. Each step is one `test_check(step, condition)` of [esw/include/test.h](esw/include/test.h); the firmware prints `PASS` on the UART, or `FAIL <step>` and stops. Each one has its scenario `test_<ip>` in `tb_PicoSoC` (see [Scenarios](#scenarios-tests_list)).
+
+| Firmware | What it checks |
+|----------|----------------|
+| [esw/test_gpio.c](esw/test_gpio.c) | GPIO: reset directions and values, LED0 / LED1 registers read back and seen on the pins, switches set by the testbench read back, their rising / falling edges recorded in the `isr` of SWITCH (polled), direction register (an input reads its pin) |
+| [esw/test_uart.c](esw/test_uart.c) | UART: reset values (disabled, baud rate of the generics), setup read back, TX (every line), RX polled on the "RX FIFO not empty" source, RX by interrupt (UART source -> GIC source 1 -> CPU) |
+| [esw/test_spi.c](esw/test_spi.c) | SPI with the flash model of the testbench: reset values, prescaler and configuration read back, flash status register (write enable latch set / cleared), read of 4 bytes, page program of 2 bytes polled on the write-in-progress bit, read back |
+| [esw/test_timer.c](esw/test_timer.c) | Timer: reset values, 32-bit initial value read back, periodic interrupt (autostart, GIC source 2) counted on LED0, period of 2000 SoC cycles measured by the testbench, no interrupt after the timer is stopped |
+| [esw/test_crc.c](esw/test_crc.c) | CRC: reset value, seed read back, CRC16 of `123456789` (`0x4B37`), of a Modbus request (`C5 CD`) and of the request with its CRC (0) |
+| [esw/test_spinlock.c](esw/test_spinlock.c) | Spinlock from one CPU: test-and-set on read, 2 independent locks, release by a write of 0, a write never takes a lock (several CPUs: [esw/user_hello.c](esw/user_hello.c)) |
+| [esw/test_gic.c](esw/test_gic.c) | GIC: reset values, mask read back, `it_user_i` pulse recorded while masked (no interrupt), taken when unmasked, taken at once when unmasked before |
+| [esw/test_ram.c](esw/test_ram.c) | RAM2 (64 bytes) and the lower half of RAM1 (WardRV keeps its stack in the upper half): address in the data then its complement (aliasing, every data bit), an unmapped address answered by the default slave of ICN2 (write ignored, read 0) |
+| [esw/test_mailbox.c](esw/test_mailbox.c) | Mailbox between 2 clusters: the CPU that takes lock 1 is the requester; reset status, FIFO order and full / empty flags, then 4 requests in fifo0 answered in fifo1, each one through the "data available" source of the GIC of the other cluster |
+
+The interconnects and the clock divider have no firmware of their own: every integration firmware reaches its peripheral through ICN1 and ICN2 at its base address (a decoding error fails it), `test_ram` checks the RAM ranges and the default slave, `test_mailbox` runs with 2 masters on ICN2, and the timer period and the UART bit time measured by the testbench are counted in cycles of the divided clock (`FSYS_INT`).
+
+The firmwares are portable C (the drivers support both CPUs), with one restriction: `test_ram` is built for WardRV only, as pbcc (SDCC 3.0.1, OpenBlaze8) miscompiles the variable port address of `PORT_WR(base, i, ...)` in a loop (it uses the high byte of `base + i`). Two other pbcc limits shape the code of the integration firmwares: a function that ends with an infinite loop breaks the register saves of the next function (the stop loops of `test.h` are in macros), and a register saved inside a branch is restored on every path (the interrupt routine of `test_mailbox.c` calls one function per source).
 
 ### Drivers
 
@@ -411,14 +432,14 @@ Clear the old events of a GIC source before unmasking it: the `isr` register als
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i`, `inject_error_i` and `uart_rx_i`, checks LED0, LED1, `led_diff_o` and the UART lines (UART VIP). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd) |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i`, `inject_error_i` and `uart_rx_i`, checks LED0, LED1, `led_diff_o` and the UART lines (UART VIP). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>`, whatever the scenario waits for |
 | [sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd](sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd) | `PicoSoC_top` | UVVM testbench of [esw/user_modbus_rtu.c](esw/user_modbus_rtu.c): the UART VIP is the Modbus RTU master (CRC16 computed by the bench) and reads / writes the SoC addresses. Scenarios in `tb_PicoSoC_modbus_rtu_<name>_pkg`, dispatch in [tb_PicoSoC_modbus_rtu_tests_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_tests_pkg.vhd), Modbus frames in [tb_PicoSoC_modbus_rtu_bfm_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd) |
 
 Waveform setups: [sim/wave/waves.gtkw](sim/wave/waves.gtkw), [sim/wave/cpus.gtkw](sim/wave/cpus.gtkw).
 
 ### Scenarios (`TESTS_LIST`)
 
-The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space, a name may be repeated. The sequencer first checks every name (an unknown name, or a scenario that does not apply to the firmware and the configuration, is a `TB_ERROR` before any scenario runs), then for each scenario puts the inputs to their inactive level, drives a reset pulse, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset, so the firmware runs its setup again. The empty list only compiles and elaborates the testbench. Checks are counted as the `=> OK` lines of the log.
+The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space, a name may be repeated. The sequencer first checks every name (an unknown name, or a scenario that does not apply to the firmware and the configuration, is a `TB_ERROR` before any scenario runs), then for each scenario puts the inputs to their inactive level, drives a reset pulse, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset, so the firmware runs its setup again. The empty list only compiles and elaborates the testbench. Checks are counted as the `=> OK` lines of the log; for an integration scenario, `(+ n)` is the number of `test_check` steps of its firmware, summed up by its `PASS` line.
 
 `tb_PicoSoC`:
 
@@ -431,6 +452,15 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 | `fault_tmr` | 24 | `user*`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Errors in CPU0 (voted out: no reset, LED0 still follows the switches), CPU1 (second error: reset, `led_diff_o` = 1), CPU2 (voted out), CPU2 again (its sources already masked), CPU1 (reset, 2), CPU1 (voted out) |
 | `fault_diff` | 4 | `user*`, no supervisor, lock-step or TMR, fault injection | Without supervisor `led_diff_o` shows the difference flags: an error in CPU0 sets them (lock-step `001`, TMR `101`) and they stay set |
 | `hello` | 4 x `USER_NB_CPU` + 4 | `hello` | The first 4 x `USER_NB_CPU` UART lines are `CPU <id> - Loop <counter>` with a valid id and the counter 0, 1, 2, ... (mutual exclusion, shared counter in RAM2); every CPU takes the lock (LED1) and the counter progresses (LED0); `led_diff_o` stays 0 during the whole scenario: with lock-step or TMR, the copies of every cluster read the same `mhartid` (no difference flag, no error counted by the supervisor) |
+| `test_gpio` | 5 (+ 16 in the firmware) | `test_gpio` | LED0 = `0xA5` and LED1 = `0x5A` on the pins, switches `0x3C` (rising edges) copied into LED0, then `0x00` (falling edges); `PASS`; LED1 pins unchanged while the firmware reads LED1 as an input |
+| `test_uart` | 3 (+ 11) | `test_uart` | On each prompt `>`, a byte sent on `uart_rx_i`: `0x5A` read by polling, `0xA5` read by the interrupt routine; `PASS`; LED0 = `0xA5`, LED1 = one interrupt |
+| `test_spi` | 1 (+ 16) | `test_spi` (`SPI_MODEL = m25p40`) | `PASS`: the firmware checks the answers of the flash model |
+| `test_timer` | 9 (+ 10) | `test_timer` | LED0 counts the timer interrupts: 3 periods of 2000 SoC cycles (± 10); `PASS`; LED0 stays at 4 for 2 more periods (timer stopped) |
+| `test_crc` | 1 (+ 10) | `test_crc` | `PASS`: the firmware checks the CRC values |
+| `test_spinlock` | 1 (+ 9) | `test_spinlock` | `PASS`: the firmware checks the lock values |
+| `test_gic` | 5 (+ 9) | `test_gic` | One `it_user_i` pulse on each request of the firmware (LED0 = 1, 2, 3); `PASS`; LED1 = 2 interrupts (pulses 2 and 3) |
+| `test_ram` | 1 (+ 6) | `test_ram` | `PASS`: the firmware checks the RAM bytes and the unmapped addresses |
+| `test_mailbox` | 7 (+ 6) | `test_mailbox`, `USER_NB_CPU = 2` | LED1 counts the 4 answers of the other cluster; `PASS`; LED0 = last answer `0xBB` |
 
 `tb_PicoSoC_modbus_rtu`:
 
@@ -459,6 +489,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc1_<cpu>_c_user_uart`, `_uart_spi`, `_uart_spi_mem`, `sim_soc2_<cpu>_c_user_uart`, `sim_soc4_<cpu>_c_user_uart` | `tb_PicoSoC` | `user.c` with UART at 921600 baud (+ SPI loopback, + SPI flash model `m25p40`): `switch`, `it_user`, `uart`; `sim_soc1_wardrv_fsm_c_user_uart` with `arst_i` active high |
 | `sim_soc1x2_wardrv_fsm_c_hello_uart`, `sim_soc1x4_...`, `sim_soc1x6_...` | `tb_PicoSoC` | `user_hello.c` on 2, 4, 6 clusters: `hello` |
 | `sim_soc3x2_wardrv_fsm_c_hello_uart`, `sim_soc4x2_wardrv_fsm_c_hello_uart` | `tb_PicoSoC` | `user_hello.c` on 2 clusters with supervisor and lock-step / TMR in each cluster, no fault: `hello` |
+| `sim_soc1_<cpu>_c_test_<ip>`, `sim_soc1x2_<cpu>_c_test_mailbox` | `tb_PicoSoC` | Integration firmware `esw/test_<ip>.c`: scenario `test_<ip>`, for `<ip>` in `gpio`, `uart`, `spi`, `timer`, `crc`, `spinlock`, `gic` (both CPUs), `ram` (WardRV only), `mailbox` (2 clusters) |
 | `sim_soc{1,2,3}_<cpu>_c_user_modbus_rtu`, `sim_soc3_<cpu>_fault_c_user_modbus_rtu`, `sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu` | `tb_PicoSoC_modbus_rtu` | `basic`, `sequence` (+ `fault_lock_step` / `fault_tmr`); the TMR one with the board polarities |
 | `lint_ghdl` | `asylum.PicoSoC_top` | GHDL `-Wall` analysis and elaboration, default generics |
 | `lint_ghdl_synth_<config>` | `asylum.PicoSoC_top` | `ghdl --synth` check (no latch) of 7 configurations: `default`, `soc1`, `soc4_ng_medium`, `4leds_reset_high`, `wardrv_soc1`, `wardrv_soc4_ng_medium`, `wardrv_soc1x4` |
@@ -468,6 +499,8 @@ A target is a firmware build: its generators compile the user and supervisor pro
 `<cpu>` is `openblaze8` (generators `gen_picoblaze3_*`) or `wardrv_fsm` (`gen_rv32i_*`). Every `sim_*`, `lint_*` and `syn_*` target is a job of the [GitHub CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml), run in the [asylum-env](https://github.com/deuskane/asylum-ci) image. The `sim`, `lint` and `syn` badges count the passed and failed targets of the last run on `main`.
 
 The testbenches were validated with 33 RTL mutants of the SoC glue (address decoding, interrupt routing, lock-step compare, TMR vote, supervisor, reset and clock, multi-core), each scenario run alone: 31 are killed. The 2 survivors are a lock-step compare without the data bus and difference flags that are not sticky: the fault injection flips an instruction bit, which also changes the instruction stream and leaves the two CPUs different, so neither the data bus compare nor the stickiness can be seen with it.
+
+The integration scenarios were validated with 45 integration mutants, each one run on the targets of its peripheral (both CPUs, 86 runs): wrong base addresses and GIC masks in `addrmap_user.h` (13), wrong bits in the drivers of `esw/include` (8), interrupt lines swapped or tied low, pins disconnected, address decoding, CRC polynomial, timer and clock divider in a copy of the RTL (20), and wrong stimuli in the testbench (4): all are killed, most of them by the `FAIL <step>` line of the firmware.
 
 ### How to Run
 
@@ -490,7 +523,7 @@ make sim_soc4_openblaze8_fault_c_user           # build and elaboration (TESTS_L
 fusesoc --cores-root . run --build-root build --no-export --run --target sim_soc4_openblaze8_fault_c_user asylum:soc:PicoSoC:4.0.0 --TESTS_LIST=fault_tmr,switch
 ```
 
-To add a scenario: a package `tb_PicoSoC_<name>_pkg` with a procedure `run`, its name in `C_TESTS`, its applicability in `test_applies` and its case in `run_test` of [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), the file in the `files_sim` fileset, the name in the `TESTS_LIST` of the targets it applies to, then `make mk/targets.txt` and `make ci_generate`.
+To add a scenario: a package `tb_PicoSoC_<name>_pkg` with a procedure `run`, its name in `C_TESTS`, its applicability in `test_applies` and its case in `run_test` of [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), the file in the `files_sim` fileset, the name in the `TESTS_LIST` of the targets it applies to, then `make mk/targets.txt` and `make ci_generate`. An integration firmware `esw/test_<ip>.c` is a scenario of the same name: add it to `C_INTEGRATION` (it applies to its firmware only), give it a package when the testbench drives or checks pins (else `run_test` only calls `wait_pass`), and add its generators `gen_rv32i_user_test_<ip>` / `gen_picoblaze3_user_test_<ip>` and its targets `sim_soc1_<cpu>_c_test_<ip>` to the core.
 
 Outside the CI, GHDL writes a waveform `dut.fst`.
 

@@ -32,17 +32,34 @@ lint_ghdl_synth_wardrv_soc4_ng_medium                 : Synthesis check of PicoS
 sim                                                   : default rule to sim (DON'T RUN)
 sim_soc1_openblaze8_asm_identity                      : Simulation of the test esw/user_identity.psm
 sim_soc1_openblaze8_c_identity                        : Simulation of the test esw/user_identity.c, SoC clock = clk_i (no division)
+sim_soc1_openblaze8_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+sim_soc1_openblaze8_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+sim_soc1_openblaze8_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+sim_soc1_openblaze8_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+sim_soc1_openblaze8_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
+sim_soc1_openblaze8_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
+sim_soc1_openblaze8_c_test_uart                       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
 sim_soc1_openblaze8_c_user                            : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_openblaze8_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_openblaze8_c_user_uart                       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_openblaze8_c_user_uart_spi                   : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_openblaze8_c_user_uart_spi_mem               : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_identity                        : Simulation of the test esw/user_identity.c
+sim_soc1_wardrv_fsm_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+sim_soc1_wardrv_fsm_c_test_gic                        : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+sim_soc1_wardrv_fsm_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+sim_soc1_wardrv_fsm_c_test_ram                        : Integration test esw/test_ram.c - RAM1 and RAM2 address and data, unmapped address
+sim_soc1_wardrv_fsm_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+sim_soc1_wardrv_fsm_c_test_spinlock                   : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
+sim_soc1_wardrv_fsm_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
+sim_soc1_wardrv_fsm_c_test_uart                       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
 sim_soc1_wardrv_fsm_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_user_uart                       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, reset active high
 sim_soc1_wardrv_fsm_c_user_uart_spi                   : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_user_uart_spi_mem               : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+sim_soc1x2_openblaze8_c_test_mailbox                  : Integration test esw/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
 sim_soc1x2_wardrv_fsm_c_hello_uart                    : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
+sim_soc1x2_wardrv_fsm_c_test_mailbox                  : Integration test esw/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
 sim_soc1x4_wardrv_fsm_c_hello_uart                    : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
 sim_soc1x6_wardrv_fsm_c_hello_uart                    : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
 sim_soc2_openblaze8_c_user                            : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
