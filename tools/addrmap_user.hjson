@@ -44,6 +44,10 @@
     base : 0x28
   }
   {
+    name : "i2c"
+    base : 0x30
+  }
+  {
     name : "ram2"
     base : 0x40
   }

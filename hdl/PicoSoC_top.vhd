@@ -25,6 +25,7 @@
 --                               (2 more cycles : the GPIO input stages are
 --                               loaded before the reset release)
 -- 2026-11-21  2.4      mrosiere debug_o and debug_mux_i removed (pads freed)
+-- 2026-11-21  2.5      mrosiere Add I2C pads
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -96,6 +97,10 @@ entity PicoSoC_top is
     ;spi_sclk_io      : inout std_logic
     ;spi_cs_b_io      : inout std_logic
     ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+
+    -- I2C Interface (open drain : external pull-ups)
+    ;i2c_scl_io       : inout std_logic
+    ;i2c_sda_io       : inout std_logic
      
     -- Error Injection Interface
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
@@ -147,6 +152,13 @@ architecture rtl of PicoSoC_top is
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
+
+  signal   i2c_scl_i                    : std_logic;
+  signal   i2c_scl_o                    : std_logic;
+  signal   i2c_scl_oe_o                 : std_logic;
+  signal   i2c_sda_i                    : std_logic;
+  signal   i2c_sda_o                    : std_logic;
+  signal   i2c_sda_oe_o                 : std_logic;
 
 begin  -- architecture rtl
 
@@ -276,6 +288,12 @@ begin  -- architecture rtl
     ,spi_io_i             => spi_io_i_user
     ,spi_io_o             => spi_io_o_user
     ,spi_io_oe_o          => spi_io_oe_o_user
+    ,i2c_scl_i            => i2c_scl_i
+    ,i2c_scl_o            => i2c_scl_o
+    ,i2c_scl_oe_o         => i2c_scl_oe_o
+    ,i2c_sda_i            => i2c_sda_i
+    ,i2c_sda_o            => i2c_sda_o
+    ,i2c_sda_oe_o         => i2c_sda_oe_o
     );
 
   spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
@@ -376,6 +394,30 @@ begin  -- architecture rtl
        ,ie_i       => '1'
        );
   end generate;
+
+  -----------------------------------------------------------------------------
+  -- I2C PAD
+  -- Open drain : the line is pulled low when the output enable of the I2C is
+  -- set (its output is 0), released ('Z') otherwise : the pull-up of the
+  -- board gives the high level
+  -----------------------------------------------------------------------------
+  PAD_I2C_SCL : iobuf
+    port map
+     (buf_io     => i2c_scl_io
+     ,d_i        => i2c_scl_o
+     ,d_o        => i2c_scl_i
+     ,oe_i       => i2c_scl_oe_o
+     ,ie_i       => '1'
+     );
+
+  PAD_I2C_SDA : iobuf
+    port map
+     (buf_io     => i2c_sda_io
+     ,d_i        => i2c_sda_o
+     ,d_o        => i2c_sda_i
+     ,oe_i       => i2c_sda_oe_o
+     ,ie_i       => '1'
+     );
 
   -----------------------------------------------------------------------------
   -- Debug
