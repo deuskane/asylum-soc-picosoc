@@ -32,6 +32,7 @@ lint_ghdl_synth_wardrv_soc4_ng_medium                 : Synthesis check of PicoS
 sim                                                   : default rule to sim (DON'T RUN)
 sim_soc1_openblaze8_asm_identity                      : Simulation of the test esw/user_identity.psm
 sim_soc1_openblaze8_c_identity                        : Simulation of the test esw/user_identity.c, SoC clock = clk_i (no division)
+sim_soc1_openblaze8_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
 sim_soc1_openblaze8_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_openblaze8_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_openblaze8_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
@@ -42,6 +43,7 @@ sim_soc1_openblaze8_c_user_uart                       : Simulation of the test e
 sim_soc1_openblaze8_c_user_uart_spi                   : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_openblaze8_c_user_uart_spi_mem               : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 sim_soc1_wardrv_fsm_c_identity                        : Simulation of the test esw/user_identity.c
+sim_soc1_wardrv_fsm_c_test_crc                        : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
 sim_soc1_wardrv_fsm_c_test_gpio                       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
 sim_soc1_wardrv_fsm_c_test_spi                        : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
 sim_soc1_wardrv_fsm_c_test_timer                      : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC

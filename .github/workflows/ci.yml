@@ -17,6 +17,11 @@ jobs:
     with:
       name: sim_soc1_openblaze8_c_identity
 
+  sim_soc1_openblaze8_c_test_crc:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_soc1_openblaze8_c_test_crc
+
   sim_soc1_openblaze8_c_test_gpio:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
@@ -66,6 +71,11 @@ jobs:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
       name: sim_soc1_wardrv_fsm_c_identity
+
+  sim_soc1_wardrv_fsm_c_test_crc:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_soc1_wardrv_fsm_c_test_crc
 
   sim_soc1_wardrv_fsm_c_test_gpio:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
@@ -328,7 +338,7 @@ jobs:
       name: syn_wardrv_soc4_ng_medium
 
   badges:
-    needs: [sim_soc1_openblaze8_asm_identity, sim_soc1_openblaze8_c_identity, sim_soc1_openblaze8_c_test_gpio, sim_soc1_openblaze8_c_test_spi, sim_soc1_openblaze8_c_test_timer, sim_soc1_openblaze8_c_test_uart, sim_soc1_openblaze8_c_user, sim_soc1_openblaze8_c_user_modbus_rtu, sim_soc1_openblaze8_c_user_uart, sim_soc1_openblaze8_c_user_uart_spi, sim_soc1_openblaze8_c_user_uart_spi_mem, sim_soc1_wardrv_fsm_c_identity, sim_soc1_wardrv_fsm_c_test_gpio, sim_soc1_wardrv_fsm_c_test_spi, sim_soc1_wardrv_fsm_c_test_timer, sim_soc1_wardrv_fsm_c_test_uart, sim_soc1_wardrv_fsm_c_user_modbus_rtu, sim_soc1_wardrv_fsm_c_user_uart, sim_soc1_wardrv_fsm_c_user_uart_spi, sim_soc1_wardrv_fsm_c_user_uart_spi_mem, sim_soc1x2_wardrv_fsm_c_hello_uart, sim_soc1x4_wardrv_fsm_c_hello_uart, sim_soc1x6_wardrv_fsm_c_hello_uart, sim_soc2_openblaze8_c_user, sim_soc2_openblaze8_c_user_modbus_rtu, sim_soc2_openblaze8_c_user_uart, sim_soc2_openblaze8_fault_c_user, sim_soc2_wardrv_fsm_c_user, sim_soc2_wardrv_fsm_c_user_modbus_rtu, sim_soc2_wardrv_fsm_c_user_uart, sim_soc3_openblaze8_c_user, sim_soc3_openblaze8_c_user_modbus_rtu, sim_soc3_openblaze8_fault_c_user, sim_soc3_openblaze8_fault_c_user_modbus_rtu, sim_soc3_wardrv_fsm_c_user, sim_soc3_wardrv_fsm_c_user_modbus_rtu, sim_soc3_wardrv_fsm_fault_c_user, sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc3x2_wardrv_fsm_c_hello_uart, sim_soc4_openblaze8_c_user_uart, sim_soc4_openblaze8_fault_c_user, sim_soc4_openblaze8_fault_c_user_fault_tmr, sim_soc4_openblaze8_fault_c_user_it_user, sim_soc4_openblaze8_fault_c_user_modbus_rtu, sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic, sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr, sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence, sim_soc4_openblaze8_fault_c_user_switch, sim_soc4_wardrv_fsm_c_user_uart, sim_soc4_wardrv_fsm_fault_c_user, sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc4x2_wardrv_fsm_c_hello_uart, lint_ghdl, lint_ghdl_synth_4leds_reset_high, lint_ghdl_synth_default, lint_ghdl_synth_soc1, lint_ghdl_synth_soc4_ng_medium, lint_ghdl_synth_wardrv_soc1, lint_ghdl_synth_wardrv_soc1x4, lint_ghdl_synth_wardrv_soc4_ng_medium, syn_soc1, syn_soc4_ng_medium, syn_wardrv_soc1, syn_wardrv_soc4_ng_medium]
+    needs: [sim_soc1_openblaze8_asm_identity, sim_soc1_openblaze8_c_identity, sim_soc1_openblaze8_c_test_crc, sim_soc1_openblaze8_c_test_gpio, sim_soc1_openblaze8_c_test_spi, sim_soc1_openblaze8_c_test_timer, sim_soc1_openblaze8_c_test_uart, sim_soc1_openblaze8_c_user, sim_soc1_openblaze8_c_user_modbus_rtu, sim_soc1_openblaze8_c_user_uart, sim_soc1_openblaze8_c_user_uart_spi, sim_soc1_openblaze8_c_user_uart_spi_mem, sim_soc1_wardrv_fsm_c_identity, sim_soc1_wardrv_fsm_c_test_crc, sim_soc1_wardrv_fsm_c_test_gpio, sim_soc1_wardrv_fsm_c_test_spi, sim_soc1_wardrv_fsm_c_test_timer, sim_soc1_wardrv_fsm_c_test_uart, sim_soc1_wardrv_fsm_c_user_modbus_rtu, sim_soc1_wardrv_fsm_c_user_uart, sim_soc1_wardrv_fsm_c_user_uart_spi, sim_soc1_wardrv_fsm_c_user_uart_spi_mem, sim_soc1x2_wardrv_fsm_c_hello_uart, sim_soc1x4_wardrv_fsm_c_hello_uart, sim_soc1x6_wardrv_fsm_c_hello_uart, sim_soc2_openblaze8_c_user, sim_soc2_openblaze8_c_user_modbus_rtu, sim_soc2_openblaze8_c_user_uart, sim_soc2_openblaze8_fault_c_user, sim_soc2_wardrv_fsm_c_user, sim_soc2_wardrv_fsm_c_user_modbus_rtu, sim_soc2_wardrv_fsm_c_user_uart, sim_soc3_openblaze8_c_user, sim_soc3_openblaze8_c_user_modbus_rtu, sim_soc3_openblaze8_fault_c_user, sim_soc3_openblaze8_fault_c_user_modbus_rtu, sim_soc3_wardrv_fsm_c_user, sim_soc3_wardrv_fsm_c_user_modbus_rtu, sim_soc3_wardrv_fsm_fault_c_user, sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc3x2_wardrv_fsm_c_hello_uart, sim_soc4_openblaze8_c_user_uart, sim_soc4_openblaze8_fault_c_user, sim_soc4_openblaze8_fault_c_user_fault_tmr, sim_soc4_openblaze8_fault_c_user_it_user, sim_soc4_openblaze8_fault_c_user_modbus_rtu, sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic, sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr, sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence, sim_soc4_openblaze8_fault_c_user_switch, sim_soc4_wardrv_fsm_c_user_uart, sim_soc4_wardrv_fsm_fault_c_user, sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc4x2_wardrv_fsm_c_hello_uart, lint_ghdl, lint_ghdl_synth_4leds_reset_high, lint_ghdl_synth_default, lint_ghdl_synth_soc1, lint_ghdl_synth_soc4_ng_medium, lint_ghdl_synth_wardrv_soc1, lint_ghdl_synth_wardrv_soc1x4, lint_ghdl_synth_wardrv_soc4_ng_medium, syn_soc1, syn_soc4_ng_medium, syn_wardrv_soc1, syn_wardrv_soc4_ng_medium]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
