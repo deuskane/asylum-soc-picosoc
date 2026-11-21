@@ -70,9 +70,11 @@ sim_soc2_openblaze8_c_user                            : Simulation of the test e
 sim_soc2_openblaze8_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_openblaze8_c_user_uart                       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_openblaze8_fault_c_user                      : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection
+sim_soc2_openblaze8_fault_c_user_hwla                 : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
 sim_soc2_wardrv_fsm_c_user                            : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_wardrv_fsm_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc2_wardrv_fsm_c_user_uart                       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
+sim_soc2_wardrv_fsm_fault_c_user_hwla                 : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
 sim_soc3_openblaze8_c_user                            : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc3_openblaze8_c_user_modbus_rtu                 : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
 sim_soc3_openblaze8_fault_c_user                      : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection

@@ -40,6 +40,7 @@
 -- 2026-11-21  3.12     mrosiere Switch edges as user GIC source 5
 -- 2026-11-21  3.13     mrosiere Add I2C (master and slave)
 -- 2026-11-21  3.14     mrosiere Add PWM
+-- 2026-11-21  3.15     mrosiere Debug record : data of the CPU0 bus
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -342,6 +343,8 @@ begin  -- architecture rtl
       debug_o.cpu_dre     <= cpu_sbi_ini.re                   ;
       debug_o.cpu_dwe     <= cpu_sbi_ini.we                   ;
       debug_o.cpu_daddr   <= cpu_sbi_ini.addr                 ;
+      debug_o.cpu_dwdata  <= cpu_sbi_ini.wdata                ;
+      debug_o.cpu_drdata  <= cpu_sbi_tgt.rdata                ;
       debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
     end generate;
 
