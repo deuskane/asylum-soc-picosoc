@@ -205,6 +205,15 @@ generate:
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
       logical_name : asylum
 
+  gen_picoblaze3_user_test_gpio :
+    generator : pbcc_gen
+    parameters :
+      file         : esw/test_gpio.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_picoblaze3_supervisor_c :
     generator : pbcc_gen
     parameters :
@@ -349,6 +358,15 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
+  gen_rv32i_user_test_gpio :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/test_gpio.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
   gen_rv32i_supervisor_c :
     generator : rvcc_gen
     parameters :
@@ -430,6 +448,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
       - sim/picosoc/tb_PicoSoC_hello_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
       - sim/picosoc/tb_PicoSoC.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
@@ -2645,6 +2664,62 @@ targets:
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
       - TESTS_LIST=basic,fault_tmr,sequence
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_test_gpio:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+    generate     : [gen_rv32i_user_test_gpio,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_gpio
+      - TESTS_LIST=test_gpio
+
+  #---------------------------------------
+  sim_soc1_openblaze8_c_test_gpio:
+  #---------------------------------------
+    << : *sim
+    description  : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+    generate     : [gen_picoblaze3_user_test_gpio,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_gpio
+      - TESTS_LIST=test_gpio
 
 #=========================================
 scripts:
