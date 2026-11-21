@@ -186,8 +186,6 @@ begin  -- architecture tb
     ,spi_sclk_io      => spi_sclk_io
     ,spi_cs_b_io      => spi_cs_b_io
     ,spi_io_io        => spi_io_io
-    ,debug_mux_i      => "000"
-    ,debug_o          => open
     ,debug_uart_tx_o  => open
     );
 

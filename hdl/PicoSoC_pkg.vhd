@@ -15,6 +15,8 @@
 -- 2026-10-05  1.1      mrosiere PicoSoC_top component : CPU_MODEL default "OpenBlaze8"
 -- 2026-11-16  1.2      mrosiere GIC map : mailbox fifo0 / fifo1 "data available"
 -- 2026-11-21  1.3      mrosiere GIC map : switch edges
+-- 2026-11-21  1.4      mrosiere PicoSoC_top component : debug_o and
+--                               debug_mux_i removed
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -203,9 +205,7 @@ component PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
-    ;debug_o          : out std_logic_vector(             8-1 downto 0)
-    ;debug_uart_tx_o  : out std_logic
+    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
      
     );
 end component PicoSoC_top;

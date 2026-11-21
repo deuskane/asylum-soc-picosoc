@@ -24,6 +24,7 @@
 -- 2026-11-21  2.3      mrosiere Reset of the user SoC resynchronized on clk
 --                               (2 more cycles : the GPIO input stages are
 --                               loaded before the reset release)
+-- 2026-11-21  2.4      mrosiere debug_o and debug_mux_i removed (pads freed)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -100,11 +101,7 @@ entity PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    -- debug_mux_i is not used : the debug selection is switch_i(2 downto 0)
-    -- (since 2025-05-08). The port is kept for the board pad files.
-    ;debug_mux_i      : in  std_logic_vector(             3-1 downto 0)
-    ;debug_o          : out std_logic_vector(             8-1 downto 0)
-    ;debug_uart_tx_o  : out std_logic
+    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
      
     );
 end PicoSoC_top;
@@ -137,7 +134,6 @@ architecture rtl of PicoSoC_top is
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
   
-  signal   debug_mux                    : unsigned        (3-1 downto 0);
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
 
@@ -384,54 +380,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug
   -----------------------------------------------------------------------------
-  gen_debug:
-  if DEBUG_ENABLE = True
-  generate
-    -- Debug selection from the switches (debug_mux_i is not used)
-    debug_mux      <= unsigned(switch_i(2 downto 0));
-    debug_o        <= std_logic_vector(resize(unsigned(led0_user),8)) when debug_mux = 0 else
-                      std_logic_vector(resize(unsigned(switch_i),8)) when debug_mux = 1 else
-                      (0      => debug_user      .arst_b,
-                       1      => debug_supervisor.arst_b,
-                       others => '0')                                when debug_mux = 2 else
-                      debug_user.cpu_iaddr(8-1  downto  0)           when debug_mux = 3 else
-                      debug_user.cpu_idata(18-1 downto 10)           when debug_mux = 4 else
---                      (7          => debug_user      .cpu_dcs,
---                       6          => debug_user      .cpu_dre,
---                       5          => debug_user      .cpu_dwe,
---                       4          => debug_user      .cpu_dready,
---                       3 downto 0 => debug_user      .cpu_daddr(7 downto 4)) when debug_mux = 7 else
-
-                      debug_user      .cpu_dcs   &
-                      debug_user      .cpu_dre   &
-                      debug_user      .cpu_dwe   &
-                      debug_user      .cpu_dready&
-                      debug_user      .cpu_daddr(7 downto 4)         when debug_mux = 5 else
-
-                      debug_user      .cpu_daddr(7 downto 0)         when debug_mux = 6 else
-                      
-                      debug_user      .switch_cs   &
-                      debug_user      .switch_ready&
-                      debug_user      .led0_cs     &
-                      debug_user      .led0_ready  &
-                      debug_user      .led1_cs     &
-                      debug_user      .led1_ready  &
-                      debug_user      .uart_cs     &
-                      debug_user      .uart_ready                    when debug_mux = 7 else
-                      
-                      (others => '0');
-    debug_uart_tx_o<= uart_tx;
-  end generate gen_debug;
-
-  gen_debug_b:
-  if DEBUG_ENABLE = False
-  generate
-    debug_o        <= (clk
-                       & debug_user.uart.uart_rx.bit_cnt(2 downto 0)
-                       & debug_user.uart.uart_rx.state
-                       & uart_rx    
-                       & uart_tx    ); -- output
-    debug_uart_tx_o<= '0';
-  end generate gen_debug_b;
+  -- Copy of the UART output on a second pad (e.g. to a logic analyzer)
+  debug_uart_tx_o <= uart_tx when DEBUG_ENABLE = True else
+                     '0';
     
 end architecture rtl;

@@ -61,7 +61,7 @@ The SoC has two parts:
 - the **user SoC** (`PicoSoC_user`): 1 to `USER_NB_CPU` CPU clusters (CPU, program ROM, local interconnect, GIC and RAM) sharing the peripherals through a global interconnect;
 - the **supervisor SoC** (`PicoSoC_supervisor`, optional): one CPU that watches the differences between the redundant user CPUs (lock-step or TMR) and resets the user SoC on an error.
 
-The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, SPI pads and a debug output. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
+The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities and SPI pads. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
 
 ## Features
 
@@ -143,8 +143,6 @@ use     asylum.PicoSoC_pkg.all;
     ,spi_cs_b_io      => spi_cs_b
     ,spi_io_io        => spi_io           -- (7 downto 0)
     ,inject_error_i   => inject_error_b
-    ,debug_mux_i      => (others => '0')
-    ,debug_o          => open
     ,debug_uart_tx_o  => open
     );
 ```
@@ -164,7 +162,7 @@ Top-level entity: **`PicoSoC_top`** ([hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd))
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `switch_i` | in | std_logic_vector(USER_NB_SWITCH-1 downto 0) | Switches (user GPIO `SWITCH`, resynchronized in the GPIO); bits 2..0 also select `debug_o` |
+| `switch_i` | in | std_logic_vector(USER_NB_SWITCH-1 downto 0) | Switches (user GPIO `SWITCH`, resynchronized in the GPIO) |
 | `led0_o` | out | std_logic_vector(USER_NB_LED0-1 downto 0) | User GPIO `LED0` |
 | `led1_o` | out | std_logic_vector(USER_NB_LED1-1 downto 0) | User GPIO `LED1` |
 | `led_diff_o` | out | std_logic_vector(2 downto 0) | Supervisor GPIO `LED_DIFF` (error counter of [esw/supervisor.c](esw/supervisor.c)); without supervisor, the difference flags |
@@ -197,8 +195,6 @@ Top-level entity: **`PicoSoC_top`** ([hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd))
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `debug_mux_i` | in | std_logic_vector(2 downto 0) | Not used (the selection is `switch_i(2 downto 0)`); kept for the pad files |
-| `debug_o` | out | std_logic_vector(7 downto 0) | `DEBUG_ENABLE = true`, by `switch_i(2 downto 0)`: 0 LED0, 1 switches, 2 user / supervisor resets, 3 CPU0 `iaddr(7:0)`, 4 CPU0 `idata(17:10)`, 5 data bus `cs`, `re`, `we`, `ready`, `addr(7:4)`, 6 data address, 7 `cs` / `ready` of SWITCH, LED0, LED1, UART. `false`: SoC clock, UART RX bit counter and state, `uart_rx`, `uart_tx` |
 | `debug_uart_tx_o` | out | std_logic | Copy of `uart_tx_o` (`DEBUG_ENABLE = true`), else `'0'` |
 
 ## Configuration
@@ -210,7 +206,7 @@ Generics of `PicoSoC_top`:
 | `FSYS` | positive | `50_000_000` | Frequency of `clk_i` (Hz) |
 | `FSYS_INT` | positive | `50_000_000` | Frequency of the SoC (Hz): clock divider ratio `FSYS/FSYS_INT`, UART clock |
 | `RESET_POLARITY` | string | `"low"` | Active level of `arst_i`: `"high"` / `"low"` |
-| `DEBUG_ENABLE` | boolean | `True` | Debug multiplexer on `debug_o` (see [Debug](#debug)) |
+| `DEBUG_ENABLE` | boolean | `True` | Copy of `uart_tx_o` on `debug_uart_tx_o` (see [Debug](#debug)) |
 | `CPU_MODEL` | string | `"OpenBlaze8"` | `"OpenBlaze8"` or `"WardRV_fsm"`, for the user and supervisor CPUs; the ROMs of the target must be built for this CPU |
 | `USER_NB_CPU` | natural | `1` | Number of CPU clusters of the user SoC |
 | `USER_ICN_TARGET_SEL` | string | `"or"` | Response selection of the user interconnects: `"or"` / `"mux"` |
@@ -304,7 +300,7 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 | File | Unit | Role |
 |------|------|------|
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI pads, debug multiplexer |
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI pads |
 | [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
 | [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
 | [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection |
