@@ -20,6 +20,10 @@
 --                               addr when cs = '1', wdata when we = '1')
 -- 2026-11-21  1.3      mrosiere HARTID of the redundant CPUs (the copies of a
 --                               hart read the same mhartid as CPU0)
+-- 2026-11-22  1.4      mrosiere DEBUG_ENABLE : debug ports (WardRV_debug).
+--                               The requests go to every copy like the other
+--                               inputs ; the debug memory accesses of the
+--                               copies are compared (lock-step) or voted (TMR)
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -29,6 +33,8 @@ use     asylum.sbi_pkg.all;
 use     asylum.logic_pkg.all;
 use     asylum.math_pkg.all;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 entity cpu_safety is
   generic
@@ -37,6 +43,7 @@ entity cpu_safety is
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
     ;HARTID                : std_logic_vector(31 downto 0) := x"00000000"
+    ;DEBUG_ENABLE          : boolean  := False -- WardRV_fsm : debug mode (WardRV_debug)
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
     ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
@@ -63,6 +70,11 @@ entity cpu_safety is
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
+
+    -- Debug (DEBUG_ENABLE) : to / from the Debug Module of WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
     );
 end cpu_safety;
 
@@ -89,6 +101,21 @@ architecture rtl of cpu_safety is
   constant CPU2_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 15,
                                                     mux2(CPU_MODEL = "WardRV_fsm",  2,
                                                          2));
+  -- Debug interfaces of the CPU copies (WardRV_debug_pkg / WardRV_pkg)
+  type dbg_hart_reqs_t is array (natural range <>) of dbg_hart_req_t;
+  type dmem_inis_t     is array (natural range <>) of dmem_ini_t;
+  type dmem_tgts_t     is array (natural range <>) of dmem_tgt_t;
+
+  -- Majority vote of the debug memory accesses (TMR)
+  function vote(a, b, c : dmem_ini_t) return dmem_ini_t is
+  begin
+    return (valid => (a.valid and b.valid) or (b.valid and c.valid) or (c.valid and a.valid)
+           ,addr  => (a.addr  and b.addr ) or (b.addr  and c.addr ) or (c.addr  and a.addr )
+           ,wdata => (a.wdata and b.wdata) or (b.wdata and c.wdata) or (c.wdata and a.wdata)
+           ,we    => (a.we    and b.we   ) or (b.we    and c.we   ) or (c.we    and a.we   )
+           ,be    => (a.be    and b.be   ) or (b.be    and c.be   ) or (c.be    and a.be   ));
+  end function;
+
   -- CPU 0 signals
   signal cpu0_arst_b                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
   signal cpu0_ics                     : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
@@ -99,6 +126,9 @@ architecture rtl of cpu_safety is
   signal cpu0_sbi_tgt                 : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(DMEM_DATA_WIDTH-1 downto 0));
   signal cpu0_it_val                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
   signal cpu0_it_ack                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_dbg_hart_req            : dbg_hart_reqs_t(LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_dbg_mem_ini             : dmem_inis_t    (LOCK_STEP_DEPTH_INT downto 0);
+  signal cpu0_dbg_mem_tgt             : dmem_tgts_t    (LOCK_STEP_DEPTH_INT downto 0);
 
   -- CPU 1 signals
   signal cpu1_arst_b                  : std_logic;
@@ -110,6 +140,9 @@ architecture rtl of cpu_safety is
   signal cpu1_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
   signal cpu1_it_val                  : std_logic;
   signal cpu1_it_ack                  : std_logic;
+  signal cpu1_dbg_hart_req            : dbg_hart_req_t;
+  signal cpu1_dbg_mem_ini             : dmem_ini_t;
+  signal cpu1_dbg_mem_tgt             : dmem_tgt_t;
   
   -- CPU 2 signals
   signal cpu2_arst_b                  : std_logic;
@@ -121,6 +154,9 @@ architecture rtl of cpu_safety is
   signal cpu2_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
   signal cpu2_it_val                  : std_logic;
   signal cpu2_it_ack                  : std_logic;
+  signal cpu2_dbg_hart_req            : dbg_hart_req_t;
+  signal cpu2_dbg_mem_ini             : dmem_ini_t;
+  signal cpu2_dbg_mem_tgt             : dmem_tgt_t;
 
   -- Error injection and comparison signals
   signal cpu0_idata_with_seu          : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
@@ -142,6 +178,7 @@ begin
     generic map
     (CPU_MODEL       => CPU_MODEL
     ,HARTID          => HARTID
+    ,DEBUG_ENABLE    => DEBUG_ENABLE
     )
     port map
     (clk_i           => clk_i
@@ -154,12 +191,17 @@ begin
     ,sbi_tgt_i       => cpu0_sbi_tgt(0)
     ,interrupt_i     => cpu0_it_val (0)
     ,interrupt_ack_o => cpu0_it_ack (0)
+    ,dbg_hart_req_i  => cpu0_dbg_hart_req(0)
+    ,dbg_mem_ini_o   => cpu0_dbg_mem_ini (0)
+    ,dbg_mem_tgt_i   => cpu0_dbg_mem_tgt (0)
     );
 
-  cpu0_arst_b (0) <= arst_b_i;
-  cpu0_idata  (0) <= idata_i;
-  cpu0_sbi_tgt(0) <= sbi_tgt_i;
-  cpu0_it_val (0) <= interrupt_i;
+  cpu0_arst_b      (0) <= arst_b_i;
+  cpu0_idata       (0) <= idata_i;
+  cpu0_sbi_tgt     (0) <= sbi_tgt_i;
+  cpu0_it_val      (0) <= interrupt_i;
+  cpu0_dbg_hart_req(0) <= dbg_hart_req_i;
+  cpu0_dbg_mem_tgt (0) <= dbg_mem_tgt_i;
 
   -- Delay pipe for Lock-step
   gen_cpu0_lockstep_pipe: for i in 1 to LOCK_STEP_DEPTH_INT 
@@ -176,6 +218,9 @@ begin
         cpu0_sbi_tgt(i) <= cpu0_sbi_tgt(i-1);
         cpu0_it_val (i) <= cpu0_it_val (i-1);
         cpu0_it_ack (i) <= cpu0_it_ack (i-1);
+        cpu0_dbg_hart_req(i) <= cpu0_dbg_hart_req(i-1);
+        cpu0_dbg_mem_ini (i) <= cpu0_dbg_mem_ini (i-1);
+        cpu0_dbg_mem_tgt (i) <= cpu0_dbg_mem_tgt (i-1);
       end if;
     end process;
   end generate;
@@ -190,6 +235,7 @@ begin
       generic map
       (CPU_MODEL       => CPU_MODEL
       ,HARTID          => HARTID
+      ,DEBUG_ENABLE    => DEBUG_ENABLE
       )
       port map
       (clk_i           => clk_i
@@ -202,17 +248,26 @@ begin
       ,sbi_tgt_i       => cpu1_sbi_tgt
       ,interrupt_i     => cpu1_it_val
       ,interrupt_ack_o => cpu1_it_ack
+      ,dbg_hart_req_i  => cpu1_dbg_hart_req
+      ,dbg_mem_ini_o   => cpu1_dbg_mem_ini
+      ,dbg_mem_tgt_i   => cpu1_dbg_mem_tgt
       );
 
-    cpu1_arst_b  <= cpu0_arst_b  (LOCK_STEP_DEPTH_INT);
-    cpu1_idata   <= cpu0_idata   (LOCK_STEP_DEPTH_INT);
-    cpu1_sbi_tgt <= cpu0_sbi_tgt (LOCK_STEP_DEPTH_INT);
-    cpu1_it_val  <= cpu0_it_val  (LOCK_STEP_DEPTH_INT);
+    -- Inputs of CPU0 (debug requests included), delayed in lock-step ; the
+    -- outputs compared with CPU0 delayed. The debug memory accesses only with
+    -- DEBUG_ENABLE : WardRV_fsm drives their address and data anyway
+    cpu1_arst_b       <= cpu0_arst_b      (LOCK_STEP_DEPTH_INT);
+    cpu1_idata        <= cpu0_idata       (LOCK_STEP_DEPTH_INT);
+    cpu1_sbi_tgt      <= cpu0_sbi_tgt     (LOCK_STEP_DEPTH_INT);
+    cpu1_it_val       <= cpu0_it_val      (LOCK_STEP_DEPTH_INT);
+    cpu1_dbg_hart_req <= cpu0_dbg_hart_req(LOCK_STEP_DEPTH_INT);
+    cpu1_dbg_mem_tgt  <= cpu0_dbg_mem_tgt (LOCK_STEP_DEPTH_INT);
     
     diff(DIFF_CPU0_VS_CPU1) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
                                          or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
                                          or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
                                          or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
+                                         or (DEBUG_ENABLE and (cpu0_dbg_mem_ini(LOCK_STEP_DEPTH_INT) /= cpu1_dbg_mem_ini))
                                             ) else
                                '0';
     
@@ -243,6 +298,7 @@ begin
       generic map
       (CPU_MODEL       => CPU_MODEL
       ,HARTID          => HARTID
+      ,DEBUG_ENABLE    => DEBUG_ENABLE
       )
       port map
       (clk_i           => clk_i
@@ -255,17 +311,23 @@ begin
       ,sbi_tgt_i       => cpu2_sbi_tgt
       ,interrupt_i     => cpu2_it_val
       ,interrupt_ack_o => cpu2_it_ack
+      ,dbg_hart_req_i  => cpu2_dbg_hart_req
+      ,dbg_mem_ini_o   => cpu2_dbg_mem_ini
+      ,dbg_mem_tgt_i   => cpu2_dbg_mem_tgt
       );
 
-    cpu2_arst_b    <= arst_b_i;
-    cpu2_idata     <= idata_i;
-    cpu2_sbi_tgt   <= sbi_tgt_i;
-    cpu2_it_val    <= interrupt_i;   
+    cpu2_arst_b       <= arst_b_i;
+    cpu2_idata        <= idata_i;
+    cpu2_sbi_tgt      <= sbi_tgt_i;
+    cpu2_it_val       <= interrupt_i;   
+    cpu2_dbg_hart_req <= dbg_hart_req_i;
+    cpu2_dbg_mem_tgt  <= dbg_mem_tgt_i;
 
     diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
                                          or (cpu1_iaddr   /= cpu2_iaddr        )
                                          or (cpu1_it_ack  /= cpu2_it_ack       )
                                          or (cpu1_sbi_ini /= cpu2_sbi_ini      )
+                                         or (DEBUG_ENABLE and (cpu1_dbg_mem_ini /= cpu2_dbg_mem_ini))
                                          ) else
                                '0';
       
@@ -273,6 +335,7 @@ begin
                                          or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
                                          or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
                                          or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
+                                         or (DEBUG_ENABLE and (cpu2_dbg_mem_ini /= cpu0_dbg_mem_ini(0)))
                                         ) else
                                '0';
     
@@ -301,6 +364,7 @@ begin
   --  * ROM interface
   --  * ICN interface
   --  * IT  interface
+  --  * Debug memory interface (DEBUG_ENABLE)
   --
   -- If safety none or lock-step : take cpu 0
   -- else if tmr : vote all cpu output
@@ -318,12 +382,14 @@ begin
     interrupt_ack_o<= ((cpu0_it_ack  (0) and cpu1_it_ack    ) or
                        (cpu1_it_ack      and cpu2_it_ack    ) or
                        (cpu2_it_ack      and cpu0_it_ack (0)));
+    dbg_mem_ini_o  <= vote(cpu0_dbg_mem_ini(0), cpu1_dbg_mem_ini, cpu2_dbg_mem_ini);
  
   else generate
     ics_o           <= cpu0_ics    (0);
     iaddr_o         <= cpu0_iaddr  (0);
     sbi_ini_o       <= cpu0_sbi_ini(0);
     interrupt_ack_o <= cpu0_it_ack (0);
+    dbg_mem_ini_o   <= cpu0_dbg_mem_ini(0);
   end generate;
 
   -----------------------------------------------------------------------------

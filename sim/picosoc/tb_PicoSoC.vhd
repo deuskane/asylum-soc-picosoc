@@ -44,6 +44,9 @@
 -- 2026-11-22  2.6      mrosiere JTAG BFM on the UART pads (switches 10),
 --                               Capture-IR monitor of the chain, scenarios
 --                               jtag_*
+-- 2026-11-22  2.7      mrosiere USER_CPU_DEBUG_ENABLE,
+--                               SUPERVISOR_CPU_DEBUG_ENABLE (CPU debuggers in
+--                               the JTAG chain)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -83,6 +86,8 @@ entity tb_PicoSoC is
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
     ;DEBUG_ENABLE          : boolean  := True
+    ;USER_CPU_DEBUG_ENABLE       : boolean := False
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean := False
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
     ;RESET_POLARITY        : string   := "low"       -- "high" / "low"
     ;USER_IT_POLARITY      : string   := "high"      -- "high" / "low"
@@ -119,7 +124,7 @@ architecture tb of tb_PicoSoC is
   constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
 
   -- JTAG chain of the DUT
-  constant C_JTAG                  : t_jtag_chain := jtag_chain(false, false, DEBUG_ENABLE);
+  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_CPU_DEBUG_ENABLE, SUPERVISOR_CPU_DEBUG_ENABLE, DEBUG_ENABLE);
 
   constant C_CFG                   : t_tb_cfg := (
     clk_period => TB_PERIOD,
@@ -207,6 +212,8 @@ begin  -- architecture tb
     ,USER_SPI_NB_IO        => USER_SPI_NB_IO
     ,RESET_POLARITY        => RESET_POLARITY
     ,DEBUG_ENABLE          => DEBUG_ENABLE
+    ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
+    ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
     ,SUPERVISOR            => SUPERVISOR
     ,USER_SAFETY           => USER_SAFETY
     ,USER_FAULT_INJECTION  => USER_FAULT_INJECTION

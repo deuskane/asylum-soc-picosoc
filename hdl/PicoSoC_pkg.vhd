@@ -24,6 +24,8 @@
 -- 2026-11-22  1.8      mrosiere PicoSoC_top component : uart_rts_b_io
 -- 2026-11-22  1.9      mrosiere JTAG : IDCODE and instructions of the
 --                               injection / status TAP
+-- 2026-11-22  1.10     mrosiere JTAG : IDCODE of the CPU debuggers,
+--                               components with the CPU debug ports
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -34,6 +36,8 @@ library asylum;
 use     asylum.uart_pkg.ALL;
 use     asylum.ROM_user_pkg.all;
 use     asylum.sbi_pkg.all;
+use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 package PicoSoC_pkg is
 
@@ -83,7 +87,9 @@ package PicoSoC_pkg is
   -- IDCODE : version 1, part number, manufacturer 0
   -----------------------------------------------------------------------------
   constant PICOSOC_JTAG_IR_WIDTH               : natural  := 5;
-  constant PICOSOC_JTAG_IDCODE_INJECT          : std_logic_vector(32-1 downto 0) := x"10003001";
+  constant PICOSOC_JTAG_IDCODE_USER_CPU        : std_logic_vector(32-1 downto 0) := x"10001001"; -- WardRV_debug of the user CPU
+  constant PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU  : std_logic_vector(32-1 downto 0) := x"10002001"; -- WardRV_debug of the supervisor CPU
+  constant PICOSOC_JTAG_IDCODE_INJECT          : std_logic_vector(32-1 downto 0) := x"10003001"; -- injection / status TAP
 
   -- Instructions of the injection / status TAP
   constant PICOSOC_JTAG_IR_INJECT              : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00010"; -- jtag_tdr_inout : inject_error (out), diff (in)
@@ -147,6 +153,7 @@ component PicoSoC_supervisor is
     ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
+    ;CPU_DEBUG_ENABLE      : boolean  := False -- Debug ports of the CPU (WardRV_fsm)
     );
   port
     (clk_i                 : in  std_logic
@@ -158,6 +165,12 @@ component PicoSoC_supervisor is
     ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
     ;debug_o               : out PicoSoC_supervisor_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE) : to / from the Debug Module of
+    -- WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
      );
 end component PicoSoC_supervisor;
 
@@ -166,7 +179,9 @@ component PicoSoC_top is
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True
+    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- WardRV_debug on the user CPU (cluster 0) : its TAP in the JTAG chain
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- WardRV_debug on the supervisor CPU : its TAP in the JTAG chain
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -265,6 +280,7 @@ component PicoSoC_user is
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
+    ;CPU_DEBUG_ENABLE       : boolean  := False -- Debug ports of the CPU of cluster 0 (WardRV_fsm)
     );
   port
     (clk_i                 : in  std_logic
@@ -307,6 +323,12 @@ component PicoSoC_user is
                                                                         -- bit 2 : cpu2 vs cpu0
                                  
     ;debug_o               : out PicoSoC_user_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE, CPU of cluster 0) : to / from the Debug
+    -- Module of WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
     );
 end component PicoSoC_user;
 
@@ -317,6 +339,7 @@ component cpu_safety is
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
     ;HARTID                : std_logic_vector(31 downto 0) := x"00000000"
+    ;DEBUG_ENABLE          : boolean  := False -- WardRV_fsm : debug mode (WardRV_debug)
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
     ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
@@ -343,6 +366,11 @@ component cpu_safety is
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
+
+    -- Debug (DEBUG_ENABLE) : to / from the Debug Module of WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
     );
 end component cpu_safety;
 
@@ -350,6 +378,7 @@ component cpu_wrapper is
   generic (
     CPU_MODEL        : string   := "OpenBlaze8"
    ;HARTID           : std_logic_vector(31 downto 0) := x"00000000"
+   ;DEBUG_ENABLE     : boolean  := false -- WardRV_fsm only : debug mode (RISC-V Debug Spec)
   );
   port   (
     clk_i            : in    std_logic;
@@ -367,7 +396,12 @@ component cpu_wrapper is
 
     -- To/From IT Ctrl
     interrupt_i      : in    std_logic;
-    interrupt_ack_o  : out   std_logic
+    interrupt_ack_o  : out   std_logic;
+
+    -- Debug (DEBUG_ENABLE) : to / from the Debug Module of WardRV_debug
+    dbg_hart_req_i   : in    dbg_hart_req_t := DBG_HART_REQ_NULL;
+    dbg_mem_ini_o    : out   dmem_ini_t;
+    dbg_mem_tgt_i    : in    dmem_tgt_t     := DMEM_TGT_NULL
     );
   
 end component cpu_wrapper;

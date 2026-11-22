@@ -38,6 +38,9 @@
 --                               uart_rts_b_io (TMS) become inout pads
 -- 2026-11-22  2.10     mrosiere DEBUG_ENABLE : JTAG TAP of fault injection
 --                               (ORed with inject_error_i) and status
+-- 2026-11-22  2.11     mrosiere USER_CPU_DEBUG_ENABLE,
+--                               SUPERVISOR_CPU_DEBUG_ENABLE : WardRV_debug of
+--                               the user / supervisor CPU in the JTAG chain
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -50,13 +53,17 @@ use     asylum.clock_divider_pkg.all;
 use     asylum.hwla_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
+use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 entity PicoSoC_top is
   generic
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True
+    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- WardRV_debug on the user CPU (cluster 0) : its TAP in the JTAG chain
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- WardRV_debug on the supervisor CPU : its TAP in the JTAG chain
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -146,7 +153,9 @@ architecture rtl of PicoSoC_top is
   signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
+  signal   arst_b_user_req              : std_logic;
   signal   arst_b_user_sync             : std_logic;
+  signal   arst_b_supervisor_soc        : std_logic;
            
   signal   diff                         : std_logic_vector(3-1 downto 0);
            
@@ -197,6 +206,17 @@ architecture rtl of PicoSoC_top is
   signal   jtag_ini                     : jtag_ini_t;
   signal   jtag_chain                   : jtag_tgts_t(0 to 3);
   signal   jtag_tgt                     : jtag_tgt_t;
+
+  -- CPU debug (WardRV_debug) : hart requests, debug memory, ndmreset (reset
+  -- of the SoC of the CPU, not of the debug unit)
+  signal   user_dbg_hart_req            : dbg_hart_req_t;
+  signal   user_dbg_mem_ini             : dmem_ini_t;
+  signal   user_dbg_mem_tgt             : dmem_tgt_t;
+  signal   user_ndmreset                : std_logic;
+  signal   supervisor_dbg_hart_req      : dbg_hart_req_t;
+  signal   supervisor_dbg_mem_ini       : dmem_ini_t;
+  signal   supervisor_dbg_mem_tgt       : dmem_tgt_t;
+  signal   supervisor_ndmreset          : std_logic;
 
   -- Error injection : push buttons (active high) or JTAG (synchronized on clk)
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
@@ -294,14 +314,16 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
-  -- The reset of the user SoC (from the supervisor or arst_b_sync2) is
-  -- resynchronized on clk : 2 more cycles of reset with a running clock, so
-  -- that the registers without reset (input stages of the GPIOs) are loaded
-  -- before the reset release
+  -- The reset of the user SoC (from the supervisor or arst_b_sync2, or
+  -- ndmreset of its debugger) is resynchronized on clk : 2 more cycles of
+  -- reset with a running clock, so that the registers without reset (input
+  -- stages of the GPIOs) are loaded before the reset release
+  arst_b_user_req <= arst_b_user(0) and not user_ndmreset;
+
   ins_reset_resynchronizer_user : sync2dffrn
     port map
     (clk_i                => clk
-    ,arst_b_i             => arst_b_user(0)
+    ,arst_b_i             => arst_b_user_req
     ,d_i                  => '1'
     ,q_o                  => arst_b_user_sync
     );
@@ -331,6 +353,7 @@ begin  -- architecture rtl
     ,MAILBOX_FIFO0_DEPTH_RX => USER_MAILBOX_FIFO0_DEPTH_RX
     ,MAILBOX_FIFO1_DEPTH_TX => USER_MAILBOX_FIFO1_DEPTH_TX
     ,MAILBOX_FIFO1_DEPTH_RX => USER_MAILBOX_FIFO1_DEPTH_RX
+    ,CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     )
   port map
     (clk_i                => clk
@@ -360,6 +383,9 @@ begin  -- architecture rtl
     ,i2c_sda_o            => i2c_sda_o
     ,i2c_sda_oe_o         => i2c_sda_oe_o
     ,pwm_o                => pwm
+    ,dbg_hart_req_i       => user_dbg_hart_req
+    ,dbg_mem_ini_o        => user_dbg_mem_ini
+    ,dbg_mem_tgt_i        => user_dbg_mem_tgt
     );
 
   spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
@@ -376,6 +402,9 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC Supervisor
   -----------------------------------------------------------------------------
+  -- Reset of the supervisor SoC : arst_b_sync2, or ndmreset of its debugger
+  arst_b_supervisor_soc <= arst_b_supervisor and not supervisor_ndmreset;
+
   gen_supervisor: if SUPERVISOR = True
   generate
     ins_soc_supervisor : PicoSoC_supervisor
@@ -387,14 +416,18 @@ begin  -- architecture rtl
       ,ICN_MASTER_SEL       => SUPERVISOR_ICN_MASTER_SEL
       ,NB_CPU               => SUPERVISOR_NB_CPU
       ,RAM_DEPTH            => SUPERVISOR_RAM_DEPTH
+      ,CPU_DEBUG_ENABLE     => SUPERVISOR_CPU_DEBUG_ENABLE
        )
       port map
       (clk_i                => clk
-      ,arst_b_i             => arst_b_supervisor
+      ,arst_b_i             => arst_b_supervisor_soc
       ,led0_o               => arst_b_user
       ,led1_o               => led_supervisor
       ,diff_i               => diff 
       ,debug_o              => debug_supervisor
+      ,dbg_hart_req_i       => supervisor_dbg_hart_req
+      ,dbg_mem_ini_o        => supervisor_dbg_mem_ini
+      ,dbg_mem_tgt_i        => supervisor_dbg_mem_tgt
        );
 
   end generate gen_supervisor;
@@ -587,11 +620,93 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   jtag_chain(0) <= (tdo => jtag_ini.tdi, tdo_en => '0');
 
-  -- No CPU debugger yet
-  jtag_chain(1) <= jtag_chain(0);
-  jtag_chain(2) <= jtag_chain(1);
-
   jtag_tgt      <= jtag_chain(3);
+
+  assert (not (USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE) or CPU_MODEL = "WardRV_fsm")
+    report "PicoSoC_top : USER_CPU_DEBUG_ENABLE and SUPERVISOR_CPU_DEBUG_ENABLE need CPU_MODEL WardRV_fsm (" & CPU_MODEL & ")"
+    severity failure;
+
+  assert (not SUPERVISOR_CPU_DEBUG_ENABLE or SUPERVISOR)
+    report "PicoSoC_top : SUPERVISOR_CPU_DEBUG_ENABLE needs SUPERVISOR"
+    severity failure;
+
+  -----------------------------------------------------------------------------
+  -- Debug : user CPU debugger (WardRV_debug : TAP, DTM and Debug Module),
+  -- first TAP of the chain (IDCODE PICOSOC_JTAG_IDCODE_USER_CPU). It debugs
+  -- the CPU of cluster 0, whose redundant copies receive the same requests
+  -- (cpu_safety). Power-on reset : the reset of the supervisor (a reset of
+  -- the user SoC does not reset the debugger) ; ndmreset resets the user SoC
+  -----------------------------------------------------------------------------
+  gen_user_cpu_debug: if USER_CPU_DEBUG_ENABLE = True
+  generate
+    signal   user_debug_ini      : jtag_ini_t;
+  begin
+    user_debug_ini <= (tck => jtag_ini.tck, tdi => jtag_chain(0).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
+
+    ins_user_cpu_debug : entity asylum.WardRV_debug
+      generic map
+      (IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_USER_CPU
+      ,TRST_ENABLE          => false
+      )
+      port map
+      (jtag_ini_i           => user_debug_ini
+      ,jtag_tgt_o           => jtag_chain(1)
+      ,clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,hart_rst_b_i         => arst_b_user_sync
+      ,dbg_hart_req_o       => user_dbg_hart_req
+      ,dbg_mem_ini_i        => user_dbg_mem_ini
+      ,dbg_mem_tgt_o        => user_dbg_mem_tgt
+      ,ndmreset_o           => user_ndmreset
+      ,sba_dmem_ini_o       => open
+      );
+  end generate gen_user_cpu_debug;
+
+  gen_user_cpu_debug_b: if USER_CPU_DEBUG_ENABLE = False
+  generate
+    jtag_chain(1)     <= jtag_chain(0);
+    user_dbg_hart_req <= DBG_HART_REQ_NULL;
+    user_dbg_mem_tgt  <= DMEM_TGT_NULL;
+    user_ndmreset     <= '0';
+  end generate gen_user_cpu_debug_b;
+
+  -----------------------------------------------------------------------------
+  -- Debug : supervisor CPU debugger (WardRV_debug), second TAP of the chain
+  -- (IDCODE PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU). Power-on reset : the reset
+  -- of the supervisor ; ndmreset resets the supervisor SoC
+  -----------------------------------------------------------------------------
+  gen_supervisor_cpu_debug: if SUPERVISOR_CPU_DEBUG_ENABLE = True
+  generate
+    signal   supervisor_debug_ini : jtag_ini_t;
+  begin
+    supervisor_debug_ini <= (tck => jtag_ini.tck, tdi => jtag_chain(1).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
+
+    ins_supervisor_cpu_debug : entity asylum.WardRV_debug
+      generic map
+      (IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU
+      ,TRST_ENABLE          => false
+      )
+      port map
+      (jtag_ini_i           => supervisor_debug_ini
+      ,jtag_tgt_o           => jtag_chain(2)
+      ,clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,hart_rst_b_i         => arst_b_supervisor_soc
+      ,dbg_hart_req_o       => supervisor_dbg_hart_req
+      ,dbg_mem_ini_i        => supervisor_dbg_mem_ini
+      ,dbg_mem_tgt_o        => supervisor_dbg_mem_tgt
+      ,ndmreset_o           => supervisor_ndmreset
+      ,sba_dmem_ini_o       => open
+      );
+  end generate gen_supervisor_cpu_debug;
+
+  gen_supervisor_cpu_debug_b: if SUPERVISOR_CPU_DEBUG_ENABLE = False
+  generate
+    jtag_chain(2)           <= jtag_chain(1);
+    supervisor_dbg_hart_req <= DBG_HART_REQ_NULL;
+    supervisor_dbg_mem_tgt  <= DMEM_TGT_NULL;
+    supervisor_ndmreset     <= '0';
+  end generate gen_supervisor_cpu_debug_b;
 
   -----------------------------------------------------------------------------
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
@@ -783,7 +898,7 @@ begin  -- architecture rtl
       ,data_o               => inject_tck_domain
       );
 
-    status <= arst_b_supervisor & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
+    status <= arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
 
     ins_jtag_tdr_status : jtag_tdr_in
       port map

@@ -41,6 +41,8 @@
 -- 2026-11-21  3.13     mrosiere Add I2C (master and slave)
 -- 2026-11-21  3.14     mrosiere Add PWM
 -- 2026-11-21  3.15     mrosiere Debug record : data of the CPU0 bus
+-- 2026-11-22  3.16     mrosiere CPU_DEBUG_ENABLE : debug ports of the CPU of
+--                               cluster 0 (WardRV_debug in PicoSoC_top)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -78,6 +80,8 @@ use     asylum.pwm_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_user_pkg.all;
+use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 entity PicoSoC_user is
   generic
@@ -104,6 +108,7 @@ entity PicoSoC_user is
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
+    ;CPU_DEBUG_ENABLE       : boolean  := False -- Debug ports of the CPU of cluster 0 (WardRV_fsm)
     );
   port
     (clk_i                 : in  std_logic
@@ -146,6 +151,12 @@ entity PicoSoC_user is
                                                                         -- bit 2 : cpu2 vs cpu0
                                  
     ;debug_o               : out PicoSoC_user_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE, CPU of cluster 0) : to / from the Debug
+    -- Module of WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
     );
 end PicoSoC_user;
 
@@ -332,6 +343,11 @@ begin  -- architecture rtl
   -- Interruption Vector
   signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
 
+  -- CPU debug (cluster 0 only)
+  signal   cpu_dbg_hart_req           : dbg_hart_req_t;
+  signal   cpu_dbg_mem_ini            : dmem_ini_t;
+  signal   cpu_dbg_mem_tgt            : dmem_tgt_t;
+
   begin
 
     gen_cpu0_debug :
@@ -346,6 +362,18 @@ begin  -- architecture rtl
       debug_o.cpu_dwdata  <= cpu_sbi_ini.wdata                ;
       debug_o.cpu_drdata  <= cpu_sbi_tgt.rdata                ;
       debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
+
+      -- CPU debug : the debug unit sees the CPU of cluster 0
+      cpu_dbg_hart_req    <= dbg_hart_req_i;
+      dbg_mem_ini_o       <= cpu_dbg_mem_ini;
+      cpu_dbg_mem_tgt     <= dbg_mem_tgt_i;
+    end generate;
+
+    gen_cpu_debug_b :
+    if i /= 0
+    generate
+      cpu_dbg_hart_req    <= DBG_HART_REQ_NULL;
+      cpu_dbg_mem_tgt     <= DMEM_TGT_NULL;
     end generate;
 
     ins_cpu_safety : cpu_safety
@@ -355,6 +383,7 @@ begin  -- architecture rtl
       ,FAULT_INJECTION      => FAULT_INJECTION
       ,CPU_MODEL            => CPU_MODEL
       ,HARTID               => std_logic_vector(to_unsigned(i, 32))
+      ,DEBUG_ENABLE         => CPU_DEBUG_ENABLE and (i = 0)
       ,IMEM_ADDR_WIDTH      => CPU_IMEM_ADDR_WIDTH
       ,IMEM_DATA_WIDTH      => CPU_IMEM_DATA_WIDTH
       ,DMEM_ADDR_WIDTH      => CPU_DMEM_ADDR_WIDTH
@@ -373,6 +402,9 @@ begin  -- architecture rtl
       ,interrupt_ack_o      => cpu_it_ack
       ,inject_error_i       => inject_error_i
       ,diff_o               => cpu_diff(i)
+      ,dbg_hart_req_i       => cpu_dbg_hart_req
+      ,dbg_mem_ini_o        => cpu_dbg_mem_ini
+      ,dbg_mem_tgt_i        => cpu_dbg_mem_tgt
       );
 
     icn1_sbi_inim(0)    <= cpu_sbi_ini;

@@ -15,6 +15,9 @@
 --              The positions count from TDI : the first TAP after TDI is 0,
 --              its bits are shifted in last (MSB of the vectors) and out
 --              last
+--              * RISC-V DTM of a CPU debugger (WardRV_debug) : dtmcs and dmi
+--                scans, DMI read / write with the busy retry of a debugger
+--                (as WardRV_vips of asylum-processor-WardRV, on the chain)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -34,6 +37,7 @@ use     asylum_uvvm.jtag_bfm_pkg.all;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
@@ -93,6 +97,34 @@ package tb_PicoSoC_jtag_pkg is
     ;signal   jtag_if  : inout t_jtag_if
     );
 
+  -- dtmcs of the CPU debugger at the position tap : data written, the read
+  -- value in data_out
+  procedure dtmcs_scan
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant data     : in    std_logic_vector(32-1 downto 0)
+    ;variable data_out : out   std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    );
+
+  -- DMI write / read of the Debug Module of the CPU debugger at the
+  -- position tap
+  procedure dmi_write
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant addr     : in    std_logic_vector(DMI_ABITS-1 downto 0)
+    ;constant data     : in    std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    );
+
+  procedure dmi_read
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant addr     : in    std_logic_vector(DMI_ABITS-1 downto 0)
+    ;variable data     : out   std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    );
+
 end package tb_PicoSoC_jtag_pkg;
 
 package body tb_PicoSoC_jtag_pkg is
@@ -139,7 +171,13 @@ package body tb_PicoSoC_jtag_pkg is
     ;tap      : natural
     ) return std_logic_vector is
   begin
-    if tap = cfg.jtag.inject
+    if    tap = cfg.jtag.user
+    then
+      return PICOSOC_JTAG_IDCODE_USER_CPU;
+    elsif tap = cfg.jtag.supervisor
+    then
+      return PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU;
+    elsif tap = cfg.jtag.inject
     then
       return PICOSOC_JTAG_IDCODE_INJECT;
     end if;
@@ -211,6 +249,96 @@ package body tb_PicoSoC_jtag_pkg is
                  scope      => C_TB_SCOPE,
                  config     => jtag_config(cfg.jtag.nb_tap));
     data_out := v_out(data'length+C_AFTER-1 downto C_AFTER);
+  end procedure;
+
+  -----------------------------------------------------------------------------
+  -- RISC-V DTM
+  -----------------------------------------------------------------------------
+  constant C_DMI_IDLE    : natural := 5;  -- Run-Test/Idle cycles after a dmi scan (dtmcs.idle)
+  constant DMI_OP_NOP    : std_logic_vector(1 downto 0) := "00";
+  constant DMI_OP_READ   : std_logic_vector(1 downto 0) := "01";
+  constant DMI_OP_WRITE  : std_logic_vector(1 downto 0) := "10";
+  constant DMI_OP_BUSY   : std_logic_vector(1 downto 0) := "11";
+
+  procedure dtmcs_scan
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant data     : in    std_logic_vector(32-1 downto 0)
+    ;variable data_out : out   std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    ) is
+  begin
+    chain_ir(cfg, tap, JTAG_IR_DTMCS, "dtmcs", jtag_if);
+    chain_dr(cfg, tap, data, data_out, "dtmcs", jtag_if);
+  end procedure;
+
+  -- Request, then nop scans until the result is not busy ; busy : dmireset,
+  -- one more idle cycle, scan again
+  procedure dmi_access
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant op       : in    std_logic_vector(1 downto 0)
+    ;constant addr     : in    std_logic_vector(DMI_ABITS-1 downto 0)
+    ;constant wdata    : in    std_logic_vector(32-1 downto 0)
+    ;variable rdata    : out   std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    ) is
+    variable v_idle    : natural := C_DMI_IDLE;
+    variable v_op      : std_logic_vector(1 downto 0) := op;
+    variable v_dmi     : std_logic_vector(DMI_ABITS+32+2-1 downto 0);
+    variable v_dtmcs   : std_logic_vector(32-1 downto 0);
+  begin
+    chain_ir(cfg, tap, JTAG_IR_DMI, "dmi", jtag_if);
+    for retry in 1 to 100 loop
+      chain_dr (cfg, tap, addr & wdata & v_op, v_dmi, "dmi", jtag_if);
+      jtag_idle(num_cycles => v_idle,
+                msg        => "after the dmi scan",
+                jtag_if    => jtag_if,
+                scope      => C_TB_SCOPE,
+                config     => jtag_config(cfg.jtag.nb_tap));
+      if v_dmi(1 downto 0) = DMI_OP_BUSY
+      then
+        log(ID_BFM, "DMI busy : dmireset, " & integer'image(v_idle+1) & " idle cycles", C_TB_SCOPE);
+        dtmcs_scan(cfg, tap, x"00010000", v_dtmcs, jtag_if);
+        chain_ir  (cfg, tap, JTAG_IR_DMI, "dmi", jtag_if);
+        v_idle := v_idle + 1;
+      elsif v_op = DMI_OP_NOP
+      then
+        rdata := v_dmi(33 downto 2);
+        return;
+      else
+        -- Request accepted, the next scan returns its result
+        v_op  := DMI_OP_NOP;
+      end if;
+    end loop;
+    alert(ERROR, "DMI access : always busy", C_TB_SCOPE);
+  end procedure;
+
+  procedure dmi_write
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant addr     : in    std_logic_vector(DMI_ABITS-1 downto 0)
+    ;constant data     : in    std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    ) is
+    variable v_rdata   : std_logic_vector(32-1 downto 0);
+  begin
+    log(ID_BFM, "DMI write 0x" & to_hstring(addr) & " = 0x" & to_hstring(data), C_TB_SCOPE);
+    dmi_access(cfg, tap, DMI_OP_WRITE, addr, data, v_rdata, jtag_if);
+  end procedure;
+
+  procedure dmi_read
+    (constant cfg      : in    t_tb_cfg
+    ;constant tap      : in    natural
+    ;constant addr     : in    std_logic_vector(DMI_ABITS-1 downto 0)
+    ;variable data     : out   std_logic_vector(32-1 downto 0)
+    ;signal   jtag_if  : inout t_jtag_if
+    ) is
+    variable v_rdata   : std_logic_vector(32-1 downto 0);
+  begin
+    dmi_access(cfg, tap, DMI_OP_READ, addr, x"00000000", v_rdata, jtag_if);
+    log(ID_BFM, "DMI read  0x" & to_hstring(addr) & " = 0x" & to_hstring(v_rdata), C_TB_SCOPE);
+    data := v_rdata;
   end procedure;
 
 end package body tb_PicoSoC_jtag_pkg;

@@ -17,6 +17,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-05-10  1.0      mrosiere Created
+-- 2026-11-22  1.1      mrosiere DEBUG_ENABLE : debug ports of WardRV_fsm (to the
+--                               debug unit WardRV_debug)
 -------------------------------------------------------------------------------
 
 library IEEE;
@@ -26,11 +28,13 @@ use     IEEE.numeric_std.ALL;
 library asylum;
 use     asylum.sbi_pkg.all;
 use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 entity cpu_wrapper is
   generic (
     CPU_MODEL        : string   := "OpenBlaze8"
    ;HARTID           : std_logic_vector(31 downto 0) := x"00000000"
+   ;DEBUG_ENABLE     : boolean  := false -- WardRV_fsm only : debug mode (RISC-V Debug Spec)
   );
   port   (
     clk_i            : in    std_logic;
@@ -48,7 +52,12 @@ entity cpu_wrapper is
 
     -- To/From IT Ctrl
     interrupt_i      : in    std_logic;
-    interrupt_ack_o  : out   std_logic
+    interrupt_ack_o  : out   std_logic;
+
+    -- Debug (DEBUG_ENABLE) : to / from the Debug Module of WardRV_debug
+    dbg_hart_req_i   : in    dbg_hart_req_t := DBG_HART_REQ_NULL;
+    dbg_mem_ini_o    : out   dmem_ini_t;
+    dbg_mem_tgt_i    : in    dmem_tgt_t     := DMEM_TGT_NULL
     );
   
 end entity cpu_wrapper;
@@ -83,6 +92,9 @@ gen_OpenBlaze8 : if CPU_MODEL = "OpenBlaze8" generate
       interrupt_i          => interrupt_i,
       interrupt_ack_o      => interrupt_ack_o
     );
+
+  -- No debug unit
+  dbg_mem_ini_o <= (valid => '0', addr => (others => '0'), wdata => (others => '0'), we => '0', be => (others => '0'));
 end generate gen_OpenBlaze8;
 
 -------------------------------------------------------------------------------
@@ -94,7 +106,8 @@ gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
       HARTID               => HARTID,
       RESET_ADDR           => x"00000000",
       IADDR_WIDTH          => iaddr_o'length,
-      IADDR_ALIGN_BITS     => 2 -- Word-aligned instructions
+      IADDR_ALIGN_BITS     => 2, -- Word-aligned instructions
+      DEBUG_ENABLE         => DEBUG_ENABLE
      )
     port map (
       clk_i                => clk_i,
@@ -112,7 +125,12 @@ gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
 
       -- To/From IT Ctrl
       interrupt_i          => interrupt_i,
-      interrupt_ack_o      => interrupt_ack_o
+      interrupt_ack_o      => interrupt_ack_o,
+
+      -- Debug
+      dbg_hart_req_i       => dbg_hart_req_i,
+      dbg_mem_ini_o        => dbg_mem_ini_o,
+      dbg_mem_tgt_i        => dbg_mem_tgt_i
     );
   end generate gen_WardRV_fsm;
 
@@ -122,6 +140,10 @@ gen_WardRV_fsm : if CPU_MODEL = "WardRV_fsm" generate
   assert (CPU_MODEL = "OpenBlaze8" or 
           CPU_MODEL = "WardRV_fsm")
     report "Invalid CPU_MODEL: " & CPU_MODEL
+    severity failure;
+
+  assert (not DEBUG_ENABLE or CPU_MODEL = "WardRV_fsm")
+    report "DEBUG_ENABLE needs CPU_MODEL WardRV_fsm (" & CPU_MODEL & ")"
     severity failure;
 
 end architecture rtl;

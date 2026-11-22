@@ -21,6 +21,8 @@
 -- 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 -- 2026-05-17  1.3      mrosiere Add RAM
 -- 2026-08-01  1.4      mrosiere Use GPIO_irq instead of GPIO
+-- 2026-11-22  1.5      mrosiere CPU_DEBUG_ENABLE : debug ports of the CPU
+--                               (WardRV_debug in PicoSoC_top)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -41,6 +43,8 @@ use     asylum.gic_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_supervisor_pkg.all;
+use     asylum.WardRV_pkg.all;
+use     asylum.WardRV_debug_pkg.all;
 
 entity PicoSoC_supervisor is
   generic
@@ -53,6 +57,7 @@ entity PicoSoC_supervisor is
     ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
+    ;CPU_DEBUG_ENABLE      : boolean  := False -- Debug ports of the CPU (WardRV_fsm)
     );
   port
     (clk_i                 : in  std_logic
@@ -64,6 +69,12 @@ entity PicoSoC_supervisor is
     ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
     ;debug_o               : out PicoSoC_supervisor_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE) : to / from the Debug Module of
+    -- WardRV_debug
+    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
+    ;dbg_mem_ini_o         : out dmem_ini_t
+    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
      );
 end PicoSoC_supervisor;
 
@@ -148,6 +159,7 @@ begin  -- architecture rtl
   ins_cpu : entity asylum.cpu_wrapper
     generic map
     (CPU_MODEL            => CPU_MODEL
+    ,DEBUG_ENABLE         => CPU_DEBUG_ENABLE
     )
     port map
     (clk_i                => clk      
@@ -160,6 +172,9 @@ begin  -- architecture rtl
     ,sbi_tgt_i            => cpu_sbi_tgt  
     ,interrupt_i          => cpu_it_val   
     ,interrupt_ack_o      => open
+    ,dbg_hart_req_i       => dbg_hart_req_i
+    ,dbg_mem_ini_o        => dbg_mem_ini_o
+    ,dbg_mem_tgt_i        => dbg_mem_tgt_i
     );
 
   icn_sbi_inim(0) <= cpu_sbi_ini;

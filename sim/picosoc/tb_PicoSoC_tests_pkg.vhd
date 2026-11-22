@@ -25,6 +25,7 @@
 --                               CTS* of the cable, UART pads CTS* and RTS*
 -- 2026-11-22  1.6      mrosiere jtag_chain, jtag_inject, jtag_status (JTAG
 --                               BFM, JTAG chain of the configuration)
+-- 2026-11-22  1.7      mrosiere jtag_cpu_user, jtag_cpu_supervisor
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -52,7 +53,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,hello," & C_INTEGRATION;
@@ -126,6 +127,8 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_chain"     ) then return C_USER and jtag.nb_tap > 0;
     elsif string_eq(name, "jtag_inject"    ) then return C_USER and debug and fault and (not supervisor or string_eq(safety, "lock-step"));
     elsif string_eq(name, "jtag_status"    ) then return C_USER and debug;
+    elsif string_eq(name, "jtag_cpu_user"      ) then return C_USER and jtag.user       >= 0;
+    elsif string_eq(name, "jtag_cpu_supervisor") then return C_USER and jtag.supervisor >= 0;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
@@ -197,6 +200,12 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_status")
     then
       work.tb_PicoSoC_jtag_status_pkg.run(cfg, clk, switch, it_user, inject, led0, led1, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_cpu_user")
+    then
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, false, clk, switch, inject, led0, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_cpu_supervisor")
+    then
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);
