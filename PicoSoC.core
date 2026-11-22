@@ -78,9 +78,16 @@ CAPI=2:
 #                               targets: emu_basys_* removed, lint_ghdl_synth_basys renamed
 #                               lint_ghdl_synth_4leds_reset_high, sim_soc4_*_fault_c_user_uart
 #                               renamed sim_soc4_*_c_user_uart
+# 2026-11-22  4.1.0    mrosiere UART pads shared by the user UART, the HWLA UART and JTAG
+#                               (asylum:debug:jtag jtag_pad_mux, switch_i MSBs, FTDI MPSSE
+#                               pinout : uart_tx_io, uart_cts_b_io, uart_rts_b_io), JTAG chain :
+#                               WardRV_debug of the user / supervisor CPU
+#                               (USER_CPU_DEBUG_ENABLE, SUPERVISOR_CPU_DEBUG_ENABLE), TAP of
+#                               fault injection and status (DEBUG_ENABLE); tb : JTAG BFM
+#                               (asylum:verification:uvvm 1.1.0), scenarios pad_mux, jtag_*
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.0.0
+name        : asylum:soc:PicoSoC:4.1.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
