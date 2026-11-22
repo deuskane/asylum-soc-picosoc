@@ -609,7 +609,7 @@ filesets:
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
       - ">=asylum:processor:OpenBlaze8:1.0.0"
-      - ">=asylum:processor:WardRV:0.0.1"
+      - ">=asylum:processor:WardRV:1.2.0"
       
   #---------------------------------------
   files_sim:
