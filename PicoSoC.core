@@ -604,6 +604,7 @@ filesets:
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
       - ">=asylum:debug:HWLA:3.0.0"
+      - ">=asylum:debug:jtag:1.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -623,6 +624,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
       - sim/picosoc/tb_PicoSoC_hwla_pkg.vhd
       - sim/picosoc/tb_PicoSoC_hello_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_pad_mux_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -1570,6 +1572,34 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=user
       - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user_uart_jtag:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG
+    generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # SoC User Configuration
+      - USER_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_uart
+      - TESTS_LIST=pad_mux
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -3639,7 +3669,7 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, hello / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 

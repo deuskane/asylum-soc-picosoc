@@ -17,6 +17,7 @@
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (helpers of tb_PicoSoC)
 -- 2026-11-21  1.1      mrosiere wait_pass (integration firmwares)
+-- 2026-11-22  1.2      mrosiere t_tb_cfg : debug, fault
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -46,6 +47,8 @@ package tb_PicoSoC_bfm_pkg is
     timeout    : time;               -- maximum duration of one wait
     nb_cpu     : positive;           -- user CPUs (hello)
     tmr        : boolean;            -- USER_SAFETY = "tmr" (fault_diff)
+    debug      : boolean;            -- DEBUG_ENABLE (HWLA)
+    fault      : boolean;            -- USER_FAULT_INJECTION with redundant CPUs : an injected error raises diff
     spi_byte   : t_spi_byte;         -- "Loop" lines of the user firmware with UART
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)

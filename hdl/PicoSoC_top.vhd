@@ -31,6 +31,11 @@
 --                               captures on debug_uart_tx_o (UART 115200)
 -- 2026-11-21  2.8      mrosiere HWLA 3.0.0 (no NB_PROBE) : probe width from
 --                               the fields of debug_user
+-- 2026-11-22  2.9      mrosiere UART pads shared by the user UART, the HWLA
+--                               UART and JTAG (jtag_pad_mux), selected by the
+--                               two MSBs of switch_i ; FTDI MPSSE pinout :
+--                               uart_tx_io (TDI), uart_cts_b_io (TDO) and
+--                               uart_rts_b_io (TMS) become inout pads
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -42,6 +47,7 @@ use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
 use     asylum.hwla_pkg.all;
 use     asylum.uart_pkg.all;
+use     asylum.jtag_pkg.all;
 
 entity PicoSoC_top is
   generic
@@ -94,11 +100,12 @@ entity PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface
-    ;uart_tx_o        : out std_logic
-    ;uart_rx_i        : in  std_logic
-    ;uart_cts_b_i     : in  std_logic -- Clear   To Send (Active low)
-    ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
+    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
+    ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
+    ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO (FTDI AD2 : RTS# / TDO), Clear   To Send, active low
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS (FTDI AD3 : CTS# / TMS), Request To Send, active low
 
     -- SPI Interface
     ;spi_sclk_io      : inout std_logic
@@ -148,6 +155,39 @@ architecture rtl of PicoSoC_top is
   signal   uart_rx                      : std_logic;
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
+
+  -- UART pads : 3 functions selected by the two MSBs of switch_i
+  -- (synchronized). The pads of each function are given by the constants
+  -- PAD_* and by the block "Pad multiplexer" below (one place to change).
+  -- Pads in the order of the FTDI MPSSE pins AD0 to AD3
+  constant NB_FUNC                      : positive := 3;
+  constant FUNC_UART                    : natural  := 0; -- switches 00 and 11 : user UART
+  constant FUNC_HWLA                    : natural  := 1; -- switches 01        : HWLA UART (TX only)
+  constant FUNC_JTAG                    : natural  := 2; -- switches 10        : JTAG chain
+  constant PAD_RX                       : natural  := 0; -- uart_rx_i     : RX   (in)  / TCK (in)
+  constant PAD_TX                       : natural  := 1; -- uart_tx_io    : TX   (out) / TDI (in)
+  constant PAD_CTS_B                    : natural  := 2; -- uart_cts_b_io : CTS* (in)  / TDO (out)
+  constant PAD_RTS_B                    : natural  := 3; -- uart_rts_b_io : RTS* (out) / TMS (in)
+  -- Pad inputs seen by the unselected functions : RX idle (1), CTS* active
+  -- (0 : the user UART keeps sending, its firmware never waits on a pad it
+  -- does not own), TCK stopped, TDI 1, TMS 1 (the TAPs stay in
+  -- Test-Logic-Reset)
+  constant PAD_IN_DEFAULT               : std_logic_vector(4-1 downto 0) := (PAD_RX    => '1'
+                                                                            ,PAD_TX    => '1'
+                                                                            ,PAD_CTS_B => '0'
+                                                                            ,PAD_RTS_B => '1');
+
+  signal   pad_switch                   : std_logic_vector(2-1 downto 0);
+  signal   pad_sel                      : natural range 0 to NB_FUNC-1;
+  signal   pad_func_out                 : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
+  signal   pad_func_oe                  : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
+  signal   pad_func_in                  : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
+  signal   pad_out                      : std_logic_vector(4-1 downto 0);
+  signal   pad_oe                       : std_logic_vector(4-1 downto 0);
+  signal   pad_in                       : std_logic_vector(4-1 downto 0);
+
+  signal   debug_uart_tx                : std_logic;
+  signal   jtag_tgt                     : jtag_tgt_t;
   
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
@@ -318,11 +358,6 @@ begin  -- architecture rtl
     report "PicoSoC_top : USER_SPI_NB_IO ("&integer'image(USER_SPI_NB_IO)&") must be <= 8"
     severity failure;
 
-  uart_tx_o    <= uart_tx     ;
-  uart_rx      <= uart_rx_i   ;
-  uart_rts_b_o <= uart_rts_b  ;
-  uart_cts_b   <= uart_cts_b_i;
-
   pwm_o        <= pwm;
 
   -----------------------------------------------------------------------------
@@ -435,6 +470,99 @@ begin  -- architecture rtl
      );
 
   -----------------------------------------------------------------------------
+  -- UART PAD
+  -- Pad multiplexer (jtag_pad_mux) : the 4 UART pads are given to one
+  -- function, selected by the two MSBs of switch_i, synchronized on clk :
+  --   00, 11 : user UART (RX, TX, CTS*, RTS*)
+  --   01     : HWLA UART (TX only : the captures, also on debug_uart_tx_o)
+  --   10     : JTAG chain (TCK, TDI, TDO, TMS ; no TRST*)
+  -- Change the switches while the functions are idle : the multiplexer has
+  -- no clock. Switch the FPGA before the cable (terminal or OpenOCD) : two
+  -- drivers on TX / TDI and RTS* / TMS otherwise
+  -----------------------------------------------------------------------------
+  ins_switch_sync1 : sync2dffrn
+    port map
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,d_i                  => switch_i(USER_NB_SWITCH-2)
+    ,q_o                  => pad_switch(0)
+    );
+
+  ins_switch_sync2 : sync2dffrn
+    port map
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,d_i                  => switch_i(USER_NB_SWITCH-1)
+    ,q_o                  => pad_switch(1)
+    );
+
+  -- A 4th function (switches 11) : one more line here and NB_FUNC = 4
+  pad_sel <= FUNC_HWLA when pad_switch = "01" else
+             FUNC_JTAG when pad_switch = "10" else
+             FUNC_UART;
+
+  -- Pad multiplexer : outputs, output enables and inputs of each function
+  -- (with the PAD_* constants, the only place of the pad mapping)
+  pad_func_out(FUNC_UART) <= (PAD_TX => uart_tx, PAD_RTS_B => uart_rts_b, others => '0');
+  pad_func_oe (FUNC_UART) <= (PAD_TX => '1'    , PAD_RTS_B => '1'       , others => '0');
+  uart_rx                 <= pad_func_in(FUNC_UART)(PAD_RX   );
+  uart_cts_b              <= pad_func_in(FUNC_UART)(PAD_CTS_B);
+
+  pad_func_out(FUNC_HWLA) <= (PAD_TX => debug_uart_tx, others => '0');
+  pad_func_oe (FUNC_HWLA) <= (PAD_TX => '1'          , others => '0');
+
+  pad_func_out(FUNC_JTAG) <= (PAD_CTS_B => jtag_tgt.tdo   , others => '0');
+  pad_func_oe (FUNC_JTAG) <= (PAD_CTS_B => jtag_tgt.tdo_en, others => '0');
+
+  -- No TAP yet : TDO never driven
+  jtag_tgt                <= (tdo => '0', tdo_en => '0');
+
+  ins_pad_mux : jtag_pad_mux
+    generic map
+    (NB_FUNC              => NB_FUNC
+    ,NB_PAD               => 4
+    ,PAD_IN_DEFAULT       => PAD_IN_DEFAULT
+    )
+    port map
+    (sel_i                => pad_sel
+    ,func_out_i           => pad_func_out
+    ,func_oe_i            => pad_func_oe
+    ,func_in_o            => pad_func_in
+    ,pad_out_o            => pad_out
+    ,pad_oe_o             => pad_oe
+    ,pad_in_i             => pad_in
+    );
+
+  pad_in(PAD_RX) <= uart_rx_i;
+
+  PAD_UART_TX : iobuf
+    port map
+     (buf_io     => uart_tx_io
+     ,d_i        => pad_out(PAD_TX)
+     ,d_o        => pad_in (PAD_TX)
+     ,oe_i       => pad_oe (PAD_TX)
+     ,ie_i       => '1'
+     );
+
+  PAD_UART_CTS_B : iobuf
+    port map
+     (buf_io     => uart_cts_b_io
+     ,d_i        => pad_out(PAD_CTS_B)
+     ,d_o        => pad_in (PAD_CTS_B)
+     ,oe_i       => pad_oe (PAD_CTS_B)
+     ,ie_i       => '1'
+     );
+
+  PAD_UART_RTS_B : iobuf
+    port map
+     (buf_io     => uart_rts_b_io
+     ,d_i        => pad_out(PAD_RTS_B)
+     ,d_o        => pad_in (PAD_RTS_B)
+     ,oe_i       => pad_oe (PAD_RTS_B)
+     ,ie_i       => '1'
+     );
+
+  -----------------------------------------------------------------------------
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
   -- * Trigger : a difference between the redundant CPUs (OR of diff)
   -- * Captures sent byte per byte on debug_uart_tx_o : UART 115200 baud,
@@ -528,7 +656,7 @@ begin  -- architecture rtl
       ,s_axis_tdata_i       => hwla_tdata
       ,s_axis_tvalid_i      => hwla_tvalid
       ,s_axis_tready_o      => hwla_tready
-      ,uart_tx_o            => debug_uart_tx_o
+      ,uart_tx_o            => debug_uart_tx
       ,uart_cts_b_i         => '0'
       ,baud_tick_i          => hwla_baud_tick
       ,parity_enable_i      => '0'
@@ -539,7 +667,9 @@ begin  -- architecture rtl
 
   gen_debug_b: if DEBUG_ENABLE = False
   generate
-    debug_uart_tx_o <= '1';  -- UART idle level
+    debug_uart_tx   <= '1';  -- UART idle level
   end generate gen_debug_b;
+
+  debug_uart_tx_o   <= debug_uart_tx;
 
 end architecture rtl;

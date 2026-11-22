@@ -21,6 +21,7 @@
 -- 2026-11-21  1.6      mrosiere Add PWM
 -- 2026-11-21  1.7      mrosiere PicoSoC_user_debug_t : data of the CPU bus
 --                               (cpu_dwdata, cpu_drdata), probes of the HWLA
+-- 2026-11-22  1.8      mrosiere PicoSoC_top component : uart_rts_b_io
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -198,11 +199,12 @@ component PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface
-    ;uart_tx_o        : out std_logic
-    ;uart_rx_i        : in  std_logic
-    ;uart_cts_b_i     : in  std_logic -- Clear   To Send (Active low)
-    ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
+    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
+    ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
+    ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO (FTDI AD2 : RTS# / TDO), Clear   To Send, active low
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS (FTDI AD3 : CTS# / TMS), Request To Send, active low
 
     -- SPI Interface
     ;spi_sclk_io      : inout std_logic

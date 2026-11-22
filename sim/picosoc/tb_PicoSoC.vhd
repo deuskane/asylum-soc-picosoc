@@ -38,6 +38,9 @@
 -- 2026-11-21  2.3      mrosiere pwm_o
 -- 2026-11-21  2.4      mrosiere debug_uart_tx_o, copy of the user ROM
 --                               (scenario hwla)
+-- 2026-11-22  2.5      mrosiere UART pads of PicoSoC_top with pull-ups
+--                               (FTDI cable : the tb drives RX and CTS* in
+--                               the UART modes), scenario pad_mux
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -114,6 +117,8 @@ architecture tb of tb_PicoSoC is
     timeout    => TB_WATCHDOG * TB_PERIOD,
     nb_cpu     => USER_NB_CPU,
     tmr        => USER_SAFETY = "tmr",
+    debug      => DEBUG_ENABLE,
+    fault      => USER_FAULT_INJECTION and USER_SAFETY /= "none",
     spi_byte   => to_spi_byte(FIRMWARE),
     it_on      => C_IT_ON,
     fault_on   => C_FAULT_ON,
@@ -151,8 +156,14 @@ architecture tb of tb_PicoSoC is
   signal  spi_io_io                : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
 
   signal  RSTNeg                   : std_logic;
-  signal  uart_tx_o                : std_logic;
-  signal  uart_rx_i                : std_logic := '1';
+  -- UART pads (pull-ups) and the UART side of the cable : RX (UART BFM)
+  -- and CTS* ('Z' : released), driven in the UART modes of the pads
+  signal  uart_rx_i                : std_logic;
+  signal  uart_tx_io               : std_logic;
+  signal  uart_cts_b_io            : std_logic;
+  signal  uart_rts_b_io            : std_logic;
+  signal  uart_rx                  : std_logic := '1';
+  signal  uart_cts_b               : std_logic := '0';
 
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
@@ -197,10 +208,10 @@ begin  -- architecture tb
     ,led_diff_o       => led_diff_o
     ,it_user_i        => it_user_i
     ,inject_error_i   => inject_error_i
-    ,uart_tx_o        => uart_tx_o
     ,uart_rx_i        => uart_rx_i
-    ,uart_cts_b_i     => '0'
-    ,uart_rts_b_o     => open
+    ,uart_tx_io       => uart_tx_io
+    ,uart_cts_b_io    => uart_cts_b_io
+    ,uart_rts_b_io    => uart_rts_b_io
     ,spi_sclk_io      => spi_sclk_io
     ,spi_cs_b_io      => spi_cs_b_io
     ,spi_io_io        => spi_io_io
@@ -214,6 +225,14 @@ begin  -- architecture tb
   spi_sclk_io <= 'H';
   spi_cs_b_io <= 'H';
   spi_io_io   <= (others => 'H');
+
+  -- UART pads : pull-ups (a pad driven by nobody is 'H'), the UART side of
+  -- the cable drives RX and CTS*
+  uart_tx_io    <= 'H';
+  uart_cts_b_io <= 'H';
+  uart_rts_b_io <= 'H';
+  uart_rx_i     <= uart_rx;
+  uart_cts_b_io <= uart_cts_b;
 
   -- Pull-ups of the I2C bus
   i2c_if.scl  <= 'H';
@@ -305,12 +324,12 @@ begin  -- architecture tb
     end if;
 
     v_cfg.uart.timeout := 0 ns;
-    if uart_tx_o /= '1'
+    if uart_tx_io /= '1'
     then
-      wait until uart_tx_o = '1'; -- idle after the reset
+      wait until uart_tx_io = '1'; -- idle after the reset
     end if;
     loop
-      uart_get_line(v_line, v_len, uart_tx_o, v_cfg);
+      uart_get_line(v_line, v_len, uart_tx_io, v_cfg);
       log(ID_SEQUENCER_SUB, "UART : " & v_line(1 to v_len), C_SCOPE);
       if v_len >= 4 and v_line(1 to 4) = "FAIL"
       then
@@ -352,7 +371,8 @@ begin  -- architecture tb
       switch_i       <= (others => '0');
       it_user_i      <= not C_IT_ON;
       inject_error_i <= (others => not C_FAULT_ON);
-      uart_rx_i      <= '1';
+      uart_rx        <= '1';
+      uart_cts_b     <= '0';
       i2c_if         <= init_i2c_if_signals(VOID);
       if (SPI_MODEL /= "none") and (now < C_MEM_POWER_UP)
       then
@@ -361,7 +381,8 @@ begin  -- architecture tb
       do_reset(C_RESET_ON, clk_i, arst_i);
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
-      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx_i, uart_tx_o, i2c_if, pwm_o,
+      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
+               uart_cts_b, uart_cts_b_io, uart_rts_b_io, i2c_if, pwm_o,
                debug_uart_tx_o, rom_addr, rom_data);
     end loop;
 

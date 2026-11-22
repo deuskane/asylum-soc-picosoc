@@ -14,6 +14,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC_modbus_rtu)
+-- 2026-11-22  1.1      mrosiere Switches 0xDA (was 0x5A : MSBs 01 give the
+--                               UART pads to the HWLA UART)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -61,8 +63,8 @@ package body tb_PicoSoC_modbus_rtu_basic_pkg is
 
     -- Change Switch and check if it's the expected value
     wait for C_FRAME_GAP;
-    switch <= x"5A";
-    modbus_read (C_SWITCH_DATA,(0 => x"5A"), "Read  SWITCH Data", cfg, uart_rx, uart_tx);
+    switch <= x"DA";
+    modbus_read (C_SWITCH_DATA,(0 => x"DA"), "Read  SWITCH Data", cfg, uart_rx, uart_tx);
 
     wait for C_FRAME_GAP;
     switch <= x"3C";
