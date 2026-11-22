@@ -16,7 +16,8 @@
 --                does not wait on CTS* (LED0 follows the switches) ; CTS*
 --                and RTS* not driven
 --              * 10 : JTAG : no pad driven out of a scan (TDI, TMS : inputs,
---                TDO : not driven), the firmware does not wait on CTS*
+--                TDO : not driven, TDI and TMS of the cable released), the
+--                firmware does not wait on CTS*
 --              * back to 00 : the loop lines are on the TX pad again
 --              * 01, with DEBUG_ENABLE and fault injection : an error in
 --                CPU0 triggers the HWLA, its capture is on the TX pad, bit by
@@ -37,6 +38,9 @@ use     ieee.std_logic_1164.all;
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
 
+library asylum_uvvm;
+use     asylum_uvvm.jtag_bfm_pkg.all;
+
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
 
@@ -54,6 +58,7 @@ package tb_PicoSoC_pad_mux_pkg is
     ;signal   cts_b    : out   std_logic
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
+    ;signal   jtag_if  : inout t_jtag_if
     ;signal   debug_tx : in    std_logic
     );
 
@@ -72,6 +77,7 @@ package body tb_PicoSoC_pad_mux_pkg is
     ;signal   cts_b    : out   std_logic
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
+    ;signal   jtag_if  : inout t_jtag_if
     ;signal   debug_tx : in    std_logic
     ) is
     constant C_BANNER  : string   := "Welcome Back, Commander";
@@ -135,12 +141,15 @@ package body tb_PicoSoC_pad_mux_pkg is
 
     -- 10 : JTAG chain. Out of a scan, no pad is driven by the SoC (TDI and
     -- TMS are inputs, TDO is driven in Shift-IR / Shift-DR only) ; the
-    -- firmware does not wait on CTS*
+    -- firmware does not wait on CTS*. TDI and TMS of the cable released
     set_switch(x"A0");
+    jtag_if.tdi <= 'Z';
+    jtag_if.tms <= 'Z';
     wait for C_QUIET;
     check_value(uart_tx = 'H', ERROR, "10 : TDI pad (TX) not driven by the SoC", C_TB_SCOPE);
     check_value(rts_pad = 'H', ERROR, "10 : TMS pad (RTS*) not driven by the SoC", C_TB_SCOPE);
-    check_cts_input("10");
+    check_value(cts_pad = 'H', ERROR, "10 : TDO pad (CTS*) not driven out of a scan", C_TB_SCOPE);
+    jtag_if     <= init_jtag_if_signals;
     set_switch(x"A1");
 
     -- Back to 00 : the end of the current loop line, then no line

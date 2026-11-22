@@ -22,6 +22,8 @@
 -- 2026-11-21  1.7      mrosiere PicoSoC_user_debug_t : data of the CPU bus
 --                               (cpu_dwdata, cpu_drdata), probes of the HWLA
 -- 2026-11-22  1.8      mrosiere PicoSoC_top component : uart_rts_b_io
+-- 2026-11-22  1.9      mrosiere JTAG : IDCODE and instructions of the
+--                               injection / status TAP
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -75,6 +77,17 @@ package PicoSoC_pkg is
   constant PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1 : natural  := 0;
   constant PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2 : natural  := 1;
   constant PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0 : natural  := 2;
+
+  -----------------------------------------------------------------------------
+  -- JTAG
+  -- IDCODE : version 1, part number, manufacturer 0
+  -----------------------------------------------------------------------------
+  constant PICOSOC_JTAG_IR_WIDTH               : natural  := 5;
+  constant PICOSOC_JTAG_IDCODE_INJECT          : std_logic_vector(32-1 downto 0) := x"10003001";
+
+  -- Instructions of the injection / status TAP
+  constant PICOSOC_JTAG_IR_INJECT              : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00010"; -- jtag_tdr_inout : inject_error (out), diff (in)
+  constant PICOSOC_JTAG_IR_STATUS              : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00011"; -- jtag_tdr_in    : LEDs, switches, resets
   
   -----------------------------------------------------------------------------
   -- PicoSoC_user_debug_t

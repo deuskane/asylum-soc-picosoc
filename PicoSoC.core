@@ -616,6 +616,7 @@ filesets:
   #---------------------------------------
     files:
       - sim/picosoc/tb_PicoSoC_bfm_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_pkg.vhd
       - sim/picosoc/tb_PicoSoC_switch_pkg.vhd
       - sim/picosoc/tb_PicoSoC_it_user_pkg.vhd
       - sim/picosoc/tb_PicoSoC_uart_pkg.vhd
@@ -625,6 +626,9 @@ filesets:
       - sim/picosoc/tb_PicoSoC_hwla_pkg.vhd
       - sim/picosoc/tb_PicoSoC_hello_pkg.vhd
       - sim/picosoc/tb_PicoSoC_pad_mux_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_chain_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_inject_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_status_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -648,6 +652,7 @@ filesets:
       - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
+      - ">=asylum:verification:uvvm:1.1.0" # jtag_bfm_pkg (JTAG BFM)
 
   #---------------------------------------
   files_ng_medium:
@@ -1599,7 +1604,7 @@ targets:
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user_uart
-      - TESTS_LIST=pad_mux
+      - TESTS_LIST=pad_mux,jtag_chain,jtag_inject,jtag_status
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -3669,7 +3674,7 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 
