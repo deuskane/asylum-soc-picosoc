@@ -603,6 +603,7 @@ filesets:
       - ">=asylum:system:mailbox:1.1.0"
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
+      - ">=asylum:debug:HWLA:3.0.0"
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -620,6 +621,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_hwla_pkg.vhd
       - sim/picosoc/tb_PicoSoC_hello_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
@@ -1543,6 +1545,31 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=user
       - TESTS_LIST=switch,it_user,fault_diff
+
+  #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user_hwla:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
+    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=2304000
+      - FSYS_INT=1152000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -2649,6 +2676,31 @@ targets:
 
       # Test Bench Configuration
       - TESTS_LIST=basic,sequence
+
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_hwla:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
+    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=2304000
+      - FSYS_INT=1152000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_c_user:

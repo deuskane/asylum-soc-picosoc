@@ -19,6 +19,8 @@
 --                               debug_mux_i removed
 -- 2026-11-21  1.5      mrosiere Add I2C
 -- 2026-11-21  1.6      mrosiere Add PWM
+-- 2026-11-21  1.7      mrosiere PicoSoC_user_debug_t : data of the CPU bus
+--                               (cpu_dwdata, cpu_drdata), probes of the HWLA
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -88,6 +90,8 @@ package PicoSoC_pkg is
     cpu_dre     : std_logic;
     cpu_dwe     : std_logic;
     cpu_daddr   : std_logic_vector( 8-1 downto 0);
+    cpu_dwdata  : std_logic_vector( 8-1 downto 0);
+    cpu_drdata  : std_logic_vector( 8-1 downto 0);
     cpu_dready  : std_logic;
 
     switch_cs   : std_logic;
@@ -216,7 +220,7 @@ component PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Copy of uart_tx_o (DEBUG_ENABLE), else 0
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART 115200 8N1 (DEBUG_ENABLE), else 1
      
     );
 end component PicoSoC_top;

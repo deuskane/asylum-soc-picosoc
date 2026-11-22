@@ -61,7 +61,7 @@ The SoC has two parts:
 - the **user SoC** (`PicoSoC_user`): 1 to `USER_NB_CPU` CPU clusters (CPU, program ROM, local interconnect, GIC and RAM) sharing the peripherals through a global interconnect;
 - the **supervisor SoC** (`PicoSoC_supervisor`, optional): one CPU that watches the differences between the redundant user CPUs (lock-step or TMR) and resets the user SoC on an error.
 
-The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, SPI and I2C pads. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
+The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, SPI and I2C pads, and with `DEBUG_ENABLE` a logic analyzer (HWLA) on the bus of the user CPU. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
 
 ## Features
 
@@ -73,6 +73,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 - Peripherals: switches and 2 LED banks (`sbi_GPIO_irq`), UART with CTS/RTS, SPI master with pads, I2C master and slave with open-drain pads, PWM output, GIC, timer, CRC16 (Modbus polynomial), spinlock, mailbox, RAMs
 - Interrupts: user button (`it_user_i`, resynchronized in the GIC), UART, timer, mailbox "data available", switch edges
 - Firmware in C (and one assembler example): switch / LED identity, full peripheral test with UART output, Modbus RTU server, multi-core hello with spinlock, supervisor
+- Debug (`DEBUG_ENABLE`): HWLA logic analyzer on the bus of the user CPU, triggered by a difference of the redundant CPUs, captures sent on `debug_uart_tx_o` at 115200 baud
 - Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
 ## Block Diagram
@@ -81,7 +82,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 
 Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)).
 
-`PicoSoC_top` (not drawn) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, and puts IO buffers on the SPI and I2C signals.
+`PicoSoC_top` (not drawn) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, puts IO buffers on the SPI and I2C signals and, with `DEBUG_ENABLE`, instantiates the HWLA (see [Debug: HWLA](#debug-hwla)).
 
 ## Getting Started
 
@@ -103,7 +104,7 @@ A target names its firmware with its `generate` entries (see [PicoSoC.core](Pico
 
 ### Board
 
-The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK625V0) with NXmap and program it (`program: True`); pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py): 25 MHz clock, 6 switches, push buttons on `arst_i`, `it_user_i` and `inject_error_i` (active low), 8 + 8 + 3 LEDs, UART, SPI flash (`USER_SPI_NB_IO = 2`), I2C (`i2c_scl_io`, `i2c_sda_io`, weak pull-ups of the pads) and `pwm_o` on spare pads of Bank0. The Basys1 pad file ([boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)) has no pin for the UART, SPI, I2C and PWM. NXmap is not in the asylum-env image: these targets are not run by the CI.
+The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK625V0) with NXmap and program it (`program: True`); pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py): 25 MHz clock, 6 switches, push buttons on `arst_i`, `it_user_i` and `inject_error_i` (active low), 8 + 8 + 3 LEDs, UART, SPI flash (`USER_SPI_NB_IO = 2`), I2C (`i2c_scl_io`, `i2c_sda_io`, weak pull-ups of the pads) and `pwm_o` on spare pads of Bank0, `debug_uart_tx_o` on `IOB5_D05P`. The `emu_ng_medium_*` targets set `DEBUG_ENABLE = false` (no HWLA, `debug_uart_tx_o` at `'1'`): set it to `true` in a target to get the captures of the HWLA. The Basys1 pad file ([boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)) has no pin for the UART, SPI, I2C and PWM. NXmap is not in the asylum-env image: these targets are not run by the CI.
 
 ```bash
 make emu_ng_medium_soc4_wardrv_fsm_fault      # TOOL=nxmap (mk/defs.mk)
@@ -146,7 +147,7 @@ use     asylum.PicoSoC_pkg.all;
     ,i2c_sda_io       => i2c_sda
     ,pwm_o            => pwm
     ,inject_error_i   => inject_error_b
-    ,debug_uart_tx_o  => open
+    ,debug_uart_tx_o  => debug_tx         -- HWLA captures, UART 115200 8N1
     );
 ```
 
@@ -211,7 +212,7 @@ Top-level entity: **`PicoSoC_top`** ([hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd))
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `debug_uart_tx_o` | out | std_logic | Copy of `uart_tx_o` (`DEBUG_ENABLE = true`), else `'0'` |
+| `debug_uart_tx_o` | out | std_logic | Captures of the HWLA (`DEBUG_ENABLE = true`): UART 115200 baud, 8 data bits, no parity, 1 stop bit (see [Debug: HWLA](#debug-hwla)); `'1'` (idle) otherwise |
 
 ## Configuration
 
@@ -222,7 +223,7 @@ Generics of `PicoSoC_top`:
 | `FSYS` | positive | `50_000_000` | Frequency of `clk_i` (Hz) |
 | `FSYS_INT` | positive | `50_000_000` | Frequency of the SoC (Hz): clock divider ratio `FSYS/FSYS_INT`, UART clock |
 | `RESET_POLARITY` | string | `"low"` | Active level of `arst_i`: `"high"` / `"low"` |
-| `DEBUG_ENABLE` | boolean | `True` | Copy of `uart_tx_o` on `debug_uart_tx_o` (see [Debug](#debug)) |
+| `DEBUG_ENABLE` | boolean | `True` | HWLA on the bus of the user CPU, captures on `debug_uart_tx_o` (see [Debug: HWLA](#debug-hwla)) |
 | `CPU_MODEL` | string | `"OpenBlaze8"` | `"OpenBlaze8"` or `"WardRV_fsm"`, for the user and supervisor CPUs; the ROMs of the target must be built for this CPU |
 | `USER_NB_CPU` | natural | `1` | Number of CPU clusters of the user SoC |
 | `USER_ICN_TARGET_SEL` | string | `"or"` | Response selection of the user interconnects: `"or"` / `"mux"` |
@@ -296,14 +297,26 @@ Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 
 ## Resources
 
-Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `PicoSoC_top` with the generics of each configuration, synthesized by Yosys and its GHDL plugin; the reports are in the build directory of each target. The user ROM holds [esw/user_identity.c](esw/user_identity.c) (the firmware of `lint_ghdl`), the supervisor ROM [esw/dummy.c](esw/dummy.c): a bigger program needs a bigger ROM. `soc1`: no supervisor, no safety, default FIFOs (0); `soc4_ng_medium`: supervisor and TMR (3 user CPUs) with the generics of the NG-MEDIUM board (6 switches, FIFOs of 4, 2 SPI pads).
+Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `PicoSoC_top` with the generics of each configuration, synthesized by Yosys and its GHDL plugin; the reports are in the build directory of each target. The user ROM holds [esw/user_identity.c](esw/user_identity.c) (the firmware of `lint_ghdl`), the supervisor ROM [esw/dummy.c](esw/dummy.c): a bigger program needs a bigger ROM. `soc1`: no supervisor, no safety, default FIFOs (0); `soc4_ng_medium`: supervisor and TMR (3 user CPUs) with the generics of the NG-MEDIUM board (6 switches, FIFOs of 4, 2 SPI pads). The `syn_*` targets set `DEBUG_ENABLE = false`: no HWLA.
 
 | Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1285 | 108 | 773 | 59 | 181 | 0.5 | 0 | 190091.06 | 50.642 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 1938 | 304 | 993 | 127 | 76 | 1 | 0 | 490445.38 | 130.660 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 2053 | 104 | 1054 | 53 | 170 | 1 | 0 | 164007.30 | 43.693 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5390 | 304 | 2124 | 103 | 646 | 2 | 0 | 380224.67 | 101.296 |
+| `syn_soc1` (OpenBlaze8) | 1270 | 108 | 773 | 59 | 186 | 0.5 | 0 | 190182.40 | 50.667 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 1935 | 304 | 993 | 127 | 57 | 1 | 0 | 491916.79 | 131.052 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2071 | 104 | 1054 | 53 | 173 | 1 | 0 | 163917.21 | 43.669 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5316 | 304 | 2124 | 103 | 633 | 2 | 0 | 380184.63 | 101.285 |
+
+With the HWLA ([Debug: HWLA](#debug-hwla)): the same configurations with `DEBUG_ENABLE = true` (`fusesoc --cores-root . run --target syn_soc1 asylum:soc:PicoSoC --DEBUG_ENABLE=true`), and the default generics of `PicoSoC_top` (supervisor, lock-step, fault injection, `DEBUG_ENABLE = true`: the configuration of `lint_ghdl_synth_default`):
+
+| Configuration, `DEBUG_ENABLE = true` | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
+|---|---|---|---|---|---|---|---|---|---|
+| `syn_soc1` (OpenBlaze8) | 1452 | 204 | 1055 | 76 | 86 | 0.5 | 0 | 362336.26 | 96.530 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 2172 | 400 | 1277 | 144 | 61 | 1 | 0 | 665778.53 | 177.371 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2295 | 220 | 1378 | 70 | 176 | 1 | 0 | 372307.07 | 99.187 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5577 | 420 | 2450 | 120 | 658 | 2 | 0 | 588326.75 | 156.737 |
+| default generics (OpenBlaze8) | 1922 | 308 | 1334 | 114 | 91 | 1 | 0 | 569476.17 | 151.715 |
+
+The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV_fsm) LUTRAM for its RAM of 64 x 72 or 86 bits, 280 to 330 flip-flops and 17 CARRY4 on Artix-7, and 170000 to 210000 µm² in sky130, where its RAM becomes flip-flops. Without `DEBUG_ENABLE` nothing of it is synthesized: before technology mapping, the netlists of the `syn_*` targets have the same cells as without the HWLA; the small differences of the first table with the version before the HWLA (e.g. `syn_soc1` 1285 LUTs, 181 MUXF7/F8) come from the technology mapping, which changes with the order and the names of the cells of the netlist.
 
 ¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. The SPI and I2C pads (`inout`) are not synthesized by the GHDL plugin of Yosys (warning "no assignment for port"): the SPI and I2C output enables and output registers that only drive them may be removed.
 
@@ -319,7 +332,7 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 | File | Unit | Role |
 |------|------|------|
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI and I2C pads |
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI and I2C pads, HWLA (`DEBUG_ENABLE`) |
 | [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
 | [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
 | [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection |
@@ -367,6 +380,36 @@ Fault injection: `inject_error_i(i)` XORs one instruction bit of CPU `i` (bit 17
 - TMR (`-DSAFETY_TMR`): on the first error (all sources still enabled) it only masks the sources that fired: the voter already hides the faulty CPU. On a second error (an unmasked pair differs) it resets the user SoC as above, unmasks every source and increments `LED`.
 
 The user SoC restarts from its reset: the firmware runs its setup again.
+
+### Debug: HWLA
+
+With `DEBUG_ENABLE = true`, `PicoSoC_top` instantiates `hwla`, the logic analyzer of [asylum-debug-hwla](https://github.com/deuskane/asylum-debug-hwla), on the bus of the user CPU of cluster 0 (the CPU that drives the SoC, after the lock-step / TMR logic). With `DEBUG_ENABLE = false` nothing is added and `debug_uart_tx_o` stays at `'1'`.
+
+- Probes: the data bus and the instruction bus of the CPU (`cpu_*` fields of `PicoSoC_user_debug_t`), 56 probes with OpenBlaze8, 70 with WardRV_fsm:
+
+  | Probes | Signal |
+  |--------|--------|
+  | 0, 1, 2, 3 | Data bus `cs`, `re`, `we`, `ready` |
+  | 11:4 | Data bus address |
+  | 19:12 | Data bus write data |
+  | 27:20 | Data bus read data |
+  | 37:28 | Instruction address (address of the ROM word) |
+  | 55:38 (OpenBlaze8), 69:38 (WardRV_fsm) | Instruction (output of the ROM) |
+
+- Trigger: a difference between the redundant CPUs, the OR of the three difference flags (`diff_o` of `PicoSoC_user`): with `USER_SAFETY = "none"` there is no trigger.
+- Capture: 64 stored samples, 32 before the trigger sample, a 16-bit timestamp (cycles of the SoC clock), changes only: a sample is stored when a probe changes (and for the first sample, the trigger sample and the timestamp 0), so a capture covers about 70 (OpenBlaze8) to 130 (WardRV_fsm) clock cycles of the main loop of [esw/user.c](esw/user.c) (tens of instructions). `arm_i` is tied to 1: a new capture starts after each extraction; without supervisor the difference flags stay set, so the captures follow one another.
+- Clock and reset: the SoC clock for both domains of the HWLA, and the reset of the supervisor SoC: a capture goes on while the supervisor resets the user SoC.
+- Output: the bytes of the capture (`TDATA_WIDTH = 8`) go to `uart_tx_axis` and `uart_baud_rate_gen` of [asylum-communication-uart](https://github.com/deuskane/asylum-communication-uart), without CSR: 115200 baud (a bit every `FSYS_INT/115200` cycles, 108 cycles at 12.5 MHz: 115741 baud, + 0.5 %), 8 data bits, no parity, 1 stop bit, CTS ignored. A sample is 9 bytes (OpenBlaze8: 56 probes and the timestamp) or 11 bytes (WardRV_fsm), from the LSB; a capture is 576 or 704 bytes, 50 or 61 ms at 115200 baud.
+
+To read a capture on the host, save the bytes of `debug_uart_tx_o` and rebuild a VCD file with [tools/hwla2vcd.py](https://github.com/deuskane/asylum-debug-hwla/blob/main/tools/hwla2vcd.py) of asylum-debug-hwla (`-n` 70 for WardRV_fsm, 56 for OpenBlaze8; `--period` is the period of the SoC clock in ns, 80 at `FSYS_INT = 12.5 MHz`):
+
+```bash
+python3 tools/hwla2vcd.py --port /dev/ttyUSB1 --baudrate 115200 --captures 1 \
+        -n 70 -d 64 -p 32 -t 16 -w 8 --period 80 --bus probes -o capture.vcd
+gtkwave capture.vcd
+```
+
+`--bus probes` dumps the probes as one bus (split it in GTKWave with the table above); `--names` names them one by one instead. The `trigger` wire of the VCD file is high during the clock cycle of the trigger sample. Cost of the HWLA: see [Resources](#resources).
 
 ## Programmer's Guide
 
@@ -450,7 +493,7 @@ Clear the old events of a GIC source before unmasking it: the `isr` register als
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i`, `inject_error_i` and `uart_rx_i`, checks LED0, LED1, `led_diff_o`, `pwm_o` and the UART lines (UART VIP); the I2C bus has pull-ups and the UVVM I2C BFM (slave or master of the SoC). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>`, whatever the scenario waits for |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i`, `inject_error_i` and `uart_rx_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP, with a copy of the user ROM `ROM_user` as the reference of the instruction bus); the I2C bus has pull-ups and the UVVM I2C BFM (slave or master of the SoC). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>`, whatever the scenario waits for |
 | [sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd](sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd) | `PicoSoC_top` | UVVM testbench of [esw/user_modbus_rtu.c](esw/user_modbus_rtu.c): the UART VIP is the Modbus RTU master (CRC16 computed by the bench) and reads / writes the SoC addresses. Scenarios in `tb_PicoSoC_modbus_rtu_<name>_pkg`, dispatch in [tb_PicoSoC_modbus_rtu_tests_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_tests_pkg.vhd), Modbus frames in [tb_PicoSoC_modbus_rtu_bfm_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd) |
 
 Waveform setups: [sim/wave/waves.gtkw](sim/wave/waves.gtkw), [sim/wave/cpus.gtkw](sim/wave/cpus.gtkw).
@@ -469,6 +512,7 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 | `fault_lock_step` | 13 | `user*`, supervisor, lock-step, fault injection | Errors in CPU0, CPU1, CPU0: after each one the user SoC is reset (LED0 = 0, then the switches again) and `led_diff_o` counts the errors; one reset per error |
 | `fault_tmr` | 24 | `user*`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Errors in CPU0 (voted out: no reset, LED0 still follows the switches), CPU1 (second error: reset, `led_diff_o` = 1), CPU2 (voted out), CPU2 again (its sources already masked), CPU1 (reset, 2), CPU1 (voted out) |
 | `fault_diff` | 4 | `user*`, no supervisor, lock-step or TMR, fault injection | Without supervisor `led_diff_o` shows the difference flags: an error in CPU0 sets them (lock-step `001`, TMR `101`) and they stay set |
+| `hwla` | 11 | `user*`, no supervisor, lock-step or TMR, fault injection, `DEBUG_ENABLE` | Switches `0x5A` then `0x96` (LED0 follows), `debug_uart_tx_o` idle until the error; error in CPU1 just after LED0 changes; the capture is received on `debug_uart_tx_o` with the UART VIP at 115200 baud and checked: the read of the new switches and their write to LED0 are in the samples before the trigger, the trigger sample is the sample 32 (its timestamp is the one of the write of LED0 plus the clock cycles between the change of LED0 and the difference flag on `led_diff_o`), the next capture does not continue it (64 samples), the timestamps increase and the probes change from a sample to the next (but the trigger sample), the instruction of each sample is the word of the user ROM at the address of the previous sample (or unchanged), with a copy of `ROM_user` in the testbench |
 | `hello` | 4 x `USER_NB_CPU` + 4 | `hello` | The first 4 x `USER_NB_CPU` UART lines are `CPU <id> - Loop <counter>` with a valid id and the counter 0, 1, 2, ... (mutual exclusion, shared counter in RAM2); every CPU takes the lock (LED1) and the counter progresses (LED0); `led_diff_o` stays 0 during the whole scenario: with lock-step or TMR, the copies of every cluster read the same `mhartid` (no difference flag, no error counted by the supervisor) |
 | `test_gpio` | 5 (+ 16 in the firmware) | `test_gpio` | LED0 = `0xA5` and LED1 = `0x5A` on the pins, switches `0x3C` (rising edges) copied into LED0, then `0x00` (falling edges); `PASS`; LED1 pins unchanged while the firmware reads LED1 as an input |
 | `test_uart` | 3 (+ 11) | `test_uart` | On each prompt `>`, a byte sent on `uart_rx_i`: `0x5A` read by polling, `0xA5` read by the interrupt routine; `PASS`; LED0 = `0xA5`, LED1 = one interrupt |
@@ -504,6 +548,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc1_openblaze8_asm_identity`, `sim_soc1_<cpu>_c_identity` | `tb_PicoSoC` | `user_identity` (assembler, C): `switch`; `sim_soc1_openblaze8_c_identity` with `FSYS_INT = FSYS` (clock divider ratio 1) |
 | `sim_soc1_openblaze8_c_user`, `sim_soc2_<cpu>_c_user`, `sim_soc3_<cpu>_c_user` | `tb_PicoSoC` | `user.c` without UART: `switch`, `it_user` |
 | `sim_soc2_openblaze8_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_diff` |
+| `sim_soc2_<cpu>_fault_c_user_hwla` | `tb_PicoSoC` | `hwla`, with `DEBUG_ENABLE = true` and a SoC clock of 1.152 MHz (`FSYS_INT`): 10 clock cycles per bit at 115200 baud, a capture of 50 ms (OpenBlaze8) or 62 ms (WardRV_fsm) of simulated time in about a minute |
 | `sim_soc3_<cpu>_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_lock_step` |
 | `sim_soc4_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_tmr`, with `it_user_i` and `inject_error_i` active low (as on the board) |
 | `sim_soc1_<cpu>_c_user_uart`, `_uart_spi`, `_uart_spi_mem`, `sim_soc2_<cpu>_c_user_uart`, `sim_soc4_<cpu>_c_user_uart` | `tb_PicoSoC` | `user.c` with UART at 921600 baud (+ SPI loopback, + SPI flash model `m25p40`): `switch`, `it_user`, `uart`; `sim_soc1_wardrv_fsm_c_user_uart` with `arst_i` active high |
@@ -512,7 +557,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc1_<cpu>_c_test_<ip>`, `sim_soc1x2_<cpu>_c_test_mailbox` | `tb_PicoSoC` | Integration firmware `esw/test_<ip>.c`: scenario `test_<ip>`, for `<ip>` in `gpio`, `uart`, `spi`, `timer`, `crc`, `spinlock`, `gic`, `i2c`, `pwm` (both CPUs), `ram` (WardRV only), `mailbox` (2 clusters) |
 | `sim_soc{1,2,3}_<cpu>_c_user_modbus_rtu`, `sim_soc3_<cpu>_fault_c_user_modbus_rtu`, `sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu` | `tb_PicoSoC_modbus_rtu` | `basic`, `sequence` (+ `fault_lock_step` / `fault_tmr`); the TMR one with the board polarities |
 | `lint_ghdl` | `asylum.PicoSoC_top` | GHDL `-Wall` analysis and elaboration, default generics |
-| `lint_ghdl_synth_<config>` | `asylum.PicoSoC_top` | `ghdl --synth` check (no latch) of 7 configurations: `default`, `soc1`, `soc4_ng_medium`, `4leds_reset_high`, `wardrv_soc1`, `wardrv_soc4_ng_medium`, `wardrv_soc1x4` |
+| `lint_ghdl_synth_<config>` | `asylum.PicoSoC_top` | `ghdl --synth` check (no latch) of 7 configurations: `default`, `soc1`, `soc4_ng_medium`, `4leds_reset_high`, `wardrv_soc1`, `wardrv_soc4_ng_medium`, `wardrv_soc1x4`; `default` and `4leds_reset_high` with the HWLA (`DEBUG_ENABLE = true`), the others without |
 | `syn_<config>` | `asylum.PicoSoC_top` | Yosys synthesis (see [Resources](#resources)): `syn_soc1`, `syn_soc4_ng_medium`, `syn_wardrv_soc1`, `syn_wardrv_soc4_ng_medium` |
 | `emu_ng_medium_*` | `PicoSoC_top` | NG-MEDIUM board (NXmap, not in the CI): `user.c` and `user_modbus_rtu.c` builds of soc1 to soc4 for each CPU |
 
@@ -521,6 +566,8 @@ A target is a firmware build: its generators compile the user and supervisor pro
 The testbenches were validated with 33 RTL mutants of the SoC glue (address decoding, interrupt routing, lock-step compare, TMR vote, supervisor, reset and clock, multi-core), each scenario run alone: 31 are killed. The 2 survivors are a lock-step compare without the data bus and difference flags that are not sticky: the fault injection flips an instruction bit, which also changes the instruction stream and leaves the two CPUs different, so neither the data bus compare nor the stickiness can be seen with it.
 
 The integration scenarios were validated with 45 integration mutants, each one run on the targets of its peripheral (both CPUs, 86 runs): wrong base addresses and GIC masks in `addrmap_user.h` (13), wrong bits in the drivers of `esw/include` (8), interrupt lines swapped or tied low, pins disconnected, address decoding, CRC polynomial, timer and clock divider in a copy of the RTL (20), and wrong stimuli in the testbench (4): all are killed, most of them by the `FAIL <step>` line of the firmware. The I2C and PWM scenarios were validated the same way with 40 more mutants (both CPUs, 80 runs): base addresses in `addrmap_user.h` and in the RTL, ICN2 address width, SCL / SDA pad input not connected, output enable inverted or off, SCL and SDA swapped, prescaler reset value, slave disabled, static prescaler of the PWM, `pwm_o` not driven or inverted (RTL copies), wrong bits or registers in `i2c.h` and `pwm.h`, wrong constants in the firmwares and in the testbench: 38 are killed. The 2 survivors are equivalent in these firmwares: `i2c_wait` polling `bus_busy` instead of `busy` (both fall at the STOP of a single master), and the slave waiting for `slave_addressed` instead of `slave_read` before writing the bytes of the read (with FIFOs of depth 0, the write of `data` waits until the remote master reads).
+
+The scenario `hwla` was validated with 21 mutants in copies of the RTL, both CPUs (42 runs): trigger tied low or high, `arm_i` tied low, probe bits swapped (data address, instruction address, instruction bits 0 / 1 and 4 / 5, read / write strobes, write / read data, read data taken from the write data), baud tick of `FSYS_INT/115200` (no `- 1`), of `FSYS/115200 - 1` and of 9600 baud, parity enabled, CTS high, `debug_uart_tx_o` driven by a copy of `uart_tx_o` or by `'1'`, `PRE_TRIGGER` 31, `DEPTH` 128, `CHANGE_ONLY` false, `TIMESTAMP_WIDTH` 8: all are killed. Only the swap of the instruction bits 0 and 1 survives with WardRV_fsm, where both bits are always 1 (RV32I): it is killed with OpenBlaze8.
 
 ### How to Run
 
@@ -555,7 +602,8 @@ Outside the CI, GHDL writes a waveform `dut.fst`.
 | `asylum:target:techmap` | [asylum-target-techmap](https://github.com/deuskane/asylum-target-techmap) | `sync2dffrn`, `obuf`, `iobuf` |
 | `asylum:component:clock_divider` | [asylum-component-clock_divider](https://github.com/deuskane/asylum-component-clock_divider) | SoC clock |
 | `asylum:component:GPIO` | [asylum-component-gpio](https://github.com/deuskane/asylum-component-gpio) | `sbi_GPIO_irq`: switches, LEDs, supervisor GPIOs |
-| `asylum:communication:uart` | [asylum-communication-uart](https://github.com/deuskane/asylum-communication-uart) | `sbi_uart` (>= 3.0.0) |
+| `asylum:communication:uart` | [asylum-communication-uart](https://github.com/deuskane/asylum-communication-uart) | `sbi_uart` (>= 3.0.0); `uart_tx_axis` and `uart_baud_rate_gen` of the HWLA output |
+| `asylum:debug:HWLA` | [asylum-debug-hwla](https://github.com/deuskane/asylum-debug-hwla) | `hwla` (`DEBUG_ENABLE`); `tools/hwla2vcd.py` reads its captures |
 | `asylum:communication:SPI` | [asylum-communication-spi](https://github.com/deuskane/asylum-communication-spi) | `sbi_spi`; `fmf:memory:flash_nor` (flash models of the testbench) |
 | `asylum:system:GIC` | [asylum-system-gic](https://github.com/deuskane/asylum-system-gic) | `sbi_GIC` (>= 2.0.0) |
 | `asylum:component:timer` | [asylum-component-timer](https://github.com/deuskane/asylum-component-timer) | `sbi_timer` |
