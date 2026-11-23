@@ -1,0 +1,97 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p.........................."
+  },
+  {
+   "name": "trigger (diff)",
+   "wave": "0................10........"
+  },
+  {},
+  {
+   "name": "ics",
+   "wave": "0........1.0..1.0.........."
+  },
+  {
+   "name": "iaddr",
+   "wave": "=........=....=............",
+   "data": [
+    "0A3",
+    "0A4",
+    "07E"
+   ]
+  },
+  {
+   "name": "idata",
+   "wave": "=.........=....=...........",
+   "data": [
+    "00900523",
+    "F69FF06F",
+    "00604783"
+   ]
+  },
+  {},
+  {
+   "name": "dcs",
+   "wave": "0..1..0..............1..0.."
+  },
+  {
+   "name": "dre",
+   "wave": "10.................1......."
+  },
+  {
+   "name": "dwe",
+   "wave": "01.................0......."
+  },
+  {
+   "name": "daddr",
+   "wave": "====..=..=.........===..=..",
+   "data": [
+    "04",
+    "08",
+    "09",
+    "0A",
+    "0B",
+    "08",
+    "04",
+    "05",
+    "06",
+    "07"
+   ]
+  },
+  {
+   "name": "dwdata",
+   "wave": "=..=..=....................",
+   "data": [
+    "00",
+    "96",
+    "00"
+   ]
+  },
+  {
+   "name": "drdata",
+   "wave": "=....==................==..",
+   "data": [
+    "00",
+    "5A",
+    "00",
+    "96",
+    "00"
+   ]
+  },
+  {
+   "name": "dready",
+   "wave": "0....10................10.."
+  }
+ ],
+ "head": {
+  "text": "HWLA capture of an error in CPU1 (scenario hwla, WardRV_fsm, lock-step), decoded by hwla2vcd.py"
+ },
+ "foot": {
+  "text": "SoC clock cycles 36 to 62 of the capture (1.152 MHz). The firmware writes the new switches 0x96 to LED0 (daddr 0A, dwdata 96), loops (iaddr 0A4 -> 07E) and reads them again (daddr 06, drdata 96) ; the trigger is the difference of the copies of the CPU"
+ },
+ "config": {
+  "hscale": 2
+ }
+}

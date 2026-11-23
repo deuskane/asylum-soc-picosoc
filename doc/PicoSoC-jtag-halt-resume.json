@@ -1,0 +1,134 @@
+{
+ "signal": [
+  {
+   "name": "step",
+   "wave": "2.....2.....|2.....|2.....|2.....|2.....2.....|2.....|2.....|2.....",
+   "data": [
+    "write haltreq",
+    "haltreq",
+    "read dmstatus: allhalted",
+    "write dmcontrol 0",
+    "halted",
+    "new switches, LED0 frozen",
+    "write resumereq",
+    "read dmstatus: allresumeack",
+    "running",
+    "LED0 = switches"
+   ]
+  },
+  {},
+  {
+   "name": "TCK (uart_rx_i)",
+   "wave": "pppppppppppp|pppppp|pppppp|pppppp|1.....pppppp|pppppp|1.....|......"
+  },
+  {
+   "name": "TMS (uart_rts_b_io)",
+   "wave": "3.....0.....|3.....|3.....|3.....|0.....3.....|3.....|0.....|......",
+   "data": [
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS"
+   ]
+  },
+  {
+   "name": "TDI (uart_tx_io)",
+   "wave": "3.....0.....|3.....|3.....|3.....|0.....3.....|3.....|0.....|......",
+   "data": [
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI"
+   ]
+  },
+  {
+   "name": "TDO (uart_cts_b_io)",
+   "wave": "3.....1.....|3.....|3.....|3.....|1.....3.....|3.....|1.....|......",
+   "data": [
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO"
+   ]
+  },
+  {},
+  {
+   "name": "dm haltreq",
+   "wave": "0.....1.....|......|......|0.....|............|......|......|......"
+  },
+  {
+   "name": "dm halted",
+   "wave": "0...........|1.....|......|......|............|0.....|......|......"
+  },
+  {
+   "name": "cpu_ics",
+   "wave": "4...........|0.....|......|......|............|4.....|4.....|4.....",
+   "data": [
+    "fetch",
+    "fetch",
+    "fetch",
+    "fetch"
+   ]
+  },
+  {
+   "name": "cpu_iaddr",
+   "wave": "4.....4.....|4.....|4.....|4.....|4.....4.....|4.....|4.....|4.....",
+   "data": [
+    "0x0B6..0x143",
+    "0x142..0x201",
+    "0x201..0x206",
+    "0x202..0x206",
+    "0x202..0x206",
+    "0x202..0x206",
+    "0x202..0x209",
+    "0x0B6..0x20B",
+    "0x06E..0x163",
+    "0x0B6..0x14B"
+   ]
+  },
+  {},
+  {
+   "name": "switch_i",
+   "wave": "=...........|=.....|=.....|=.....|=...........|=.....|=.....|=.....",
+   "data": [
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0xA5",
+    "0xA5",
+    "0xA5",
+    "0xA5"
+   ]
+  },
+  {
+   "name": "led0_o",
+   "wave": "=...........|=.....|=.....|=.....|=...........|=.....|=.....|=.....",
+   "data": [
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0x9A",
+    "0xA5"
+   ]
+  }
+ ],
+ "head": {
+  "text": "Halt and resume of the user CPU through the JTAG pads (switches 10, TCK 1 us) : scenario jtag_cpu_user"
+ },
+ "foot": {
+  "text": "Simulation of sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user (WardRV_fsm, lock-step, SoC clock 12.5 MHz), from 0.92 to 2.26 ms, compressed at each |. write / read: DMI accesses of the debug unit (IR DMI, DR scans of 41 bits + 2 BYPASS bits). Halted, the CPU runs the park loop of the Debug Module: no user ROM fetch (cpu_ics low)."
+ },
+ "config": {
+  "hscale": 1
+ }
+}
