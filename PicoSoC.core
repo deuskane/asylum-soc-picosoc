@@ -85,9 +85,16 @@ CAPI=2:
 #                               (USER_CPU_DEBUG_ENABLE, SUPERVISOR_CPU_DEBUG_ENABLE), TAP of
 #                               fault injection and status (DEBUG_ENABLE); tb : JTAG BFM
 #                               (asylum:verification:uvvm 1.1.0), scenarios pad_mux, jtag_*
+# 2026-11-23  4.2.0    mrosiere Switch code 11 = JTAG over the UART pads (asylum:debug:jtag
+#                               jtag_bitbang, OpenOCD remote_bitbang, JTAG_BAUD_RATE, SRST
+#                               resets the user SoC); TMR vote with vote of sbi_pkg
+#                               (asylum:utils:pkg 1.11.0); PicoSoC_hwla, PicoSoC_tap; cpu_ics in
+#                               the HWLA probes; tb : JTAG BFM chain fields
+#                               (asylum:verification:uvvm 1.2.0), scenarios bitbang_*,
+#                               jtag_last
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.1.0
+name        : asylum:soc:PicoSoC:4.2.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -592,13 +599,15 @@ filesets:
       - hdl/cpu_safety.vhd
       - hdl/PicoSoC_pkg.vhd
       - hdl/PicoSoC_pads.vhd
+      - hdl/PicoSoC_hwla.vhd
+      - hdl/PicoSoC_tap.vhd
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd
       - hdl/PicoSoC_supervisor.vhd
     file_type    : vhdlSource
     logical_name : asylum
     depend       :
-      - ">=asylum:utils:pkg:1.9.0"
+      - ">=asylum:utils:pkg:1.11.0" # vote of sbi_pkg
       - ">=asylum:target:techmap:1.0.0"
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
@@ -612,7 +621,7 @@ filesets:
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
       - ">=asylum:debug:HWLA:3.0.0"
-      - ">=asylum:debug:jtag:1.0.0"
+      - ">=asylum:debug:jtag:1.1.0" # jtag_bitbang
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -638,6 +647,11 @@ filesets:
       - sim/picosoc/tb_PicoSoC_jtag_inject_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_status_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_cpu_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_bitbang_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_bitbang_chain_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_bitbang_inject_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_bitbang_cpu_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_last_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -661,7 +675,7 @@ filesets:
       - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
-      - ">=asylum:verification:uvvm:1.1.0" # jtag_bfm_pkg (JTAG BFM)
+      - ">=asylum:verification:uvvm:1.2.0" # jtag_bfm_pkg (JTAG BFM, chain fields)
 
   #---------------------------------------
   files_ng_medium:
@@ -1639,7 +1653,7 @@ targets:
   sim_soc2_openblaze8_fault_c_user_uart_jtag:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG
+    description  : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG over the UART pads (115200 baud)
     generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1661,7 +1675,7 @@ targets:
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user_uart
-      - TESTS_LIST=pad_mux,jtag_chain,jtag_inject,jtag_status
+      - TESTS_LIST=pad_mux,jtag_chain,jtag_inject,jtag_status,bitbang_chain
 
   #---------------------------------------
   sim_soc2_openblaze8_c_user_uart:
@@ -2914,6 +2928,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -2937,6 +2952,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -2960,6 +2976,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -2983,6 +3000,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -3006,6 +3024,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -3029,6 +3048,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -3052,6 +3072,7 @@ targets:
       - FSYS=25000000
       - FSYS_INT=12500000
       - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
       - SUPERVISOR=true
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
@@ -3064,6 +3085,78 @@ targets:
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
       - TESTS_LIST=jtag_cpu_supervisor
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description  : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+      - SUPERVISOR_CPU_DEBUG_ENABLE=true
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_uart
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TESTS_LIST=bitbang_chain
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description  : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_inject (JTAG over the UART pads, 921600 baud)
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+      - SUPERVISOR_CPU_DEBUG_ENABLE=true
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_uart
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TESTS_LIST=bitbang_inject
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description  : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_cpu (JTAG over the UART pads, 921600 baud)
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_BAUD_RATE=921600
+      - JTAG_BAUD_RATE=921600
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+      - SUPERVISOR_CPU_DEBUG_ENABLE=true
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_uart
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TESTS_LIST=bitbang_cpu
 
   #---------------------------------------
   sim_soc5_wardrv_fsm_c_user_uart_jtag:
@@ -3093,6 +3186,36 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=user_uart
       - TESTS_LIST=pad_mux,jtag_chain,jtag_cpu_user
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_user_jtag_last:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, generics of emu_ng_medium_soc1_wardrv_fsm (the TAP of the user CPU is the only TAP, the last stages of the JTAG chain are wires), JTAG pads and JTAG over the UART pads (921600 baud)
+    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - RESET_POLARITY=low
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - JTAG_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=jtag_last,jtag_chain,bitbang_chain
 
   #---------------------------------------
   sim_soc1x2_wardrv_fsm_c_user_jtag:
@@ -3841,6 +3964,12 @@ parameters :
     default     : 9600
     paramtype   : generic
 
+  JTAG_BAUD_RATE :
+    description : Baud rate of JTAG over the UART pads (switches 11)
+    datatype    : int
+    default     : 115200
+    paramtype   : generic
+
   USER_UART_DEPTH_TX :
     description : UART TX Depth FIFO
     datatype    : int
@@ -3962,7 +4091,7 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 

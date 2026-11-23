@@ -24,6 +24,8 @@
 --                               (cpu_wrapper). JTAG pins, TCK resynchronized,
 --                               to every copy like the other inputs ; TDO and
 --                               ndmreset compared (lock-step) or voted (TMR)
+-- 2026-11-23  1.5      mrosiere TMR : vote of the data bus requests with
+--                               vote of sbi_pkg
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -400,9 +402,7 @@ begin
     iaddr_o        <= ((cpu0_iaddr   (0) and cpu1_iaddr     ) or
                        (cpu1_iaddr       and cpu2_iaddr     ) or
                        (cpu2_iaddr       and cpu0_iaddr  (0)));
-    sbi_ini_o      <= ((cpu0_sbi_ini (0) and cpu1_sbi_ini   ) or
-                       (cpu1_sbi_ini     and cpu2_sbi_ini   ) or
-                       (cpu2_sbi_ini     and cpu0_sbi_ini(0)));
+    sbi_ini_o      <= vote(cpu0_sbi_ini(0), cpu1_sbi_ini, cpu2_sbi_ini); -- sbi_pkg
     interrupt_ack_o<= ((cpu0_it_ack  (0) and cpu1_it_ack    ) or
                        (cpu1_it_ack      and cpu2_it_ack    ) or
                        (cpu2_it_ack      and cpu0_it_ack (0)));

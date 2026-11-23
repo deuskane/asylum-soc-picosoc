@@ -26,19 +26,22 @@
 --                - the timestamps increase and the probes change from a
 --                  sample to the next (but the trigger sample)
 --                - the instruction bus matches the user ROM (copy in the
---                  testbench) : the instruction of a sample is the one of
---                  the previous sample (ROM not enabled) or the ROM word at
---                  its address
+--                  testbench) : the instruction of a sample is the ROM word
+--                  at the address of the previous sample when its fetch
+--                  strobe (ics) is set, else the instruction of the previous
+--                  sample (ROM not enabled)
 --              Sample (HWLA, from the LSB) : probes, then a 16-bit timestamp.
 --              Probes (PicoSoC_top) : cs, re, we, ready, address, write data,
---              read data of the data bus, then address and instruction of the
---              instruction bus.
+--              read data of the data bus, then fetch strobe (ics), address
+--              and instruction of the instruction bus.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-21  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere Probe ics : the instruction of a sample
+--                               follows the fetch strobe of the previous one
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -97,7 +100,7 @@ package body tb_PicoSoC_hwla_pkg is
     -- Sample : probes (fields below, from the LSB), then the timestamp
     constant C_AW           : positive := rom_addr'length;  -- instruction address
     constant C_DW           : positive := rom_data'length;  -- instruction
-    constant C_NB_PROBE     : positive := 4 + 3*8 + C_AW + C_DW;
+    constant C_NB_PROBE     : positive := 4 + 3*8 + 1 + C_AW + C_DW;
     constant C_SAMPLE_BYTES : positive := (C_NB_PROBE + C_TS_WIDTH + 7) / 8;
     constant C_DCS          : natural  := 0;
     constant C_DRE          : natural  := 1;
@@ -106,7 +109,8 @@ package body tb_PicoSoC_hwla_pkg is
     constant C_DADDR        : natural  := 4;
     constant C_DWDATA       : natural  := 12;
     constant C_DRDATA       : natural  := 20;
-    constant C_IADDR        : natural  := 28;
+    constant C_ICS          : natural  := 28;
+    constant C_IADDR        : natural  := 29;
     constant C_IDATA        : natural  := C_IADDR + C_AW;
     constant C_TS           : natural  := C_NB_PROBE;
 
@@ -247,9 +251,15 @@ package body tb_PicoSoC_hwla_pkg is
       rom_addr <= field(v_capture(s-1), C_IADDR, C_AW);
       wait until rising_edge(clk);
       wait until falling_edge(clk);
-      v_rom    := rom_data;
+      -- ROM enabled by ics : the word at the address, else unchanged
+      if v_capture(s-1)(C_ICS) = '1'
+      then
+        v_rom  := rom_data;
+      else
+        v_rom  := field(v_capture(s-1), C_IDATA, C_DW);
+      end if;
       v_idata  := field(v_capture(s), C_IDATA, C_DW);
-      if (v_idata /= v_rom) and (v_idata /= field(v_capture(s-1), C_IDATA, C_DW))
+      if v_idata /= v_rom
       then
         v_err_rom := v_err_rom + 1;
         log(ID_SEQUENCER_SUB, "Sample " & integer'image(s) & " : instruction " & to_hstring(v_idata) & ", ROM " & to_hstring(v_rom), C_TB_SCOPE);

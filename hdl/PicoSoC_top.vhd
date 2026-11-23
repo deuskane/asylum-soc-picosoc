@@ -43,6 +43,12 @@
 --                               the user / supervisor CPUs (cpu_wrapper) in
 --                               the JTAG chain
 -- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
+-- 2026-11-23  2.13     mrosiere HWLA and its UART in PicoSoC_hwla
+-- 2026-11-23  2.14     mrosiere Injection / status TAP in PicoSoC_tap
+-- 2026-11-23  2.15     mrosiere cpu_ics in the HWLA probes
+-- 2026-11-23  2.16     mrosiere Switches 11 : JTAG over the UART pads
+--                               (jtag_bitbang, OpenOCD remote_bitbang,
+--                               JTAG_BAUD_RATE) when the chain has a TAP
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -52,7 +58,6 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
-use     asylum.hwla_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
 
@@ -64,6 +69,7 @@ entity PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -187,6 +193,13 @@ architecture rtl of PicoSoC_top is
   -- debug unit
   signal   user_ndmreset                : std_logic;
   signal   supervisor_ndmreset          : std_logic;
+
+  -- JTAG over the UART pads (switches 11) : UART of jtag_bitbang, its JTAG
+  -- pins (to the chain through PicoSoC_pads). Only with a TAP in the chain
+  constant BITBANG_ENABLE               : boolean := DEBUG_ENABLE or USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE;
+  signal   bitbang_rx                   : std_logic;
+  signal   bitbang_tx                   : std_logic;
+  signal   bitbang_jtag_ini             : jtag_ini_t;
 
   -- Error injection : push buttons (active high) or JTAG (synchronized on clk)
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
@@ -456,6 +469,9 @@ begin  -- architecture rtl
     ,debug_uart_tx_i      => debug_uart_tx
     ,jtag_ini_o           => jtag_ini
     ,jtag_tgt_i           => jtag_tgt
+    ,bitbang_tx_i         => bitbang_tx
+    ,bitbang_rx_o         => bitbang_rx
+    ,bitbang_jtag_i       => bitbang_jtag_ini
     ,spi_sclk_i           => spi_sclk_o
     ,spi_sclk_oe_i        => spi_sclk_oe_o
     ,spi_cs_b_i           => spi_cs_b_o
@@ -470,6 +486,148 @@ begin  -- architecture rtl
     ,i2c_sda_oe_i         => i2c_sda_oe_o
     ,i2c_sda_o            => i2c_sda_i
     );
+
+  -----------------------------------------------------------------------------
+  -- JTAG over the UART pads (switches 11) : jtag_bitbang of asylum-debug-jtag
+  -- behind a UART (8 data bits, no parity, 1 stop bit, JTAG_BAUD_RATE) :
+  -- OpenOCD (remote_bitbang adapter, socat to the serial port) sends one
+  -- byte per change of TCK / TMS / TDI and one per TDO read ('R'),
+  -- jtag_bitbang answers '0' / '1'. Its JTAG pins drive the JTAG chain in
+  -- place of the JTAG pads (PicoSoC_pads) ; SRST ('s', 'u') is not
+  -- connected (reset a CPU with ndmreset of its debug unit) ; TRST* ('t',
+  -- 'u') reaches the TAPs, which ignore it (no TRST*) ; the LED of OpenOCD
+  -- (blink) is not used (no free LED).
+  -- Clock and reset of the supervisor : a reset of the user SoC keeps the
+  -- link. TCK is a register of clk : a clock derived from data for the TAPs
+  -- (see the README for the constraints).
+  -- Only with a TAP in the chain : else the TX pad stays idle (1) and the
+  -- chain sees TCK 0, TMS 1
+  -----------------------------------------------------------------------------
+  gen_bitbang: if BITBANG_ENABLE
+  generate
+    -- Baud tick every FSYS_INT/JTAG_BAUD_RATE cycles of clk
+    constant BITBANG_BAUD_TICK_MAX : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/JTAG_BAUD_RATE-1, 16));
+
+    signal   rx_b                : std_logic;
+    signal   rx_b_sync           : std_logic;
+    signal   rx_sync             : std_logic;
+    signal   rx_tick             : std_logic;
+    signal   rx_tick_half        : std_logic;
+    signal   rx_tick_en          : std_logic;
+    signal   tx_tick             : std_logic;
+    signal   cmd_tdata           : std_logic_vector(8-1 downto 0);
+    signal   cmd_tvalid          : std_logic;
+    signal   cmd_tready          : std_logic;
+    signal   answer_tdata        : std_logic_vector(8-1 downto 0);
+    signal   answer_tvalid       : std_logic;
+    signal   answer_tready       : std_logic;
+  begin
+    -- RX synchronized on clk (uart_rx_axis expects a synchronous input).
+    -- sync2dffrn is reset to '0' : the inverted line is synchronized, so
+    -- that RX is idle ('1') during the reset
+    rx_b    <= not bitbang_rx;
+
+    ins_bitbang_rx_sync : sync2dffrn
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,d_i                     => rx_b
+      ,q_o                     => rx_b_sync
+      );
+
+    rx_sync <= not rx_b_sync;
+
+    ins_bitbang_rx_baud : uart_baud_rate_gen
+      generic map
+      (BAUD_TICK_CNT_WIDTH     => 16
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,baud_tick_en_i          => rx_tick_en
+      ,baud_tick_o             => rx_tick
+      ,baud_tick_half_o        => rx_tick_half
+      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
+      );
+
+    ins_bitbang_rx : uart_rx_axis
+      generic map
+      (WIDTH                   => 8
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,uart_rx_i               => rx_sync
+      ,m_axis_tdata_o          => cmd_tdata
+      ,m_axis_parity_error_o   => open
+      ,m_axis_tvalid_o         => cmd_tvalid
+      ,m_axis_tready_i         => cmd_tready
+      ,baud_tick_i             => rx_tick
+      ,baud_tick_half_i        => rx_tick_half
+      ,baud_tick_en_o          => rx_tick_en
+      ,parity_enable_i         => '0'
+      ,parity_odd_i            => '0'
+      ,last_parity_error_o     => open
+      ,err_overrun_o           => open
+      ,err_parity_o            => open
+      ,err_framing_o           => open
+      ,err_break_o             => open
+      ,debug_o                 => open
+      );
+
+    ins_bitbang : jtag_bitbang
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,s_axis_tdata_i          => cmd_tdata
+      ,s_axis_tvalid_i         => cmd_tvalid
+      ,s_axis_tready_o         => cmd_tready
+      ,m_axis_tdata_o          => answer_tdata
+      ,m_axis_tvalid_o         => answer_tvalid
+      ,m_axis_tready_i         => answer_tready
+      ,jtag_ini_o              => bitbang_jtag_ini
+      ,jtag_tgt_i              => jtag_tgt
+      ,srst_o                  => open
+      ,blink_o                 => open
+      );
+
+    ins_bitbang_tx_baud : uart_baud_rate_gen
+      generic map
+      (BAUD_TICK_CNT_WIDTH     => 16
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,baud_tick_en_i          => '1'
+      ,baud_tick_o             => tx_tick
+      ,baud_tick_half_o        => open
+      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
+      );
+
+    ins_bitbang_tx : uart_tx_axis
+      generic map
+      (WIDTH                   => 8
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,s_axis_tdata_i          => answer_tdata
+      ,s_axis_tvalid_i         => answer_tvalid
+      ,s_axis_tready_o         => answer_tready
+      ,uart_tx_o               => bitbang_tx
+      ,uart_cts_b_i            => '0'
+      ,baud_tick_i             => tx_tick
+      ,parity_enable_i         => '0'
+      ,parity_odd_i            => '0'
+      ,debug_o                 => open
+      );
+  end generate gen_bitbang;
+
+  gen_bitbang_b: if not BITBANG_ENABLE
+  generate
+    bitbang_tx       <= '1';                                              -- UART idle level
+    bitbang_jtag_ini <= (tck => '0', tms => '1', tdi => '1', trst_n => '1'); -- No TAP to drive
+  end generate gen_bitbang_b;
 
   -----------------------------------------------------------------------------
   -- JTAG chain
@@ -499,7 +657,8 @@ begin  -- architecture rtl
     severity failure;
 
   -----------------------------------------------------------------------------
-  -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
+  -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
+  -- in PicoSoC_hwla
   -- * Trigger : a difference between the redundant CPUs (OR of diff)
   -- * Captures sent byte per byte on debug_uart_tx_o : UART 115200 baud,
   --   8 bits, no parity, 1 stop bit (tools/hwla2vcd.py of asylum-debug-hwla)
@@ -508,15 +667,14 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_debug: if DEBUG_ENABLE = True
   generate
-    -- Baud tick every FSYS_INT/115200 cycles of clk
-    constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/115200-1, 16));
-
     -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
-    -- data, read data), then instruction bus (address, instruction).
+    -- data, read data), then instruction bus (fetch strobe ics, address,
+    -- instruction).
     -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i.
     -- One term per field ('length does not exist on the std_logic fields)
     signal   hwla_probe          : std_logic_vector(debug_user.cpu_idata 'length +
                                                     debug_user.cpu_iaddr 'length +
+                                                    1 +                             -- cpu_ics
                                                     debug_user.cpu_drdata'length +
                                                     debug_user.cpu_dwdata'length +
                                                     debug_user.cpu_daddr 'length +
@@ -526,13 +684,10 @@ begin  -- architecture rtl
                                                     1                               -- cpu_dcs
                                                     -1 downto 0);
     signal   hwla_trigger        : std_logic;
-    signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
-    signal   hwla_tvalid         : std_logic;
-    signal   hwla_tready         : std_logic;
-    signal   hwla_baud_tick      : std_logic;
   begin
     hwla_probe   <= debug_user.cpu_idata
                   & debug_user.cpu_iaddr
+                  & debug_user.cpu_ics
                   & debug_user.cpu_drdata
                   & debug_user.cpu_dwdata
                   & debug_user.cpu_daddr
@@ -544,60 +699,16 @@ begin  -- architecture rtl
     hwla_trigger <= '1' when diff /= "000" else
                     '0';
 
-    ins_hwla : hwla
+    ins_hwla : PicoSoC_hwla
       generic map
-      (DEPTH                => 64    -- Small RAM (64 x 72 or 86 bits) : a few tens of instructions
-      ,PRE_TRIGGER          => 32    -- Half of the capture before the trigger
-      ,TIMESTAMP_WIDTH      => 16    -- A sample at least every 65536 cycles
-      ,CHANGE_ONLY          => true  -- A CPU waiting on the bus fills no sample
-      ,TDATA_WIDTH          => 8     -- One byte per beat, for the UART
-      )
-      port map
-      (trig_clk_i           => clk
-      ,trig_arst_b_i        => arst_b_supervisor
-      ,arm_i                => '1'   -- A new capture after each extraction
-      ,trigger_i            => hwla_trigger
-      ,probe_i              => hwla_probe
-      ,armed_o              => open
-      ,triggered_o          => open
-      ,extract_clk_i        => clk
-      ,extract_arst_b_i     => arst_b_supervisor
-      ,m_axis_tdata_o       => hwla_tdata
-      ,m_axis_tvalid_o      => hwla_tvalid
-      ,m_axis_tready_i      => hwla_tready
-      ,m_axis_tlast_o       => open
-      );
-
-    ins_uart_baud_rate_gen : uart_baud_rate_gen
-      generic map
-      (BAUD_TICK_CNT_WIDTH     => 16
-      )
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,baud_tick_en_i          => '1'
-      ,baud_tick_o             => hwla_baud_tick
-      ,baud_tick_half_o        => open
-      ,cfg_baud_tick_cnt_max_i => HWLA_BAUD_TICK_MAX
-      );
-
-    -- Transmitter only : no parity, CTS ignored
-    ins_uart_tx_axis : uart_tx_axis
-      generic map
-      (WIDTH                => 8
+      (FSYS_INT             => FSYS_INT
       )
       port map
       (clk_i                => clk
       ,arst_b_i             => arst_b_supervisor
-      ,s_axis_tdata_i       => hwla_tdata
-      ,s_axis_tvalid_i      => hwla_tvalid
-      ,s_axis_tready_o      => hwla_tready
+      ,probe_i              => hwla_probe
+      ,trigger_i            => hwla_trigger
       ,uart_tx_o            => debug_uart_tx
-      ,uart_cts_b_i         => '0'
-      ,baud_tick_i          => hwla_baud_tick
-      ,parity_enable_i      => '0'
-      ,parity_odd_i         => '0'
-      ,debug_o              => open
       );
   end generate gen_debug;
 
@@ -607,114 +718,36 @@ begin  -- architecture rtl
   end generate gen_debug_b;
 
   -----------------------------------------------------------------------------
-  -- Debug : JTAG TAP of fault injection and status, last TAP of the chain
-  -- (IDCODE PICOSOC_JTAG_IDCODE_INJECT), its instruction decoder and 2 test
-  -- data registers (TCK domain) :
-  -- * PICOSOC_JTAG_IR_INJECT : jtag_tdr_inout, 3 bits : writes the error
-  --   injection (bit i : CPU i, like inject_error_i), reads diff
-  -- * PICOSOC_JTAG_IR_STATUS : jtag_tdr_in, reads (from the LSB) led0_o,
-  --   led1_o, led_diff_o, switch_i, then the resets : user SoC, supervisor
-  --   SoC (1 : running)
-  -- The read values are quasi-static (LEDs, switches, sticky diff, resets) :
-  -- sampled directly in Capture-DR, without synchronizer (a value that
-  -- changes during the capture may give a mix of old and new bits)
-  -- The injection is synchronized on clk (2 flip-flops per bit)
+  -- Debug : JTAG TAP of fault injection and status, last TAP of the chain,
+  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK domain) :
+  -- * PICOSOC_JTAG_IR_INJECT : writes the error injection (bit i : CPU i,
+  --   like inject_error_i, synchronized on clk), reads diff
+  -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,
+  --   led_diff_o, switch_i, then the resets : user SoC, supervisor SoC
+  --   (1 : running)
   -----------------------------------------------------------------------------
   gen_debug_jtag: if DEBUG_ENABLE = True
   generate
     signal   inject_ini          : jtag_ini_t;
     signal   inject_tgt          : jtag_tgt_t;
-    signal   inject_tck          : std_logic;
-    signal   inject_trst_b       : std_logic;
-    signal   inject_tlr          : std_logic;
-    signal   inject_ir           : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0);
-    signal   inject_capture_dr   : std_logic;
-    signal   inject_shift_dr     : std_logic;
-    signal   inject_update_dr    : std_logic;
-    signal   inject_tdi          : std_logic;
-    signal   inject_user_tdo_en  : std_logic;
-    signal   inject_user_tdo     : std_logic;
-    signal   sel_inject          : std_logic;
-    signal   sel_status          : std_logic;
-    signal   tdo_inject          : std_logic;
-    signal   tdo_status          : std_logic;
-    signal   inject_tck_domain   : std_logic_vector(3-1 downto 0);
+    -- A signal : GHDL 6.0.0 crashes on an expression actual of status_i
     signal   status              : std_logic_vector(2+USER_NB_SWITCH+3+USER_NB_LED1+USER_NB_LED0-1 downto 0);
   begin
     inject_ini    <= (tck => jtag_ini.tck, tdi => jtag_chain(2).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
     jtag_chain(3) <= (tdo => inject_tgt.tdo, tdo_en => inject_tgt.tdo_en or jtag_chain(2).tdo_en);
 
-    ins_jtag_tap : jtag_tap
-      generic map
-      (IR_WIDTH             => PICOSOC_JTAG_IR_WIDTH
-      ,IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_INJECT
-      ,TRST_ENABLE          => false
-      )
-      port map
-      (arst_b_i             => arst_b_supervisor
-      ,jtag_ini_i           => inject_ini
-      ,jtag_tgt_o           => inject_tgt
-      ,tck_o                => inject_tck
-      ,trst_b_o             => inject_trst_b
-      ,tlr_o                => inject_tlr
-      ,ir_o                 => inject_ir
-      ,capture_dr_o         => inject_capture_dr
-      ,shift_dr_o           => inject_shift_dr
-      ,update_dr_o          => inject_update_dr
-      ,tdi_o                => inject_tdi
-      ,user_tdo_en_i        => inject_user_tdo_en
-      ,user_tdo_i           => inject_user_tdo
-      );
-
-    -- Instruction decoder
-    sel_inject         <= '1' when inject_ir = PICOSOC_JTAG_IR_INJECT else
-                          '0';
-    sel_status         <= '1' when inject_ir = PICOSOC_JTAG_IR_STATUS else
-                          '0';
-    inject_user_tdo_en <= sel_inject or sel_status;
-    inject_user_tdo    <= tdo_inject when sel_inject = '1' else
-                          tdo_status;
-
-    ins_jtag_tdr_inject : jtag_tdr_inout
-      port map
-      (tck_i                => inject_tck
-      ,trst_b_i             => inject_trst_b
-      ,tlr_i                => inject_tlr
-      ,sel_i                => sel_inject
-      ,capture_dr_i         => inject_capture_dr
-      ,shift_dr_i           => inject_shift_dr
-      ,update_dr_i          => inject_update_dr
-      ,tdi_i                => inject_tdi
-      ,tdo_o                => tdo_inject
-      ,data_i               => diff
-      ,data_o               => inject_tck_domain
-      );
-
     status <= arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
 
-    ins_jtag_tdr_status : jtag_tdr_in
+    ins_tap : PicoSoC_tap
       port map
-      (tck_i                => inject_tck
-      ,trst_b_i             => inject_trst_b
-      ,sel_i                => sel_status
-      ,capture_dr_i         => inject_capture_dr
-      ,shift_dr_i           => inject_shift_dr
-      ,update_dr_i          => inject_update_dr
-      ,tdi_i                => inject_tdi
-      ,tdo_o                => tdo_status
-      ,data_i               => status
+      (clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,jtag_ini_i           => inject_ini
+      ,jtag_tgt_o           => inject_tgt
+      ,diff_i               => diff
+      ,status_i             => status
+      ,inject_error_o       => inject_error_jtag
       );
-
-    gen_inject_sync: for i in 0 to 3-1
-    generate
-      ins_inject_sync : sync2dffrn
-        port map
-        (clk_i              => clk
-        ,arst_b_i           => arst_b_supervisor
-        ,d_i                => inject_tck_domain(i)
-        ,q_o                => inject_error_jtag(i)
-        );
-    end generate gen_inject_sync;
   end generate gen_debug_jtag;
 
   gen_debug_jtag_b: if DEBUG_ENABLE = False

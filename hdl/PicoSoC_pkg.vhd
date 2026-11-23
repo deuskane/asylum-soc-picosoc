@@ -27,6 +27,12 @@
 -- 2026-11-22  1.10     mrosiere JTAG : IDCODE of the CPU debuggers,
 --                               components with the JTAG ports
 -- 2026-11-23  1.11     mrosiere PicoSoC_pads component
+-- 2026-11-23  1.12     mrosiere PicoSoC_hwla component
+-- 2026-11-23  1.13     mrosiere PicoSoC_tap component
+-- 2026-11-23  1.14     mrosiere PicoSoC_user_debug_t : cpu_ics (instruction
+--                               fetch strobe of the user CPU)
+-- 2026-11-23  1.15     mrosiere JTAG over the UART (switches 11) : PicoSoC_pads
+--                               and PicoSoC_top components
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -103,6 +109,7 @@ package PicoSoC_pkg is
 
   type PicoSoC_user_debug_t is record
     arst_b      : std_logic;
+    cpu_ics     : std_logic;
     cpu_iaddr   : std_logic_vector(ROM_user_ADDR_WIDTH-1 downto 0);
     cpu_idata   : std_logic_vector(ROM_user_DATA_WIDTH-1 downto 0);
                 
@@ -142,6 +149,23 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_hwla is
+  generic
+    (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    );
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic
+
+    -- Probes (any width) and trigger
+    ;probe_i          : in  std_logic_vector
+    ;trigger_i        : in  std_logic
+
+    -- Captures : UART 115200 8N1
+    ;uart_tx_o        : out std_logic
+    );
+end component PicoSoC_hwla;
+
 component PicoSoC_pads is
   generic
     (USER_SPI_NB_IO   : natural  := 8          -- SPI data lanes with a pad (up to 8)
@@ -171,9 +195,14 @@ component PicoSoC_pads is
     ;uart_rts_b_i     : in    std_logic
     -- HWLA UART (TX only)
     ;debug_uart_tx_i  : in    std_logic
-    -- JTAG chain
+    -- JTAG chain : driven by the JTAG pads (switches 10) or by jtag_bitbang
+    -- (switches 11)
     ;jtag_ini_o       : out   jtag_ini_t
     ;jtag_tgt_i       : in    jtag_tgt_t
+    -- JTAG over the UART (jtag_bitbang and its UART)
+    ;bitbang_tx_i     : in    std_logic
+    ;bitbang_rx_o     : out   std_logic
+    ;bitbang_jtag_i   : in    jtag_ini_t
     -- SPI (8 data lanes of the SPI)
     ;spi_sclk_i       : in    std_logic
     ;spi_sclk_oe_i    : in    std_logic
@@ -226,6 +255,24 @@ component PicoSoC_supervisor is
      );
 end component PicoSoC_supervisor;
 
+component PicoSoC_tap is
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic  -- Power-on reset of the TAP, reset of the synchronizers
+
+    -- JTAG pins of this TAP (one stage of the JTAG chain)
+    ;jtag_ini_i       : in  jtag_ini_t
+    ;jtag_tgt_o       : out jtag_tgt_t
+
+    -- Values read through JTAG
+    ;diff_i           : in  std_logic_vector(3-1 downto 0)
+    ;status_i         : in  std_logic_vector
+
+    -- Error injection written through JTAG (synchronized on clk_i, active high)
+    ;inject_error_o   : out std_logic_vector(3-1 downto 0)
+    );
+end component PicoSoC_tap;
+
 component PicoSoC_top is
   generic
     (FSYS                        : positive := 50_000_000
@@ -234,6 +281,7 @@ component PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 

@@ -6,12 +6,14 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: JTAG helpers of the tb_PicoSoC scenarios, on the JTAG BFM of
---              asylum-verification-uvvm (jtag_bfm_pkg). The BFM scans one
---              TAP : the helpers scan the chain of PicoSoC_top (cfg.jtag),
---              with the other TAPs in BYPASS
---              * chain_ir : IR scan of every TAP (BYPASS but the target)
---              * chain_dr : DR scan of the target TAP, plus one BYPASS bit
---                per other TAP
+--              asylum-verification-uvvm (jtag_bfm_pkg)
+--              * jtag_config(cfg, tap) : BFM configuration of the TAP tap of
+--                the chain of PicoSoC_top (cfg.jtag), the other TAPs in
+--                BYPASS (head : the TAPs between the target and TDO, tail :
+--                the TAPs between TDI and the target, as SVF HIR / TIR /
+--                HDR / TDR)
+--              * jtag_config(nb_tap) : the whole chain as one target (IR of
+--                every TAP, Capture-IR monitor)
 --              The positions count from TDI : the first TAP after TDI is 0,
 --              its bits are shifted in last (MSB of the vectors) and out
 --              last
@@ -26,6 +28,8 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere TCK 1 us (resynchronized in cpu_safety), one
 --                               user CPU TAP per cluster
+-- 2026-11-23  1.2      mrosiere Chain fields of the BFM (asylum:verification:
+--                               uvvm 1.2.0) : chain_ir / chain_dr removed
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -48,12 +52,18 @@ use     work.tb_PicoSoC_bfm_pkg.all;
 package tb_PicoSoC_jtag_pkg is
 
   constant C_JTAG_IR_IDCODE : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00001";
-  constant C_JTAG_IR_BYPASS : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "11111";
 
-  -- BFM configuration for a chain of nb_tap TAPs : TCK 1 us, IR scan of
-  -- the IRs of every TAP
+  -- BFM configuration of a chain of nb_tap TAPs scanned as one target : TCK
+  -- 1 us, IR of every TAP
   function jtag_config
     (nb_tap   : positive
+    ) return t_jtag_bfm_config;
+
+  -- BFM configuration of the TAP tap of the chain of cfg : TCK 1 us, its
+  -- IR, the other TAPs in BYPASS (head and tail bits)
+  function jtag_config
+    (cfg      : t_tb_cfg
+    ;tap      : natural
     ) return t_jtag_bfm_config;
 
   -- Chain of PicoSoC_top with the TAPs present (CPU debuggers of nb_user
@@ -78,26 +88,6 @@ package tb_PicoSoC_jtag_pkg is
   -- Test-Logic-Reset (5 TCK with TMS = 1), then Run-Test/Idle
   procedure chain_reset
     (constant cfg      : in    t_tb_cfg
-    ;signal   jtag_if  : inout t_jtag_if
-    );
-
-  -- IR scan : ir to the TAP tap, BYPASS to the others
-  procedure chain_ir
-    (constant cfg      : in    t_tb_cfg
-    ;constant tap      : in    natural
-    ;constant ir       : in    std_logic_vector
-    ;constant msg      : in    string
-    ;signal   jtag_if  : inout t_jtag_if
-    );
-
-  -- DR scan of the TAP tap (the others in BYPASS) : data shifted in, the
-  -- captured value of the same width in data_out
-  procedure chain_dr
-    (constant cfg      : in    t_tb_cfg
-    ;constant tap      : in    natural
-    ;constant data     : in    std_logic_vector
-    ;variable data_out : out   std_logic_vector
-    ;constant msg      : in    string
     ;signal   jtag_if  : inout t_jtag_if
     );
 
@@ -142,6 +132,19 @@ package body tb_PicoSoC_jtag_pkg is
     v_config.tck_period  := 1 us;
     v_config.ir_width    := PICOSOC_JTAG_IR_WIDTH*nb_tap;
     v_config.trst_enable := false;  -- No TRST* pad
+    return v_config;
+  end function;
+
+  function jtag_config
+    (cfg      : t_tb_cfg
+    ;tap      : natural
+    ) return t_jtag_bfm_config is
+    variable v_config : t_jtag_bfm_config := jtag_config(1);
+  begin
+    v_config.head_ir := PICOSOC_JTAG_IR_WIDTH*(cfg.jtag.nb_tap-1-tap);
+    v_config.tail_ir := PICOSOC_JTAG_IR_WIDTH*tap;
+    v_config.head_dr := cfg.jtag.nb_tap-1-tap;
+    v_config.tail_dr := tap;
     return v_config;
   end function;
 
@@ -213,50 +216,6 @@ package body tb_PicoSoC_jtag_pkg is
                config  => jtag_config(cfg.jtag.nb_tap));
   end procedure;
 
-  procedure chain_ir
-    (constant cfg      : in    t_tb_cfg
-    ;constant tap      : in    natural
-    ;constant ir       : in    std_logic_vector
-    ;constant msg      : in    string
-    ;signal   jtag_if  : inout t_jtag_if
-    ) is
-    constant C_LAST    : natural := cfg.jtag.nb_tap-1;
-    variable v_ir      : std_logic_vector(PICOSOC_JTAG_IR_WIDTH*cfg.jtag.nb_tap-1 downto 0);
-  begin
-    -- TAP p : bits of position C_LAST-p from the LSB
-    for p in 0 to C_LAST loop
-      v_ir(PICOSOC_JTAG_IR_WIDTH*(C_LAST-p+1)-1 downto PICOSOC_JTAG_IR_WIDTH*(C_LAST-p)) := ir when p = tap else C_JTAG_IR_BYPASS;
-    end loop;
-    jtag_write_ir(ir_value => v_ir,
-                  msg      => msg,
-                  jtag_if  => jtag_if,
-                  scope    => C_TB_SCOPE,
-                  config   => jtag_config(cfg.jtag.nb_tap));
-  end procedure;
-
-  procedure chain_dr
-    (constant cfg      : in    t_tb_cfg
-    ;constant tap      : in    natural
-    ;constant data     : in    std_logic_vector
-    ;variable data_out : out   std_logic_vector
-    ;constant msg      : in    string
-    ;signal   jtag_if  : inout t_jtag_if
-    ) is
-    -- BYPASS bits : tap before the target (MSB side), the others after it
-    constant C_AFTER   : natural := cfg.jtag.nb_tap-1-tap;
-    variable v_in      : std_logic_vector(data'length+cfg.jtag.nb_tap-1-1 downto 0) := (others => '0');
-    variable v_out     : std_logic_vector(v_in'range);
-  begin
-    v_in(data'length+C_AFTER-1 downto C_AFTER) := data;
-    jtag_scan_dr(data_value => v_in,
-                 data_out   => v_out,
-                 msg        => msg,
-                 jtag_if    => jtag_if,
-                 scope      => C_TB_SCOPE,
-                 config     => jtag_config(cfg.jtag.nb_tap));
-    data_out := v_out(data'length+C_AFTER-1 downto C_AFTER);
-  end procedure;
-
   -----------------------------------------------------------------------------
   -- RISC-V DTM
   -----------------------------------------------------------------------------
@@ -274,8 +233,8 @@ package body tb_PicoSoC_jtag_pkg is
     ;signal   jtag_if  : inout t_jtag_if
     ) is
   begin
-    chain_ir(cfg, tap, JTAG_IR_DTMCS, "dtmcs", jtag_if);
-    chain_dr(cfg, tap, data, data_out, "dtmcs", jtag_if);
+    jtag_write_ir(ir_value => JTAG_IR_DTMCS, msg => "dtmcs", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, tap));
+    jtag_scan_dr (data_value => data, data_out => data_out, msg => "dtmcs", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, tap));
   end procedure;
 
   -- Request, then nop scans until the result is not busy ; busy : dmireset,
@@ -294,19 +253,24 @@ package body tb_PicoSoC_jtag_pkg is
     variable v_dmi     : std_logic_vector(DMI_ABITS+32+2-1 downto 0);
     variable v_dtmcs   : std_logic_vector(32-1 downto 0);
   begin
-    chain_ir(cfg, tap, JTAG_IR_DMI, "dmi", jtag_if);
+    jtag_write_ir(ir_value => JTAG_IR_DMI, msg => "dmi", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, tap));
     for retry in 1 to 100 loop
-      chain_dr (cfg, tap, addr & wdata & v_op, v_dmi, "dmi", jtag_if);
+      jtag_scan_dr(data_value => addr & wdata & v_op,
+                   data_out   => v_dmi,
+                   msg        => "dmi",
+                   jtag_if    => jtag_if,
+                   scope      => C_TB_SCOPE,
+                   config     => jtag_config(cfg, tap));
       jtag_idle(num_cycles => v_idle,
                 msg        => "after the dmi scan",
                 jtag_if    => jtag_if,
                 scope      => C_TB_SCOPE,
-                config     => jtag_config(cfg.jtag.nb_tap));
+                config     => jtag_config(cfg, tap));
       if v_dmi(1 downto 0) = DMI_OP_BUSY
       then
         log(ID_BFM, "DMI busy : dmireset, " & integer'image(v_idle+1) & " idle cycles", C_TB_SCOPE);
         dtmcs_scan(cfg, tap, x"00010000", v_dtmcs, jtag_if);
-        chain_ir  (cfg, tap, JTAG_IR_DMI, "dmi", jtag_if);
+        jtag_write_ir(ir_value => JTAG_IR_DMI, msg => "dmi", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, tap));
         v_idle := v_idle + 1;
       elsif v_op = DMI_OP_NOP
       then

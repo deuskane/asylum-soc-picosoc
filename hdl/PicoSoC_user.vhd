@@ -43,6 +43,7 @@
 -- 2026-11-21  3.15     mrosiere Debug record : data of the CPU0 bus
 -- 2026-11-23  3.16     mrosiere CPU_DEBUG_ENABLE : debug unit of the CPU of
 --                               every cluster, JTAG chain of the clusters
+-- 2026-11-23  3.17     mrosiere Debug record : cpu_ics
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -367,6 +368,7 @@ begin  -- architecture rtl
     gen_cpu0_debug :
     if i = 0 
     generate
+      debug_o.cpu_ics     <= cpu_ics                          ;
       debug_o.cpu_iaddr   <= cpu_iaddr                        ;
       debug_o.cpu_idata   <= cpu_idata                        ;
       debug_o.cpu_dcs     <= cpu_sbi_ini.cs                   ;

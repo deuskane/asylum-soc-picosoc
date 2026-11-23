@@ -47,6 +47,9 @@
 -- 2026-11-22  2.7      mrosiere USER_CPU_DEBUG_ENABLE,
 --                               SUPERVISOR_CPU_DEBUG_ENABLE (CPU debuggers in
 --                               the JTAG chain)
+-- 2026-11-23  2.8      mrosiere JTAG_BAUD_RATE : JTAG over the UART pads
+--                               (switches 11), answers of jtag_bitbang
+--                               received on the TX pad (p_bitbang)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -75,6 +78,7 @@ library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
 use     work.tb_PicoSoC_tests_pkg.all;
 use     work.tb_PicoSoC_jtag_pkg.all;
+use     work.tb_PicoSoC_bitbang_pkg.all;
 
 entity tb_PicoSoC is
   generic
@@ -82,6 +86,7 @@ entity tb_PicoSoC is
     ;FSYS_INT              : positive := 50_000_000
     ;USER_NB_CPU           : positive := 1
     ;USER_BAUD_RATE        : integer  := 115200
+    ;JTAG_BAUD_RATE        : integer  := 115200      -- JTAG over the UART pads (switches 11)
     ;SUPERVISOR            : boolean  := True
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
@@ -122,6 +127,7 @@ architecture tb of tb_PicoSoC is
 
   -- Bit time of the DUT : the baud tick counter divides the internal clock by FSYS_INT/USER_BAUD_RATE
   constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
+  constant C_JTAG_BIT_TIME         : time     := (FSYS_INT/JTAG_BAUD_RATE) * (1 sec / FSYS_INT);
 
   -- JTAG chain of the DUT
   constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE, DEBUG_ENABLE);
@@ -146,6 +152,22 @@ architecture tb of tb_PicoSoC is
       num_stop_bits                         => STOP_BITS_ONE,
       parity                                => PARITY_NONE,
       timeout                               => TB_WATCHDOG * TB_PERIOD,
+      timeout_severity                      => error,
+      num_bytes_to_log_before_expected_data => 10,
+      match_strictness                      => MATCH_EXACT,
+      id_for_bfm                            => ID_NEVER,
+      id_for_bfm_wait                       => ID_NEVER,
+      id_for_bfm_poll                       => ID_NEVER,
+      id_for_bfm_poll_summary               => ID_NEVER,
+      error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
+      ),
+    bitbang    => (
+      bit_time                              => C_JTAG_BIT_TIME,
+      num_data_bits                         => 8,
+      idle_state                            => '1',
+      num_stop_bits                         => STOP_BITS_ONE,
+      parity                                => PARITY_NONE,
+      timeout                               => 0 ns,          -- p_bitbang waits for the answers
       timeout_severity                      => error,
       num_bytes_to_log_before_expected_data => 10,
       match_strictness                      => MATCH_EXACT,
@@ -184,6 +206,11 @@ architecture tb of tb_PicoSoC is
   signal  uart_cts_b               : std_logic := '0';
   signal  jtag_if                  : t_jtag_if := init_jtag_if_signals;
   signal  jtag_mode                : boolean;
+  -- JTAG over the UART (switches 11) : the cable is a UART, the answers of
+  -- jtag_bitbang are received on the TX pad
+  signal  bitbang_mode             : boolean;
+  signal  bitbang_off              : std_logic;
+  signal  bitbang                  : t_bitbang_rsp := C_BITBANG_RSP_INIT;
 
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
@@ -206,6 +233,7 @@ begin  -- architecture tb
     ,FSYS_INT              => FSYS_INT
     ,USER_NB_CPU           => USER_NB_CPU
     ,USER_BAUD_RATE        => USER_BAUD_RATE
+    ,JTAG_BAUD_RATE        => JTAG_BAUD_RATE
     ,USER_NB_SWITCH        => USER_NB_SWITCH
     ,USER_NB_LED0          => USER_NB_LED0
     ,USER_NB_LED1          => USER_NB_LED1
@@ -260,6 +288,37 @@ begin  -- architecture tb
   uart_cts_b_io <= 'Z'           when jtag_mode else uart_cts_b;
   uart_rts_b_io <= jtag_if.tms   when jtag_mode else 'Z';
   jtag_if.tdo   <= uart_cts_b_io when jtag_mode else 'Z';
+
+  -----------------------------------------------------------------------------
+  -- JTAG over the UART (switches 11) : each byte of the TX pad is an answer
+  -- of jtag_bitbang to 'R' ('0' / '1'), kept in bitbang (count, last bits)
+  -----------------------------------------------------------------------------
+  bitbang_mode  <= switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2) = "11";
+  bitbang_off   <= '0' when bitbang_mode else '1';
+
+  p_bitbang : process
+    variable v_byte    : std_logic_vector(8-1 downto 0);
+  begin
+    if not (bitbang_mode and uart_tx_io = '1')
+    then
+      wait until bitbang_mode and uart_tx_io = '1';  -- idle line in the mode 11
+    end if;
+    uart_receive(data_value     => v_byte,
+                 msg            => "answer of jtag_bitbang",
+                 rx             => uart_tx_io,
+                 terminate_loop => bitbang_off,
+                 config         => C_CFG.bitbang,
+                 scope          => C_SCOPE);
+    if bitbang_off = '0'
+    then
+      if v_byte /= x"30" and v_byte /= x"31"
+      then
+        alert(ERROR, "jtag_bitbang : answer x" & to_hstring(v_byte) & " is not '0' or '1'", C_SCOPE);
+      end if;
+      bitbang <= (cnt => bitbang.cnt + 1,
+                  tdo => bitbang.tdo(C_BITBANG_DEPTH-2 downto 0) & v_byte(0));
+    end if;
+  end process;
 
   -- Capture-IR value of the whole chain ("00001" per TAP) at each IR scan
   gen_jtag_monitor:
@@ -420,7 +479,7 @@ begin  -- architecture tb
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
       run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
-               uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, i2c_if, pwm_o,
+               uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, bitbang, i2c_if, pwm_o,
                debug_uart_tx_o, rom_addr, rom_data);
     end loop;
 

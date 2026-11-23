@@ -10,7 +10,8 @@
 --              pads to one function
 --              * 00 : user UART (banner, echo of a byte), RTS* driven,
 --                CTS* not driven by the SoC
---              * 11 : user UART (echo of a byte), RTS* driven
+--              * 11 : JTAG over the UART : TX pad driven by the UART of
+--                jtag_bitbang (idle), CTS* and RTS* not driven
 --              * 01 : HWLA UART : the loop lines of the firmware (switch(5))
 --                do not reach the TX pad, which stays idle ; the firmware
 --                does not wait on CTS* (LED0 follows the switches) ; CTS*
@@ -30,6 +31,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere Switches 11 : JTAG over the UART (was the
+--                               user UART)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -122,12 +125,12 @@ package body tb_PicoSoC_pad_mux_pkg is
     uart_send (x"3F", "00 : byte to echo", uart_rx, cfg);
     uart_check(x"3F", "00 : echo of the user UART", uart_tx, cfg);
 
-    -- 11 : user UART
+    -- 11 : JTAG over the UART : the UART of jtag_bitbang drives the TX pad
+    -- (idle), CTS* and RTS* are not driven, the firmware does not wait
     set_switch(x"C0");
-    check_rts_driven("11");
-    check_cts_input ("11");
-    uart_send (x"C3", "11 : byte to echo", uart_rx, cfg);
-    uart_check(x"C3", "11 : echo of the user UART", uart_tx, cfg);
+    check_value(uart_tx = '1', ERROR, "11 : TX pad driven by the UART of jtag_bitbang (idle, " & std_logic'image(uart_tx) & ")", C_TB_SCOPE);
+    check_value(rts_pad = 'H', ERROR, "11 : RTS* pad not driven", C_TB_SCOPE);
+    check_cts_input("11");
 
     -- 01 : HWLA UART. The firmware prints its loop lines (switch(5)) : the
     -- pad stays idle, the firmware does not wait (CTS* = 0)

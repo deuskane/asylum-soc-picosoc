@@ -22,6 +22,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere Target TAP with the chain fields of the BFM
+--                               (jtag_config(cfg, tap))
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -110,8 +112,8 @@ package body tb_PicoSoC_jtag_chain_pkg is
 
     -- IDCODE of each TAP alone : position of the TAP in the chain
     for p in 0 to C_NB-1 loop
-      chain_ir   (cfg, p, C_JTAG_IR_IDCODE, "IDCODE of TAP " & integer'image(p), jtag_if);
-      chain_dr   (cfg, p, x"00000000", v_id, "IDCODE of TAP " & integer'image(p), jtag_if);
+      jtag_write_ir(ir_value => C_JTAG_IR_IDCODE, msg => "IDCODE of TAP " & integer'image(p), jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, p));
+      jtag_scan_dr (data_value => x"00000000", data_out => v_id, msg => "IDCODE of TAP " & integer'image(p), jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, p));
       check_value(v_id, idcode(cfg, p), ERROR, "IDCODE of TAP " & integer'image(p) & ", the others in BYPASS", C_TB_SCOPE);
     end loop;
   end procedure;

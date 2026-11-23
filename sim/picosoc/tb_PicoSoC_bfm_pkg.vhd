@@ -19,6 +19,8 @@
 -- 2026-11-21  1.1      mrosiere wait_pass (integration firmwares)
 -- 2026-11-22  1.2      mrosiere t_tb_cfg : debug, fault, supervisor, JTAG
 --                               chain (t_jtag_chain)
+-- 2026-11-23  1.3      mrosiere t_tb_cfg : bitbang (UART of JTAG over the
+--                               UART pads)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -66,6 +68,7 @@ package tb_PicoSoC_bfm_pkg is
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)
     uart       : t_uart_bfm_config;  -- UART VIP configuration (bit time of the DUT)
+    bitbang    : t_uart_bfm_config;  -- UART VIP configuration of JTAG over the UART (switches 11, JTAG_BAUD_RATE)
   end record t_tb_cfg;
 
   -- Never set : the UART receiver ends on a line feed or on its timeout

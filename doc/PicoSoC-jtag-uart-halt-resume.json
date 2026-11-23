@@ -1,0 +1,170 @@
+{
+ "signal": [
+  {
+   "name": "step",
+   "wave": "2.....2.....|2.....|2.....|2.....|2.....|2.....2.....|2.....|2.....",
+   "data": [
+    "write haltreq",
+    "haltreq",
+    "write haltreq: result scan",
+    "read dmstatus: allhalted",
+    "write dmcontrol 0",
+    "halted",
+    "new switches; write resumereq",
+    "resumed",
+    "LED0 = switches",
+    "read dmstatus: allresumeack"
+   ]
+  },
+  {},
+  {
+   "name": "uart_rx_i (commands)",
+   "wave": "5.....1.....|5.....|5.....|5.....|5.....|5.....5.....|5.....|5.....",
+   "data": [
+    "140 bytes",
+    "172 bytes",
+    "312 bytes",
+    "140 bytes",
+    "172 bytes",
+    "140 bytes",
+    "62 bytes",
+    "110 bytes",
+    "312 bytes"
+   ]
+  },
+  {
+   "name": "uart_tx_io (answers)",
+   "wave": "5.....1.....|5.....|5.....|5.....|5.....|5.....5.....|5.....|5.....",
+   "data": [
+    "43 answers",
+    "43 answers",
+    "86 answers",
+    "43 answers",
+    "43 answers",
+    "43 answers",
+    "13 answers",
+    "30 answers",
+    "86 answers"
+   ]
+  },
+  {
+   "name": "TCK (jtag_bitbang)",
+   "wave": "pppppp0.....|pppppp|pppppp|pppppp|pppppp|pppppppppppp|pppppp|pppppp"
+  },
+  {
+   "name": "TMS (jtag_bitbang)",
+   "wave": "3.....0.....|3.....|3.....|3.....|3.....|3...........|3.....|3.....",
+   "data": [
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS",
+    "TMS"
+   ]
+  },
+  {
+   "name": "TDI (jtag_bitbang)",
+   "wave": "3.....0.....|3.....|3.....|3.....|3.....|3.....0.....|3.....|3.....",
+   "data": [
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI",
+    "TDI"
+   ]
+  },
+  {
+   "name": "TDO (chain)",
+   "wave": "3.....1.....|3.....|3.....|3.....|3.....|3...........|3.....|3.....",
+   "data": [
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO",
+    "TDO"
+   ]
+  },
+  {},
+  {
+   "name": "dm haltreq",
+   "wave": "0.....1.....|......|......|......|0.....|............|......|......"
+  },
+  {
+   "name": "dm halted",
+   "wave": "0...........|1.....|......|......|......|......0.....|......|......"
+  },
+  {
+   "name": "cpu_ics",
+   "wave": "4...........|0.....|......|......|......|......4.....|4.....|4.....",
+   "data": [
+    "fetch",
+    "fetch",
+    "fetch",
+    "fetch"
+   ]
+  },
+  {
+   "name": "cpu_iaddr",
+   "wave": "4.....4.....|4.....|4.....|4.....|4.....|4.....4.....|4.....|4.....",
+   "data": [
+    "0x0B6..0x143",
+    "0x0B6..0x201",
+    "0x201..0x206",
+    "0x202..0x206",
+    "0x202..0x206",
+    "0x202..0x206",
+    "0x202..0x209",
+    "0x06E..0x20B",
+    "0x06E..0x163",
+    "0x06E..0x163"
+   ]
+  },
+  {},
+  {
+   "name": "switch_i",
+   "wave": "=...........|=.....|=.....|=.....|=.....|=...........|=.....|=.....",
+   "data": [
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xE5",
+    "0xE5",
+    "0xE5"
+   ]
+  },
+  {
+   "name": "led0_o",
+   "wave": "=...........|=.....|=.....|=.....|=.....|=...........|=.....|=.....",
+   "data": [
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xDA",
+    "0xE5",
+    "0xE5"
+   ]
+  }
+ ],
+ "head": {
+  "text": "Halt and resume of the user CPU through JTAG over the UART pads (switches 11, remote_bitbang at 921600 baud) : scenario bitbang_cpu"
+ },
+ "foot": {
+  "text": "Simulation of sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu (WardRV_fsm, lock-step, SoC clock 12.5 MHz), from 6.1 to 22.5 ms, compressed at each |. A DMI access is two DR scans of 43 bits (request, then result): 3 command bytes per bit (TCK low, R, TCK high)."
+ },
+ "config": {
+  "hscale": 1
+ }
+}
