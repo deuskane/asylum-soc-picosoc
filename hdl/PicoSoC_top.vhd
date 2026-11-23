@@ -51,6 +51,7 @@
 --                               JTAG_BAUD_RATE) when the chain has a TAP
 -- 2026-11-23  2.17     mrosiere Polarities of the inputs with active_high
 --                               (one line each)
+-- 2026-11-23  2.18     mrosiere Clock and resets in PicoSoC_clkrst
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -59,7 +60,6 @@ use     ieee.numeric_std.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
-use     asylum.clock_divider_pkg.all;
 use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
 
@@ -151,17 +151,12 @@ architecture rtl of PicoSoC_top is
   constant SUPERVISOR_NB_LED            : positive := 3;
   
   signal   clk                          : std_logic;
-  signal   arst_b                       : std_logic;
-  signal   arst_b_sync1                 : std_logic;
-  signal   arst_b_sync2                 : std_logic;
   signal   led0_user                    : std_logic_vector(USER_NB_LED0     -1 downto 0);
   signal   led1_user                    : std_logic_vector(USER_NB_LED1     -1 downto 0);
   signal   led_supervisor               : std_logic_vector(SUPERVISOR_NB_LED-1 downto 0);
            
-  signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
-  signal   arst_b_user_req              : std_logic;
   signal   arst_b_user_sync             : std_logic;
   signal   arst_b_supervisor_soc        : std_logic;
            
@@ -230,43 +225,31 @@ architecture rtl of PicoSoC_top is
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
-  -- Reset Management
+  -- Clock and resets, in PicoSoC_clkrst
+  -- * clk : clk_i divided by FSYS/FSYS_INT
+  -- * arst_b_supervisor : arst_i resynchronized, power-on reset of the
+  --   supervisor domain (board modules, debug units of the CPUs)
+  -- * arst_b_supervisor_soc : supervisor SoC (and ndmreset of its debugger)
+  -- * arst_b_user_sync : user SoC (reset by the supervisor, or by ndmreset
+  --   of its debugger), resynchronized on clk
   -----------------------------------------------------------------------------
-  arst_b <= not active_high(arst_i, RESET_POLARITY);
-
-  ins_reset_resynchronizer1 : sync2dffrn
-    port map
-    (clk_i                => clk_i     
-    ,arst_b_i             => arst_b    
-    ,d_i                  => '1'       
-    ,q_o                  => arst_b_sync1
-    );
-
-  ins_reset_resynchronizer2 : sync2dffrn
-    port map
-    (clk_i                => clk     
-    ,arst_b_i             => arst_b_sync1
-    ,d_i                  => '1'       
-    ,q_o                  => arst_b_sync2
-    );
-
-  arst_b_top        <= arst_b_sync1;
-  arst_b_supervisor <= arst_b_sync2;
-
-  -----------------------------------------------------------------------------
-  -- Clock Management
-  -----------------------------------------------------------------------------
-  ins_clock_divider : clock_divider
+  ins_clkrst : PicoSoC_clkrst
     generic map
-    (RATIO                => FSYS/FSYS_INT
-    ,ALGO                 => "50%"
-     )
+    (FSYS                    => FSYS
+    ,FSYS_INT                => FSYS_INT
+    ,RESET_POLARITY          => RESET_POLARITY
+    )
     port map
-    (clk_i                => clk_i            
-    ,arstn_i              => arst_b_top
-    ,cke_i                => '1'              
-    ,clk_div_o            => clk
-     );
+    (clk_i                   => clk_i
+    ,arst_i                  => arst_i
+    ,clk_o                   => clk
+    ,arst_b_supervisor_o     => arst_b_supervisor
+    ,supervisor_ndmreset_i   => supervisor_ndmreset
+    ,arst_b_supervisor_soc_o => arst_b_supervisor_soc
+    ,arst_b_user_i           => arst_b_user(0)
+    ,user_ndmreset_i         => user_ndmreset
+    ,arst_b_user_o           => arst_b_user_sync
+    );
 
   -----------------------------------------------------------------------------
   -- IT_USER User
@@ -276,20 +259,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
-  -- The reset of the user SoC (from the supervisor or arst_b_sync2, or
-  -- ndmreset of its debugger) is resynchronized on clk : 2 more cycles of
-  -- reset with a running clock, so that the registers without reset (input
-  -- stages of the GPIOs) are loaded before the reset release
-  arst_b_user_req <= arst_b_user(0) and not user_ndmreset;
-
-  ins_reset_resynchronizer_user : sync2dffrn
-    port map
-    (clk_i                => clk
-    ,arst_b_i             => arst_b_user_req
-    ,d_i                  => '1'
-    ,q_o                  => arst_b_user_sync
-    );
-
   ins_soc_user : PicoSoC_user
     generic map
     (CLOCK_FREQ             => FSYS_INT
@@ -357,9 +326,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC Supervisor
   -----------------------------------------------------------------------------
-  -- Reset of the supervisor SoC : arst_b_sync2, or ndmreset of its debugger
-  arst_b_supervisor_soc <= arst_b_supervisor and not supervisor_ndmreset;
-
   gen_supervisor: if SUPERVISOR = True
   generate
     ins_soc_supervisor : PicoSoC_supervisor

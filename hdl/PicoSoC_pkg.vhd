@@ -34,6 +34,7 @@
 -- 2026-11-23  1.15     mrosiere JTAG over the UART (switches 11) : PicoSoC_pads
 --                               and PicoSoC_top components
 -- 2026-11-23  1.16     mrosiere active_high (polarity of the inputs)
+-- 2026-11-23  1.17     mrosiere PicoSoC_clkrst component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -157,6 +158,29 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_clkrst is
+  generic
+    (FSYS                    : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;FSYS_INT                : positive := 50_000_000 -- Frequency of clk_o (Hz)
+    ;RESET_POLARITY          : string   := "low"      -- Polarity of arst_i : "high" / "low"
+    );
+  port
+    (clk_i                   : in  std_logic
+    ;arst_i                  : in  std_logic
+
+    -- SoC clock
+    ;clk_o                   : out std_logic
+
+    -- Resets, active low, released on clk_o
+    ;arst_b_supervisor_o     : out std_logic -- Supervisor domain, debug units
+    ;supervisor_ndmreset_i   : in  std_logic -- ndmreset of the debugger of the supervisor CPU
+    ;arst_b_supervisor_soc_o : out std_logic -- Supervisor SoC
+    ;arst_b_user_i           : in  std_logic -- Reset of the user SoC by the supervisor
+    ;user_ndmreset_i         : in  std_logic -- ndmreset of the debugger of a user CPU
+    ;arst_b_user_o           : out std_logic -- User SoC
+    );
+end component PicoSoC_clkrst;
+
 component PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)

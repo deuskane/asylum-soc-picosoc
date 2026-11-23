@@ -598,6 +598,7 @@ filesets:
       - hdl/cpu_wrapper.vhd
       - hdl/cpu_safety.vhd
       - hdl/PicoSoC_pkg.vhd
+      - hdl/PicoSoC_clkrst.vhd
       - hdl/PicoSoC_pads.vhd
       - hdl/PicoSoC_hwla.vhd
       - hdl/PicoSoC_tap.vhd
