@@ -43,6 +43,7 @@
 --                               the user / supervisor CPUs (cpu_wrapper) in
 --                               the JTAG chain
 -- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
+-- 2026-11-23  2.13     mrosiere HWLA and its UART in PicoSoC_hwla
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -52,8 +53,6 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
-use     asylum.hwla_pkg.all;
-use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
 
 entity PicoSoC_top is
@@ -499,7 +498,8 @@ begin  -- architecture rtl
     severity failure;
 
   -----------------------------------------------------------------------------
-  -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
+  -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
+  -- in PicoSoC_hwla
   -- * Trigger : a difference between the redundant CPUs (OR of diff)
   -- * Captures sent byte per byte on debug_uart_tx_o : UART 115200 baud,
   --   8 bits, no parity, 1 stop bit (tools/hwla2vcd.py of asylum-debug-hwla)
@@ -508,9 +508,6 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   gen_debug: if DEBUG_ENABLE = True
   generate
-    -- Baud tick every FSYS_INT/115200 cycles of clk
-    constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/115200-1, 16));
-
     -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
     -- data, read data), then instruction bus (address, instruction).
     -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i.
@@ -526,10 +523,6 @@ begin  -- architecture rtl
                                                     1                               -- cpu_dcs
                                                     -1 downto 0);
     signal   hwla_trigger        : std_logic;
-    signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
-    signal   hwla_tvalid         : std_logic;
-    signal   hwla_tready         : std_logic;
-    signal   hwla_baud_tick      : std_logic;
   begin
     hwla_probe   <= debug_user.cpu_idata
                   & debug_user.cpu_iaddr
@@ -544,60 +537,16 @@ begin  -- architecture rtl
     hwla_trigger <= '1' when diff /= "000" else
                     '0';
 
-    ins_hwla : hwla
+    ins_hwla : PicoSoC_hwla
       generic map
-      (DEPTH                => 64    -- Small RAM (64 x 72 or 86 bits) : a few tens of instructions
-      ,PRE_TRIGGER          => 32    -- Half of the capture before the trigger
-      ,TIMESTAMP_WIDTH      => 16    -- A sample at least every 65536 cycles
-      ,CHANGE_ONLY          => true  -- A CPU waiting on the bus fills no sample
-      ,TDATA_WIDTH          => 8     -- One byte per beat, for the UART
-      )
-      port map
-      (trig_clk_i           => clk
-      ,trig_arst_b_i        => arst_b_supervisor
-      ,arm_i                => '1'   -- A new capture after each extraction
-      ,trigger_i            => hwla_trigger
-      ,probe_i              => hwla_probe
-      ,armed_o              => open
-      ,triggered_o          => open
-      ,extract_clk_i        => clk
-      ,extract_arst_b_i     => arst_b_supervisor
-      ,m_axis_tdata_o       => hwla_tdata
-      ,m_axis_tvalid_o      => hwla_tvalid
-      ,m_axis_tready_i      => hwla_tready
-      ,m_axis_tlast_o       => open
-      );
-
-    ins_uart_baud_rate_gen : uart_baud_rate_gen
-      generic map
-      (BAUD_TICK_CNT_WIDTH     => 16
-      )
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,baud_tick_en_i          => '1'
-      ,baud_tick_o             => hwla_baud_tick
-      ,baud_tick_half_o        => open
-      ,cfg_baud_tick_cnt_max_i => HWLA_BAUD_TICK_MAX
-      );
-
-    -- Transmitter only : no parity, CTS ignored
-    ins_uart_tx_axis : uart_tx_axis
-      generic map
-      (WIDTH                => 8
+      (FSYS_INT             => FSYS_INT
       )
       port map
       (clk_i                => clk
       ,arst_b_i             => arst_b_supervisor
-      ,s_axis_tdata_i       => hwla_tdata
-      ,s_axis_tvalid_i      => hwla_tvalid
-      ,s_axis_tready_o      => hwla_tready
+      ,probe_i              => hwla_probe
+      ,trigger_i            => hwla_trigger
       ,uart_tx_o            => debug_uart_tx
-      ,uart_cts_b_i         => '0'
-      ,baud_tick_i          => hwla_baud_tick
-      ,parity_enable_i      => '0'
-      ,parity_odd_i         => '0'
-      ,debug_o              => open
       );
   end generate gen_debug;
 

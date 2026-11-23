@@ -27,6 +27,7 @@
 -- 2026-11-22  1.10     mrosiere JTAG : IDCODE of the CPU debuggers,
 --                               components with the JTAG ports
 -- 2026-11-23  1.11     mrosiere PicoSoC_pads component
+-- 2026-11-23  1.12     mrosiere PicoSoC_hwla component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -142,6 +143,23 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_hwla is
+  generic
+    (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    );
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic
+
+    -- Probes (any width) and trigger
+    ;probe_i          : in  std_logic_vector
+    ;trigger_i        : in  std_logic
+
+    -- Captures : UART 115200 8N1
+    ;uart_tx_o        : out std_logic
+    );
+end component PicoSoC_hwla;
+
 component PicoSoC_pads is
   generic
     (USER_SPI_NB_IO   : natural  := 8          -- SPI data lanes with a pad (up to 8)

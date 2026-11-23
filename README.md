@@ -84,7 +84,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 
 Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)).
 
-`PicoSoC_top` (not drawn on this page) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, puts IO buffers on the SPI and I2C signals and, with `DEBUG_ENABLE`, instantiates the HWLA (see [Debug: HWLA](#debug-hwla)).
+`PicoSoC_top` (not drawn on this page) resynchronizes `arst_i`, divides `clk_i` by `FSYS/FSYS_INT`, inverts `it_user_i` / `inject_error_i` when they are active low, puts IO buffers on the SPI and I2C signals and, with `DEBUG_ENABLE`, instantiates the HWLA and its UART (`PicoSoC_hwla`, see [Debug: HWLA](#debug-hwla)).
 
 ![UART pads and JTAG chain of PicoSoC_top](doc/picosoc-jtag.png)
 
@@ -344,8 +344,9 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 | File | Unit | Role |
 |------|------|------|
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, pads, JTAG chain (user SoC, supervisor SoC, injection / status TAP), HWLA (`DEBUG_ENABLE`) |
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, pads, JTAG chain (user SoC, supervisor SoC, injection / status TAP), HWLA (`PicoSoC_hwla`, `DEBUG_ENABLE`) |
 | [hdl/PicoSoC_pads.vhd](hdl/PicoSoC_pads.vhd) | `PicoSoC_pads` | Pads: UART pads shared by the user UART, the HWLA UART and the JTAG chain (`jtag_pad_mux`, switch MSB synchronizers and select), SPI pads (`obuf`, `iobuf`), I2C open-drain pads |
+| [hdl/PicoSoC_hwla.vhd](hdl/PicoSoC_hwla.vhd) | `PicoSoC_hwla` | HWLA of the top: `hwla` on the probes (unconstrained `probe_i`: the width comes from the actual) and the trigger, its captures on a UART 115200 8N1 (`uart_tx_axis`, `uart_baud_rate_gen`) |
 | [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
 | [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
 | [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection, JTAG pins of the copies (TCK resynchronized) |
@@ -396,7 +397,7 @@ The user SoC restarts from its reset: the firmware runs its setup again.
 
 ### Debug: HWLA
 
-With `DEBUG_ENABLE = true`, `PicoSoC_top` instantiates `hwla`, the logic analyzer of [asylum-debug-hwla](https://github.com/deuskane/asylum-debug-hwla), on the bus of the user CPU of cluster 0 (the CPU that drives the SoC, after the lock-step / TMR logic). With `DEBUG_ENABLE = false` nothing is added and `debug_uart_tx_o` stays at `'1'`.
+With `DEBUG_ENABLE = true`, `PicoSoC_top` instantiates `PicoSoC_hwla` ([hdl/PicoSoC_hwla.vhd](hdl/PicoSoC_hwla.vhd)): `hwla`, the logic analyzer of [asylum-debug-hwla](https://github.com/deuskane/asylum-debug-hwla), and its UART, on the bus of the user CPU of cluster 0 (the CPU that drives the SoC, after the lock-step / TMR logic). With `DEBUG_ENABLE = false` nothing is added and `debug_uart_tx_o` stays at `'1'`.
 
 - Probes: the data bus and the instruction bus of the CPU (`cpu_*` fields of `PicoSoC_user_debug_t`), 56 probes with OpenBlaze8, 70 with WardRV_fsm:
 
