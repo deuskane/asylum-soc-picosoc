@@ -50,6 +50,9 @@
 -- 2026-11-23  2.8      mrosiere JTAG_BAUD_RATE : JTAG over the UART pads
 --                               (switches 11), answers of jtag_bitbang
 --                               received on the TX pad (p_bitbang)
+-- 2026-11-23  2.9      mrosiere debug_mux_sel_i (function of the UART pads)
+--                               driven by the scenarios (was the two MSBs of
+--                               switch_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -86,7 +89,7 @@ entity tb_PicoSoC is
     ;FSYS_INT              : positive := 50_000_000
     ;USER_NB_CPU           : positive := 1
     ;USER_BAUD_RATE        : integer  := 115200
-    ;JTAG_BAUD_RATE        : integer  := 115200      -- JTAG over the UART pads (switches 11)
+    ;JTAG_BAUD_RATE        : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11)
     ;SUPERVISOR            : boolean  := True
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
@@ -184,6 +187,7 @@ architecture tb of tb_PicoSoC is
   signal  clk_ena                  : boolean   := true;
   signal  arst_i                   : std_logic := C_RESET_ON;
   signal  switch_i                 : std_logic_vector(USER_NB_SWITCH-1 downto 0) := (others => '0');
+  signal  debug_mux_sel_i          : std_logic_vector(             2-1 downto 0) := C_MUX_UART;
   signal  led0_o                   : std_logic_vector(USER_NB_LED0  -1 downto 0);
   signal  led1_o                   : std_logic_vector(USER_NB_LED1  -1 downto 0);
   signal  led_diff_o               : std_logic_vector(             3-1 downto 0);
@@ -197,7 +201,7 @@ architecture tb of tb_PicoSoC is
   signal  RSTNeg                   : std_logic;
   -- UART pads (pull-ups) and the cable (FTDI MPSSE) : UART side RX (UART
   -- BFM) and CTS* ('Z' : released), driven in the UART modes of the pads ;
-  -- JTAG side (JTAG BFM) TCK, TDI, TMS, driven in the JTAG mode (switches 10)
+  -- JTAG side (JTAG BFM) TCK, TDI, TMS, driven in the JTAG mode (debug_mux_sel_i 10)
   signal  uart_rx_i                : std_logic;
   signal  uart_tx_io               : std_logic;
   signal  uart_cts_b_io            : std_logic;
@@ -206,7 +210,7 @@ architecture tb of tb_PicoSoC is
   signal  uart_cts_b               : std_logic := '0';
   signal  jtag_if                  : t_jtag_if := init_jtag_if_signals;
   signal  jtag_mode                : boolean;
-  -- JTAG over the UART (switches 11) : the cable is a UART, the answers of
+  -- JTAG over the UART (debug_mux_sel_i 11) : the cable is a UART, the answers of
   -- jtag_bitbang are received on the TX pad
   signal  bitbang_mode             : boolean;
   signal  bitbang_off              : std_logic;
@@ -253,6 +257,7 @@ begin  -- architecture tb
     (clk_i            => clk_i
     ,arst_i           => arst_i
     ,switch_i         => switch_i
+    ,debug_mux_sel_i  => debug_mux_sel_i
     ,led0_o           => led0_o
     ,led1_o           => led1_o
     ,led_diff_o       => led_diff_o
@@ -282,7 +287,7 @@ begin  -- architecture tb
   uart_cts_b_io <= 'H';
   uart_rts_b_io <= 'H';
 
-  jtag_mode     <= switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2) = "10";
+  jtag_mode     <= debug_mux_sel_i = C_MUX_JTAG;
   uart_rx_i     <= jtag_if.tck   when jtag_mode else uart_rx;
   uart_tx_io    <= jtag_if.tdi   when jtag_mode else 'Z';
   uart_cts_b_io <= 'Z'           when jtag_mode else uart_cts_b;
@@ -290,10 +295,10 @@ begin  -- architecture tb
   jtag_if.tdo   <= uart_cts_b_io when jtag_mode else 'Z';
 
   -----------------------------------------------------------------------------
-  -- JTAG over the UART (switches 11) : each byte of the TX pad is an answer
+  -- JTAG over the UART (debug_mux_sel_i 11) : each byte of the TX pad is an answer
   -- of jtag_bitbang to 'R' ('0' / '1'), kept in bitbang (count, last bits)
   -----------------------------------------------------------------------------
-  bitbang_mode  <= switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2) = "11";
+  bitbang_mode  <= debug_mux_sel_i = C_MUX_BITBANG;
   bitbang_off   <= '0' when bitbang_mode else '1';
 
   p_bitbang : process
@@ -465,6 +470,7 @@ begin  -- architecture tb
     for i in 1 to list_length(TESTS_LIST) loop
       -- Inputs inactive, then reset pulse : each scenario starts from reset
       switch_i       <= (others => '0');
+      debug_mux_sel_i <= C_MUX_UART;
       it_user_i      <= not C_IT_ON;
       inject_error_i <= (others => not C_FAULT_ON);
       uart_rx        <= '1';
@@ -478,7 +484,7 @@ begin  -- architecture tb
       do_reset(C_RESET_ON, clk_i, arst_i);
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
-      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
+      run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, debug_mux_sel_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
                uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, bitbang, i2c_if, pwm_o,
                debug_uart_tx_o, rom_addr, rom_data);
     end loop;

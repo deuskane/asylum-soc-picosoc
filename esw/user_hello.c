@@ -17,17 +17,11 @@
 // 2025-01-06  1.1      mrosiere Add comments
 // 2025-06-13  1.2      mrosiere Add SPI
 // 2026-11-15  1.3      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
+// 2026-11-23  1.4      mrosiere cpu_hartid of cpu.h (was a local read_mhartid)
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
 #include "addrmap_user.h"
-
-static inline uint32_t read_mhartid(void)
-{
-  uint32_t id;
-  asm volatile ("csrr %0, mhartid" : "=r" (id));
-  return id;
-}
 
 typedef struct
 {
@@ -109,7 +103,7 @@ void main()
   uint8_t seed; 
 
   // Read the CPU ID
-  cpu_id = read_mhartid();
+  cpu_id = cpu_hartid();
   seed   = (uint8_t)cpu_id;
 
   while (spinlock_try_lock(SPINLOCK,0) != 0);

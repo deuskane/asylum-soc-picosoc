@@ -18,6 +18,9 @@
 // 2025-06-13  1.2      mrosiere Add SPI
 // 2026-11-15  1.3      mrosiere Clear the ISR before unmasking (GIC >= 2.0.0)
 // 2026-11-16  1.4      mrosiere Mailbox test : check the GIC sources "data available"
+// 2026-11-23  1.5      mrosiere The loop line is printed on every loop (was
+//                               while switch 5 is set)
+// 2026-11-23  1.6      mrosiere Mailbox test on hart 0 only (several clusters)
 //-----------------------------------------------------------------------------
 
 #include <stdint.h>
@@ -303,8 +306,7 @@ void main()
       // Read Switch
       uint8_t sw   = gpio_rd(SWITCH);
 
-      // Get switch[5]
-      if (sw&0x20)
+      // Loop line : counter, switches, SPI byte, spinlock, mailbox
 	{
 	  uint8_t cpt_byte3,cpt_byte2,cpt_byte1,cpt_byte0;
 
@@ -367,8 +369,10 @@ void main()
       spinlock_unlock(SPINLOCK,0);
     }
 
+    // Test Mailbox, on hart 0 only : with several clusters, the other
+    // clusters share the mailbox and its GIC sources
+    if (cpu_hartid() == 0)
     {
-      // Test Mailbox
       // * fifo0 : push 8 bytes, pop and print them
       // * GIC   : the source "data available" of a channel is set while the
       //   channel has data; its ISR bit is cleared only once it is empty

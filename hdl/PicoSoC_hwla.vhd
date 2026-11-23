@@ -14,8 +14,9 @@
 --                trigger, 16-bit timestamp, changes only ; probe_i is
 --                unconstrained (the width of the probes comes from the
 --                actual : map a signal, GHDL 6.0.0 crashes on an expression)
---              * captures sent byte per byte on uart_tx_o : UART 115200
---                baud (a bit every FSYS_INT/115200 cycles of clk_i), 8 bits,
+--              * captures sent byte per byte on uart_tx_o : UART
+--                HWLA_BAUD_RATE (115200 by default : a bit every
+--                FSYS_INT/HWLA_BAUD_RATE cycles of clk_i), 8 bits,
 --                no parity, 1 stop bit
 --              * one clock (clk_i) and one reset for the trigger and the
 --                extraction domains
@@ -25,6 +26,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created (HWLA of PicoSoC_top)
+-- 2026-11-23  1.1      mrosiere HWLA_BAUD_RATE (was the constant 115200)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -37,6 +39,7 @@ use     asylum.uart_pkg.all;
 entity PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;HWLA_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART of the captures
     );
   port
     (clk_i            : in  std_logic
@@ -46,15 +49,15 @@ entity PicoSoC_hwla is
     ;probe_i          : in  std_logic_vector
     ;trigger_i        : in  std_logic
 
-    -- Captures : UART 115200 8N1
+    -- Captures : UART 8N1, HWLA_BAUD_RATE
     ;uart_tx_o        : out std_logic
     );
 end entity PicoSoC_hwla;
 
 architecture rtl of PicoSoC_hwla is
 
-  -- Baud tick every FSYS_INT/115200 cycles of clk_i
-  constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/115200-1, 16));
+  -- Baud tick every FSYS_INT/HWLA_BAUD_RATE cycles of clk_i
+  constant HWLA_BAUD_TICK_MAX  : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/HWLA_BAUD_RATE-1, 16));
 
   signal   hwla_tdata          : std_logic_vector(8-1 downto 0);
   signal   hwla_tvalid         : std_logic;

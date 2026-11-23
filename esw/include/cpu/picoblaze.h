@@ -15,6 +15,7 @@
 // 2026-05-14  1.1      mrosiere Support others picoblaze cores 
 //                               (but keep the same interface)
 // 2026-11-19  1.2      mrosiere Add cpu_nop
+// 2026-11-23  1.3      mrosiere Add cpu_hartid (always 0)
 //-----------------------------------------------------------------------------
 
 #ifndef _picoblaze_h_
@@ -39,6 +40,9 @@ extern volatile uint8_t PBLAZEPORT[];
 // No operation : the PicoBlaze has no NOP instruction, LOAD s0, s0 changes nothing
 // (macro : inlined, no code when unused)
 #define cpu_nop() __asm LOAD s0, s0 __endasm
+
+// Index of the hart : the PicoBlaze has no hart id and runs one cluster
+#define cpu_hartid() 0
 
 //--------------------------------------
 // Interruption

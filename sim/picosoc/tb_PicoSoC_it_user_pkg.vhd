@@ -9,15 +9,17 @@
 --              the interruption routine increments LED1 on it_user_i
 --              (user GIC source 0, level sensitive). Two short pulses give
 --              exactly one interruption each, a long pulse at least one;
---              LED1 does not change without interruption. switch(5) set :
---              the main loop also runs the spinlock, mailbox and GIC code
---              of the firmware, it must still copy the switches at the end
+--              LED1 does not change without interruption. The main loop
+--              also prints its loop line and runs the spinlock, mailbox and
+--              GIC code of the firmware, it must still copy the switches at
+--              the end
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
+-- 2026-11-23  1.1      mrosiere Loop line at every iteration (esw/user.c)
 -------------------------------------------------------------------------------
 
 library ieee;

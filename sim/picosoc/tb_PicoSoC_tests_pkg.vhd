@@ -30,6 +30,10 @@
 --                               (JTAG over the UART pads),
 --                               jtag_last (stages without TAP at the end of
 --                               the chain)
+-- 2026-11-23  1.9      mrosiere uart : CTS* of the cable (echo on a quiet
+--                               line)
+-- 2026-11-23  1.10     mrosiere mux_sel (debug_mux_sel_i) to the scenarios of
+--                               the UART pads
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -85,6 +89,7 @@ package tb_PicoSoC_tests_pkg is
     ;constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   it_user  : out   std_logic
     ;signal   inject   : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
@@ -159,6 +164,7 @@ package body tb_PicoSoC_tests_pkg is
     ;constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   it_user  : out   std_logic
     ;signal   inject   : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
@@ -186,7 +192,7 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_it_user_pkg.run(cfg, clk, switch, it_user, led0, led1, led_diff);
     elsif string_eq(name, "uart")
     then
-      work.tb_PicoSoC_uart_pkg.run(cfg, clk, switch, it_user, led0, led1, uart_rx, uart_tx);
+      work.tb_PicoSoC_uart_pkg.run(cfg, clk, switch, it_user, led0, led1, uart_rx, uart_tx, cts_b);
     elsif string_eq(name, "fault_lock_step")
     then
       work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, switch, inject, led0, led_diff);
@@ -201,34 +207,34 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_hwla_pkg.run(cfg, clk, switch, inject, led0, led_diff, debug_tx, rom_addr, rom_data);
     elsif string_eq(name, "pad_mux")
     then
-      work.tb_PicoSoC_pad_mux_pkg.run(cfg, clk, switch, inject, led0, uart_rx, uart_tx, cts_b, cts_pad, rts_pad, jtag_if, debug_tx);
+      work.tb_PicoSoC_pad_mux_pkg.run(cfg, clk, switch, mux_sel, inject, led0, uart_rx, uart_tx, cts_b, cts_pad, rts_pad, jtag_if, debug_tx);
     elsif string_eq(name, "jtag_chain")
     then
-      work.tb_PicoSoC_jtag_chain_pkg.run(cfg, clk, switch, led0, cts_pad, jtag_if);
+      work.tb_PicoSoC_jtag_chain_pkg.run(cfg, clk, switch, mux_sel, led0, cts_pad, jtag_if);
     elsif string_eq(name, "jtag_inject")
     then
-      work.tb_PicoSoC_jtag_inject_pkg.run(cfg, clk, switch, led0, led_diff, jtag_if);
+      work.tb_PicoSoC_jtag_inject_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, jtag_if);
     elsif string_eq(name, "jtag_status")
     then
-      work.tb_PicoSoC_jtag_status_pkg.run(cfg, clk, switch, it_user, inject, led0, led1, led_diff, jtag_if);
+      work.tb_PicoSoC_jtag_status_pkg.run(cfg, clk, switch, mux_sel, it_user, inject, led0, led1, led_diff, jtag_if);
     elsif string_eq(name, "jtag_cpu_user")
     then
-      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, false, clk, switch, inject, led0, led_diff, jtag_if);
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, false, clk, switch, mux_sel, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "jtag_cpu_supervisor")
     then
-      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, inject, led0, led_diff, jtag_if);
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, mux_sel, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "bitbang_chain")
     then
-      work.tb_PicoSoC_bitbang_chain_pkg.run(cfg, clk, switch, led0, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_chain_pkg.run(cfg, clk, switch, mux_sel, led0, uart_rx, bitbang);
     elsif string_eq(name, "bitbang_inject")
     then
-      work.tb_PicoSoC_bitbang_inject_pkg.run(cfg, clk, switch, led0, led_diff, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_inject_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, uart_rx, bitbang);
     elsif string_eq(name, "bitbang_cpu")
     then
-      work.tb_PicoSoC_bitbang_cpu_pkg.run(cfg, clk, switch, led0, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_cpu_pkg.run(cfg, clk, switch, mux_sel, led0, uart_rx, bitbang);
     elsif string_eq(name, "jtag_last")
     then
-      work.tb_PicoSoC_jtag_last_pkg.run(cfg, clk, switch, led0, cts_pad, jtag_if, uart_rx, bitbang);
+      work.tb_PicoSoC_jtag_last_pkg.run(cfg, clk, switch, mux_sel, led0, cts_pad, jtag_if, uart_rx, bitbang);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);

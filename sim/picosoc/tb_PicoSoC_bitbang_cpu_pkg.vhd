@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
 -- Description: Scenario bitbang_cpu of tb_PicoSoC, from reset (user*, debug
 --              unit of the user CPU) : halt and resume of the user CPU
---              through JTAG over the UART pads (switches 11), as OpenOCD
+--              through JTAG over the UART pads (debug_mux_sel_i 11), as OpenOCD
 --              with the remote_bitbang adapter
 --              * dtmcs of the DTM
 --              * dmcontrol haltreq : dmstatus allhalted, LED0 no longer
@@ -20,6 +20,9 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere UART pads to JTAG over the UART with
+--                               debug_mux_sel_i (was the switch MSBs) :
+--                               switches 0x1A, 0x25
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -43,6 +46,7 @@ package tb_PicoSoC_bitbang_cpu_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   bitbang  : in    t_bitbang_rsp
@@ -56,14 +60,14 @@ package body tb_PicoSoC_bitbang_cpu_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   bitbang  : in    t_bitbang_rsp
     ) is
     constant C_TAP       : natural := cfg.jtag.user;
-    -- Switches with the MSBs 11 : JTAG over the UART
-    constant C_SW1       : std_logic_vector(8-1 downto 0) := x"DA";
-    constant C_SW2       : std_logic_vector(8-1 downto 0) := x"E5";
+    constant C_SW1       : std_logic_vector(8-1 downto 0) := x"1A";
+    constant C_SW2       : std_logic_vector(8-1 downto 0) := x"25";
     -- The halted CPU does nothing during C_HALTED cycles
     constant C_HALTED    : positive := 2000*cfg.clk_ratio;
     variable v_data      : std_logic_vector(32-1 downto 0);
@@ -82,6 +86,7 @@ package body tb_PicoSoC_bitbang_cpu_pkg is
   begin
     log(ID_SEQUENCER, "bitbang_cpu : halt and resume the user CPU through JTAG over the UART", C_TB_SCOPE);
 
+    set_slv    (C_MUX_BITBANG, clk, mux_sel);
     set_slv    (C_SW1, clk, switch);
     wait_value (led0, C_SW1, cfg, "LED0 = switches 0x" & to_hstring(C_SW1) & " : UART pads to JTAG over the UART");
     bitbang_reset(cfg, uart_rx);

@@ -1,7 +1,7 @@
 default                                                        : Default Target (DON'T RUN)
 emu_ng_medium_soc1_openblaze8                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_openblaze8_modbus_rtu                       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-emu_ng_medium_soc1_wardrv_fsm                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, switches 10)
+emu_ng_medium_soc1_wardrv_fsm                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, debug_mux_sel_i 10)
 emu_ng_medium_soc1_wardrv_fsm_modbus_rtu                       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc2_openblaze8                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
 emu_ng_medium_soc2_openblaze8_fault                            : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection

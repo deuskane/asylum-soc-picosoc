@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario jtag_chain of tb_PicoSoC, from reset (at least one
---              TAP) : the JTAG chain on the UART pads (switches 10)
+--              TAP) : the JTAG chain on the UART pads (debug_mux_sel_i 10)
 --              * TDO not driven out of a scan
 --              * after Test-Logic-Reset, one DR scan reads the IDCODE of
 --                every TAP of the chain, in the chain order
@@ -24,6 +24,8 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
+-- 2026-11-23  1.2      mrosiere UART pads to JTAG with debug_mux_sel_i (was
+--                               the switch MSBs) : switches 0x35
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -49,6 +51,7 @@ package tb_PicoSoC_jtag_chain_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
@@ -62,12 +65,13 @@ package body tb_PicoSoC_jtag_chain_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
     ) is
     constant C_NB      : positive := cfg.jtag.nb_tap;
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"80";  -- MSBs 10 : JTAG
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"35";
     constant C_PATTERN : std_logic_vector(16-1 downto 0) := x"B4E3";
     variable v_ids     : std_logic_vector(32*C_NB-1 downto 0);
     variable v_exp     : std_logic_vector(32*C_NB-1 downto 0);
@@ -78,6 +82,7 @@ package body tb_PicoSoC_jtag_chain_pkg is
   begin
     log(ID_SEQUENCER, "jtag_chain : " & integer'image(C_NB) & " TAP(s) on the UART pads", C_TB_SCOPE);
 
+    set_slv    (C_MUX_JTAG, clk, mux_sel);
     set_slv    (C_SW, clk, switch);
     wait_value (led0, C_SW, cfg, "LED0 = switches 0x" & to_hstring(C_SW) & " : UART pads to JTAG");
     check_value(tdo_pad = 'H', ERROR, "TDO not driven out of a scan", C_TB_SCOPE);

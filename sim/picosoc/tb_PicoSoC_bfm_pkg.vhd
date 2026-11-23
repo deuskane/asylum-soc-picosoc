@@ -7,7 +7,8 @@
 -------------------------------------------------------------------------------
 -- Description: Helpers of the tb_PicoSoC scenarios : configuration record,
 --              waits with a timeout, inputs driven on the falling edge of
---              clk_i, reset pulse, UART line receiver (UART VIP), hexa
+--              clk_i, reset pulse, UART line receiver (UART VIP), quiet
+--              UART line (CTS*) and echo during the loop lines, hexa
 --              conversions of the UART lines printed by the firmware and
 --              result line of the integration firmwares (esw/test_<ip>.c)
 -------------------------------------------------------------------------------
@@ -21,6 +22,10 @@
 --                               chain (t_jtag_chain)
 -- 2026-11-23  1.3      mrosiere t_tb_cfg : bitbang (UART of JTAG over the
 --                               UART pads)
+-- 2026-11-23  1.4      mrosiere uart_get_line_quiet, uart_quiet, uart_echo
+--                               (esw/user.c prints a loop line at every
+--                               iteration)
+-- 2026-11-23  1.5      mrosiere C_MUX_* : codes of debug_mux_sel_i
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -68,8 +73,14 @@ package tb_PicoSoC_bfm_pkg is
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)
     uart       : t_uart_bfm_config;  -- UART VIP configuration (bit time of the DUT)
-    bitbang    : t_uart_bfm_config;  -- UART VIP configuration of JTAG over the UART (switches 11, JTAG_BAUD_RATE)
+    bitbang    : t_uart_bfm_config;  -- UART VIP configuration of JTAG over the UART (debug_mux_sel_i 11, JTAG_BAUD_RATE)
   end record t_tb_cfg;
+
+  -- Function of the UART pads (debug_mux_sel_i of PicoSoC_top)
+  constant C_MUX_UART    : std_logic_vector(2-1 downto 0) := "00";  -- user UART
+  constant C_MUX_HWLA    : std_logic_vector(2-1 downto 0) := "01";  -- HWLA UART
+  constant C_MUX_JTAG    : std_logic_vector(2-1 downto 0) := "10";  -- JTAG chain
+  constant C_MUX_BITBANG : std_logic_vector(2-1 downto 0) := "11";  -- JTAG over the UART
 
   -- Never set : the UART receiver ends on a line feed or on its timeout
   signal   uart_no_terminate : std_logic := '0';
@@ -144,6 +155,40 @@ package tb_PicoSoC_bfm_pkg is
     (constant data     : in    std_logic_vector
     ;constant msg      : in    string
     ;signal   uart_tx  : in    std_logic
+    ;constant cfg      : in    t_tb_cfg
+    );
+
+  -- Receive one line, then hold CTS* inactive : raised on the CR, so that
+  -- the LF is the last byte sent (the UART takes the next byte at the start
+  -- of the stop bit of the previous one) ; released by uart_echo
+  procedure uart_get_line_quiet
+    (variable line     : out   string
+    ;variable len      : out   natural
+    ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
+    ;constant cfg      : in    t_tb_cfg
+    );
+
+  -- Quiet UART line at any time : CTS* held inactive during two characters
+  -- (the byte in progress ends, the firmware waits on its next byte), then
+  -- released. The next byte received starts on a start bit
+  procedure uart_quiet
+    (signal   cts_b    : out   std_logic
+    ;constant cfg      : in    t_tb_cfg
+    );
+
+  -- Echo of a byte by the firmware while it prints its loop lines, after
+  -- uart_get_line_quiet (CTS* held) : the byte is sent on a quiet line, CTS*
+  -- released, then the next line is received ; the echo must be in it,
+  -- line / len : the line without the echo
+  procedure uart_echo
+    (constant data     : in    std_logic_vector
+    ;constant msg      : in    string
+    ;variable line     : out   string
+    ;variable len      : out   natural
+    ;signal   uart_rx  : inout std_logic
+    ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
     ;constant cfg      : in    t_tb_cfg
     );
 
@@ -313,6 +358,84 @@ package body tb_PicoSoC_bfm_pkg is
                 alert_level    => ERROR,
                 config         => cfg.uart,
                 scope          => C_TB_SCOPE);
+  end procedure;
+
+  procedure uart_get_line_quiet
+    (variable line     : out   string
+    ;variable len      : out   natural
+    ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
+    ;constant cfg      : in    t_tb_cfg
+    ) is
+    variable v_byte    : std_logic_vector(8-1 downto 0);
+    variable v_len     : natural := 0;
+  begin
+    line := (line'range => ' ');
+    loop
+      uart_receive(data_value     => v_byte,
+                   msg            => "UART TX",
+                   rx             => uart_tx,
+                   terminate_loop => uart_no_terminate,
+                   config         => cfg.uart,
+                   scope          => C_TB_SCOPE);
+      exit when v_byte = x"0A";
+      if v_byte = x"0D"
+      then
+        cts_b <= '1';
+      elsif v_len = line'length
+      then
+        alert(ERROR, "UART : line too long : " & line, C_TB_SCOPE);
+        exit;
+      else
+        v_len                   := v_len+1;
+        line(line'left+v_len-1) := character'val(to_integer(unsigned(v_byte)));
+      end if;
+    end loop;
+    len := v_len;
+  end procedure;
+
+  procedure uart_quiet
+    (signal   cts_b    : out   std_logic
+    ;constant cfg      : in    t_tb_cfg
+    ) is
+  begin
+    cts_b <= '1';
+    wait for 2 * 10 * cfg.uart.bit_time;
+    cts_b <= '0';
+  end procedure;
+
+  procedure uart_echo
+    (constant data     : in    std_logic_vector
+    ;constant msg      : in    string
+    ;variable line     : out   string
+    ;variable len      : out   natural
+    ;signal   uart_rx  : inout std_logic
+    ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
+    ;constant cfg      : in    t_tb_cfg
+    ) is
+    constant C_ECHO    : character := character'val(to_integer(unsigned(data)));
+    variable v_line    : string(1 to line'length);
+    variable v_len     : natural;
+    variable v_pos     : natural := 0;
+  begin
+    uart_send(data, msg, uart_rx, cfg);
+    cts_b <= '0';
+    uart_get_line(v_line, v_len, uart_tx, cfg);
+    for i in v_len downto 1 loop
+      if v_line(i) = C_ECHO
+      then
+        v_pos := i;
+      end if;
+    end loop;
+    check_value(v_pos /= 0, ERROR, msg & " : echo in the line " & v_line(1 to v_len), C_TB_SCOPE);
+    if v_pos /= 0
+    then
+      v_line(v_pos to v_len-1) := v_line(v_pos+1 to v_len);
+      v_len                    := v_len-1;
+    end if;
+    line := v_line;
+    len  := v_len;
   end procedure;
 
   procedure wait_pass

@@ -10,8 +10,9 @@ p.addPad('switch_i[0]'       ,{'location':'IOB10_D04P'  , 'standard':'LVCMOS', '
 p.addPad('switch_i[1]'       ,{'location':'IOB10_D03N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA03 (Switch S3)
 p.addPad('switch_i[2]'       ,{'location':'IOB10_D03P'  , 'standard':'LVCMOS', 'drive':'16mA'}) # PA03 (Switch S2)
 p.addPad('switch_i[3]'       ,{'location':'IOB10_D09P'  , 'standard':'LVCMOS', 'drive':'16mA'}) # PA09 (Switch S1)
-p.addPad('switch_i[4]'       ,{'location':'IOB10_D04N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA09 (Switch S5)
-p.addPad('switch_i[5]'       ,{'location':'IOB10_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA04 (Switch S6)
+# Function of the UART pads (S6 S5) : 00 user UART, 01 HWLA UART, 10 JTAG, 11 JTAG over the UART
+p.addPad('debug_mux_sel_i[0]',{'location':'IOB10_D04N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA09 (Switch S5)
+p.addPad('debug_mux_sel_i[1]',{'location':'IOB10_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA04 (Switch S6)
 
 #------------------------------------------------------------------
 # Push Buttons
@@ -57,7 +58,7 @@ p.addPad('spi_io_io[1]'      ,{'location':'USER_D10'    }) # USER_* have predefi
 # Bank5 spare I/Os                                      
 p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left
 #                             {'location':'IOB5_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 3 from left
-# UART pads, shared with the HWLA UART and JTAG (switch_i MSBs), FTDI MPSSE
+# UART pads, shared with the HWLA UART and JTAG (debug_mux_sel_i), FTDI MPSSE
 # pinout : rx = TCK (AD0), tx = TDI (AD1, pull-up : TDI idle high), cts_b =
 # TDO (AD2, pull-down : CTS* active without a cable), rts_b = TMS (AD3,
 # pull-up : TMS idle high)

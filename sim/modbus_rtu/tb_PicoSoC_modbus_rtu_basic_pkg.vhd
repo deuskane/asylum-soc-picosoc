@@ -18,6 +18,8 @@
 --                               UART pads to the HWLA UART)
 -- 2026-11-23  1.2      mrosiere Switches 0x1A (MSBs 11 : JTAG over the UART
 --                               pads, only 00 keeps the user UART)
+-- 2026-11-23  1.3      mrosiere Switches 0x5A again (the UART pads are
+--                               selected by debug_mux_sel_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -65,8 +67,8 @@ package body tb_PicoSoC_modbus_rtu_basic_pkg is
 
     -- Change Switch and check if it's the expected value
     wait for C_FRAME_GAP;
-    switch <= x"1A";
-    modbus_read (C_SWITCH_DATA,(0 => x"1A"), "Read  SWITCH Data", cfg, uart_rx, uart_tx);
+    switch <= x"5A";
+    modbus_read (C_SWITCH_DATA,(0 => x"5A"), "Read  SWITCH Data", cfg, uart_rx, uart_tx);
 
     wait for C_FRAME_GAP;
     switch <= x"3C";

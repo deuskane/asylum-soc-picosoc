@@ -16,8 +16,11 @@
 --                difference flag on led_diff_o)
 --              * The capture (DEPTH samples of C_SAMPLE_BYTES bytes) is
 --                received with the UART BFM, then checked :
---                - the read of the switches and the write of LED0 with the
---                  new value are in the samples before the trigger sample
+--                - the write of LED0 with the new value is in the samples
+--                  before the trigger sample, the read of the switches of
+--                  the next loop iteration (still the new value) follows it
+--                  (the read of the iteration that wrote LED0 is a whole
+--                  loop line earlier, out of the capture)
 --                - the trigger sample is the sample PRE_TRIGGER : its
 --                  timestamp is the one of the write of LED0, plus the clock
 --                  cycles between the change of LED0 and the difference flag
@@ -42,6 +45,8 @@
 -- 2026-11-21  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Probe ics : the instruction of a sample
 --                               follows the fetch strobe of the previous one
+-- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
+--                               read of the switches of the next iteration
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -123,7 +128,7 @@ package body tb_PicoSoC_hwla_pkg is
     constant C_SWITCH_DATA  : std_logic_vector(8-1 downto 0) := std_logic_vector(unsigned(PICOSOC_USER_SWITCH_BA) + GPIO_IRQ_DATA);
     constant C_LED0_DATA    : std_logic_vector(8-1 downto 0) := std_logic_vector(unsigned(PICOSOC_USER_LED0_BA  ) + GPIO_IRQ_DATA);
 
-    -- Switch 5 clear : the firmware loops on SWITCH -> LED0
+    -- The firmware loops on SWITCH -> loop line -> LED0
     constant C_SW1          : std_logic_vector(8-1 downto 0) := x"5A";
     constant C_SW2          : std_logic_vector(8-1 downto 0) := x"96";
 
@@ -201,8 +206,8 @@ package body tb_PicoSoC_hwla_pkg is
       log(ID_SEQUENCER_SUB, "HWLA sample " & integer'image(s) & " : " & to_hstring(v_capture(s)), C_TB_SCOPE);
     end loop;
 
-    -- Data bus : first accepted write of the new switches to LED0, last
-    -- read of the new switches before it
+    -- Data bus : first accepted write of the new switches to LED0, first
+    -- read of the new switches after it (next loop iteration)
     v_write := -1;
     for s in C_DEPTH-1 downto 0 loop
       if (v_capture(s)(C_DCS) = '1') and (v_capture(s)(C_DWE) = '1') and (v_capture(s)(C_DREADY) = '1') and
@@ -213,7 +218,7 @@ package body tb_PicoSoC_hwla_pkg is
       end if;
     end loop;
     v_read := -1;
-    for s in 0 to v_write-1 loop
+    for s in C_DEPTH-1 downto v_write+1 loop
       if (v_capture(s)(C_DCS) = '1') and (v_capture(s)(C_DRE) = '1') and (v_capture(s)(C_DREADY) = '1') and
          (field(v_capture(s), C_DADDR , 8) = C_SWITCH_DATA) and
          (field(v_capture(s), C_DRDATA, 8) = C_SW2)
@@ -222,7 +227,7 @@ package body tb_PicoSoC_hwla_pkg is
       end if;
     end loop;
     check_value(v_write >= 0 and v_write < C_PRE_TRIGGER, ERROR, "Sample " & integer'image(v_write) & " (before the trigger) : write of the new switches to LED0", C_TB_SCOPE);
-    check_value(v_read  >= 0                            , ERROR, "Sample " & integer'image(v_read ) & " : read of the new switches", C_TB_SCOPE);
+    check_value(v_read  >= 0                            , ERROR, "Sample " & integer'image(v_read ) & " : read of the new switches after the write (next loop iteration)", C_TB_SCOPE);
 
     -- Trigger sample : sample PRE_TRIGGER
     if v_write >= 0

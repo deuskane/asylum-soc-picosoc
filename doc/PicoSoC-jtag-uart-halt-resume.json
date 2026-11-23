@@ -133,33 +133,33 @@
    "name": "switch_i",
    "wave": "=...........|=.....|=.....|=.....|=.....|=...........|=.....|=.....",
    "data": [
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xE5",
-    "0xE5",
-    "0xE5"
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x25",
+    "0x25",
+    "0x25"
    ]
   },
   {
    "name": "led0_o",
    "wave": "=...........|=.....|=.....|=.....|=.....|=...........|=.....|=.....",
    "data": [
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xDA",
-    "0xE5",
-    "0xE5"
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x25",
+    "0x25"
    ]
   }
  ],
  "head": {
-  "text": "Halt and resume of the user CPU through JTAG over the UART pads (switches 11, remote_bitbang at 921600 baud) : scenario bitbang_cpu"
+  "text": "Halt and resume of the user CPU through JTAG over the UART pads (debug_mux_sel_i 11, remote_bitbang at 921600 baud) : scenario bitbang_cpu"
  },
  "foot": {
   "text": "Simulation of sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu (WardRV_fsm, lock-step, SoC clock 12.5 MHz), from 6.1 to 22.5 ms, compressed at each |. A DMI access is two DR scans of 43 bits (request, then result): 3 command bytes per bit (TCK low, R, TCK high)."

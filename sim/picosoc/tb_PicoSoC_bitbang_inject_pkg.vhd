@@ -8,7 +8,7 @@
 -- Description: Scenario bitbang_inject of tb_PicoSoC, from reset (user*,
 --              DEBUG_ENABLE, supervisor, lock-step, fault injection) : the
 --              INJECT register of the injection / status TAP written and
---              read back through JTAG over the UART pads (switches 11)
+--              read back through JTAG over the UART pads (debug_mux_sel_i 11)
 --              * diff read 000 before the injection
 --              * an error injected in CPU1 : the supervisor resets the user
 --                SoC ; diff, read while the injection lasts, is CPU0 vs
@@ -20,6 +20,9 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere UART pads to JTAG over the UART with
+--                               debug_mux_sel_i (was the switch MSBs) :
+--                               switches 0x1A
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -43,6 +46,7 @@ package tb_PicoSoC_bitbang_inject_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
@@ -57,12 +61,13 @@ package body tb_PicoSoC_bitbang_inject_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   bitbang  : in    t_bitbang_rsp
     ) is
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"DA";  -- MSBs 11 : JTAG over the UART
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"1A";
     constant C_TAP     : natural  := cfg.jtag.inject;
     -- No more change during C_SETTLE cycles
     constant C_SETTLE  : positive := 2000*cfg.clk_ratio;
@@ -70,6 +75,7 @@ package body tb_PicoSoC_bitbang_inject_pkg is
   begin
     log(ID_SEQUENCER, "bitbang_inject : error injected in CPU1 through JTAG over the UART", C_TB_SCOPE);
 
+    set_slv    (C_MUX_BITBANG, clk, mux_sel);
     set_slv    (C_SW, clk, switch);
     wait_value (led0, C_SW, cfg, "LED0 = switches 0x" & to_hstring(C_SW) & " : UART pads to JTAG over the UART");
     check_value(led_diff, "000", ERROR, "led_diff : no difference before the injection", C_TB_SCOPE);

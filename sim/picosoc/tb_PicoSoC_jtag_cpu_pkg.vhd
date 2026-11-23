@@ -9,7 +9,7 @@
 --              tb_PicoSoC, from reset (firmware user*, WardRV_fsm,
 --              USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE) : the
 --              debugger (WardRV_debug) of a CPU, in the JTAG chain of the
---              UART pads (switches 10), halts and resumes the hart
+--              UART pads (debug_mux_sel_i 10), halts and resumes the hart
 --              * dtmcs : version 1, abits 7, idle 5
 --              * dmcontrol.dmactive, dmstatus : running, havereset
 --                acknowledged
@@ -35,6 +35,8 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
+-- 2026-11-23  1.2      mrosiere UART pads to JTAG with debug_mux_sel_i (was
+--                               the switch MSBs) : switches 0x1A, 0x25
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -64,6 +66,7 @@ package tb_PicoSoC_jtag_cpu_pkg is
     ;constant supervisor : in    boolean
     ;signal   clk        : in    std_logic
     ;signal   switch     : out   std_logic_vector
+    ;signal   mux_sel    : out   std_logic_vector
     ;signal   inject     : out   std_logic_vector
     ;signal   led0       : in    std_logic_vector
     ;signal   led_diff   : in    std_logic_vector
@@ -79,6 +82,7 @@ package body tb_PicoSoC_jtag_cpu_pkg is
     ;constant supervisor : in    boolean
     ;signal   clk        : in    std_logic
     ;signal   switch     : out   std_logic_vector
+    ;signal   mux_sel    : out   std_logic_vector
     ;signal   inject     : out   std_logic_vector
     ;signal   led0       : in    std_logic_vector
     ;signal   led_diff   : in    std_logic_vector
@@ -95,9 +99,8 @@ package body tb_PicoSoC_jtag_cpu_pkg is
     end function;
     constant C_NAME      : string  := cpu_name;
     constant C_TAP       : natural := cpu_tap;
-    -- Switches with the MSBs 10 : JTAG
-    constant C_SW1       : std_logic_vector(8-1 downto 0) := x"9A";
-    constant C_SW2       : std_logic_vector(8-1 downto 0) := x"A5";
+    constant C_SW1       : std_logic_vector(8-1 downto 0) := x"1A";
+    constant C_SW2       : std_logic_vector(8-1 downto 0) := x"25";
     -- The halted CPU does nothing during C_HALTED cycles
     constant C_HALTED    : positive := 2000*cfg.clk_ratio;
     variable v_data      : std_logic_vector(32-1 downto 0);
@@ -107,6 +110,7 @@ package body tb_PicoSoC_jtag_cpu_pkg is
   begin
     log(ID_SEQUENCER, "jtag_cpu : halt and resume the " & C_NAME & " through its debugger", C_TB_SCOPE);
 
+    set_slv    (C_MUX_JTAG, clk, mux_sel);
     set_slv    (C_SW1, clk, switch);
     wait_value (led0, C_SW1, cfg, "LED0 = switches 0x" & to_hstring(C_SW1) & " : UART pads to JTAG");
     chain_reset(cfg, jtag_if);

@@ -10,11 +10,11 @@
 --              chain have no TAP (wires : TDO = TDI, enable of the stage
 --              ORed with the enables before it), as in the configuration of
 --              the board (no supervisor, no DEBUG_ENABLE)
---              * switches 10 (JTAG pads) : TDO pad not driven out of a scan ;
+--              * debug_mux_sel_i 10 (JTAG pads) : TDO pad not driven out of a scan ;
 --                the IDCODE of every TAP in one DR scan, each bit driven by
 --                the SoC on the TDO pad (no 'H' of the pull-up) ; dmactive,
 --                then dmstatus of the user CPU read through the DMI
---              * switches 11 (JTAG over the UART) : the IDCODE of every TAP,
+--              * debug_mux_sel_i 11 (JTAG over the UART) : the IDCODE of every TAP,
 --                dmstatus of the user CPU (jtag_bitbang answers '1' when
 --                TDO is not driven)
 -------------------------------------------------------------------------------
@@ -23,6 +23,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere UART pads with debug_mux_sel_i (was the switch
+--                               MSBs) : switches 0x0C, 0x09
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -49,6 +51,7 @@ package tb_PicoSoC_jtag_last_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
@@ -64,6 +67,7 @@ package body tb_PicoSoC_jtag_last_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
@@ -72,8 +76,8 @@ package body tb_PicoSoC_jtag_last_pkg is
     ) is
     constant C_NB      : positive := cfg.jtag.nb_tap;
     constant C_TAP     : natural  := cfg.jtag.user;
-    constant C_SW10    : std_logic_vector(8-1 downto 0) := x"8C";  -- MSBs 10 : JTAG pads
-    constant C_SW11    : std_logic_vector(8-1 downto 0) := x"C9";  -- MSBs 11 : JTAG over the UART
+    constant C_SW10    : std_logic_vector(8-1 downto 0) := x"0C";  -- with the JTAG pads
+    constant C_SW11    : std_logic_vector(8-1 downto 0) := x"09";  -- with JTAG over the UART
     variable v_ids     : std_logic_vector(32*C_NB-1 downto 0);
     variable v_exp     : std_logic_vector(32*C_NB-1 downto 0);
     variable v_data    : std_logic_vector(32-1 downto 0);
@@ -84,7 +88,8 @@ package body tb_PicoSoC_jtag_last_pkg is
       v_exp(32*(C_NB-p)-1 downto 32*(C_NB-1-p)) := idcode(cfg, p);
     end loop;
 
-    -- Switches 10 : JTAG pads
+    -- 10 : JTAG pads
+    set_slv     (C_MUX_JTAG, clk, mux_sel);
     set_slv     (C_SW10, clk, switch);
     wait_value  (led0, C_SW10, cfg, "LED0 = switches 0x" & to_hstring(C_SW10) & " : UART pads to JTAG");
     check_value (tdo_pad = 'H', ERROR, "TDO pad not driven out of a scan", C_TB_SCOPE);
@@ -102,7 +107,8 @@ package body tb_PicoSoC_jtag_last_pkg is
     dmi_read    (cfg, C_TAP, DM_DMSTATUS, v_data, jtag_if);
     check_value (v_data(11 downto 8), "1100", ERROR, "dmstatus of the user CPU through the JTAG pads : allrunning", C_TB_SCOPE);
 
-    -- Switches 11 : JTAG over the UART
+    -- 11 : JTAG over the UART
+    set_slv         (C_MUX_BITBANG, clk, mux_sel);
     set_slv         (C_SW11, clk, switch);
     wait_value      (led0, C_SW11, cfg, "LED0 = switches 0x" & to_hstring(C_SW11) & " : UART pads to JTAG over the UART");
     bitbang_reset   (cfg, uart_rx);

@@ -33,6 +33,11 @@
 --                               fetch strobe of the user CPU)
 -- 2026-11-23  1.15     mrosiere JTAG over the UART (switches 11) : PicoSoC_pads
 --                               and PicoSoC_top components
+-- 2026-11-23  1.16     mrosiere active_high (polarity of the inputs)
+-- 2026-11-23  1.17     mrosiere PicoSoC_clkrst component
+-- 2026-11-23  1.18     mrosiere PicoSoC_jtag_over_uart component
+-- 2026-11-23  1.19     mrosiere HWLA_BAUD_RATE (PicoSoC_top, PicoSoC_hwla components)
+-- 2026-11-23  1.20     mrosiere debug_mux_sel_i (PicoSoC_top, PicoSoC_pads components)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -144,14 +149,45 @@ package PicoSoC_pkg is
   type PicoSoC_supervisor_debug_t is record
     arst_b : std_logic;
   end record PicoSoC_supervisor_debug_t;
+
+  -----------------------------------------------------------------------------
+  -- Polarity of an input of PicoSoC_top (generics *_POLARITY) : x seen
+  -- active high ("low" : inverted, "high" : unchanged)
+  -----------------------------------------------------------------------------
+  function active_high (x : std_logic       ; polarity : string) return std_logic;
+  function active_high (x : std_logic_vector; polarity : string) return std_logic_vector;
   
   -----------------------------------------------------------------------------
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_clkrst is
+  generic
+    (FSYS                    : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;FSYS_INT                : positive := 50_000_000 -- Frequency of clk_o (Hz)
+    ;RESET_POLARITY          : string   := "low"      -- Polarity of arst_i : "high" / "low"
+    );
+  port
+    (clk_i                   : in  std_logic
+    ;arst_i                  : in  std_logic
+
+    -- SoC clock
+    ;clk_o                   : out std_logic
+
+    -- Resets, active low, released on clk_o
+    ;arst_b_supervisor_o     : out std_logic -- Supervisor domain, debug units
+    ;supervisor_ndmreset_i   : in  std_logic -- ndmreset of the debugger of the supervisor CPU
+    ;arst_b_supervisor_soc_o : out std_logic -- Supervisor SoC
+    ;arst_b_user_i           : in  std_logic -- Reset of the user SoC by the supervisor
+    ;user_ndmreset_i         : in  std_logic -- ndmreset of the debugger of a user CPU
+    ;arst_b_user_o           : out std_logic -- User SoC
+    );
+end component PicoSoC_clkrst;
+
 component PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;HWLA_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART of the captures
     );
   port
     (clk_i            : in  std_logic
@@ -161,10 +197,29 @@ component PicoSoC_hwla is
     ;probe_i          : in  std_logic_vector
     ;trigger_i        : in  std_logic
 
-    -- Captures : UART 115200 8N1
+    -- Captures : UART 8N1, HWLA_BAUD_RATE
     ;uart_tx_o        : out std_logic
     );
 end component PicoSoC_hwla;
+
+component PicoSoC_jtag_over_uart is
+  generic
+    (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;JTAG_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART
+    );
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic
+
+    -- UART (8N1, JTAG_BAUD_RATE) : commands of OpenOCD in, answers out
+    ;uart_rx_i        : in  std_logic
+    ;uart_tx_o        : out std_logic
+
+    -- JTAG pins to the chain, TDO of the chain
+    ;jtag_ini_o       : out jtag_ini_t
+    ;jtag_tgt_i       : in  jtag_tgt_t
+    );
+end component PicoSoC_jtag_over_uart;
 
 component PicoSoC_pads is
   generic
@@ -174,8 +229,8 @@ component PicoSoC_pads is
     (clk_i            : in    std_logic
     ;arst_b_i         : in    std_logic
 
-    -- Selection of the UART pads : the two MSBs of the switches (asynchronous)
-    ;switch_i         : in    std_logic_vector(2-1 downto 0)
+    -- Function of the UART pads (asynchronous)
+    ;debug_mux_sel_i  : in    std_logic_vector(2-1 downto 0)
 
     -- Pads : UART / JTAG (FTDI MPSSE AD0 to AD3), SPI, I2C
     ;uart_rx_i        : in    std_logic -- RX   / TCK
@@ -195,8 +250,8 @@ component PicoSoC_pads is
     ;uart_rts_b_i     : in    std_logic
     -- HWLA UART (TX only)
     ;debug_uart_tx_i  : in    std_logic
-    -- JTAG chain : driven by the JTAG pads (switches 10) or by jtag_bitbang
-    -- (switches 11)
+    -- JTAG chain : driven by the JTAG pads (debug_mux_sel_i 10) or by
+    -- jtag_bitbang (debug_mux_sel_i 11)
     ;jtag_ini_o       : out   jtag_ini_t
     ;jtag_tgt_i       : in    jtag_tgt_t
     -- JTAG over the UART (jtag_bitbang and its UART)
@@ -281,7 +336,8 @@ component PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
-    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
+    ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -327,7 +383,11 @@ component PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- Function of the UART pads (asynchronous) : 00 user UART, 01 HWLA
+    -- UART, 10 JTAG, 11 JTAG over the UART
+    ;debug_mux_sel_i  : in  std_logic_vector(             2-1 downto 0)
+
+    -- UART Interface, shared with the HWLA UART and JTAG (debug_mux_sel_i) :
     -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
     ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
     ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
@@ -350,7 +410,7 @@ component PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART 115200 8N1 (DEBUG_ENABLE), else 1
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART HWLA_BAUD_RATE 8N1 (DEBUG_ENABLE), else 1
      
     );
 end component PicoSoC_top;
@@ -516,3 +576,27 @@ end component cpu_wrapper;
 
 -- [COMPONENT_INSERT][END]
 end package PicoSoC_pkg;
+
+package body PicoSoC_pkg is
+
+  function active_high (x : std_logic; polarity : string) return std_logic is
+  begin
+    if polarity = "low"
+    then
+      return not x;
+    else
+      return x;
+    end if;
+  end function active_high;
+
+  function active_high (x : std_logic_vector; polarity : string) return std_logic_vector is
+  begin
+    if polarity = "low"
+    then
+      return not x;
+    else
+      return x;
+    end if;
+  end function active_high;
+
+end package body PicoSoC_pkg;

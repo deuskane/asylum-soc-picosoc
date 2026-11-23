@@ -7,12 +7,14 @@
 -------------------------------------------------------------------------------
 -- Description: Scenario jtag_status of tb_PicoSoC, from reset (firmware
 --              user*, DEBUG_ENABLE) : the TDR PICOSOC_JTAG_IR_STATUS of the
---              injection TAP (JTAG on the UART pads, switches 10) reads,
+--              injection TAP (JTAG on the UART pads, debug_mux_sel_i 10) reads,
 --              from the LSB, led0_o, led1_o, led_diff_o, switch_i and the
 --              resets (user SoC, supervisor SoC : 1 = running)
 --              * after reset (LED1 = 0, led_diff = 0)
 --              * new switches (LED0) and an it_user_i pulse (LED1 = 1)
 --              * with fault injection : an error (inject_error_i) in CPU0,
+--                held until the difference flag (the CPU waits on the
+--                UART most of the time : a short error may see no fetch),
 --                led_diff_o = difference flags (no supervisor) or number of
 --                errors (supervisor)
 -------------------------------------------------------------------------------
@@ -24,6 +26,10 @@
 -- 2026-11-23  1.1      mrosiere Switches 0x85 (no UART line during the error)
 -- 2026-11-23  1.2      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
+-- 2026-11-23  1.3      mrosiere Loop line at every iteration (esw/user.c) :
+--                               error held until the difference flag
+-- 2026-11-23  1.4      mrosiere UART pads to JTAG with debug_mux_sel_i (was
+--                               the switch MSBs) : switches 0x1A, 0x05
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -49,6 +55,7 @@ package tb_PicoSoC_jtag_status_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   it_user  : out   std_logic
     ;signal   inject   : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
@@ -65,6 +72,7 @@ package body tb_PicoSoC_jtag_status_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   it_user  : out   std_logic
     ;signal   inject   : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
@@ -73,11 +81,8 @@ package body tb_PicoSoC_jtag_status_pkg is
     ;signal   jtag_if  : inout t_jtag_if
     ) is
     constant C_TAP     : natural := cfg.jtag.inject;
-    -- Switches with the MSBs 10 : JTAG
-    constant C_SW1     : std_logic_vector(8-1 downto 0) := x"9A";
-    -- switch(5) clear : no UART line, the CPU fetches (an UART write with
-    -- FIFO depth 0 stalls the bus and the fetches for a character time)
-    constant C_SW2     : std_logic_vector(8-1 downto 0) := x"85";
+    constant C_SW1     : std_logic_vector(8-1 downto 0) := x"1A";
+    constant C_SW2     : std_logic_vector(8-1 downto 0) := x"05";
     variable v_diff    : std_logic_vector(3-1 downto 0);
 
     -- Status read through JTAG : resets 11 (running), switches sw,
@@ -99,6 +104,7 @@ package body tb_PicoSoC_jtag_status_pkg is
   begin
     log(ID_SEQUENCER, "jtag_status : LEDs, switches and resets read through JTAG", C_TB_SCOPE);
 
+    set_slv     (C_MUX_JTAG, clk, mux_sel);
     set_slv     (C_SW1, clk, switch);
     wait_value  (led0, C_SW1, cfg, "LED0 = switches 0x" & to_hstring(C_SW1) & " : UART pads to JTAG");
     chain_reset (cfg, jtag_if);
@@ -120,7 +126,16 @@ package body tb_PicoSoC_jtag_status_pkg is
       else
         v_diff := "101" when cfg.tmr else "001";
       end if;
-      inject_error(0, cfg, clk, inject);
+      -- Error until the difference flag : an UART write with FIFO depth 0
+      -- stalls the bus and the fetches for a character time
+      wait until falling_edge(clk);
+      inject(0) <= cfg.fault_on;
+      if led_diff = "000"
+      then
+        wait until led_diff /= "000" for cfg.timeout;
+      end if;
+      wait until falling_edge(clk);
+      inject(0) <= not cfg.fault_on;
       wait_value  (led_diff, v_diff, cfg, "led_diff after an error in CPU0");
       if cfg.supervisor
       then

@@ -21,6 +21,7 @@
  NET "switch_i<5>"     LOC = "P12"; # Bank = 3, Pin name = IP/VREF_3,           Sch name = SW5
  NET "switch_i<6>"     LOC = "P10"; # Bank = 3, Pin name = IO(3S100E)/IP(3S250E),Sch name = SW6
  NET "switch_i<7>"     LOC = "P6";  # Bank = 3, Pin name = IP,                  Sch name = SW7
+# debug_mux_sel_i (function of the UART pads) : no pin, as the UART pads
 
 # Buttons                                                                                                                        
  NET "arst_i"          LOC = "P69"; # Bank = 2, Pin name = IP,                   Sch name = BTN0
