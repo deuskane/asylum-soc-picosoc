@@ -49,6 +49,8 @@
 -- 2026-11-23  2.16     mrosiere Switches 11 : JTAG over the UART pads
 --                               (jtag_bitbang, OpenOCD remote_bitbang,
 --                               JTAG_BAUD_RATE) when the chain has a TAP
+-- 2026-11-23  2.17     mrosiere Polarities of the inputs with active_high
+--                               (one line each)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -230,17 +232,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Reset Management
   -----------------------------------------------------------------------------
-  gen_arst_b:
-  if RESET_POLARITY = "low"
-  generate
-    arst_b <=     arst_i;
-  end generate gen_arst_b;
-
-  gen_arst:
-  if RESET_POLARITY = "high"
-  generate
-    arst_b <= not arst_i;
-  end generate gen_arst;
+  arst_b <= not active_high(arst_i, RESET_POLARITY);
 
   ins_reset_resynchronizer1 : sync2dffrn
     port map
@@ -279,17 +271,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- IT_USER User
   -----------------------------------------------------------------------------
-  gen_it_user_b:
-  if USER_IT_POLARITY = "low"
-  generate
-    it_user <= not it_user_i;
-  end generate gen_it_user_b;
-
-  gen_it_user:
-  if USER_IT_POLARITY = "high"
-  generate
-    it_user <=     it_user_i;
-  end generate gen_it_user;
+  it_user <= active_high(it_user_i, USER_IT_POLARITY);
 
   -----------------------------------------------------------------------------
   -- SoC User
@@ -427,17 +409,7 @@ begin  -- architecture rtl
   -- FAULT_INJECTION
   -- Push buttons (polarity USER_FAULT_POLARITY) or JTAG, ORed active high
   -----------------------------------------------------------------------------
-  gen_inject_error_b:
-  if USER_FAULT_POLARITY = "low"
-  generate
-    inject_error_button <= not inject_error_i;
-  end generate gen_inject_error_b;
-
-  gen_inject_error:
-  if USER_FAULT_POLARITY = "high"
-  generate
-    inject_error_button <=     inject_error_i;
-  end generate gen_inject_error;
+  inject_error_button <= active_high(inject_error_i, USER_FAULT_POLARITY);
 
   inject_error <= inject_error_button or inject_error_jtag;
 

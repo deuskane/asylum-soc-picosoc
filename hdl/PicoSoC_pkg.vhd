@@ -33,6 +33,7 @@
 --                               fetch strobe of the user CPU)
 -- 2026-11-23  1.15     mrosiere JTAG over the UART (switches 11) : PicoSoC_pads
 --                               and PicoSoC_top components
+-- 2026-11-23  1.16     mrosiere active_high (polarity of the inputs)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -144,6 +145,13 @@ package PicoSoC_pkg is
   type PicoSoC_supervisor_debug_t is record
     arst_b : std_logic;
   end record PicoSoC_supervisor_debug_t;
+
+  -----------------------------------------------------------------------------
+  -- Polarity of an input of PicoSoC_top (generics *_POLARITY) : x seen
+  -- active high ("low" : inverted, "high" : unchanged)
+  -----------------------------------------------------------------------------
+  function active_high (x : std_logic       ; polarity : string) return std_logic;
+  function active_high (x : std_logic_vector; polarity : string) return std_logic_vector;
   
   -----------------------------------------------------------------------------
   -- Component
@@ -516,3 +524,27 @@ end component cpu_wrapper;
 
 -- [COMPONENT_INSERT][END]
 end package PicoSoC_pkg;
+
+package body PicoSoC_pkg is
+
+  function active_high (x : std_logic; polarity : string) return std_logic is
+  begin
+    if polarity = "low"
+    then
+      return not x;
+    else
+      return x;
+    end if;
+  end function active_high;
+
+  function active_high (x : std_logic_vector; polarity : string) return std_logic_vector is
+  begin
+    if polarity = "low"
+    then
+      return not x;
+    else
+      return x;
+    end if;
+  end function active_high;
+
+end package body PicoSoC_pkg;
