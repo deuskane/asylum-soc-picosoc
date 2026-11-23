@@ -33,6 +33,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere Target TAP with the chain fields of the BFM
+--                               (jtag_config(cfg, tap))
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -169,9 +171,9 @@ package body tb_PicoSoC_jtag_cpu_pkg is
     if cfg.jtag.inject >= 0
     then
       -- Reset bits of the status TDR (MSBs) : supervisor SoC, user SoC
-      chain_ir   (cfg, cfg.jtag.inject, PICOSOC_JTAG_IR_STATUS, "STATUS", jtag_if);
+      jtag_write_ir(ir_value => PICOSOC_JTAG_IR_STATUS, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, cfg.jtag.inject));
       v_resets := "00" when supervisor else "10";
-      chain_dr   (cfg, cfg.jtag.inject, v_status, v_status, "STATUS", jtag_if);
+      jtag_scan_dr (data_value => v_status, data_out => v_status, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, cfg.jtag.inject));
       check_value(v_status(v_status'high downto v_status'high-1), v_resets, ERROR,
                   C_NAME & " ndmreset : reset bits of the status TDR (supervisor SoC, user SoC)", C_TB_SCOPE);
     end if;

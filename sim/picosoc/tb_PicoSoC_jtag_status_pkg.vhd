@@ -22,6 +22,8 @@
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Switches 0x85 (no UART line during the error)
+-- 2026-11-23  1.2      mrosiere Target TAP with the chain fields of the BFM
+--                               (jtag_config(cfg, tap))
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -90,7 +92,7 @@ package body tb_PicoSoC_jtag_status_pkg is
       constant C_EXP   : std_logic_vector(2+8+3+8+8-1 downto 0) := "11" & sw & diff & l1 & l0;
       variable v_read  : std_logic_vector(C_EXP'range);
     begin
-      chain_dr   (cfg, C_TAP, C_EXP xor C_EXP, v_read, "STATUS", jtag_if);
+      jtag_scan_dr (data_value => C_EXP xor C_EXP, data_out => v_read, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
       check_value(v_read, C_EXP, ERROR, "status read through JTAG (resets, switches, led_diff, LED1, LED0) : " & msg, C_TB_SCOPE);
     end procedure;
 
@@ -100,7 +102,7 @@ package body tb_PicoSoC_jtag_status_pkg is
     set_slv     (C_SW1, clk, switch);
     wait_value  (led0, C_SW1, cfg, "LED0 = switches 0x" & to_hstring(C_SW1) & " : UART pads to JTAG");
     chain_reset (cfg, jtag_if);
-    chain_ir    (cfg, C_TAP, PICOSOC_JTAG_IR_STATUS, "STATUS", jtag_if);
+    jtag_write_ir(ir_value => PICOSOC_JTAG_IR_STATUS, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
     check_status(C_SW1, "000", x"00", C_SW1, "after reset");
 
     set_slv     (C_SW2, clk, switch);

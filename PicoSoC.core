@@ -663,7 +663,7 @@ filesets:
       - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
-      - ">=asylum:verification:uvvm:1.1.0" # jtag_bfm_pkg (JTAG BFM)
+      - ">=asylum:verification:uvvm:1.2.0" # jtag_bfm_pkg (JTAG BFM, chain fields)
 
   #---------------------------------------
   files_ng_medium:
