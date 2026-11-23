@@ -311,32 +311,32 @@ Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 
 Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `PicoSoC_top` with the generics of each configuration, synthesized by Yosys and its GHDL plugin; the reports are in the build directory of each target. The user ROM holds [esw/user_identity.c](esw/user_identity.c) (the firmware of `lint_ghdl`), the supervisor ROM [esw/dummy.c](esw/dummy.c): a bigger program needs a bigger ROM. `soc1`: no supervisor, no safety, default FIFOs (0); `soc4_ng_medium`: supervisor and TMR (3 user CPUs) with the generics of the NG-MEDIUM board (6 switches, FIFOs of 4, 2 SPI pads). The `syn_*` targets set `DEBUG_ENABLE = false` (no HWLA, no injection / status TAP), but `syn_wardrv_soc4_ng_medium_debug`: `DEBUG_ENABLE` and both CPU debuggers.
 
-| Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
-|---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1273 | 108 | 777 | 59 | 189 | 0.5 | 0 | 190127.35 | 50.652 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 1948 | 304 | 997 | 127 | 71 | 1 | 0 | 493458.27 | 131.463 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 2079 | 104 | 1058 | 53 | 177 | 1 | 0 | 164143.68 | 43.730 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5430 | 304 | 2128 | 103 | 729 | 2 | 0 | 380128.32 | 101.270 |
-| `syn_wardrv_soc4_ng_medium_debug` (WardRV_fsm, `DEBUG_ENABLE`, both CPU debuggers) | 8463 | 420 | 3521 | 134 | 1084 | 2 | 0 | 685690.13 | 182.675 |
+| Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | TBUF¹ | Area² (µm²) | kGE³ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `syn_soc1` (OpenBlaze8) | 1315 | 108 | 788 | 60 | 181 | 0.5 | 0 | 13 | 190926.86 | 50.865 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 1994 | 304 | 1006 | 128 | 77 | 1 | 0 | 7 | 490681.85 | 130.723 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2188 | 104 | 1069 | 54 | 203 | 1 | 0 | 13 | 164076.11 | 43.712 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5442 | 304 | 2137 | 104 | 729 | 2 | 0 | 7 | 380302.24 | 101.317 |
+| `syn_wardrv_soc4_ng_medium_debug` (WardRV_fsm, `DEBUG_ENABLE`, both CPU debuggers) | 8685 | 420 | 3591 | 135 | 1152 | 2 | 0 | 7 | 685343.55 | 182.583 |
 
 With the HWLA ([Debug: HWLA](#debug-hwla)) and the injection / status TAP: the same configurations with `DEBUG_ENABLE = true` (`fusesoc --cores-root . run --target syn_soc1 asylum:soc:PicoSoC --DEBUG_ENABLE=true`):
 
-| Configuration, `DEBUG_ENABLE = true` | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
-|---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1453 | 204 | 1059 | 76 | 77 | 0.5 | 0 | 365128.94 | 97.274 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 2229 | 400 | 1307 | 144 | 63 | 1 | 0 | 667838.01 | 177.919 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 2331 | 220 | 1382 | 70 | 198 | 1 | 0 | 378738.24 | 100.900 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5572 | 420 | 2480 | 120 | 644 | 2 | 0 | 592667.16 | 157.893 |
+| Configuration, `DEBUG_ENABLE = true` | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | TBUF¹ | Area² (µm²) | kGE³ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `syn_soc1` (OpenBlaze8) | 1609 | 204 | 1150 | 77 | 78 | 0.5 | 0 | 13 | 367182.16 | 97.821 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 2361 | 400 | 1377 | 145 | 63 | 1 | 0 | 7 | 671804.31 | 178.976 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2453 | 220 | 1473 | 71 | 162 | 1 | 0 | 13 | 378757.01 | 100.905 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5701 | 420 | 2550 | 121 | 639 | 2 | 0 | 7 | 592685.93 | 157.898 |
 
-The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV_fsm) LUTRAM for its RAM of 64 x 72 or 86 bits, 280 to 330 flip-flops and 17 CARRY4 on Artix-7, and 170000 to 210000 µm² in sky130, where its RAM becomes flip-flops. The injection / status TAP adds about 30 flip-flops with fault injection (the INJECT register and its synchronizers); the CPU debuggers (`syn_wardrv_soc4_ng_medium_debug` against `syn_wardrv_soc4_ng_medium` with `DEBUG_ENABLE`) about 2900 LUTs and 1040 flip-flops: two Debug Modules and the debug logic of the 4 WardRV_fsm (3 user copies in TMR and the supervisor). The two synchronizers of the switch MSBs (pad multiplexer) add 4 flip-flops to every configuration; the other small differences between versions come from the technology mapping, which changes with the order and the names of the cells of the netlist.
+The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV_fsm) LUTRAM for its RAM of 64 x 72 or 86 bits, 280 to 330 flip-flops and 17 CARRY4 on Artix-7, and 170000 to 210000 µm² in sky130, where its RAM becomes flip-flops. The injection / status TAP adds about 80 to 90 flip-flops (its IDCODE, IR and TDR shift registers, the INJECT register and its synchronizers) and up to about 130 LUTs (the LUT count of the `DEBUG_ENABLE` configurations moves with the technology mapping); the CPU debuggers (`syn_wardrv_soc4_ng_medium_debug` against `syn_wardrv_soc4_ng_medium` with `DEBUG_ENABLE`) about 3000 LUTs and 1040 flip-flops: two Debug Modules and the debug logic of the 4 WardRV_fsm (3 user copies in TMR and the supervisor). The two synchronizers of the switch MSBs (pad multiplexer) add 4 flip-flops to every configuration; the other small differences between versions come from the technology mapping, which changes with the order and the names of the cells of the netlist.
 
-¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. The SPI, I2C and UART pads (`inout`) are not synthesized by the GHDL plugin of Yosys (warning "no assignment for port"): the output enables and output registers that only drive them may be removed. For the JTAG chain, it is the logic that only drives TDO (IDCODE registers, captures of the TDRs): with the pad outputs on extra top-level ports, `syn_wardrv_soc4_ng_medium_debug` gives 8624 LUTs and 3582 flip-flops.
+¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. TBUF: tristate pad buffers (the OBUFT / IOBUF of the I/O blocks, not logic, never in LUT), one per pad whose output enable is not constant: the SPI data lanes (8 in `soc1`, 2 with the NG-MEDIUM generics; SCLK and CS\* are plain outputs), I2C SCL and SDA, and the 3 inout UART pads (TX / TDI, CTS\* / TDO, RTS\* / TMS). The logic that drives the pads (data and output enables, TDO of the JTAG chain) is counted. These figures need `asylum:utils:yosys_synth` >= 1.1.0: older versions lost the logic behind the `inout` pads of component instances (a GHDL synthesis issue) and rejected the tristate buffers.
 
-² SkyWater sky130 `sky130_fd_sc_hd`, typical corner (tt, 25 °C, 1.80 V), Yosys 0.33 `synth` + `dfflibmap` + `abc -liberty`: standard-cell area only, no timing constraint, no buffering, clock tree or placement; the ROMs, RAMs and FIFOs become flip-flops and logic (no ROM or SRAM macro), which explains most of the area.
+² SkyWater sky130 `sky130_fd_sc_hd`, typical corner (tt, 25 °C, 1.80 V), Yosys 0.33 `synth` + `dfflibmap` + `abc -liberty`: standard-cell area only, no timing constraint, no buffering, clock tree or placement (the tristate pad buffers are I/O cells: no area); the ROMs, RAMs and FIFOs become flip-flops and logic (no ROM or SRAM macro), which explains most of the area.
 
 ³ Area in thousands of NAND2 gate equivalents (`sky130_fd_sc_hd__nand2_1` = 3.7536 µm²).
 
-The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the asylum-env image: no figure for this FPGA (about 32000 4-input LUTs and 32000 flip-flops: the 8.6k LUT6 and 3.6k flip-flops of the largest configuration, with the CPU debuggers, are expected to fit, not checked with NXmap).
+The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the asylum-env image: no figure for this FPGA (about 32000 4-input LUTs and 32000 flip-flops: the 8.7k LUT6 and 3.6k flip-flops of the largest configuration, with the CPU debuggers, are expected to fit, not checked with NXmap).
 
 ## Theory of Operation
 
