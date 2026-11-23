@@ -92,9 +92,16 @@ CAPI=2:
 #                               the HWLA probes; tb : JTAG BFM chain fields
 #                               (asylum:verification:uvvm 1.2.0), scenarios bitbang_*,
 #                               jtag_last
+# 2026-11-23  4.3.0    mrosiere esw/user.c prints the loop line at every iteration (tb :
+#                               echo on a quiet line with CTS*), mailbox test on hart 0 only ;
+#                               cpu_safety : one record per CPU, a loop over the copies ;
+#                               polarities with active_high ; PicoSoC_clkrst,
+#                               PicoSoC_jtag_over_uart ; HWLA_BAUD_RATE ; debug_mux_sel_i
+#                               (function of the UART pads, was the switch MSBs ; NG-MEDIUM :
+#                               4 user switches) ; core : one YAML anchor per configuration
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.2.0
+name        : asylum:soc:PicoSoC:4.3.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
