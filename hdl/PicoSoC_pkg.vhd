@@ -35,6 +35,7 @@
 --                               and PicoSoC_top components
 -- 2026-11-23  1.16     mrosiere active_high (polarity of the inputs)
 -- 2026-11-23  1.17     mrosiere PicoSoC_clkrst component
+-- 2026-11-23  1.18     mrosiere PicoSoC_jtag_over_uart component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -197,6 +198,25 @@ component PicoSoC_hwla is
     ;uart_tx_o        : out std_logic
     );
 end component PicoSoC_hwla;
+
+component PicoSoC_jtag_over_uart is
+  generic
+    (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;JTAG_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART
+    );
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic
+
+    -- UART (8N1, JTAG_BAUD_RATE) : commands of OpenOCD in, answers out
+    ;uart_rx_i        : in  std_logic
+    ;uart_tx_o        : out std_logic
+
+    -- JTAG pins to the chain, TDO of the chain
+    ;jtag_ini_o       : out jtag_ini_t
+    ;jtag_tgt_i       : in  jtag_tgt_t
+    );
+end component PicoSoC_jtag_over_uart;
 
 component PicoSoC_pads is
   generic

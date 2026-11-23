@@ -52,6 +52,7 @@
 -- 2026-11-23  2.17     mrosiere Polarities of the inputs with active_high
 --                               (one line each)
 -- 2026-11-23  2.18     mrosiere Clock and resets in PicoSoC_clkrst
+-- 2026-11-23  2.19     mrosiere JTAG over the UART in PicoSoC_jtag_over_uart
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -59,8 +60,6 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
-use     asylum.techmap_pkg.all;
-use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
 
 entity PicoSoC_top is
@@ -426,138 +425,28 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
-  -- JTAG over the UART pads (switches 11) : jtag_bitbang of asylum-debug-jtag
-  -- behind a UART (8 data bits, no parity, 1 stop bit, JTAG_BAUD_RATE) :
-  -- OpenOCD (remote_bitbang adapter, socat to the serial port) sends one
-  -- byte per change of TCK / TMS / TDI and one per TDO read ('R'),
-  -- jtag_bitbang answers '0' / '1'. Its JTAG pins drive the JTAG chain in
-  -- place of the JTAG pads (PicoSoC_pads) ; SRST ('s', 'u') is not
-  -- connected (reset a CPU with ndmreset of its debug unit) ; TRST* ('t',
-  -- 'u') reaches the TAPs, which ignore it (no TRST*) ; the LED of OpenOCD
-  -- (blink) is not used (no free LED).
+  -- JTAG over the UART pads (switches 11), in PicoSoC_jtag_over_uart :
+  -- jtag_bitbang behind a UART (JTAG_BAUD_RATE), OpenOCD remote_bitbang. Its
+  -- JTAG pins drive the JTAG chain in place of the JTAG pads (PicoSoC_pads).
   -- Clock and reset of the supervisor : a reset of the user SoC keeps the
-  -- link. TCK is a register of clk : a clock derived from data for the TAPs
-  -- (see the README for the constraints).
+  -- link.
   -- Only with a TAP in the chain : else the TX pad stays idle (1) and the
   -- chain sees TCK 0, TMS 1
   -----------------------------------------------------------------------------
   gen_bitbang: if BITBANG_ENABLE
   generate
-    -- Baud tick every FSYS_INT/JTAG_BAUD_RATE cycles of clk
-    constant BITBANG_BAUD_TICK_MAX : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/JTAG_BAUD_RATE-1, 16));
-
-    signal   rx_b                : std_logic;
-    signal   rx_b_sync           : std_logic;
-    signal   rx_sync             : std_logic;
-    signal   rx_tick             : std_logic;
-    signal   rx_tick_half        : std_logic;
-    signal   rx_tick_en          : std_logic;
-    signal   tx_tick             : std_logic;
-    signal   cmd_tdata           : std_logic_vector(8-1 downto 0);
-    signal   cmd_tvalid          : std_logic;
-    signal   cmd_tready          : std_logic;
-    signal   answer_tdata        : std_logic_vector(8-1 downto 0);
-    signal   answer_tvalid       : std_logic;
-    signal   answer_tready       : std_logic;
-  begin
-    -- RX synchronized on clk (uart_rx_axis expects a synchronous input).
-    -- sync2dffrn is reset to '0' : the inverted line is synchronized, so
-    -- that RX is idle ('1') during the reset
-    rx_b    <= not bitbang_rx;
-
-    ins_bitbang_rx_sync : sync2dffrn
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,d_i                     => rx_b
-      ,q_o                     => rx_b_sync
-      );
-
-    rx_sync <= not rx_b_sync;
-
-    ins_bitbang_rx_baud : uart_baud_rate_gen
+    ins_jtag_over_uart : PicoSoC_jtag_over_uart
       generic map
-      (BAUD_TICK_CNT_WIDTH     => 16
+      (FSYS_INT             => FSYS_INT
+      ,JTAG_BAUD_RATE       => JTAG_BAUD_RATE
       )
       port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,baud_tick_en_i          => rx_tick_en
-      ,baud_tick_o             => rx_tick
-      ,baud_tick_half_o        => rx_tick_half
-      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
-      );
-
-    ins_bitbang_rx : uart_rx_axis
-      generic map
-      (WIDTH                   => 8
-      )
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,uart_rx_i               => rx_sync
-      ,m_axis_tdata_o          => cmd_tdata
-      ,m_axis_parity_error_o   => open
-      ,m_axis_tvalid_o         => cmd_tvalid
-      ,m_axis_tready_i         => cmd_tready
-      ,baud_tick_i             => rx_tick
-      ,baud_tick_half_i        => rx_tick_half
-      ,baud_tick_en_o          => rx_tick_en
-      ,parity_enable_i         => '0'
-      ,parity_odd_i            => '0'
-      ,last_parity_error_o     => open
-      ,err_overrun_o           => open
-      ,err_parity_o            => open
-      ,err_framing_o           => open
-      ,err_break_o             => open
-      ,debug_o                 => open
-      );
-
-    ins_bitbang : jtag_bitbang
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,s_axis_tdata_i          => cmd_tdata
-      ,s_axis_tvalid_i         => cmd_tvalid
-      ,s_axis_tready_o         => cmd_tready
-      ,m_axis_tdata_o          => answer_tdata
-      ,m_axis_tvalid_o         => answer_tvalid
-      ,m_axis_tready_i         => answer_tready
-      ,jtag_ini_o              => bitbang_jtag_ini
-      ,jtag_tgt_i              => jtag_tgt
-      ,srst_o                  => open
-      ,blink_o                 => open
-      );
-
-    ins_bitbang_tx_baud : uart_baud_rate_gen
-      generic map
-      (BAUD_TICK_CNT_WIDTH     => 16
-      )
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,baud_tick_en_i          => '1'
-      ,baud_tick_o             => tx_tick
-      ,baud_tick_half_o        => open
-      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
-      );
-
-    ins_bitbang_tx : uart_tx_axis
-      generic map
-      (WIDTH                   => 8
-      )
-      port map
-      (clk_i                   => clk
-      ,arst_b_i                => arst_b_supervisor
-      ,s_axis_tdata_i          => answer_tdata
-      ,s_axis_tvalid_i         => answer_tvalid
-      ,s_axis_tready_o         => answer_tready
-      ,uart_tx_o               => bitbang_tx
-      ,uart_cts_b_i            => '0'
-      ,baud_tick_i             => tx_tick
-      ,parity_enable_i         => '0'
-      ,parity_odd_i            => '0'
-      ,debug_o                 => open
+      (clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,uart_rx_i            => bitbang_rx
+      ,uart_tx_o            => bitbang_tx
+      ,jtag_ini_o           => bitbang_jtag_ini
+      ,jtag_tgt_i           => jtag_tgt
       );
   end generate gen_bitbang;
 
