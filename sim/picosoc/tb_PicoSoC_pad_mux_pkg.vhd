@@ -8,18 +8,21 @@
 -- Description: Scenario pad_mux of tb_PicoSoC, from reset (firmware
 --              user_uart*) : the two MSBs of the switches give the 4 UART
 --              pads to one function
---              * 00 : user UART (banner, echo of a byte), RTS* driven,
---                CTS* not driven by the SoC
+--              * 00 : user UART (banner, echo of a byte in the first loop
+--                line, CTS* held from the end of the banner while it is
+--                sent), RTS* driven, CTS* not
+--                driven by the SoC
 --              * 11 : JTAG over the UART : TX pad driven by the UART of
 --                jtag_bitbang (idle), CTS* and RTS* not driven
---              * 01 : HWLA UART : the loop lines of the firmware (switch(5))
---                do not reach the TX pad, which stays idle ; the firmware
+--              * 01 : HWLA UART : the loop lines of the firmware do not reach the TX pad, which stays idle ; the firmware
 --                does not wait on CTS* (LED0 follows the switches) ; CTS*
 --                and RTS* not driven
 --              * 10 : JTAG : no pad driven out of a scan (TDI, TMS : inputs,
 --                TDO : not driven, TDI and TMS of the cable released), the
 --                firmware does not wait on CTS*
---              * back to 00 : the loop lines are on the TX pad again
+--              * back to 00 : the loop lines are on the TX pad again (a
+--                quiet line with CTS*, the end of the current line, then a
+--                full loop line)
 --              * 01, with DEBUG_ENABLE and fault injection : an error in
 --                CPU0 triggers the HWLA, its capture is on the TX pad, bit by
 --                bit equal to debug_uart_tx_o
@@ -33,6 +36,9 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Switches 11 : JTAG over the UART (was the
 --                               user UART)
+-- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
+--                               echo with CTS* held (uart_echo), back to 00
+--                               after a quiet line (uart_quiet)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -118,12 +124,11 @@ package body tb_PicoSoC_pad_mux_pkg is
     log(ID_SEQUENCER, "pad_mux : functions of the UART pads selected by the switch MSBs", C_TB_SCOPE);
 
     -- 00 : user UART
-    uart_get_line(v_line, v_len, uart_tx, cfg);
+    uart_get_line_quiet(v_line, v_len, uart_tx, cts_b, cfg);
     check_value(v_line(1 to v_len) = C_BANNER, ERROR, "00 : UART banner : " & v_line(1 to v_len), C_TB_SCOPE);
+    uart_echo(x"3F", "00 : echo of the user UART", v_line, v_len, uart_rx, uart_tx, cts_b, cfg);
     check_rts_driven("00");
     check_cts_input ("00");
-    uart_send (x"3F", "00 : byte to echo", uart_rx, cfg);
-    uart_check(x"3F", "00 : echo of the user UART", uart_tx, cfg);
 
     -- 11 : JTAG over the UART : the UART of jtag_bitbang drives the TX pad
     -- (idle), CTS* and RTS* are not driven, the firmware does not wait
@@ -132,8 +137,8 @@ package body tb_PicoSoC_pad_mux_pkg is
     check_value(rts_pad = 'H', ERROR, "11 : RTS* pad not driven", C_TB_SCOPE);
     check_cts_input("11");
 
-    -- 01 : HWLA UART. The firmware prints its loop lines (switch(5)) : the
-    -- pad stays idle, the firmware does not wait (CTS* = 0)
+    -- 01 : HWLA UART. The firmware prints its loop lines : the pad stays
+    -- idle, the firmware does not wait (CTS* = 0)
     set_switch(x"60");
     wait for C_QUIET;
     check_stable(uart_tx, C_QUIET, ERROR, "01 : the loop lines of the user UART are not on the TX pad", C_TB_SCOPE);
@@ -155,11 +160,11 @@ package body tb_PicoSoC_pad_mux_pkg is
     jtag_if     <= init_jtag_if_signals;
     set_switch(x"A1");
 
-    -- Back to 00 : the end of the current loop line, then no line
-    -- (switch(5) clear) ; the next loop line is on the TX pad
+    -- Back to 00 : a quiet line (the TX pad changed in the middle of a
+    -- byte), the end of the current loop line, then the next loop line
     set_switch(x"00");
-    wait for C_QUIET;
-    set_slv   (x"20", clk, switch);  -- the firmware writes LED0 after the line
+    uart_quiet(cts_b, cfg);
+    uart_get_line(v_line, v_len, uart_tx, cfg);
     uart_get_line(v_line, v_len, uart_tx, cfg);
     check_value(v_len >= 5 and v_line(1 to 5) = "Loop ", ERROR, "00 : the loop lines are on the TX pad again : " & v_line(1 to v_len), C_TB_SCOPE);
     check_rts_driven("00");

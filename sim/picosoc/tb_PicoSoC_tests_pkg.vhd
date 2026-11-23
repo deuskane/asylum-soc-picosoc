@@ -30,6 +30,8 @@
 --                               (JTAG over the UART pads),
 --                               jtag_last (stages without TAP at the end of
 --                               the chain)
+-- 2026-11-23  1.9      mrosiere uart : CTS* of the cable (echo on a quiet
+--                               line)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -186,7 +188,7 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_it_user_pkg.run(cfg, clk, switch, it_user, led0, led1, led_diff);
     elsif string_eq(name, "uart")
     then
-      work.tb_PicoSoC_uart_pkg.run(cfg, clk, switch, it_user, led0, led1, uart_rx, uart_tx);
+      work.tb_PicoSoC_uart_pkg.run(cfg, clk, switch, it_user, led0, led1, uart_rx, uart_tx, cts_b);
     elsif string_eq(name, "fault_lock_step")
     then
       work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, switch, inject, led0, led_diff);

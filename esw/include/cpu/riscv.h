@@ -13,6 +13,7 @@
 // Date        Version  Author   Description
 // 2026-05-17  1.0      mrosiere Created
 // 2026-11-19  1.1      mrosiere Add cpu_nop
+// 2026-11-23  1.2      mrosiere Add cpu_hartid (mhartid, was in user_hello.c)
 //-----------------------------------------------------------------------------
 
 #ifndef _riscv_h_
@@ -34,6 +35,14 @@
 
 // No operation (macro : inlined, no code when unused)
 #define cpu_nop() __asm__ volatile ("nop")
+
+// Index of the hart (CSR mhartid) : the cluster index in PicoSoC
+static inline uint32_t cpu_hartid(void)
+{
+  uint32_t id;
+  __asm__ volatile ("csrr %0, mhartid" : "=r" (id));
+  return id;
+}
 
 //--------------------------------------
 // Interruption

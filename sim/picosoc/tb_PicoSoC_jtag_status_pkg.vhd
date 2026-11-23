@@ -13,6 +13,8 @@
 --              * after reset (LED1 = 0, led_diff = 0)
 --              * new switches (LED0) and an it_user_i pulse (LED1 = 1)
 --              * with fault injection : an error (inject_error_i) in CPU0,
+--                held until the difference flag (the CPU waits on the
+--                UART most of the time : a short error may see no fetch),
 --                led_diff_o = difference flags (no supervisor) or number of
 --                errors (supervisor)
 -------------------------------------------------------------------------------
@@ -24,6 +26,8 @@
 -- 2026-11-23  1.1      mrosiere Switches 0x85 (no UART line during the error)
 -- 2026-11-23  1.2      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
+-- 2026-11-23  1.3      mrosiere Loop line at every iteration (esw/user.c) :
+--                               error held until the difference flag
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -75,8 +79,7 @@ package body tb_PicoSoC_jtag_status_pkg is
     constant C_TAP     : natural := cfg.jtag.inject;
     -- Switches with the MSBs 10 : JTAG
     constant C_SW1     : std_logic_vector(8-1 downto 0) := x"9A";
-    -- switch(5) clear : no UART line, the CPU fetches (an UART write with
-    -- FIFO depth 0 stalls the bus and the fetches for a character time)
+    -- Switches with the MSBs 10 : JTAG
     constant C_SW2     : std_logic_vector(8-1 downto 0) := x"85";
     variable v_diff    : std_logic_vector(3-1 downto 0);
 
@@ -120,7 +123,16 @@ package body tb_PicoSoC_jtag_status_pkg is
       else
         v_diff := "101" when cfg.tmr else "001";
       end if;
-      inject_error(0, cfg, clk, inject);
+      -- Error until the difference flag : an UART write with FIFO depth 0
+      -- stalls the bus and the fetches for a character time
+      wait until falling_edge(clk);
+      inject(0) <= cfg.fault_on;
+      if led_diff = "000"
+      then
+        wait until led_diff /= "000" for cfg.timeout;
+      end if;
+      wait until falling_edge(clk);
+      inject(0) <= not cfg.fault_on;
       wait_value  (led_diff, v_diff, cfg, "led_diff after an error in CPU0");
       if cfg.supervisor
       then
