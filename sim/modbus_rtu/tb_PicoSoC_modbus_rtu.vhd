@@ -27,6 +27,8 @@
 --                               (tb_PicoSoC_modbus_rtu_<name>_pkg), helpers
 --                               in tb_PicoSoC_modbus_rtu_bfm_pkg, reset pulse
 --                               before each scenario
+-- 2026-11-22  2.1      mrosiere uart_tx_io, uart_cts_b_io, uart_rts_b_io
+--                               (inout pads of PicoSoC_top)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -117,7 +119,8 @@ architecture tb of tb_PicoSoC_modbus_rtu is
   signal   led_diff_o              : std_logic_vector(             3-1 downto 0);
   signal   it_user_i               : std_logic := not C_IT_ON;
   signal   inject_error_i          : std_logic_vector(             3-1 downto 0) := (others => not C_FAULT_ON);
-  signal   uart_tx_o               : std_logic;
+  signal   uart_tx_io              : std_logic;
+  signal   uart_cts_b_io           : std_logic;
   signal   uart_rx_i               : std_logic := '1';
 
 begin  -- architecture tb
@@ -153,10 +156,10 @@ begin  -- architecture tb
     ,led_diff_o       => led_diff_o
     ,it_user_i        => it_user_i
     ,inject_error_i   => inject_error_i
-    ,uart_tx_o        => uart_tx_o
     ,uart_rx_i        => uart_rx_i
-    ,uart_cts_b_i     => '0'
-    ,uart_rts_b_o     => open
+    ,uart_tx_io       => uart_tx_io
+    ,uart_cts_b_io    => uart_cts_b_io
+    ,uart_rts_b_io    => open
     ,spi_sclk_io      => open
     ,spi_cs_b_io      => open
     ,spi_io_io        => open
@@ -165,6 +168,9 @@ begin  -- architecture tb
     ,pwm_o            => open
     ,debug_uart_tx_o  => open
     );
+
+  -- CTS* of the user UART active
+  uart_cts_b_io <= '0';
 
   -----------------------------------------------------------------------------
   -- Clock Generator
@@ -205,7 +211,7 @@ begin  -- architecture tb
       wait for C_RESET_LATENCY;
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
-      run_test(list_item(TESTS_LIST, i), C_CFG, uart_rx_i, uart_tx_o, switch_i, inject_error_i, led0_o, led_diff_o);
+      run_test(list_item(TESTS_LIST, i), C_CFG, uart_rx_i, uart_tx_io, switch_i, inject_error_i, led0_o, led_diff_o);
     end loop;
 
     report_alert_counters(FINAL);

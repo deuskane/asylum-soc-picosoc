@@ -17,6 +17,8 @@
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (helpers of tb_PicoSoC)
 -- 2026-11-21  1.1      mrosiere wait_pass (integration firmwares)
+-- 2026-11-22  1.2      mrosiere t_tb_cfg : debug, fault, supervisor, JTAG
+--                               chain (t_jtag_chain)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -39,6 +41,16 @@ package tb_PicoSoC_bfm_pkg is
                      ,SPI_MEMORY    -- SPI memory : byte <counter> of memory.mem
                      );
 
+  -- JTAG chain of PicoSoC_top : number of TAPs and position of each TAP
+  -- from TDI (0 : first TAP after TDI), -1 : absent
+  type t_jtag_chain is record
+    nb_tap     : natural;
+    user       : integer;            -- user CPU debugger of cluster 0 (USER_CPU_DEBUG_ENABLE), cluster i at user + i
+    nb_user    : natural;            -- user CPU debuggers (one per cluster)
+    supervisor : integer;            -- supervisor CPU debugger (SUPERVISOR_CPU_DEBUG_ENABLE)
+    inject     : integer;            -- injection / status TAP (DEBUG_ENABLE)
+  end record t_jtag_chain;
+
   -- Constants of the scenarios (computed from the generics in tb_PicoSoC)
   type t_tb_cfg is record
     clk_period : time;               -- period of clk_i
@@ -46,6 +58,10 @@ package tb_PicoSoC_bfm_pkg is
     timeout    : time;               -- maximum duration of one wait
     nb_cpu     : positive;           -- user CPUs (hello)
     tmr        : boolean;            -- USER_SAFETY = "tmr" (fault_diff)
+    debug      : boolean;            -- DEBUG_ENABLE (HWLA)
+    fault      : boolean;            -- USER_FAULT_INJECTION with redundant CPUs : an injected error raises diff
+    supervisor : boolean;            -- SUPERVISOR
+    jtag       : t_jtag_chain;       -- JTAG chain
     spi_byte   : t_spi_byte;         -- "Loop" lines of the user firmware with UART
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)

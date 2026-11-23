@@ -21,6 +21,12 @@
 -- 2026-11-21  1.6      mrosiere Add PWM
 -- 2026-11-21  1.7      mrosiere PicoSoC_user_debug_t : data of the CPU bus
 --                               (cpu_dwdata, cpu_drdata), probes of the HWLA
+-- 2026-11-22  1.8      mrosiere PicoSoC_top component : uart_rts_b_io
+-- 2026-11-22  1.9      mrosiere JTAG : IDCODE and instructions of the
+--                               injection / status TAP
+-- 2026-11-22  1.10     mrosiere JTAG : IDCODE of the CPU debuggers,
+--                               components with the JTAG ports
+-- 2026-11-23  1.11     mrosiere PicoSoC_pads component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -31,6 +37,7 @@ library asylum;
 use     asylum.uart_pkg.ALL;
 use     asylum.ROM_user_pkg.all;
 use     asylum.sbi_pkg.all;
+use     asylum.jtag_pkg.all;
 
 package PicoSoC_pkg is
 
@@ -74,6 +81,19 @@ package PicoSoC_pkg is
   constant PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1 : natural  := 0;
   constant PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2 : natural  := 1;
   constant PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0 : natural  := 2;
+
+  -----------------------------------------------------------------------------
+  -- JTAG
+  -- IDCODE : version 1, part number, manufacturer 0
+  -----------------------------------------------------------------------------
+  constant PICOSOC_JTAG_IR_WIDTH               : natural  := 5;
+  constant PICOSOC_JTAG_IDCODE_USER_CPU        : std_logic_vector(32-1 downto 0) := x"10001001"; -- debug unit of the user CPU of cluster 0, + i * 0x10000 for cluster i
+  constant PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU  : std_logic_vector(32-1 downto 0) := x"10002001"; -- WardRV_debug of the supervisor CPU
+  constant PICOSOC_JTAG_IDCODE_INJECT          : std_logic_vector(32-1 downto 0) := x"10003001"; -- injection / status TAP
+
+  -- Instructions of the injection / status TAP
+  constant PICOSOC_JTAG_IR_INJECT              : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00010"; -- jtag_tdr_inout : inject_error (out), diff (in)
+  constant PICOSOC_JTAG_IR_STATUS              : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00011"; -- jtag_tdr_in    : LEDs, switches, resets
   
   -----------------------------------------------------------------------------
   -- PicoSoC_user_debug_t
@@ -122,6 +142,56 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_pads is
+  generic
+    (USER_SPI_NB_IO   : natural  := 8          -- SPI data lanes with a pad (up to 8)
+    );
+  port
+    (clk_i            : in    std_logic
+    ;arst_b_i         : in    std_logic
+
+    -- Selection of the UART pads : the two MSBs of the switches (asynchronous)
+    ;switch_i         : in    std_logic_vector(2-1 downto 0)
+
+    -- Pads : UART / JTAG (FTDI MPSSE AD0 to AD3), SPI, I2C
+    ;uart_rx_i        : in    std_logic -- RX   / TCK
+    ;uart_tx_io       : inout std_logic -- TX   / TDI
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS
+    ;spi_sclk_io      : inout std_logic
+    ;spi_cs_b_io      : inout std_logic
+    ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;i2c_scl_io       : inout std_logic
+    ;i2c_sda_io       : inout std_logic
+
+    -- User UART
+    ;uart_tx_i        : in    std_logic
+    ;uart_rx_o        : out   std_logic
+    ;uart_cts_b_o     : out   std_logic
+    ;uart_rts_b_i     : in    std_logic
+    -- HWLA UART (TX only)
+    ;debug_uart_tx_i  : in    std_logic
+    -- JTAG chain
+    ;jtag_ini_o       : out   jtag_ini_t
+    ;jtag_tgt_i       : in    jtag_tgt_t
+    -- SPI (8 data lanes of the SPI)
+    ;spi_sclk_i       : in    std_logic
+    ;spi_sclk_oe_i    : in    std_logic
+    ;spi_cs_b_i       : in    std_logic
+    ;spi_cs_b_oe_i    : in    std_logic
+    ;spi_io_i         : in    std_logic_vector(8-1 downto 0)
+    ;spi_io_oe_i      : in    std_logic_vector(8-1 downto 0)
+    ;spi_io_o         : out   std_logic_vector(8-1 downto 0)
+    -- I2C (open drain : the output enable pulls the line low)
+    ;i2c_scl_i        : in    std_logic
+    ;i2c_scl_oe_i     : in    std_logic
+    ;i2c_scl_o        : out   std_logic
+    ;i2c_sda_i        : in    std_logic
+    ;i2c_sda_oe_i     : in    std_logic
+    ;i2c_sda_o        : out   std_logic
+    );
+end component PicoSoC_pads;
+
 component PicoSoC_supervisor is
   generic
     (NB_LED0               : positive := 8
@@ -133,6 +203,8 @@ component PicoSoC_supervisor is
     ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
+    ;CPU_DEBUG_ENABLE      : boolean  := False -- Debug unit of the CPU (WardRV_fsm)
+    ;IDCODE_VALUE          : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of its TAP
     );
   port
     (clk_i                 : in  std_logic
@@ -144,6 +216,13 @@ component PicoSoC_supervisor is
     ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
     ;debug_o               : out PicoSoC_supervisor_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE) : JTAG pins (TDO = TDI without debug unit),
+    -- power-on reset of the debug unit, ndmreset
+    ;dbg_arst_b_i          : in  std_logic := '1'
+    ;jtag_ini_i            : in  jtag_ini_t
+    ;jtag_tgt_o            : out jtag_tgt_t
+    ;ndmreset_o            : out std_logic
      );
 end component PicoSoC_supervisor;
 
@@ -152,7 +231,9 @@ component PicoSoC_top is
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True
+    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -198,11 +279,12 @@ component PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface
-    ;uart_tx_o        : out std_logic
-    ;uart_rx_i        : in  std_logic
-    ;uart_cts_b_i     : in  std_logic -- Clear   To Send (Active low)
-    ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
+    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
+    ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
+    ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO (FTDI AD2 : RTS# / TDO), Clear   To Send, active low
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS (FTDI AD3 : CTS# / TMS), Request To Send, active low
 
     -- SPI Interface
     ;spi_sclk_io      : inout std_logic
@@ -250,6 +332,8 @@ component PicoSoC_user is
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
+    ;CPU_DEBUG_ENABLE       : boolean  := False -- Debug unit of the CPU of every cluster (WardRV_fsm)
+    ;IDCODE_VALUE           : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of the TAP of cluster 0, + i * 0x10000 for cluster i
     );
   port
     (clk_i                 : in  std_logic
@@ -292,6 +376,13 @@ component PicoSoC_user is
                                                                         -- bit 2 : cpu2 vs cpu0
                                  
     ;debug_o               : out PicoSoC_user_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE) : JTAG chain of the clusters (TDI ->
+    -- cluster 0 -> ... -> TDO), power-on reset of the debug units, ndmreset
+    ;dbg_arst_b_i          : in  std_logic := '1'
+    ;jtag_ini_i            : in  jtag_ini_t
+    ;jtag_tgt_o            : out jtag_tgt_t
+    ;ndmreset_o            : out std_logic
     );
 end component PicoSoC_user;
 
@@ -302,6 +393,8 @@ component cpu_safety is
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
     ;HARTID                : std_logic_vector(31 downto 0) := x"00000000"
+    ;DEBUG_ENABLE          : boolean  := False -- WardRV_fsm : debug unit in each copy (cpu_wrapper)
+    ;IDCODE_VALUE          : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of its TAP
     ;IMEM_ADDR_WIDTH       : positive := 12
     ;IMEM_DATA_WIDTH       : positive := 18
     ;DMEM_ADDR_WIDTH       : positive := SBI_ADDR_WIDTH
@@ -328,6 +421,13 @@ component cpu_safety is
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
+
+    -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug unit,
+    -- ndmreset ; without debug unit : TDO = TDI
+    ;dbg_arst_b_i          : in  std_logic := '1'
+    ;jtag_ini_i            : in  jtag_ini_t
+    ;jtag_tgt_o            : out jtag_tgt_t
+    ;ndmreset_o            : out std_logic
     );
 end component cpu_safety;
 
@@ -335,6 +435,8 @@ component cpu_wrapper is
   generic (
     CPU_MODEL        : string   := "OpenBlaze8"
    ;HARTID           : std_logic_vector(31 downto 0) := x"00000000"
+   ;DEBUG_ENABLE     : boolean  := false -- WardRV_fsm only : debug unit WardRV_debug (RISC-V Debug Spec), its TAP
+   ;IDCODE_VALUE     : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of the TAP (DEBUG_ENABLE)
   );
   port   (
     clk_i            : in    std_logic;
@@ -352,7 +454,14 @@ component cpu_wrapper is
 
     -- To/From IT Ctrl
     interrupt_i      : in    std_logic;
-    interrupt_ack_o  : out   std_logic
+    interrupt_ack_o  : out   std_logic;
+
+    -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug
+    -- unit (not the CPU reset), ndmreset (request to reset the CPU and its SoC)
+    dbg_arst_b_i     : in    std_logic := '1';
+    jtag_ini_i       : in    jtag_ini_t;
+    jtag_tgt_o       : out   jtag_tgt_t;
+    ndmreset_o       : out   std_logic
     );
   
 end component cpu_wrapper;

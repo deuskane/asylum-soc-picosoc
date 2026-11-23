@@ -21,6 +21,8 @@
 -- 2025-07-05  1.2      mrosiere Use GIC instead GPIO
 -- 2026-05-17  1.3      mrosiere Add RAM
 -- 2026-08-01  1.4      mrosiere Use GPIO_irq instead of GPIO
+-- 2026-11-23  1.5      mrosiere CPU_DEBUG_ENABLE : debug unit of the CPU
+--                               (cpu_wrapper), JTAG pins
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -41,6 +43,7 @@ use     asylum.gic_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_supervisor_pkg.all;
+use     asylum.jtag_pkg.all;
 
 entity PicoSoC_supervisor is
   generic
@@ -53,6 +56,8 @@ entity PicoSoC_supervisor is
     ;NB_CPU                : natural  := 1
     ;CPU_MODEL             : string   := "OpenBlaze8" 
     ;RAM_DEPTH             : natural  := 128
+    ;CPU_DEBUG_ENABLE      : boolean  := False -- Debug unit of the CPU (WardRV_fsm)
+    ;IDCODE_VALUE          : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of its TAP
     );
   port
     (clk_i                 : in  std_logic
@@ -64,6 +69,13 @@ entity PicoSoC_supervisor is
     ;diff_i                : in  std_logic_vector(        3-1 downto 0)
                           
     ;debug_o               : out PicoSoC_supervisor_debug_t
+
+    -- CPU debug (CPU_DEBUG_ENABLE) : JTAG pins (TDO = TDI without debug unit),
+    -- power-on reset of the debug unit, ndmreset
+    ;dbg_arst_b_i          : in  std_logic := '1'
+    ;jtag_ini_i            : in  jtag_ini_t
+    ;jtag_tgt_o            : out jtag_tgt_t
+    ;ndmreset_o            : out std_logic
      );
 end PicoSoC_supervisor;
 
@@ -148,6 +160,8 @@ begin  -- architecture rtl
   ins_cpu : entity asylum.cpu_wrapper
     generic map
     (CPU_MODEL            => CPU_MODEL
+    ,DEBUG_ENABLE         => CPU_DEBUG_ENABLE
+    ,IDCODE_VALUE         => IDCODE_VALUE
     )
     port map
     (clk_i                => clk      
@@ -160,6 +174,10 @@ begin  -- architecture rtl
     ,sbi_tgt_i            => cpu_sbi_tgt  
     ,interrupt_i          => cpu_it_val   
     ,interrupt_ack_o      => open
+    ,dbg_arst_b_i         => dbg_arst_b_i
+    ,jtag_ini_i           => jtag_ini_i
+    ,jtag_tgt_o           => jtag_tgt_o
+    ,ndmreset_o           => ndmreset_o
     );
 
   icn_sbi_inim(0) <= cpu_sbi_ini;

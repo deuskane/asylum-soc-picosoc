@@ -31,6 +31,18 @@
 --                               captures on debug_uart_tx_o (UART 115200)
 -- 2026-11-21  2.8      mrosiere HWLA 3.0.0 (no NB_PROBE) : probe width from
 --                               the fields of debug_user
+-- 2026-11-22  2.9      mrosiere UART pads shared by the user UART, the HWLA
+--                               UART and JTAG (jtag_pad_mux), selected by the
+--                               two MSBs of switch_i ; FTDI MPSSE pinout :
+--                               uart_tx_io (TDI), uart_cts_b_io (TDO) and
+--                               uart_rts_b_io (TMS) become inout pads
+-- 2026-11-22  2.10     mrosiere DEBUG_ENABLE : JTAG TAP of fault injection
+--                               (ORed with inject_error_i) and status
+-- 2026-11-22  2.11     mrosiere USER_CPU_DEBUG_ENABLE,
+--                               SUPERVISOR_CPU_DEBUG_ENABLE : debug units of
+--                               the user / supervisor CPUs (cpu_wrapper) in
+--                               the JTAG chain
+-- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -42,13 +54,16 @@ use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
 use     asylum.hwla_pkg.all;
 use     asylum.uart_pkg.all;
+use     asylum.jtag_pkg.all;
 
 entity PicoSoC_top is
   generic
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True
+    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -94,11 +109,12 @@ entity PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface
-    ;uart_tx_o        : out std_logic
-    ;uart_rx_i        : in  std_logic
-    ;uart_cts_b_i     : in  std_logic -- Clear   To Send (Active low)
-    ;uart_rts_b_o     : out std_logic -- Request To Send (Active low)
+    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
+    ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
+    ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO (FTDI AD2 : RTS# / TDO), Clear   To Send, active low
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS (FTDI AD3 : CTS# / TMS), Request To Send, active low
 
     -- SPI Interface
     ;spi_sclk_io      : inout std_logic
@@ -137,7 +153,9 @@ architecture rtl of PicoSoC_top is
   signal   arst_b_top                   : std_logic;
   signal   arst_b_supervisor            : std_logic;
   signal   arst_b_user                  : std_logic_vector(1-1 downto 0);
+  signal   arst_b_user_req              : std_logic;
   signal   arst_b_user_sync             : std_logic;
+  signal   arst_b_supervisor_soc        : std_logic;
            
   signal   diff                         : std_logic_vector(3-1 downto 0);
            
@@ -148,6 +166,31 @@ architecture rtl of PicoSoC_top is
   signal   uart_rx                      : std_logic;
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
+
+  signal   debug_uart_tx                : std_logic;
+
+  -- JTAG chain : TDI -> user SoC (TAP of the CPU of each cluster) ->
+  -- supervisor SoC (TAP of its CPU) -> injection / status TAP -> TDO.
+  -- jtag_chain(i) : TDO after the stage i (stage 0 : TDI of the pads) and the
+  -- OR of the TDO enables so far. A CPU without debug unit and an absent
+  -- stage are wires
+  type     jtag_tgts_t                  is array (natural range <>) of jtag_tgt_t;
+  signal   jtag_ini                     : jtag_ini_t;
+  signal   jtag_chain                   : jtag_tgts_t(0 to 3);
+  signal   jtag_tgt                     : jtag_tgt_t;
+  signal   user_jtag_ini                : jtag_ini_t;
+  signal   user_jtag_tgt                : jtag_tgt_t;
+  signal   supervisor_jtag_ini          : jtag_ini_t;
+  signal   supervisor_jtag_tgt          : jtag_tgt_t;
+
+  -- ndmreset of the CPU debug units : reset of the SoC of the CPU, not of the
+  -- debug unit
+  signal   user_ndmreset                : std_logic;
+  signal   supervisor_ndmreset          : std_logic;
+
+  -- Error injection : push buttons (active high) or JTAG (synchronized on clk)
+  signal   inject_error_button          : std_logic_vector(3-1 downto 0);
+  signal   inject_error_jtag            : std_logic_vector(3-1 downto 0);
   
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
@@ -156,9 +199,6 @@ architecture rtl of PicoSoC_top is
   signal   spi_sclk_oe_o                : std_logic;
   signal   spi_cs_b_o                   : std_logic;
   signal   spi_cs_b_oe_o                : std_logic;
-  signal   spi_io_o                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal   spi_io_i                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal   spi_io_oe_o                  : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
@@ -241,14 +281,16 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- SoC User
   -----------------------------------------------------------------------------
-  -- The reset of the user SoC (from the supervisor or arst_b_sync2) is
-  -- resynchronized on clk : 2 more cycles of reset with a running clock, so
-  -- that the registers without reset (input stages of the GPIOs) are loaded
-  -- before the reset release
+  -- The reset of the user SoC (from the supervisor or arst_b_sync2, or
+  -- ndmreset of its debugger) is resynchronized on clk : 2 more cycles of
+  -- reset with a running clock, so that the registers without reset (input
+  -- stages of the GPIOs) are loaded before the reset release
+  arst_b_user_req <= arst_b_user(0) and not user_ndmreset;
+
   ins_reset_resynchronizer_user : sync2dffrn
     port map
     (clk_i                => clk
-    ,arst_b_i             => arst_b_user(0)
+    ,arst_b_i             => arst_b_user_req
     ,d_i                  => '1'
     ,q_o                  => arst_b_user_sync
     );
@@ -278,6 +320,8 @@ begin  -- architecture rtl
     ,MAILBOX_FIFO0_DEPTH_RX => USER_MAILBOX_FIFO0_DEPTH_RX
     ,MAILBOX_FIFO1_DEPTH_TX => USER_MAILBOX_FIFO1_DEPTH_TX
     ,MAILBOX_FIFO1_DEPTH_RX => USER_MAILBOX_FIFO1_DEPTH_RX
+    ,CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
+    ,IDCODE_VALUE           => PICOSOC_JTAG_IDCODE_USER_CPU
     )
   port map
     (clk_i                => clk
@@ -307,27 +351,20 @@ begin  -- architecture rtl
     ,i2c_sda_o            => i2c_sda_o
     ,i2c_sda_oe_o         => i2c_sda_oe_o
     ,pwm_o                => pwm
+    ,dbg_arst_b_i         => arst_b_supervisor
+    ,jtag_ini_i           => user_jtag_ini
+    ,jtag_tgt_o           => user_jtag_tgt
+    ,ndmreset_o           => user_ndmreset
     );
-
-  spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
-  spi_io_oe_o  <= spi_io_oe_o_user(spi_io_oe_o'range);
-  -- Only USER_SPI_NB_IO lines have a pad : the other inputs of the SPI are tied to 0
-  spi_io_i_user<= std_logic_vector(resize(unsigned(spi_io_i),8));
-
-  assert USER_SPI_NB_IO <= 8
-    report "PicoSoC_top : USER_SPI_NB_IO ("&integer'image(USER_SPI_NB_IO)&") must be <= 8"
-    severity failure;
-
-  uart_tx_o    <= uart_tx     ;
-  uart_rx      <= uart_rx_i   ;
-  uart_rts_b_o <= uart_rts_b  ;
-  uart_cts_b   <= uart_cts_b_i;
 
   pwm_o        <= pwm;
 
   -----------------------------------------------------------------------------
   -- SoC Supervisor
   -----------------------------------------------------------------------------
+  -- Reset of the supervisor SoC : arst_b_sync2, or ndmreset of its debugger
+  arst_b_supervisor_soc <= arst_b_supervisor and not supervisor_ndmreset;
+
   gen_supervisor: if SUPERVISOR = True
   generate
     ins_soc_supervisor : PicoSoC_supervisor
@@ -339,23 +376,31 @@ begin  -- architecture rtl
       ,ICN_MASTER_SEL       => SUPERVISOR_ICN_MASTER_SEL
       ,NB_CPU               => SUPERVISOR_NB_CPU
       ,RAM_DEPTH            => SUPERVISOR_RAM_DEPTH
+      ,CPU_DEBUG_ENABLE     => SUPERVISOR_CPU_DEBUG_ENABLE
+      ,IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU
        )
       port map
       (clk_i                => clk
-      ,arst_b_i             => arst_b_supervisor
+      ,arst_b_i             => arst_b_supervisor_soc
       ,led0_o               => arst_b_user
       ,led1_o               => led_supervisor
       ,diff_i               => diff 
       ,debug_o              => debug_supervisor
+      ,dbg_arst_b_i         => arst_b_supervisor
+      ,jtag_ini_i           => supervisor_jtag_ini
+      ,jtag_tgt_o           => supervisor_jtag_tgt
+      ,ndmreset_o           => supervisor_ndmreset
        );
 
   end generate gen_supervisor;
 
   gen_supervisor_n: if SUPERVISOR = False
   generate
-    arst_b_user(0)   <= arst_b_supervisor;
-    led_supervisor   <= diff;
-    debug_supervisor <= (others => '0');
+    arst_b_user(0)      <= arst_b_supervisor;
+    led_supervisor      <= diff;
+    debug_supervisor    <= (others => '0');
+    supervisor_jtag_tgt <= (tdo => supervisor_jtag_ini.tdi, tdo_en => '0');
+    supervisor_ndmreset <= '0';
   end generate gen_supervisor_n;
   
   -----------------------------------------------------------------------------
@@ -367,72 +412,91 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- FAULT_INJECTION
+  -- Push buttons (polarity USER_FAULT_POLARITY) or JTAG, ORed active high
   -----------------------------------------------------------------------------
   gen_inject_error_b:
   if USER_FAULT_POLARITY = "low"
   generate
-    inject_error <= not inject_error_i;
+    inject_error_button <= not inject_error_i;
   end generate gen_inject_error_b;
 
   gen_inject_error:
   if USER_FAULT_POLARITY = "high"
   generate
-    inject_error <=     inject_error_i;
+    inject_error_button <=     inject_error_i;
   end generate gen_inject_error;
 
-  -----------------------------------------------------------------------------
-  -- SPI PAD
-  -----------------------------------------------------------------------------
-  PAD_SPI_SCLK : obuf
-    port map
-     (buf_io     => spi_sclk_io
-     ,d_i        => spi_sclk_o
-     ,oe_i       => spi_sclk_oe_o
-     );
-
-  PAD_SPI_CS_B : obuf
-    port map
-     (buf_io     => spi_cs_b_io
-     ,d_i        => spi_cs_b_o
-     ,oe_i       => spi_cs_b_oe_o
-     );
-
-  gen_pad_spi_io:
-  for i in 0 to USER_SPI_NB_IO-1 
-  generate
-    PAD_SPI_IO : iobuf
-      port map
-       (buf_io     => spi_io_io   (i)
-       ,d_i        => spi_io_o    (i)
-       ,d_o        => spi_io_i    (i)
-       ,oe_i       => spi_io_oe_o (i)
-       ,ie_i       => '1'
-       );
-  end generate;
+  inject_error <= inject_error_button or inject_error_jtag;
 
   -----------------------------------------------------------------------------
-  -- I2C PAD
-  -- Open drain : the line is pulled low when the output enable of the I2C is
-  -- set (its output is 0), released ('Z') otherwise : the pull-up of the
-  -- board gives the high level
+  -- Pads : UART pads shared by the user UART, the HWLA UART and the JTAG
+  -- chain (selected by the two MSBs of switch_i), SPI and I2C pads
   -----------------------------------------------------------------------------
-  PAD_I2C_SCL : iobuf
+  ins_pads : PicoSoC_pads
+    generic map
+    (USER_SPI_NB_IO       => USER_SPI_NB_IO
+    )
     port map
-     (buf_io     => i2c_scl_io
-     ,d_i        => i2c_scl_o
-     ,d_o        => i2c_scl_i
-     ,oe_i       => i2c_scl_oe_o
-     ,ie_i       => '1'
-     );
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,switch_i             => switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2)
+    ,uart_rx_i            => uart_rx_i
+    ,uart_tx_io           => uart_tx_io
+    ,uart_cts_b_io        => uart_cts_b_io
+    ,uart_rts_b_io        => uart_rts_b_io
+    ,spi_sclk_io          => spi_sclk_io
+    ,spi_cs_b_io          => spi_cs_b_io
+    ,spi_io_io            => spi_io_io
+    ,i2c_scl_io           => i2c_scl_io
+    ,i2c_sda_io           => i2c_sda_io
+    ,uart_tx_i            => uart_tx
+    ,uart_rx_o            => uart_rx
+    ,uart_cts_b_o         => uart_cts_b
+    ,uart_rts_b_i         => uart_rts_b
+    ,debug_uart_tx_i      => debug_uart_tx
+    ,jtag_ini_o           => jtag_ini
+    ,jtag_tgt_i           => jtag_tgt
+    ,spi_sclk_i           => spi_sclk_o
+    ,spi_sclk_oe_i        => spi_sclk_oe_o
+    ,spi_cs_b_i           => spi_cs_b_o
+    ,spi_cs_b_oe_i        => spi_cs_b_oe_o
+    ,spi_io_i             => spi_io_o_user
+    ,spi_io_oe_i          => spi_io_oe_o_user
+    ,spi_io_o             => spi_io_i_user
+    ,i2c_scl_i            => i2c_scl_o
+    ,i2c_scl_oe_i         => i2c_scl_oe_o
+    ,i2c_scl_o            => i2c_scl_i
+    ,i2c_sda_i            => i2c_sda_o
+    ,i2c_sda_oe_i         => i2c_sda_oe_o
+    ,i2c_sda_o            => i2c_sda_i
+    );
 
-  PAD_I2C_SDA : iobuf
-    port map
-     (buf_io     => i2c_sda_io
-     ,d_i        => i2c_sda_o
-     ,d_o        => i2c_sda_i
-     ,oe_i       => i2c_sda_oe_o
-     ,ie_i       => '1'
-     );
+  -----------------------------------------------------------------------------
+  -- JTAG chain
+  -- TDI -> user SoC -> supervisor SoC -> injection / status TAP -> TDO. The
+  -- TAPs share TCK and TMS (they are in the same state) : TDO from the last
+  -- stage, its enable is the OR of the enables of the stages. The CPU debug
+  -- units are in cpu_wrapper (USER_CPU_DEBUG_ENABLE,
+  -- SUPERVISOR_CPU_DEBUG_ENABLE) : power-on reset arst_b_supervisor (a reset
+  -- of the SoC of the CPU does not reset its debug unit)
+  -----------------------------------------------------------------------------
+  jtag_chain(0)       <= (tdo => jtag_ini.tdi, tdo_en => '0');
+
+  user_jtag_ini       <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(0).tdo);
+  jtag_chain(1)       <= (tdo => user_jtag_tgt.tdo, tdo_en => user_jtag_tgt.tdo_en or jtag_chain(0).tdo_en);
+
+  supervisor_jtag_ini <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(1).tdo);
+  jtag_chain(2)       <= (tdo => supervisor_jtag_tgt.tdo, tdo_en => supervisor_jtag_tgt.tdo_en or jtag_chain(1).tdo_en);
+
+  jtag_tgt            <= jtag_chain(3);
+
+  assert (not (USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE) or CPU_MODEL = "WardRV_fsm")
+    report "PicoSoC_top : USER_CPU_DEBUG_ENABLE and SUPERVISOR_CPU_DEBUG_ENABLE need CPU_MODEL WardRV_fsm (" & CPU_MODEL & ")"
+    severity failure;
+
+  assert (not SUPERVISOR_CPU_DEBUG_ENABLE or SUPERVISOR)
+    report "PicoSoC_top : SUPERVISOR_CPU_DEBUG_ENABLE needs SUPERVISOR"
+    severity failure;
 
   -----------------------------------------------------------------------------
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0)
@@ -528,7 +592,7 @@ begin  -- architecture rtl
       ,s_axis_tdata_i       => hwla_tdata
       ,s_axis_tvalid_i      => hwla_tvalid
       ,s_axis_tready_o      => hwla_tready
-      ,uart_tx_o            => debug_uart_tx_o
+      ,uart_tx_o            => debug_uart_tx
       ,uart_cts_b_i         => '0'
       ,baud_tick_i          => hwla_baud_tick
       ,parity_enable_i      => '0'
@@ -539,7 +603,126 @@ begin  -- architecture rtl
 
   gen_debug_b: if DEBUG_ENABLE = False
   generate
-    debug_uart_tx_o <= '1';  -- UART idle level
+    debug_uart_tx   <= '1';  -- UART idle level
   end generate gen_debug_b;
+
+  -----------------------------------------------------------------------------
+  -- Debug : JTAG TAP of fault injection and status, last TAP of the chain
+  -- (IDCODE PICOSOC_JTAG_IDCODE_INJECT), its instruction decoder and 2 test
+  -- data registers (TCK domain) :
+  -- * PICOSOC_JTAG_IR_INJECT : jtag_tdr_inout, 3 bits : writes the error
+  --   injection (bit i : CPU i, like inject_error_i), reads diff
+  -- * PICOSOC_JTAG_IR_STATUS : jtag_tdr_in, reads (from the LSB) led0_o,
+  --   led1_o, led_diff_o, switch_i, then the resets : user SoC, supervisor
+  --   SoC (1 : running)
+  -- The read values are quasi-static (LEDs, switches, sticky diff, resets) :
+  -- sampled directly in Capture-DR, without synchronizer (a value that
+  -- changes during the capture may give a mix of old and new bits)
+  -- The injection is synchronized on clk (2 flip-flops per bit)
+  -----------------------------------------------------------------------------
+  gen_debug_jtag: if DEBUG_ENABLE = True
+  generate
+    signal   inject_ini          : jtag_ini_t;
+    signal   inject_tgt          : jtag_tgt_t;
+    signal   inject_tck          : std_logic;
+    signal   inject_trst_b       : std_logic;
+    signal   inject_tlr          : std_logic;
+    signal   inject_ir           : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0);
+    signal   inject_capture_dr   : std_logic;
+    signal   inject_shift_dr     : std_logic;
+    signal   inject_update_dr    : std_logic;
+    signal   inject_tdi          : std_logic;
+    signal   inject_user_tdo_en  : std_logic;
+    signal   inject_user_tdo     : std_logic;
+    signal   sel_inject          : std_logic;
+    signal   sel_status          : std_logic;
+    signal   tdo_inject          : std_logic;
+    signal   tdo_status          : std_logic;
+    signal   inject_tck_domain   : std_logic_vector(3-1 downto 0);
+    signal   status              : std_logic_vector(2+USER_NB_SWITCH+3+USER_NB_LED1+USER_NB_LED0-1 downto 0);
+  begin
+    inject_ini    <= (tck => jtag_ini.tck, tdi => jtag_chain(2).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
+    jtag_chain(3) <= (tdo => inject_tgt.tdo, tdo_en => inject_tgt.tdo_en or jtag_chain(2).tdo_en);
+
+    ins_jtag_tap : jtag_tap
+      generic map
+      (IR_WIDTH             => PICOSOC_JTAG_IR_WIDTH
+      ,IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_INJECT
+      ,TRST_ENABLE          => false
+      )
+      port map
+      (arst_b_i             => arst_b_supervisor
+      ,jtag_ini_i           => inject_ini
+      ,jtag_tgt_o           => inject_tgt
+      ,tck_o                => inject_tck
+      ,trst_b_o             => inject_trst_b
+      ,tlr_o                => inject_tlr
+      ,ir_o                 => inject_ir
+      ,capture_dr_o         => inject_capture_dr
+      ,shift_dr_o           => inject_shift_dr
+      ,update_dr_o          => inject_update_dr
+      ,tdi_o                => inject_tdi
+      ,user_tdo_en_i        => inject_user_tdo_en
+      ,user_tdo_i           => inject_user_tdo
+      );
+
+    -- Instruction decoder
+    sel_inject         <= '1' when inject_ir = PICOSOC_JTAG_IR_INJECT else
+                          '0';
+    sel_status         <= '1' when inject_ir = PICOSOC_JTAG_IR_STATUS else
+                          '0';
+    inject_user_tdo_en <= sel_inject or sel_status;
+    inject_user_tdo    <= tdo_inject when sel_inject = '1' else
+                          tdo_status;
+
+    ins_jtag_tdr_inject : jtag_tdr_inout
+      port map
+      (tck_i                => inject_tck
+      ,trst_b_i             => inject_trst_b
+      ,tlr_i                => inject_tlr
+      ,sel_i                => sel_inject
+      ,capture_dr_i         => inject_capture_dr
+      ,shift_dr_i           => inject_shift_dr
+      ,update_dr_i          => inject_update_dr
+      ,tdi_i                => inject_tdi
+      ,tdo_o                => tdo_inject
+      ,data_i               => diff
+      ,data_o               => inject_tck_domain
+      );
+
+    status <= arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
+
+    ins_jtag_tdr_status : jtag_tdr_in
+      port map
+      (tck_i                => inject_tck
+      ,trst_b_i             => inject_trst_b
+      ,sel_i                => sel_status
+      ,capture_dr_i         => inject_capture_dr
+      ,shift_dr_i           => inject_shift_dr
+      ,update_dr_i          => inject_update_dr
+      ,tdi_i                => inject_tdi
+      ,tdo_o                => tdo_status
+      ,data_i               => status
+      );
+
+    gen_inject_sync: for i in 0 to 3-1
+    generate
+      ins_inject_sync : sync2dffrn
+        port map
+        (clk_i              => clk
+        ,arst_b_i           => arst_b_supervisor
+        ,d_i                => inject_tck_domain(i)
+        ,q_o                => inject_error_jtag(i)
+        );
+    end generate gen_inject_sync;
+  end generate gen_debug_jtag;
+
+  gen_debug_jtag_b: if DEBUG_ENABLE = False
+  generate
+    jtag_chain(3)     <= jtag_chain(2);
+    inject_error_jtag <= (others => '0');
+  end generate gen_debug_jtag_b;
+
+  debug_uart_tx_o   <= debug_uart_tx;
 
 end architecture rtl;

@@ -21,6 +21,11 @@
 -- 2026-11-21  1.3      mrosiere test_pwm
 -- 2026-11-21  1.4      mrosiere hwla (DEBUG_ENABLE), debug_uart_tx_o and
 --                               user ROM copy of the testbench
+-- 2026-11-22  1.5      mrosiere pad_mux (functions of the UART pads) :
+--                               CTS* of the cable, UART pads CTS* and RTS*
+-- 2026-11-22  1.6      mrosiere jtag_chain, jtag_inject, jtag_status (JTAG
+--                               BFM, JTAG chain of the configuration)
+-- 2026-11-22  1.7      mrosiere jtag_cpu_user, jtag_cpu_supervisor
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -31,6 +36,9 @@ context uvvm_util.uvvm_util_context;
 
 library bitvis_vip_i2c;
 use     bitvis_vip_i2c.i2c_bfm_pkg.all;
+
+library asylum_uvvm;
+use     asylum_uvvm.jtag_bfm_pkg.all;
 
 library asylum;
 use     asylum.string_pkg.all;
@@ -45,7 +53,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,hello," & C_INTEGRATION;
@@ -58,6 +66,7 @@ package tb_PicoSoC_tests_pkg is
     ;safety     : string
     ;fault      : boolean
     ;debug      : boolean
+    ;jtag       : t_jtag_chain
     ) return boolean;
 
   -- SPI byte of the "Loop" lines printed by the firmware
@@ -78,6 +87,10 @@ package tb_PicoSoC_tests_pkg is
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
+    ;signal   cts_pad  : in    std_logic
+    ;signal   rts_pad  : in    std_logic
+    ;signal   jtag_if  : inout t_jtag_if
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -96,6 +109,7 @@ package body tb_PicoSoC_tests_pkg is
     ;safety     : string
     ;fault      : boolean
     ;debug      : boolean
+    ;jtag       : t_jtag_chain
     ) return boolean is
     -- esw/user.c, with or without UART
     constant C_USER : boolean := list_contains("user,user_uart,user_uart_spi,user_uart_spi_mem", firmware);
@@ -109,6 +123,12 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "fault_diff"     ) then return C_USER and not supervisor and fault and not string_eq(safety, "none");
     elsif string_eq(name, "hwla"           ) then return C_USER and not supervisor and fault and not string_eq(safety, "none") and debug;
     elsif string_eq(name, "hello"          ) then return string_eq(firmware, "hello");
+    elsif string_eq(name, "pad_mux"        ) then return C_UART;
+    elsif string_eq(name, "jtag_chain"     ) then return C_USER and jtag.nb_tap > 0;
+    elsif string_eq(name, "jtag_inject"    ) then return C_USER and debug and fault and (not supervisor or string_eq(safety, "lock-step"));
+    elsif string_eq(name, "jtag_status"    ) then return C_USER and debug;
+    elsif string_eq(name, "jtag_cpu_user"      ) then return C_USER and jtag.user       >= 0;
+    elsif string_eq(name, "jtag_cpu_supervisor") then return C_USER and jtag.supervisor >= 0;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
@@ -136,6 +156,10 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
+    ;signal   cts_b    : out   std_logic
+    ;signal   cts_pad  : in    std_logic
+    ;signal   rts_pad  : in    std_logic
+    ;signal   jtag_if  : inout t_jtag_if
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -164,6 +188,24 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "hwla")
     then
       work.tb_PicoSoC_hwla_pkg.run(cfg, clk, switch, inject, led0, led_diff, debug_tx, rom_addr, rom_data);
+    elsif string_eq(name, "pad_mux")
+    then
+      work.tb_PicoSoC_pad_mux_pkg.run(cfg, clk, switch, inject, led0, uart_rx, uart_tx, cts_b, cts_pad, rts_pad, jtag_if, debug_tx);
+    elsif string_eq(name, "jtag_chain")
+    then
+      work.tb_PicoSoC_jtag_chain_pkg.run(cfg, clk, switch, led0, cts_pad, jtag_if);
+    elsif string_eq(name, "jtag_inject")
+    then
+      work.tb_PicoSoC_jtag_inject_pkg.run(cfg, clk, switch, led0, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_status")
+    then
+      work.tb_PicoSoC_jtag_status_pkg.run(cfg, clk, switch, it_user, inject, led0, led1, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_cpu_user")
+    then
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, false, clk, switch, inject, led0, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_cpu_supervisor")
+    then
+      work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);

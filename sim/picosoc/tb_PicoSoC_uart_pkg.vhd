@@ -27,6 +27,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
+-- 2026-11-22  1.1      mrosiere Switches 0x25 (MSBs 00 : the UART pads stay
+--                               with the user UART)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -69,7 +71,8 @@ package body tb_PicoSoC_uart_pkg is
     ) is
     constant C_BANNER  : string   := "Welcome Back, Commander";
     constant C_NB_LOOP : positive := 6;
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"A5"; -- switch(5) set
+    -- switch(5) set ; MSBs 00 : the UART pads stay with the user UART
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"25";
     constant C_ECHO    : std_logic_vector(8-1 downto 0) := x"3F";
     variable v_line    : string(1 to 128);
     variable v_len     : natural;
