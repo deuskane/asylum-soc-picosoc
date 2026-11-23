@@ -31,6 +31,8 @@
 -- 2026-11-23  1.13     mrosiere PicoSoC_tap component
 -- 2026-11-23  1.14     mrosiere PicoSoC_user_debug_t : cpu_ics (instruction
 --                               fetch strobe of the user CPU)
+-- 2026-11-23  1.15     mrosiere JTAG over the UART (switches 11) : PicoSoC_pads
+--                               and PicoSoC_top components
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -193,9 +195,14 @@ component PicoSoC_pads is
     ;uart_rts_b_i     : in    std_logic
     -- HWLA UART (TX only)
     ;debug_uart_tx_i  : in    std_logic
-    -- JTAG chain
+    -- JTAG chain : driven by the JTAG pads (switches 10) or by jtag_bitbang
+    -- (switches 11)
     ;jtag_ini_o       : out   jtag_ini_t
     ;jtag_tgt_i       : in    jtag_tgt_t
+    -- JTAG over the UART (jtag_bitbang and its UART)
+    ;bitbang_tx_i     : in    std_logic
+    ;bitbang_rx_o     : out   std_logic
+    ;bitbang_jtag_i   : in    jtag_ini_t
     -- SPI (8 data lanes of the SPI)
     ;spi_sclk_i       : in    std_logic
     ;spi_sclk_oe_i    : in    std_logic
@@ -274,6 +281,7 @@ component PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 

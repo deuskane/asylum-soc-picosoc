@@ -46,6 +46,9 @@
 -- 2026-11-23  2.13     mrosiere HWLA and its UART in PicoSoC_hwla
 -- 2026-11-23  2.14     mrosiere Injection / status TAP in PicoSoC_tap
 -- 2026-11-23  2.15     mrosiere cpu_ics in the HWLA probes
+-- 2026-11-23  2.16     mrosiere Switches 11 : JTAG over the UART pads
+--                               (jtag_bitbang, OpenOCD remote_bitbang,
+--                               JTAG_BAUD_RATE) when the chain has a TAP
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -55,6 +58,7 @@ library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.techmap_pkg.all;
 use     asylum.clock_divider_pkg.all;
+use     asylum.uart_pkg.all;
 use     asylum.jtag_pkg.all;
 
 entity PicoSoC_top is
@@ -65,6 +69,7 @@ entity PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -188,6 +193,13 @@ architecture rtl of PicoSoC_top is
   -- debug unit
   signal   user_ndmreset                : std_logic;
   signal   supervisor_ndmreset          : std_logic;
+
+  -- JTAG over the UART pads (switches 11) : UART of jtag_bitbang, its JTAG
+  -- pins (to the chain through PicoSoC_pads). Only with a TAP in the chain
+  constant BITBANG_ENABLE               : boolean := DEBUG_ENABLE or USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE;
+  signal   bitbang_rx                   : std_logic;
+  signal   bitbang_tx                   : std_logic;
+  signal   bitbang_jtag_ini             : jtag_ini_t;
 
   -- Error injection : push buttons (active high) or JTAG (synchronized on clk)
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
@@ -457,6 +469,9 @@ begin  -- architecture rtl
     ,debug_uart_tx_i      => debug_uart_tx
     ,jtag_ini_o           => jtag_ini
     ,jtag_tgt_i           => jtag_tgt
+    ,bitbang_tx_i         => bitbang_tx
+    ,bitbang_rx_o         => bitbang_rx
+    ,bitbang_jtag_i       => bitbang_jtag_ini
     ,spi_sclk_i           => spi_sclk_o
     ,spi_sclk_oe_i        => spi_sclk_oe_o
     ,spi_cs_b_i           => spi_cs_b_o
@@ -471,6 +486,148 @@ begin  -- architecture rtl
     ,i2c_sda_oe_i         => i2c_sda_oe_o
     ,i2c_sda_o            => i2c_sda_i
     );
+
+  -----------------------------------------------------------------------------
+  -- JTAG over the UART pads (switches 11) : jtag_bitbang of asylum-debug-jtag
+  -- behind a UART (8 data bits, no parity, 1 stop bit, JTAG_BAUD_RATE) :
+  -- OpenOCD (remote_bitbang adapter, socat to the serial port) sends one
+  -- byte per change of TCK / TMS / TDI and one per TDO read ('R'),
+  -- jtag_bitbang answers '0' / '1'. Its JTAG pins drive the JTAG chain in
+  -- place of the JTAG pads (PicoSoC_pads) ; SRST ('s', 'u') is not
+  -- connected (reset a CPU with ndmreset of its debug unit) ; TRST* ('t',
+  -- 'u') reaches the TAPs, which ignore it (no TRST*) ; the LED of OpenOCD
+  -- (blink) is not used (no free LED).
+  -- Clock and reset of the supervisor : a reset of the user SoC keeps the
+  -- link. TCK is a register of clk : a clock derived from data for the TAPs
+  -- (see the README for the constraints).
+  -- Only with a TAP in the chain : else the TX pad stays idle (1) and the
+  -- chain sees TCK 0, TMS 1
+  -----------------------------------------------------------------------------
+  gen_bitbang: if BITBANG_ENABLE
+  generate
+    -- Baud tick every FSYS_INT/JTAG_BAUD_RATE cycles of clk
+    constant BITBANG_BAUD_TICK_MAX : std_logic_vector(16-1 downto 0) := std_logic_vector(to_unsigned(FSYS_INT/JTAG_BAUD_RATE-1, 16));
+
+    signal   rx_b                : std_logic;
+    signal   rx_b_sync           : std_logic;
+    signal   rx_sync             : std_logic;
+    signal   rx_tick             : std_logic;
+    signal   rx_tick_half        : std_logic;
+    signal   rx_tick_en          : std_logic;
+    signal   tx_tick             : std_logic;
+    signal   cmd_tdata           : std_logic_vector(8-1 downto 0);
+    signal   cmd_tvalid          : std_logic;
+    signal   cmd_tready          : std_logic;
+    signal   answer_tdata        : std_logic_vector(8-1 downto 0);
+    signal   answer_tvalid       : std_logic;
+    signal   answer_tready       : std_logic;
+  begin
+    -- RX synchronized on clk (uart_rx_axis expects a synchronous input).
+    -- sync2dffrn is reset to '0' : the inverted line is synchronized, so
+    -- that RX is idle ('1') during the reset
+    rx_b    <= not bitbang_rx;
+
+    ins_bitbang_rx_sync : sync2dffrn
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,d_i                     => rx_b
+      ,q_o                     => rx_b_sync
+      );
+
+    rx_sync <= not rx_b_sync;
+
+    ins_bitbang_rx_baud : uart_baud_rate_gen
+      generic map
+      (BAUD_TICK_CNT_WIDTH     => 16
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,baud_tick_en_i          => rx_tick_en
+      ,baud_tick_o             => rx_tick
+      ,baud_tick_half_o        => rx_tick_half
+      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
+      );
+
+    ins_bitbang_rx : uart_rx_axis
+      generic map
+      (WIDTH                   => 8
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,uart_rx_i               => rx_sync
+      ,m_axis_tdata_o          => cmd_tdata
+      ,m_axis_parity_error_o   => open
+      ,m_axis_tvalid_o         => cmd_tvalid
+      ,m_axis_tready_i         => cmd_tready
+      ,baud_tick_i             => rx_tick
+      ,baud_tick_half_i        => rx_tick_half
+      ,baud_tick_en_o          => rx_tick_en
+      ,parity_enable_i         => '0'
+      ,parity_odd_i            => '0'
+      ,last_parity_error_o     => open
+      ,err_overrun_o           => open
+      ,err_parity_o            => open
+      ,err_framing_o           => open
+      ,err_break_o             => open
+      ,debug_o                 => open
+      );
+
+    ins_bitbang : jtag_bitbang
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,s_axis_tdata_i          => cmd_tdata
+      ,s_axis_tvalid_i         => cmd_tvalid
+      ,s_axis_tready_o         => cmd_tready
+      ,m_axis_tdata_o          => answer_tdata
+      ,m_axis_tvalid_o         => answer_tvalid
+      ,m_axis_tready_i         => answer_tready
+      ,jtag_ini_o              => bitbang_jtag_ini
+      ,jtag_tgt_i              => jtag_tgt
+      ,srst_o                  => open
+      ,blink_o                 => open
+      );
+
+    ins_bitbang_tx_baud : uart_baud_rate_gen
+      generic map
+      (BAUD_TICK_CNT_WIDTH     => 16
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,baud_tick_en_i          => '1'
+      ,baud_tick_o             => tx_tick
+      ,baud_tick_half_o        => open
+      ,cfg_baud_tick_cnt_max_i => BITBANG_BAUD_TICK_MAX
+      );
+
+    ins_bitbang_tx : uart_tx_axis
+      generic map
+      (WIDTH                   => 8
+      )
+      port map
+      (clk_i                   => clk
+      ,arst_b_i                => arst_b_supervisor
+      ,s_axis_tdata_i          => answer_tdata
+      ,s_axis_tvalid_i         => answer_tvalid
+      ,s_axis_tready_o         => answer_tready
+      ,uart_tx_o               => bitbang_tx
+      ,uart_cts_b_i            => '0'
+      ,baud_tick_i             => tx_tick
+      ,parity_enable_i         => '0'
+      ,parity_odd_i            => '0'
+      ,debug_o                 => open
+      );
+  end generate gen_bitbang;
+
+  gen_bitbang_b: if not BITBANG_ENABLE
+  generate
+    bitbang_tx       <= '1';                                              -- UART idle level
+    bitbang_jtag_ini <= (tck => '0', tms => '1', tdi => '1', trst_n => '1'); -- No TAP to drive
+  end generate gen_bitbang_b;
 
   -----------------------------------------------------------------------------
   -- JTAG chain

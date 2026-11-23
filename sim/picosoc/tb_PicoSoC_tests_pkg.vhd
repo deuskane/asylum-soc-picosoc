@@ -26,6 +26,10 @@
 -- 2026-11-22  1.6      mrosiere jtag_chain, jtag_inject, jtag_status (JTAG
 --                               BFM, JTAG chain of the configuration)
 -- 2026-11-22  1.7      mrosiere jtag_cpu_user, jtag_cpu_supervisor
+-- 2026-11-23  1.8      mrosiere bitbang_chain, bitbang_inject, bitbang_cpu,
+--                               (JTAG over the UART pads),
+--                               jtag_last (stages without TAP at the end of
+--                               the chain)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -45,6 +49,7 @@ use     asylum.string_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
+use     work.tb_PicoSoC_bitbang_pkg.all;
 
 package tb_PicoSoC_tests_pkg is
 
@@ -53,7 +58,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,hello," & C_INTEGRATION;
@@ -91,6 +96,7 @@ package tb_PicoSoC_tests_pkg is
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
+    ;signal   bitbang  : in    t_bitbang_rsp
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -129,6 +135,10 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_status"    ) then return C_USER and debug;
     elsif string_eq(name, "jtag_cpu_user"      ) then return C_USER and jtag.user       >= 0;
     elsif string_eq(name, "jtag_cpu_supervisor") then return C_USER and jtag.supervisor >= 0;
+    elsif string_eq(name, "bitbang_chain"  ) then return C_USER and jtag.nb_tap > 0;
+    elsif string_eq(name, "bitbang_inject" ) then return C_USER and debug and fault and supervisor and string_eq(safety, "lock-step");
+    elsif string_eq(name, "bitbang_cpu"    ) then return C_USER and jtag.user >= 0;
+    elsif string_eq(name, "jtag_last"      ) then return C_USER and jtag.user >= 0;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
@@ -160,6 +170,7 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
+    ;signal   bitbang  : in    t_bitbang_rsp
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -206,6 +217,18 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_cpu_supervisor")
     then
       work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, inject, led0, led_diff, jtag_if);
+    elsif string_eq(name, "bitbang_chain")
+    then
+      work.tb_PicoSoC_bitbang_chain_pkg.run(cfg, clk, switch, led0, uart_rx, bitbang);
+    elsif string_eq(name, "bitbang_inject")
+    then
+      work.tb_PicoSoC_bitbang_inject_pkg.run(cfg, clk, switch, led0, led_diff, uart_rx, bitbang);
+    elsif string_eq(name, "bitbang_cpu")
+    then
+      work.tb_PicoSoC_bitbang_cpu_pkg.run(cfg, clk, switch, led0, uart_rx, bitbang);
+    elsif string_eq(name, "jtag_last")
+    then
+      work.tb_PicoSoC_jtag_last_pkg.run(cfg, clk, switch, led0, cts_pad, jtag_if, uart_rx, bitbang);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);
