@@ -26,6 +26,10 @@
 --                               ndmreset compared (lock-step) or voted (TMR)
 -- 2026-11-23  1.5      mrosiere TMR : vote of the data bus requests with
 --                               vote of sbi_pkg
+-- 2026-11-23  1.6      mrosiere Outputs of a copy in a record (cpu_out_t,
+--                               its "/=" and vote), inputs in another
+--                               (cpu_in_t), lock-step pipe as arrays of
+--                               records, one generate over the copies
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -84,124 +88,122 @@ entity cpu_safety is
 end cpu_safety;
 
 architecture rtl of cpu_safety is
-  -- CPU Enable
-  constant CPU1_ENABLE                : boolean  := ((SAFETY = "lock-step") or (SAFETY = "tmr"));
-  constant CPU2_ENABLE                : boolean  := ((SAFETY = "tmr"));
+  -- Number of copies of the CPU, compared pairs (copy i with copy i+1 mod 3) :
+  -- none, 0-1 (lock-step), 0-1 1-2 2-0 (TMR)
+  constant NB_CPU                     : positive := mux2(SAFETY = "tmr", 3, mux2(SAFETY = "lock-step", 2, 1));
+  constant NB_DIFF                    : natural  := mux2(NB_CPU = 3, 3, NB_CPU-1);
 
   -- Lock Step Depth configuration
   constant LOCK_STEP_DEPTH_INT        : natural  := mux2(SAFETY = "lock-step", LOCK_STEP_DEPTH, 0);
 
-  -- Difference vector
-  constant DIFF_CPU0_VS_CPU1          : natural  := PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1;
-  constant DIFF_CPU1_VS_CPU2          : natural  := PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2;
-  constant DIFF_CPU2_VS_CPU0          : natural  := PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0;
+  type     naturals_t                 is array (natural range <>) of natural;
 
-  -- SEU bit positions (model-dependent : target the opcode)
-  constant CPU0_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 17, 
-                                                    mux2(CPU_MODEL = "WardRV_fsm",  0, 
-                                                         0));
-  constant CPU1_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 16, 
-                                                    mux2(CPU_MODEL = "WardRV_fsm",  1, 
-                                                         1));
-  constant CPU2_SEU_BIT               : natural  := mux2(CPU_MODEL = "OpenBlaze8", 15,
-                                                    mux2(CPU_MODEL = "WardRV_fsm",  2,
-                                                         2));
-  -- JTAG of the CPU copies
-  type jtag_inis_t is array (natural range <>) of jtag_ini_t;
-  type jtag_tgts_t is array (natural range <>) of jtag_tgt_t;
+  -- Difference vector : bit of the pair (copy i, copy i+1 mod 3)
+  constant DIFF_BIT                   : naturals_t(0 to 3-1) := (PICOSOC_SUPERVISOR_GIC_CPU0_VS_CPU1
+                                                                ,PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2
+                                                                ,PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0);
 
-  signal jtag_tck                     : std_logic;  -- TCK resynchronized on clk_i (DEBUG_ENABLE)
+  -- SEU bit positions of each copy (model-dependent : target the opcode)
+  constant SEU_BIT                    : naturals_t(0 to 3-1) := (mux2(CPU_MODEL = "OpenBlaze8", 17, 0)
+                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 16, 1)
+                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 15, 2));
 
-  -- CPU 0 signals
-  signal cpu0_arst_b                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_ics                     : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_iaddr                   : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(IMEM_ADDR_WIDTH-1 downto 0);
-  signal cpu0_idata                   : slvs_t    (LOCK_STEP_DEPTH_INT downto 0)(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu0_sbi_ini                 : sbi_inis_t(LOCK_STEP_DEPTH_INT downto 0)(addr (DMEM_ADDR_WIDTH-1 downto 0),
-                                                                                 wdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu0_sbi_tgt                 : sbi_tgts_t(LOCK_STEP_DEPTH_INT downto 0)(rdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu0_it_val                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_it_ack                  : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_dbg_arst_b              : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_jtag_ini                : jtag_inis_t(LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_jtag_tgt                : jtag_tgts_t(LOCK_STEP_DEPTH_INT downto 0);
-  signal cpu0_ndmreset                : sls_t     (LOCK_STEP_DEPTH_INT downto 0);
+  -- Stage of the lock-step pipe of the inputs of each copy : CPU0 gets the
+  -- inputs, the other copies LOCK_STEP_DEPTH cycles later (TMR : depth 0)
+  constant STAGE                      : naturals_t(0 to 3-1) := (0, LOCK_STEP_DEPTH_INT, LOCK_STEP_DEPTH_INT);
 
-  -- CPU 1 signals
-  signal cpu1_arst_b                  : std_logic;
-  signal cpu1_ics                     : std_logic;
-  signal cpu1_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
-  signal cpu1_idata                   : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu1_sbi_ini                 : sbi_ini_t(addr (DMEM_ADDR_WIDTH-1 downto 0),
+  -- Inputs of a copy : CPU reset domain (arst_b), debug unit reset domain
+  -- (dbg_arst_b)
+  type     cpu_in_t                   is record
+    arst_b                            : std_logic;
+    idata                             : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
+    sbi_tgt                           : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
+    it_val                            : std_logic;
+    dbg_arst_b                        : std_logic;
+    jtag_ini                          : jtag_ini_t;
+  end record cpu_in_t;
+
+  -- Outputs of a copy : compared (lock-step, TMR) and voted (TMR)
+  type     cpu_out_t                  is record
+    ics                               : std_logic;
+    iaddr                             : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
+    it_ack                            : std_logic;
+    sbi_ini                           : sbi_ini_t(addr (DMEM_ADDR_WIDTH-1 downto 0),
                                                   wdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu1_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu1_it_val                  : std_logic;
-  signal cpu1_it_ack                  : std_logic;
-  signal cpu1_jtag_tgt                : jtag_tgt_t;
-  signal cpu1_ndmreset                : std_logic;
-  
-  -- CPU 2 signals
-  signal cpu2_arst_b                  : std_logic;
-  signal cpu2_ics                     : std_logic;
-  signal cpu2_iaddr                   : std_logic_vector(IMEM_ADDR_WIDTH-1 downto 0);
-  signal cpu2_idata                   : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu2_sbi_ini                 : sbi_ini_t(addr (DMEM_ADDR_WIDTH-1 downto 0),
-                                                  wdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu2_sbi_tgt                 : sbi_tgt_t(rdata(DMEM_DATA_WIDTH-1 downto 0));
-  signal cpu2_it_val                  : std_logic;
-  signal cpu2_it_ack                  : std_logic;
-  signal cpu2_jtag_tgt                : jtag_tgt_t;
-  signal cpu2_ndmreset                : std_logic;
+    jtag_tgt                          : jtag_tgt_t;
+    ndmreset                          : std_logic;
+  end record cpu_out_t;
 
-  -- Error injection and comparison signals
-  signal cpu0_idata_with_seu          : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu1_idata_with_seu          : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu2_idata_with_seu          : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu0_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu1_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-  signal cpu2_idata_seu               : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
+  type     cpu_ins_t                  is array (natural range <>) of cpu_in_t;
+  type     cpu_outs_t                 is array (natural range <>) of cpu_out_t;
 
-  signal diff                         : std_logic_vector(3-1 downto 0); -- Instantaneous      difference signals
-  signal diff_r                       : std_logic_vector(3-1 downto 0); -- Registered/Latched difference signals
+  -- Two copies differ : the "/=" of sbi_pkg for the data bus request (addr
+  -- when cs = '1', wdata when we = '1'), every other field compared
+  function "/=" (a, b : cpu_out_t) return boolean is
+  begin
+    return (a.ics      /= b.ics     ) or
+           (a.iaddr    /= b.iaddr   ) or
+           (a.it_ack   /= b.it_ack  ) or
+           (a.sbi_ini  /= b.sbi_ini ) or
+           (a.jtag_tgt /= b.jtag_tgt) or
+           (a.ndmreset /= b.ndmreset);
+  end function "/=";
+
+  -- Majority of three bits / vectors (no vote of std_logic in the packages)
+  function vote (a, b, c : std_logic) return std_logic is
+  begin
+    return (a and b) or (b and c) or (c and a);
+  end function vote;
+
+  function vote (a, b, c : std_logic_vector) return std_logic_vector is
+  begin
+    return (a and b) or (b and c) or (c and a);
+  end function vote;
+
+  -- TMR vote of the outputs of the three copies : vote of sbi_pkg for the
+  -- data bus request, a majority for every other field
+  function vote (a, b, c : cpu_out_t) return cpu_out_t is
+    variable z : cpu_out_t;
+  begin
+    z.ics             := vote(a.ics            , b.ics            , c.ics            );
+    z.iaddr           := vote(a.iaddr          , b.iaddr          , c.iaddr          );
+    z.it_ack          := vote(a.it_ack         , b.it_ack         , c.it_ack         );
+    z.sbi_ini         := vote(a.sbi_ini        , b.sbi_ini        , c.sbi_ini        ); -- sbi_pkg
+    z.jtag_tgt.tdo    := vote(a.jtag_tgt.tdo   , b.jtag_tgt.tdo   , c.jtag_tgt.tdo   );
+    z.jtag_tgt.tdo_en := vote(a.jtag_tgt.tdo_en, b.jtag_tgt.tdo_en, c.jtag_tgt.tdo_en);
+    z.ndmreset        := vote(a.ndmreset       , b.ndmreset       , c.ndmreset       );
+    return z;
+  end function vote;
+
+  signal   jtag_tck                   : std_logic;  -- TCK resynchronized on clk_i (DEBUG_ENABLE)
+
+  -- Lock-step pipe : stage 0 = the inputs of cpu_safety and the outputs of
+  -- CPU0, stage i = stage 0 delayed by i cycles. The other copies get the
+  -- inputs of the last stage, their outputs are compared with the outputs
+  -- of CPU0 of the last stage (TMR : depth 0, no delay)
+  signal   pipe_in                    : cpu_ins_t (0 to LOCK_STEP_DEPTH_INT);
+  signal   pipe_out                   : cpu_outs_t(0 to LOCK_STEP_DEPTH_INT);
+
+  -- Outputs of the copies (copy 0 : CPU0 of the last stage of the pipe)
+  signal   cpu_out                    : cpu_outs_t(0 to 3-1);
+  signal   cpu_voted                  : cpu_out_t;
+
+  signal   diff                       : std_logic_vector(3-1 downto 0); -- Instantaneous      difference signals
+  signal   diff_r                     : std_logic_vector(3-1 downto 0); -- Registered/Latched difference signals
 begin
 
   -----------------------------------------------------------------------------
-  -- CPU 0
-  -- This is the primary CPU core used in all configurations
+  -- Inputs : stage 0 of the lock-step pipe
   -----------------------------------------------------------------------------
-  ins_cpu_0 : entity asylum.cpu_wrapper
-    generic map
-    (CPU_MODEL       => CPU_MODEL
-    ,HARTID          => HARTID
-    ,DEBUG_ENABLE    => DEBUG_ENABLE
-    ,IDCODE_VALUE    => IDCODE_VALUE
-    )
-    port map
-    (clk_i           => clk_i
-    ,cke_i           => cke_i
-    ,arst_b_i        => cpu0_arst_b (0)
-    ,ics_o           => cpu0_ics    (0)
-    ,iaddr_o         => cpu0_iaddr  (0)
-    ,idata_i         => cpu0_idata_with_seu
-    ,sbi_ini_o       => cpu0_sbi_ini(0)
-    ,sbi_tgt_i       => cpu0_sbi_tgt(0)
-    ,interrupt_i     => cpu0_it_val (0)
-    ,interrupt_ack_o => cpu0_it_ack (0)
-    ,dbg_arst_b_i    => cpu0_dbg_arst_b(0)
-    ,jtag_ini_i      => cpu0_jtag_ini  (0)
-    ,jtag_tgt_o      => cpu0_jtag_tgt  (0)
-    ,ndmreset_o      => cpu0_ndmreset  (0)
-    );
-
-  cpu0_arst_b    (0) <= arst_b_i;
-  cpu0_idata     (0) <= idata_i;
-  cpu0_sbi_tgt   (0) <= sbi_tgt_i;
-  cpu0_it_val    (0) <= interrupt_i;
-  cpu0_dbg_arst_b(0) <= dbg_arst_b_i;
-  cpu0_jtag_ini  (0) <= (tck    => jtag_tck
-                        ,trst_n => jtag_ini_i.trst_n
-                        ,tms    => jtag_ini_i.tms
-                        ,tdi    => jtag_ini_i.tdi);
+  pipe_in(0) <= (arst_b     => arst_b_i
+                ,idata      => idata_i
+                ,sbi_tgt    => sbi_tgt_i
+                ,it_val     => interrupt_i
+                ,dbg_arst_b => dbg_arst_b_i
+                ,jtag_ini   => (tck    => jtag_tck
+                               ,trst_n => jtag_ini_i.trst_n
+                               ,tms    => jtag_ini_i.tms
+                               ,tdi    => jtag_ini_i.tdi));
 
   -- TCK of the debug units resynchronized on clk_i : every copy gets the same
   -- synchronous TCK (CPU1 exactly LOCK_STEP_DEPTH cycles later), so their
@@ -220,44 +222,66 @@ begin
     jtag_tck <= jtag_ini_i.tck;
   end generate;
 
+  -----------------------------------------------------------------------------
   -- Delay pipe for Lock-step
-  gen_cpu0_lockstep_pipe: for i in 1 to LOCK_STEP_DEPTH_INT 
+  -----------------------------------------------------------------------------
+  gen_lockstep_pipe: for i in 1 to LOCK_STEP_DEPTH_INT
   generate
     process (clk_i, arst_b_i) begin
-      if arst_b_i = '0' then 
-        cpu0_arst_b(i) <= '0';
+      if arst_b_i = '0' then
+        pipe_in (i).arst_b     <= '0';
       elsif rising_edge(clk_i) then
-        cpu0_arst_b (i) <= cpu0_arst_b (i-1);
-        cpu0_ics    (i) <= cpu0_ics    (i-1);
-        cpu0_iaddr  (i) <= cpu0_iaddr  (i-1);
-        cpu0_idata  (i) <= cpu0_idata  (i-1);
-        cpu0_sbi_ini(i) <= cpu0_sbi_ini(i-1);
-        cpu0_sbi_tgt(i) <= cpu0_sbi_tgt(i-1);
-        cpu0_it_val (i) <= cpu0_it_val (i-1);
-        cpu0_it_ack (i) <= cpu0_it_ack (i-1);
+        pipe_in (i).arst_b     <= pipe_in (i-1).arst_b;
+        pipe_in (i).idata      <= pipe_in (i-1).idata;
+        pipe_in (i).sbi_tgt    <= pipe_in (i-1).sbi_tgt;
+        pipe_in (i).it_val     <= pipe_in (i-1).it_val;
+        pipe_out(i).ics        <= pipe_out(i-1).ics;
+        pipe_out(i).iaddr      <= pipe_out(i-1).iaddr;
+        pipe_out(i).it_ack     <= pipe_out(i-1).it_ack;
+        pipe_out(i).sbi_ini    <= pipe_out(i-1).sbi_ini;
       end if;
     end process;
 
     -- The debug units run during the CPU reset (ndmreset) : own reset
     process (clk_i, dbg_arst_b_i) begin
       if dbg_arst_b_i = '0' then
-        cpu0_dbg_arst_b(i) <= '0';
+        pipe_in (i).dbg_arst_b <= '0';
       elsif rising_edge(clk_i) then
-        cpu0_dbg_arst_b(i) <= cpu0_dbg_arst_b(i-1);
-        cpu0_jtag_ini  (i) <= cpu0_jtag_ini  (i-1);
-        cpu0_jtag_tgt  (i) <= cpu0_jtag_tgt  (i-1);
-        cpu0_ndmreset  (i) <= cpu0_ndmreset  (i-1);
+        pipe_in (i).dbg_arst_b <= pipe_in (i-1).dbg_arst_b;
+        pipe_in (i).jtag_ini   <= pipe_in (i-1).jtag_ini;
+        pipe_out(i).jtag_tgt   <= pipe_out(i-1).jtag_tgt;
+        pipe_out(i).ndmreset   <= pipe_out(i-1).ndmreset;
       end if;
     end process;
   end generate;
 
   -----------------------------------------------------------------------------
-  -- CPU 1
-  -- diff cpu0 vs cpu1
+  -- CPU copies
+  -- CPU0 : the primary CPU, used in all configurations
+  -- CPU1 : lock-step and TMR ; CPU2 : TMR
   -----------------------------------------------------------------------------
-   gen_cpu1_enable: if CPU1_ENABLE
-   generate
-    ins_cpu_1 : entity asylum.cpu_wrapper
+  gen_cpu: for i in 0 to NB_CPU-1
+  generate
+    signal   cpu_in    : cpu_in_t;  -- Inputs of the copy
+    signal   idata     : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
+    signal   out_cpu   : cpu_out_t;
+  begin
+    -- A signal assignment, not a direct read of the pipe registers : the
+    -- inputs change a delta cycle after them, OpenBlaze8 samples them on its
+    -- internal clock (a delta cycle after clk_i) at the next edge only
+    cpu_in <= pipe_in(STAGE(i));
+
+    -- Fault Injection : one instruction bit of the copy flipped
+    process (cpu_in, inject_error_i) is
+    begin
+      idata                <= cpu_in.idata;
+      if FAULT_INJECTION
+      then
+        idata(SEU_BIT(i))  <= cpu_in.idata(SEU_BIT(i)) xor inject_error_i(i);
+      end if;
+    end process;
+
+    ins_cpu : entity asylum.cpu_wrapper
       generic map
       (CPU_MODEL       => CPU_MODEL
       ,HARTID          => HARTID
@@ -267,122 +291,58 @@ begin
       port map
       (clk_i           => clk_i
       ,cke_i           => cke_i
-      ,arst_b_i        => cpu1_arst_b
-      ,ics_o           => cpu1_ics
-      ,iaddr_o         => cpu1_iaddr
-      ,idata_i         => cpu1_idata_with_seu
-      ,sbi_ini_o       => cpu1_sbi_ini
-      ,sbi_tgt_i       => cpu1_sbi_tgt
-      ,interrupt_i     => cpu1_it_val
-      ,interrupt_ack_o => cpu1_it_ack
-      ,dbg_arst_b_i    => cpu0_dbg_arst_b(LOCK_STEP_DEPTH_INT)
-      ,jtag_ini_i      => cpu0_jtag_ini  (LOCK_STEP_DEPTH_INT)
-      ,jtag_tgt_o      => cpu1_jtag_tgt
-      ,ndmreset_o      => cpu1_ndmreset
+      ,arst_b_i        => cpu_in.arst_b
+      ,ics_o           => out_cpu.ics
+      ,iaddr_o         => out_cpu.iaddr
+      ,idata_i         => idata
+      ,sbi_ini_o       => out_cpu.sbi_ini
+      ,sbi_tgt_i       => cpu_in.sbi_tgt
+      ,interrupt_i     => cpu_in.it_val
+      ,interrupt_ack_o => out_cpu.it_ack
+      ,dbg_arst_b_i    => cpu_in.dbg_arst_b
+      ,jtag_ini_i      => cpu_in.jtag_ini
+      ,jtag_tgt_o      => out_cpu.jtag_tgt
+      ,ndmreset_o      => out_cpu.ndmreset
       );
 
-    cpu1_arst_b  <= cpu0_arst_b  (LOCK_STEP_DEPTH_INT);
-    cpu1_idata   <= cpu0_idata   (LOCK_STEP_DEPTH_INT);
-    cpu1_sbi_tgt <= cpu0_sbi_tgt (LOCK_STEP_DEPTH_INT);
-    cpu1_it_val  <= cpu0_it_val  (LOCK_STEP_DEPTH_INT);
-    
-    diff(DIFF_CPU0_VS_CPU1) <= '1' when (   (cpu0_ics     (LOCK_STEP_DEPTH_INT) /= cpu1_ics    )
-                                         or (cpu0_iaddr   (LOCK_STEP_DEPTH_INT) /= cpu1_iaddr  )
-                                         or (cpu0_it_ack  (LOCK_STEP_DEPTH_INT) /= cpu1_it_ack )
-                                         or (cpu0_sbi_ini (LOCK_STEP_DEPTH_INT) /= cpu1_sbi_ini)
-                                         or (cpu0_jtag_tgt(LOCK_STEP_DEPTH_INT) /= cpu1_jtag_tgt)
-                                         or (cpu0_ndmreset(LOCK_STEP_DEPTH_INT) /= cpu1_ndmreset)
-                                            ) else
-                               '0';
-    
-    p_diff_r: process (clk_i, cpu1_arst_b) is
-    begin  -- process p_diff_r
-      if cpu1_arst_b = '0' then                 -- asynchronous reset (active low)
-        diff_r(DIFF_CPU0_VS_CPU1) <= '0';
-      elsif rising_edge(clk_i) then  -- rising clock edge
-        -- Trap 1
-        diff_r(DIFF_CPU0_VS_CPU1) <= diff_r(DIFF_CPU0_VS_CPU1) or diff(DIFF_CPU0_VS_CPU1);
-      end if;
-    end process p_diff_r;
-  end generate;
-
-  gen_cpu1_disable: if CPU1_ENABLE = false
-  generate
-    diff_r(DIFF_CPU0_VS_CPU1) <= '0';
+    -- CPU0 : through the pipe, aligned with the other copies
+    gen_cpu0: if i = 0
+    generate
+      pipe_out(0) <= out_cpu;
+      cpu_out (i) <= pipe_out(LOCK_STEP_DEPTH_INT);
+    else generate
+      cpu_out (i) <= out_cpu;
+    end generate;
   end generate;
 
   -----------------------------------------------------------------------------
-  -- CPU 2
-  -- diff cpu1 vs cpu2
-  -- diff cpu2 vs cpu0
+  -- Differences : copy i vs copy i+1 mod 3, trapped until the reset of the
+  -- copy i+1 mod 3
   -----------------------------------------------------------------------------
-  gen_cpu2_enable: if CPU2_ENABLE 
+  gen_diff: for i in 0 to 3-1
   generate
-    ins_cpu_2 : entity asylum.cpu_wrapper
-      generic map
-      (CPU_MODEL       => CPU_MODEL
-      ,HARTID          => HARTID
-      ,DEBUG_ENABLE    => DEBUG_ENABLE
-      ,IDCODE_VALUE    => IDCODE_VALUE
-      )
-      port map
-      (clk_i           => clk_i
-      ,cke_i           => cke_i
-      ,arst_b_i        => cpu2_arst_b
-      ,ics_o           => cpu2_ics
-      ,iaddr_o         => cpu2_iaddr
-      ,idata_i         => cpu2_idata_with_seu
-      ,sbi_ini_o       => cpu2_sbi_ini
-      ,sbi_tgt_i       => cpu2_sbi_tgt
-      ,interrupt_i     => cpu2_it_val
-      ,interrupt_ack_o => cpu2_it_ack
-      ,dbg_arst_b_i    => cpu0_dbg_arst_b(0)
-      ,jtag_ini_i      => cpu0_jtag_ini  (0)
-      ,jtag_tgt_o      => cpu2_jtag_tgt
-      ,ndmreset_o      => cpu2_ndmreset
-      );
+    constant NEXT_CPU  : natural := (i+1) mod 3;
+    -- Reset of the copy i+1 mod 3 (an alias : GHDL 6.0.0 crashes on a
+    -- field of pipe_in in a sensitivity list)
+    alias    arst_b    : std_logic is pipe_in(STAGE(NEXT_CPU)).arst_b;
+  begin
+    gen_compared: if i < NB_DIFF
+    generate
+      diff(DIFF_BIT(i)) <= '1' when cpu_out(i) /= cpu_out(NEXT_CPU) else
+                           '0';
 
-    cpu2_arst_b    <= arst_b_i;
-    cpu2_idata     <= idata_i;
-    cpu2_sbi_tgt   <= sbi_tgt_i;
-    cpu2_it_val    <= interrupt_i;   
-
-    diff(DIFF_CPU1_VS_CPU2) <= '1' when (   (cpu1_ics     /= cpu2_ics          )
-                                         or (cpu1_iaddr   /= cpu2_iaddr        )
-                                         or (cpu1_it_ack  /= cpu2_it_ack       )
-                                         or (cpu1_sbi_ini /= cpu2_sbi_ini      )
-                                         or (cpu1_jtag_tgt /= cpu2_jtag_tgt    )
-                                         or (cpu1_ndmreset /= cpu2_ndmreset    )
-                                         ) else
-                               '0';
-      
-    diff(DIFF_CPU2_VS_CPU0) <= '1' when (   (cpu2_ics     /= cpu0_ics     (0)  )
-                                         or (cpu2_iaddr   /= cpu0_iaddr   (0)  )
-                                         or (cpu2_it_ack  /= cpu0_it_ack  (0)  )
-                                         or (cpu2_sbi_ini /= cpu0_sbi_ini (0)  )
-                                         or (cpu2_jtag_tgt /= cpu0_jtag_tgt(0) )
-                                         or (cpu2_ndmreset /= cpu0_ndmreset(0) )
-                                        ) else
-                               '0';
-    
-    p_diff_r: process (clk_i, arst_b_i) is
-    begin  -- process p_diff_r
-      if arst_b_i= '0' then                 -- asynchronous reset (active low)
-        diff_r(DIFF_CPU1_VS_CPU2) <= '0';
-        diff_r(DIFF_CPU2_VS_CPU0) <= '0';
-      elsif rising_edge(clk_i) then  -- rising clock edge
-
-        -- Trap 1
-        diff_r(DIFF_CPU1_VS_CPU2) <= diff_r(DIFF_CPU1_VS_CPU2) or diff(DIFF_CPU1_VS_CPU2);
-        diff_r(DIFF_CPU2_VS_CPU0) <= diff_r(DIFF_CPU2_VS_CPU0) or diff(DIFF_CPU2_VS_CPU0);
-      end if;
-    end process p_diff_r;
-  end generate;
-
-  gen_cpu2_disable: if CPU2_ENABLE = false
-  generate
-    diff_r(DIFF_CPU1_VS_CPU2) <= '0';
-    diff_r(DIFF_CPU2_VS_CPU0) <= '0';
+      p_diff_r: process (clk_i, arst_b) is
+      begin  -- process p_diff_r
+        if arst_b = '0' then -- asynchronous reset (active low)
+          diff_r(DIFF_BIT(i)) <= '0';
+        elsif rising_edge(clk_i) then  -- rising clock edge
+          -- Trap 1
+          diff_r(DIFF_BIT(i)) <= diff_r(DIFF_BIT(i)) or diff(DIFF_BIT(i));
+        end if;
+      end process p_diff_r;
+    else generate
+      diff_r(DIFF_BIT(i)) <= '0';
+    end generate;
   end generate;
 
   -----------------------------------------------------------------------------
@@ -395,60 +355,19 @@ begin
   -- If safety none or lock-step : take cpu 0
   -- else if tmr : vote all cpu output
   -----------------------------------------------------------------------------
-   gen_cpu_vote: if SAFETY = "tmr" generate
-    ics_o          <= ((cpu0_ics     (0) and cpu1_ics       ) or
-                       (cpu1_ics         and cpu2_ics       ) or
-                       (cpu2_ics         and cpu0_ics    (0)));
-    iaddr_o        <= ((cpu0_iaddr   (0) and cpu1_iaddr     ) or
-                       (cpu1_iaddr       and cpu2_iaddr     ) or
-                       (cpu2_iaddr       and cpu0_iaddr  (0)));
-    sbi_ini_o      <= vote(cpu0_sbi_ini(0), cpu1_sbi_ini, cpu2_sbi_ini); -- sbi_pkg
-    interrupt_ack_o<= ((cpu0_it_ack  (0) and cpu1_it_ack    ) or
-                       (cpu1_it_ack      and cpu2_it_ack    ) or
-                       (cpu2_it_ack      and cpu0_it_ack (0)));
-    -- No operator on jtag_tgt_t : voted field by field
-    jtag_tgt_o.tdo    <= ((cpu0_jtag_tgt(0).tdo    and cpu1_jtag_tgt.tdo   ) or
-                          (cpu1_jtag_tgt.tdo       and cpu2_jtag_tgt.tdo   ) or
-                          (cpu2_jtag_tgt.tdo       and cpu0_jtag_tgt(0).tdo));
-    jtag_tgt_o.tdo_en <= ((cpu0_jtag_tgt(0).tdo_en and cpu1_jtag_tgt.tdo_en) or
-                          (cpu1_jtag_tgt.tdo_en    and cpu2_jtag_tgt.tdo_en) or
-                          (cpu2_jtag_tgt.tdo_en    and cpu0_jtag_tgt(0).tdo_en));
-    ndmreset_o        <= ((cpu0_ndmreset(0)        and cpu1_ndmreset       ) or
-                          (cpu1_ndmreset           and cpu2_ndmreset       ) or
-                          (cpu2_ndmreset           and cpu0_ndmreset(0)    ));
- 
-  else generate
-    ics_o           <= cpu0_ics    (0);
-    iaddr_o         <= cpu0_iaddr  (0);
-    sbi_ini_o       <= cpu0_sbi_ini(0);
-    interrupt_ack_o <= cpu0_it_ack (0);
-    jtag_tgt_o      <= cpu0_jtag_tgt(0);
-    ndmreset_o      <= cpu0_ndmreset(0);
-  end generate;
-
-  -----------------------------------------------------------------------------
-  -- Fault Injection
-  -----------------------------------------------------------------------------
-  gen_inject_error: if FAULT_INJECTION
+  gen_cpu_vote: if SAFETY = "tmr"
   generate
-    process(inject_error_i) is
-    begin
-      cpu0_idata_seu               <= (others => '0');
-      cpu1_idata_seu               <= (others => '0');
-      cpu2_idata_seu               <= (others => '0');
-      cpu0_idata_seu(CPU0_SEU_BIT) <= inject_error_i(0);
-      cpu1_idata_seu(CPU1_SEU_BIT) <= inject_error_i(1);
-      cpu2_idata_seu(CPU2_SEU_BIT) <= inject_error_i(2);
-    end process;
+    cpu_voted <= vote(cpu_out(0), cpu_out(1), cpu_out(2));
   else generate
-    cpu0_idata_seu                 <= (others => '0');
-    cpu1_idata_seu                 <= (others => '0');
-    cpu2_idata_seu                 <= (others => '0');
+    cpu_voted <= pipe_out(0);
   end generate;
 
-  cpu0_idata_with_seu <= cpu0_idata(0) xor cpu0_idata_seu;
-  cpu1_idata_with_seu <= cpu1_idata    xor cpu1_idata_seu;
-  cpu2_idata_with_seu <= cpu2_idata    xor cpu2_idata_seu;
+  ics_o           <= cpu_voted.ics;
+  iaddr_o         <= cpu_voted.iaddr;
+  sbi_ini_o       <= cpu_voted.sbi_ini;
+  interrupt_ack_o <= cpu_voted.it_ack;
+  jtag_tgt_o      <= cpu_voted.jtag_tgt;
+  ndmreset_o      <= cpu_voted.ndmreset;
 
   -----------------------------------------------------------------------------
   -- Difference vector output
@@ -469,32 +388,16 @@ begin
   end process;
 
   -- Display difference vector upon detection
-  process(diff_r(DIFF_CPU0_VS_CPU1))
+  gen_report: for i in 0 to 3-1
+  generate
+    alias    diff_trap : std_logic is diff_r(DIFF_BIT(i));
   begin
-    if true --(diff_r(DIFF_CPU0_VS_CPU1) /= '0')
-    then
-      report "CPU Safety: Difference (CPU0 VS CPU1) : " & std_logic'image(diff_r(DIFF_CPU0_VS_CPU1))
+    process(diff_trap)
+    begin
+      report "CPU Safety: Difference (CPU" & integer'image(i) & " VS CPU" & integer'image((i+1) mod 3) & ") : " & std_logic'image(diff_trap)
       severity warning;
-    end if;
-  end process;
-
-  process(diff_r(DIFF_CPU1_VS_CPU2))
-  begin
-    if true --(diff_r(DIFF_CPU1_VS_CPU2) /= '0')
-    then
-      report "CPU Safety: Difference (CPU1 VS CPU2) : " & std_logic'image(diff_r(DIFF_CPU1_VS_CPU2))
-      severity warning;
-    end if;
-  end process;
-
-  process(diff_r(DIFF_CPU2_VS_CPU0))
-  begin
-    if true --(diff_r(DIFF_CPU2_VS_CPU0) /= '0')
-    then
-      report "CPU Safety: Difference (CPU2 VS CPU0) : " & std_logic'image(diff_r(DIFF_CPU2_VS_CPU0))
-      severity warning;
-    end if;
-  end process;
+    end process;
+  end generate;
 
   -- pragma translate_on
 
