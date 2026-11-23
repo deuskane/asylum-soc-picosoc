@@ -61,7 +61,7 @@ The SoC has two parts:
 - the **user SoC** (`PicoSoC_user`): 1 to `USER_NB_CPU` CPU clusters (CPU, program ROM, local interconnect, GIC and RAM) sharing the peripherals through a global interconnect;
 - the **supervisor SoC** (`PicoSoC_supervisor`, optional): one CPU that watches the differences between the redundant user CPUs (lock-step or TMR) and resets the user SoC on an error.
 
-The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, SPI and I2C pads, the UART pads shared by the user UART, the UART of the logic analyzer and a JTAG chain (selected by two switches), with `DEBUG_ENABLE` a logic analyzer (HWLA) on the bus of the user CPU and a JTAG TAP of fault injection and status, and optionally the RISC-V debuggers of the WardRV CPUs in the JTAG chain. The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
+The top level `PicoSoC_top` adds the board side: reset resynchronization, clock divider, input polarities, the pads (`PicoSoC_pads`: SPI, I2C, and the UART pads shared by the user UART, the UART of the logic analyzer and a JTAG chain, selected by two switches), with `DEBUG_ENABLE` a logic analyzer (HWLA) on the bus of the user CPU and a JTAG TAP of fault injection and status. The JTAG chain also goes through the user and supervisor SoCs, where the WardRV CPUs can have their RISC-V debug unit (in `cpu_wrapper`). The firmware in [esw/](esw/) is compiled by FuseSoC generators into the ROMs at build time; the targets run it on GHDL testbenches or on a NanoXplore NG-MEDIUM board.
 
 ## Features
 
@@ -75,7 +75,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 - Firmware in C (and one assembler example): switch / LED identity, full peripheral test with UART output, Modbus RTU server, multi-core hello with spinlock, supervisor
 - Debug (`DEBUG_ENABLE`): HWLA logic analyzer on the bus of the user CPU, triggered by a difference of the redundant CPUs, captures sent on `debug_uart_tx_o` at 115200 baud; JTAG TAP of fault injection (ORed with `inject_error_i`) and status (LEDs, switches, resets)
 - UART pads shared by 3 functions (`jtag_pad_mux` of [asylum-debug-jtag](https://github.com/deuskane/asylum-debug-jtag)), selected by the two MSBs of `switch_i`: user UART, UART of the HWLA, JTAG chain; JTAG pinout of an FTDI MPSSE cable (FT232H / FT2232H): one cable is the UART and the JTAG probe
-- JTAG chain: RISC-V debuggers (`WardRV_debug`, Debug Specification 1.0, for OpenOCD + GDB) of the user CPU (`USER_CPU_DEBUG_ENABLE`) and of the supervisor CPU (`SUPERVISOR_CPU_DEBUG_ENABLE`), then the injection / status TAP; the debug requests reach every redundant copy of the CPU
+- JTAG chain: RISC-V debug units (`WardRV_debug` in `cpu_wrapper`, Debug Specification 1.0, for OpenOCD + GDB) of the user CPUs (one TAP per cluster, `USER_CPU_DEBUG_ENABLE`) and of the supervisor CPU (`SUPERVISOR_CPU_DEBUG_ENABLE`), then the injection / status TAP; the JTAG pins reach every redundant copy of the CPU, whose TDO is compared or voted; an OpenBlaze8 (or a CPU without debug unit) is a wire in the chain (TDO = TDI)
 - Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
 ## Block Diagram
@@ -88,7 +88,7 @@ Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed b
 
 ![UART pads and JTAG chain of PicoSoC_top](doc/picosoc-jtag.png)
 
-Page `jtag` of the same file: the UART pads, their multiplexer and the JTAG chain of `PicoSoC_top` (see [UART pads and JTAG](#uart-pads-and-jtag)).
+Page `jtag` of the same file: the UART pads and their multiplexer (`PicoSoC_pads`), and the JTAG chain of `PicoSoC_top` (see [UART pads and JTAG](#uart-pads-and-jtag)).
 
 ## Getting Started
 
@@ -234,8 +234,8 @@ Generics of `PicoSoC_top`:
 | `FSYS_INT` | positive | `50_000_000` | Frequency of the SoC (Hz): clock divider ratio `FSYS/FSYS_INT`, UART clock |
 | `RESET_POLARITY` | string | `"low"` | Active level of `arst_i`: `"high"` / `"low"` |
 | `DEBUG_ENABLE` | boolean | `True` | HWLA on the bus of the user CPU, captures on `debug_uart_tx_o` (see [Debug: HWLA](#debug-hwla)); JTAG TAP of fault injection and status, last TAP of the JTAG chain |
-| `USER_CPU_DEBUG_ENABLE` | boolean | `False` | RISC-V debugger (`WardRV_debug`) of the user CPU (cluster 0), first TAP of the JTAG chain; `CPU_MODEL = "WardRV_fsm"` only |
-| `SUPERVISOR_CPU_DEBUG_ENABLE` | boolean | `False` | RISC-V debugger of the supervisor CPU, TAP after the user CPU one; `CPU_MODEL = "WardRV_fsm"` and `SUPERVISOR` only |
+| `USER_CPU_DEBUG_ENABLE` | boolean | `False` | RISC-V debug unit (`WardRV_debug`, in `cpu_wrapper`) of the user CPU of every cluster: one TAP per cluster, first TAPs of the JTAG chain; `CPU_MODEL = "WardRV_fsm"` only |
+| `SUPERVISOR_CPU_DEBUG_ENABLE` | boolean | `False` | RISC-V debug unit of the supervisor CPU, TAP after the user CPU ones; `CPU_MODEL = "WardRV_fsm"` and `SUPERVISOR` only |
 | `CPU_MODEL` | string | `"OpenBlaze8"` | `"OpenBlaze8"` or `"WardRV_fsm"`, for the user and supervisor CPUs; the ROMs of the target must be built for this CPU |
 | `USER_NB_CPU` | natural | `1` | Number of CPU clusters of the user SoC |
 | `USER_ICN_TARGET_SEL` | string | `"or"` | Response selection of the user interconnects: `"or"` / `"mux"` |
@@ -313,22 +313,22 @@ Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): `Pi
 
 | Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | TBUF¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1315 | 108 | 788 | 60 | 181 | 0.5 | 0 | 13 | 190926.86 | 50.865 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 1994 | 304 | 1006 | 128 | 77 | 1 | 0 | 7 | 490681.85 | 130.723 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 2188 | 104 | 1069 | 54 | 203 | 1 | 0 | 13 | 164076.11 | 43.712 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5442 | 304 | 2137 | 104 | 729 | 2 | 0 | 7 | 380302.24 | 101.317 |
-| `syn_wardrv_soc4_ng_medium_debug` (WardRV_fsm, `DEBUG_ENABLE`, both CPU debuggers) | 8685 | 420 | 3591 | 135 | 1152 | 2 | 0 | 7 | 685343.55 | 182.583 |
+| `syn_soc1` (OpenBlaze8) | 1313 | 108 | 788 | 60 | 164 | 0.5 | 0 | 13 | 192036.68 | 51.161 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 1993 | 304 | 1006 | 128 | 76 | 1 | 0 | 7 | 492165.78 | 131.118 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2121 | 104 | 1069 | 54 | 216 | 1 | 0 | 13 | 164231.26 | 43.753 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5459 | 304 | 2137 | 104 | 773 | 2 | 0 | 7 | 380099.55 | 101.263 |
+| `syn_wardrv_soc4_ng_medium_debug` (WardRV_fsm, `DEBUG_ENABLE`, both CPU debuggers) | 9356 | 420 | 4343 | 149 | 1186 | 2 | 0 | 7 | 718594.19 | 191.441 |
 
 With the HWLA ([Debug: HWLA](#debug-hwla)) and the injection / status TAP: the same configurations with `DEBUG_ENABLE = true` (`fusesoc --cores-root . run --target syn_soc1 asylum:soc:PicoSoC --DEBUG_ENABLE=true`):
 
 | Configuration, `DEBUG_ENABLE = true` | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | TBUF¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `syn_soc1` (OpenBlaze8) | 1609 | 204 | 1150 | 77 | 78 | 0.5 | 0 | 13 | 367182.16 | 97.821 |
-| `syn_soc4_ng_medium` (OpenBlaze8) | 2361 | 400 | 1377 | 145 | 63 | 1 | 0 | 7 | 671804.31 | 178.976 |
-| `syn_wardrv_soc1` (WardRV_fsm) | 2453 | 220 | 1473 | 71 | 162 | 1 | 0 | 13 | 378757.01 | 100.905 |
-| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5701 | 420 | 2550 | 121 | 639 | 2 | 0 | 7 | 592685.93 | 157.898 |
+| `syn_soc1` (OpenBlaze8) | 1590 | 204 | 1150 | 77 | 83 | 0.5 | 0 | 13 | 365899.68 | 97.480 |
+| `syn_soc4_ng_medium` (OpenBlaze8) | 2430 | 400 | 1377 | 145 | 278 | 1 | 0 | 7 | 669938.77 | 178.479 |
+| `syn_wardrv_soc1` (WardRV_fsm) | 2503 | 220 | 1473 | 71 | 209 | 1 | 0 | 13 | 378670.68 | 100.882 |
+| `syn_wardrv_soc4_ng_medium` (WardRV_fsm) | 5796 | 420 | 2550 | 121 | 763 | 2 | 0 | 7 | 592107.88 | 157.744 |
 
-The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV_fsm) LUTRAM for its RAM of 64 x 72 or 86 bits, 280 to 330 flip-flops and 17 CARRY4 on Artix-7, and 170000 to 210000 µm² in sky130, where its RAM becomes flip-flops. The injection / status TAP adds about 80 to 90 flip-flops (its IDCODE, IR and TDR shift registers, the INJECT register and its synchronizers) and up to about 130 LUTs (the LUT count of the `DEBUG_ENABLE` configurations moves with the technology mapping); the CPU debuggers (`syn_wardrv_soc4_ng_medium_debug` against `syn_wardrv_soc4_ng_medium` with `DEBUG_ENABLE`) about 3000 LUTs and 1040 flip-flops: two Debug Modules and the debug logic of the 4 WardRV_fsm (3 user copies in TMR and the supervisor). The two synchronizers of the switch MSBs (pad multiplexer) add 4 flip-flops to every configuration; the other small differences between versions come from the technology mapping, which changes with the order and the names of the cells of the netlist.
+The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV_fsm) LUTRAM for its RAM of 64 x 72 or 86 bits, 280 to 330 flip-flops and 17 CARRY4 on Artix-7, and 170000 to 210000 µm² in sky130, where its RAM becomes flip-flops. The injection / status TAP adds about 80 to 90 flip-flops (its IDCODE, IR and TDR shift registers, the INJECT register and its synchronizers) and up to about 130 LUTs (the LUT count of the `DEBUG_ENABLE` configurations moves with the technology mapping); the CPU debug units (`syn_wardrv_soc4_ng_medium_debug` against `syn_wardrv_soc4_ng_medium` with `DEBUG_ENABLE`) about 3600 LUTs and 1800 flip-flops: a debug unit (TAP, DTM, Debug Module) in each of the 4 WardRV_fsm (3 user copies in TMR and the supervisor) and their debug logic. The two synchronizers of the switch MSBs (pad multiplexer) add 4 flip-flops to every configuration; the other small differences between versions come from the technology mapping, which changes with the order and the names of the cells of the netlist.
 
 ¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`. The user ROM goes to BRAM (a `RAMB18E1` counts 0.5), the RAMs and FIFOs mostly to LUTRAM. TBUF: tristate pad buffers (the OBUFT / IOBUF of the I/O blocks, not logic, never in LUT), one per pad whose output enable is not constant: the SPI data lanes (8 in `soc1`, 2 with the NG-MEDIUM generics; SCLK and CS\* are plain outputs), I2C SCL and SDA, and the 3 inout UART pads (TX / TDI, CTS\* / TDO, RTS\* / TMS). The logic that drives the pads (data and output enables, TDO of the JTAG chain) is counted. These figures need `asylum:utils:yosys_synth` >= 1.1.0: older versions lost the logic behind the `inout` pads of component instances (a GHDL synthesis issue) and rejected the tristate buffers.
 
@@ -336,7 +336,7 @@ The HWLA and its UART cost about 180 to 260 LUTs, 96 (OpenBlaze8) or 116 (WardRV
 
 ³ Area in thousands of NAND2 gate equivalents (`sky130_fd_sc_hd__nand2_1` = 3.7536 µm²).
 
-The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the asylum-env image: no figure for this FPGA (about 32000 4-input LUTs and 32000 flip-flops: the 8.7k LUT6 and 3.6k flip-flops of the largest configuration, with the CPU debuggers, are expected to fit, not checked with NXmap).
+The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the asylum-env image: no figure for this FPGA (about 32000 4-input LUTs and 32000 flip-flops: the 9.4k LUT6 and 4.3k flip-flops of the largest configuration, with the CPU debuggers, are expected to fit, not checked with NXmap).
 
 ## Theory of Operation
 
@@ -344,11 +344,12 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 | File | Unit | Role |
 |------|------|------|
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, SPI and I2C pads, UART pads (`jtag_pad_mux`), JTAG chain (CPU debuggers, injection / status TAP), HWLA (`DEBUG_ENABLE`) |
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, pads, JTAG chain (user SoC, supervisor SoC, injection / status TAP), HWLA (`DEBUG_ENABLE`) |
+| [hdl/PicoSoC_pads.vhd](hdl/PicoSoC_pads.vhd) | `PicoSoC_pads` | Pads: UART pads shared by the user UART, the HWLA UART and the JTAG chain (`jtag_pad_mux`, switch MSB synchronizers and select), SPI pads (`obuf`, `iobuf`), I2C open-drain pads |
 | [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
 | [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
-| [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection, debug ports of the copies |
-| [hdl/cpu_wrapper.vhd](hdl/cpu_wrapper.vhd) | `cpu_wrapper` | `sbi_OpenBlaze8` or `sbi_WardRV_fsm` from `CPU_MODEL` (debug ports with `DEBUG_ENABLE`) |
+| [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection, JTAG pins of the copies (TCK resynchronized) |
+| [hdl/cpu_wrapper.vhd](hdl/cpu_wrapper.vhd) | `cpu_wrapper` | `sbi_OpenBlaze8` or `sbi_WardRV_fsm` from `CPU_MODEL`; with `DEBUG_ENABLE` (WardRV_fsm) its debug unit `WardRV_debug`, else TDO = TDI |
 | [hdl/PicoSoC_pkg.vhd](hdl/PicoSoC_pkg.vhd) | `PicoSoC_pkg` | Address maps, GIC source indexes, JTAG IDCODEs and instructions, debug records, components |
 | (generated) | `ROM_user`, `ROM_supervisor` | Program ROMs built from [esw/](esw/) by `pbcc_gen` / `rvcc_gen` |
 
@@ -376,11 +377,11 @@ Safety and multi-core combine: the redundancy is inside each cluster (its `cpu_s
 
 ![cpu_safety lock-step](doc/picosoc-cpu_safety-lock_step.png)
 
-Lock-step: CPU0 drives the SoC. Its inputs (reset, instruction, bus response, interrupt, debug requests) go through `USER_LOCK_STEP_DEPTH` registers to CPU1; the outputs of CPU1 (`ics`, `iaddr`, interrupt acknowledge, bus request, debug memory access) are compared with the delayed outputs of CPU0. The bus requests are compared with the `"/="` of `sbi_pkg`: the address only when `cs = '1'`, the data only when `we = '1'`. A difference sets `diff_o(0)` until the reset.
+Lock-step: CPU0 drives the SoC. Its inputs (reset, instruction, bus response, interrupt, JTAG pins of the debug unit) go through `USER_LOCK_STEP_DEPTH` registers to CPU1; the outputs of CPU1 (`ics`, `iaddr`, interrupt acknowledge, bus request, TDO and `ndmreset` of the debug unit) are compared with the delayed outputs of CPU0. The bus requests are compared with the `"/="` of `sbi_pkg`: the address only when `cs = '1'`, the data only when `we = '1'`. A difference sets `diff_o(0)` until the reset.
 
 ![cpu_safety TMR](doc/picosoc-cpu_safety-TMR.png)
 
-TMR: 3 CPUs get the same inputs; `ics`, `iaddr`, the bus request, the interrupt acknowledge and the debug memory access are majority-voted bit by bit. `diff_o` bits 0, 1, 2 latch the differences CPU0 / CPU1, CPU1 / CPU2 and CPU2 / CPU0.
+TMR: 3 CPUs get the same inputs; `ics`, `iaddr`, the bus request, the interrupt acknowledge, TDO and `ndmreset` are majority-voted bit by bit. `diff_o` bits 0, 1, 2 latch the differences CPU0 / CPU1, CPU1 / CPU2 and CPU2 / CPU0.
 
 Fault injection: `inject_error_i(i)` XORs one instruction bit of CPU `i` (bit 17 / 16 / 15 for OpenBlaze8, bit 0 / 1 / 2 for WardRV). The difference flags of all clusters are ORed into `PicoSoC_user.diff_o`.
 
@@ -425,7 +426,7 @@ gtkwave capture.vcd
 
 ### UART pads and JTAG
 
-The 4 UART pads go through `jtag_pad_mux` of [asylum-debug-jtag](https://github.com/deuskane/asylum-debug-jtag): the two MSBs of `switch_i` (`switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2)`, synchronized on the SoC clock by two `sync2dffrn`) give them to one function:
+The 4 UART pads go through `jtag_pad_mux` (in `PicoSoC_pads`) of [asylum-debug-jtag](https://github.com/deuskane/asylum-debug-jtag): the two MSBs of `switch_i` (`switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2)`, synchronized on the SoC clock by two `sync2dffrn`) give them to one function:
 
 | Switches (MSBs) | Function | Pads |
 |-----------------|----------|------|
@@ -442,19 +443,19 @@ The pinout is the one of an FTDI MPSSE cable (FT232H, channel A of an FT2232H): 
 | `uart_cts_b_io` | AD2 (RTS# / TDO) | CTS*, input | TDO, output in Shift-IR / Shift-DR, `'Z'` otherwise | `IOB5_D01N`, weak pull-down |
 | `uart_rts_b_io` | AD3 (CTS# / TMS) | RTS*, output | TMS, input | `IOB5_D01P`, weak pull-up |
 
-The functions that do not own the pads see `PAD_IN_DEFAULT`: RX idle (`'1'`), CTS* active (`'0'`: the user UART keeps sending into nothing and its firmware never waits, so the program goes on while the pads are given to JTAG), TDI `'1'`, TMS `'1'` (the TAPs stay in Test-Logic-Reset); TCK reads the RX default (`'1'`, no clock edge). Without any TAP (`DEBUG_ENABLE` and both CPU debuggers off), the JTAG mode drives no pad: TDO stays `'Z'`. The pad mapping is in the `PAD_*` constants and in one assignment block of `PicoSoC_top`; a fourth function on the code `11` is one more line in the decoder (and `NB_FUNC = 4`).
+The functions that do not own the pads see `PAD_IN_DEFAULT`: RX idle (`'1'`), CTS* active (`'0'`: the user UART keeps sending into nothing and its firmware never waits, so the program goes on while the pads are given to JTAG), TDI `'1'`, TMS `'1'` (the TAPs stay in Test-Logic-Reset); TCK reads the RX default (`'1'`, no clock edge). Without any TAP (`DEBUG_ENABLE` and both CPU debuggers off), the JTAG mode drives no pad: TDO stays `'Z'`. The pad mapping is in the `PAD_*` constants and in one assignment block of `PicoSoC_pads`; a fourth function on the code `11` is one more line in the decoder (and `NB_FUNC = 4`).
 
 Switch the mode of the FPGA before starting the terminal or OpenOCD on the cable: in the wrong mode, two outputs drive the same wire (TX of the SoC and TDI of the probe, RTS* of the SoC and TMS of the probe). Series resistors (about 330 Ω) on these wires limit the current of such a contention. The multiplexer has no clock: change the switches while the functions are idle.
 
-**JTAG chain.** TDI → user CPU debugger → supervisor CPU debugger → injection / status TAP → TDO. The TAPs share TCK and TMS (they are always in the same state); TDO and its enable come from the last TAP. An absent TAP is a wire, so the chain has 0 to 3 TAPs. Every TAP has a 5-bit IR; they are reset by the reset of the supervisor (power-on) and by 5 TCK with TMS = 1.
+**JTAG chain.** TDI → user SoC (the TAP of the CPU of each cluster, cluster 0 first) → supervisor SoC (the TAP of its CPU) → injection / status TAP → TDO. The TAPs share TCK and TMS (they are always in the same state); TDO comes from the last stage, its enable is the OR of the enables of the stages. A CPU without debug unit (OpenBlaze8, or `*_CPU_DEBUG_ENABLE = false`) and an absent TAP are wires (TDO = TDI, TDO never driven), so the chain has 0 to `USER_NB_CPU` + 2 TAPs. Every TAP has a 5-bit IR; they are reset by the reset of the supervisor (power-on) and by 5 TCK with TMS = 1.
 
 | Position from TDI | TAP | Present with | IDCODE | Instructions |
 |-------------------|-----|--------------|--------|--------------|
-| 1st | `WardRV_debug` of the user CPU (cluster 0) | `USER_CPU_DEBUG_ENABLE` | `0x10001001` | IDCODE `00001`, DTMCS `10000`, DMI `10001`, BYPASS |
-| 2nd | `WardRV_debug` of the supervisor CPU | `SUPERVISOR_CPU_DEBUG_ENABLE` | `0x10002001` | same |
+| 1st to `USER_NB_CPU`-th | `WardRV_debug` of the user CPU of cluster `i` | `USER_CPU_DEBUG_ENABLE` | `0x10001001` + `i` x `0x10000` | IDCODE `00001`, DTMCS `10000`, DMI `10001`, BYPASS |
+| next | `WardRV_debug` of the supervisor CPU | `SUPERVISOR_CPU_DEBUG_ENABLE` | `0x10002001` | same |
 | last | `jtag_tap`, injection / status | `DEBUG_ENABLE` | `0x10003001` | IDCODE `00001`, INJECT `00010`, STATUS `00011`, BYPASS (every other opcode) |
 
-The IDCODEs (`PICOSOC_JTAG_IDCODE_*` of `PicoSoC_pkg`) are version 1, part number 1, 2 or 3, manufacturer 0.
+The IDCODEs (`PICOSOC_JTAG_IDCODE_*` of `PicoSoC_pkg`) are version 1, manufacturer 0, part number `0x0001` + `0x10` x `i` for the user CPU of cluster `i`, 2 for the supervisor CPU, 3 for the injection / status TAP.
 
 **Injection / status TAP** (`DEBUG_ENABLE`): a `jtag_tap` with its instruction decoder and two test data registers, in the TCK domain:
 
@@ -465,15 +466,25 @@ The IDCODEs (`PICOSOC_JTAG_IDCODE_*` of `PicoSoC_pkg`) are version 1, part numbe
 
 The injection written by an Update-DR (falling edge of TCK) goes through a `sync2dffrn` per bit to the SoC clock, then is ORed with `inject_error_i` after its polarity (`USER_FAULT_POLARITY`): both inject while either is active. It stays until the next scan of INJECT, a Test-Logic-Reset or the power-on reset. The read values are quasi-static (LEDs, switches, sticky difference flags, resets): they are loaded in Capture-DR without synchronizer, a bit that changes during the capture may be read old or new.
 
-**CPU debuggers** (`USER_CPU_DEBUG_ENABLE`, `SUPERVISOR_CPU_DEBUG_ENABLE`, `CPU_MODEL = "WardRV_fsm"`): `WardRV_debug` of [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) (TAP, DTM, Debug Module with a program buffer of 2 words and 2 data registers, no system bus access, no TRST*) on the SoC clock, connected to the debug ports of `sbi_WardRV_fsm` (`DEBUG_ENABLE` of `cpu_wrapper`). The user debugger sees the CPU of cluster 0. With lock-step or TMR, the debug requests (halt request, answers of the debug memory) reach every copy of the CPU through the same path as their other inputs (delayed for CPU1 in lock-step), and the debug memory accesses of the copies are checked like their other outputs: compared with CPU0 (lock-step, CPU0 answers) or voted (TMR). So a halted, stepped or resumed CPU stays in lock-step: no difference flag. The debuggers are reset by the reset of the supervisor (power-on), not by a reset of the user SoC; `ndmreset` of a debugger resets the SoC of its CPU (the supervisor SoC holds the user SoC in reset).
+**CPU debug units** (`USER_CPU_DEBUG_ENABLE`, `SUPERVISOR_CPU_DEBUG_ENABLE`, `CPU_MODEL = "WardRV_fsm"`): each `cpu_wrapper` with `DEBUG_ENABLE` instantiates `WardRV_debug` of [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) (TAP, DTM, Debug Module with a program buffer of 2 words and 2 data registers, no system bus access, no TRST*) next to its `sbi_WardRV_fsm`: the halt requests and the debug memory stay inside `cpu_wrapper`, which only has the JTAG pins, the power-on reset of the debug unit and `ndmreset`. With lock-step or TMR, every copy of the CPU has its debug unit: `cpu_safety` resynchronizes TCK on the SoC clock (`sync2dffrn`), then gives the JTAG pins to every copy like their other inputs (to CPU1 through the lock-step delay line), and checks their TDO and `ndmreset` like their other outputs (compared with CPU0, which drives them, in lock-step; voted in TMR). So a halted, stepped or resumed CPU stays in lock-step: no difference flag. The debug units are reset by the reset of the supervisor (power-on), not by a reset of the user SoC; `ndmreset` of a debug unit resets the SoC of its CPU (the supervisor SoC holds the user SoC in reset).
 
-On the host, OpenOCD with the FTDI cable (TAPs declared from TDI; take the riscv target lines of [wardrv.cfg](https://github.com/deuskane/asylum-processor-WardRV/blob/main/sim/openocd/wardrv.cfg), keep the TCK frequency well below `FSYS_INT`):
+**JTAG timing.** TCK is resynchronized on the SoC clock in front of the user CPU debug units: this is not a protocol change (IEEE 1149.1 behaviour unchanged, the probes change TMS and TDI on the falling edge of TCK and sample TDO on the rising edge), but a limit on TCK:
+
+| Parameter | Value |
+|-----------|-------|
+| TCK frequency | below about `FSYS_INT` / 8 (1.5 MHz at 12.5 MHz); TCK high and low each more than 3 SoC clock cycles |
+| TMS, TDI hold after the rising edge of TCK | about 3 SoC clock cycles (the edge is seen up to 3 cycles later) |
+| TDO valid after the falling edge of TCK | about 3 SoC clock cycles |
+
+A probe faster than this limit can miss TCK pulses (the scans then fail). The testbench uses TCK = 1 µs.
+
+On the host, OpenOCD with the FTDI cable (TAPs declared from TDI; take the riscv target lines of [wardrv.cfg](https://github.com/deuskane/asylum-processor-WardRV/blob/main/sim/openocd/wardrv.cfg), TCK below `FSYS_INT` / 8, see JTAG timing):
 
 ```tcl
 adapter driver ftdi
 ftdi vid_pid 0x0403 0x6014           ;# FT232H (FT2232H : 0x0403 0x6010, channel A)
 ftdi layout_init 0x0008 0x000b       ;# TCK AD0, TDI AD1, TDO AD2, TMS AD3 (high)
-adapter speed 1000
+adapter speed 500
 transport select jtag
 reset_config none
 jtag newtap user       cpu    -irlen 5 -expected-id 0x10001001
@@ -485,7 +496,7 @@ init
 irscan picosoc.inject 0x02 ; drscan picosoc.inject 3 0x1   ;# inject an error in CPU0
 ```
 
-Remove the `newtap` and `target` lines of the absent TAPs.
+Remove the `newtap` and `target` lines of the absent TAPs; with `USER_NB_CPU` > 1, one `newtap` / `target` pair per cluster (IDCODE `0x10001001` + `i` x `0x10000`), cluster 0 first.
 
 ## Programmer's Guide
 
@@ -569,7 +580,7 @@ Clear the old events of a GIC source before unmasking it: the `isr` register als
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP, with a copy of the user ROM `ROM_user` as the reference of the instruction bus); the I2C bus has pull-ups and the UVVM I2C BFM (slave or master of the SoC). The UART pads have pull-ups (a pad driven by nobody reads `'H'`) and a model of the FTDI cable: RX and CTS* driven by the testbench in the UART modes, TCK, TDI and TMS by the JTAG BFM `jtag_bfm_pkg` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) in the JTAG mode (switches `10`), TDO read on `uart_cts_b_io`; the monitor `jtag_ir_capture_monitor` of the BFM checks the Capture-IR value of the whole chain (`00001` per TAP) at each IR scan. The BFM scans one TAP: [tb_PicoSoC_jtag_pkg](sim/picosoc/tb_PicoSoC_jtag_pkg.vhd) scans the chain (the other TAPs in BYPASS) and holds the DTM / DMI accesses of a debugger (as `WardRV_vips` of WardRV). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>`, whatever the scenario waits for |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP, with a copy of the user ROM `ROM_user` as the reference of the instruction bus); the I2C bus has pull-ups and the UVVM I2C BFM (slave or master of the SoC). The UART pads have pull-ups (a pad driven by nobody reads `'H'`) and a model of the FTDI cable: RX and CTS* driven by the testbench in the UART modes, TCK, TDI and TMS by the JTAG BFM `jtag_bfm_pkg` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) in the JTAG mode (switches `10`, TCK 1 µs), TDO read on `uart_cts_b_io`; the monitor `jtag_ir_capture_monitor` of the BFM checks the Capture-IR value of the whole chain (`00001` per TAP) at each IR scan. The BFM scans one TAP: [tb_PicoSoC_jtag_pkg](sim/picosoc/tb_PicoSoC_jtag_pkg.vhd) scans the chain (the other TAPs in BYPASS) and holds the DTM / DMI accesses of a debugger (as `WardRV_vips` of WardRV). Generics: the DUT configuration (CPU, clusters, safety, polarities), `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `identity`, `user`, `user_uart`, `user_uart_spi`, `user_uart_spi_mem`, `hello` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>`, whatever the scenario waits for |
 | [sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd](sim/modbus_rtu/tb_PicoSoC_modbus_rtu.vhd) | `PicoSoC_top` | UVVM testbench of [esw/user_modbus_rtu.c](esw/user_modbus_rtu.c): the UART VIP is the Modbus RTU master (CRC16 computed by the bench) and reads / writes the SoC addresses. Scenarios in `tb_PicoSoC_modbus_rtu_<name>_pkg`, dispatch in [tb_PicoSoC_modbus_rtu_tests_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_tests_pkg.vhd), Modbus frames in [tb_PicoSoC_modbus_rtu_bfm_pkg](sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd) |
 
 Waveform setups: [sim/wave/waves.gtkw](sim/wave/waves.gtkw), [sim/wave/cpus.gtkw](sim/wave/cpus.gtkw).
@@ -590,9 +601,9 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 | `fault_diff` | 4 | `user*`, no supervisor, lock-step or TMR, fault injection | Without supervisor `led_diff_o` shows the difference flags: an error in CPU0 sets them (lock-step `001`, TMR `101`) and they stay set |
 | `hwla` | 11 | `user*`, no supervisor, lock-step or TMR, fault injection, `DEBUG_ENABLE` | Switches `0x5A` then `0x96` (LED0 follows), `debug_uart_tx_o` idle until the error; error in CPU1 just after LED0 changes; the capture is received on `debug_uart_tx_o` with the UART VIP at 115200 baud and checked: the read of the new switches and their write to LED0 are in the samples before the trigger, the trigger sample is the sample 32 (its timestamp is the one of the write of LED0 plus the clock cycles between the change of LED0 and the difference flag on `led_diff_o`), the next capture does not continue it (64 samples), the timestamps increase and the probes change from a sample to the next (but the trigger sample), the instruction of each sample is the word of the user ROM at the address of the previous sample (or unchanged), with a copy of `ROM_user` in the testbench |
 | `pad_mux` | 24 (20 without `DEBUG_ENABLE` or fault injection) | `user_uart*` | Each code of the switch MSBs: `00` banner and echo, RTS* driven, CTS* not driven by the SoC; `11` echo, RTS* driven; `01` the loop lines of the firmware (switch 5) do not reach the TX pad, idle (`'1'`), CTS* and RTS* not driven, the firmware does not wait (LED0 follows the switches); `10` TDI, TMS and TDO pads not driven by the SoC out of a scan, the firmware does not wait; back to `00`: a complete `Loop` line; with `DEBUG_ENABLE` and fault injection, `01` again: an error in CPU0 triggers the HWLA, its capture is on the TX pad, bit by bit equal to `debug_uart_tx_o` during 3 bytes |
-| `jtag_chain` | 4 + 2 x TAPs (8 to 12) | `user*`, at least one TAP | JTAG mode; TDO not driven out of a scan; after Test-Logic-Reset one DR scan reads the IDCODE of every TAP in the chain order; every TAP in BYPASS: a DR scan is delayed by one bit per TAP; IDCODE of each TAP alone, the others in BYPASS; Capture-IR of the whole chain by the monitor |
+| `jtag_chain` | 6 + 2 x TAPs (8 to 12) | `user*`, at least one TAP | JTAG mode; TDO not driven out of a scan; after Test-Logic-Reset one DR scan reads the IDCODE of every TAP in the chain order; every TAP in BYPASS: a DR scan is delayed by one bit per TAP; IDCODE of each TAP alone, the others in BYPASS; Capture-IR of the whole chain by the monitor |
 | `jtag_inject` | 9 (no supervisor), 11 (supervisor) | `user*`, `DEBUG_ENABLE`, fault injection, no supervisor or lock-step | An error injected in CPU1 through INJECT (written `010`; the scan reads diff = `000` before); no supervisor: `led_diff_o` = flags of CPU1 (`001` lock-step, `011` TMR), read back through INJECT, sticky (read again); supervisor: the user SoC is reset and `led_diff_o` counts, diff `001` read during the injection, after it the firmware runs again, no more reset, diff `000` |
-| `jtag_status` | 8 (no supervisor), 10 (supervisor) | `user*`, `DEBUG_ENABLE` | STATUS read after reset, after new switches and an `it_user_i` pulse (LED1 = 1), and with fault injection after an error in CPU0 (`led_diff_o`); compared with the pins, resets `11` |
+| `jtag_status` | 8 (no supervisor), 10 (supervisor) | `user*`, `DEBUG_ENABLE` | STATUS read after reset, after new switches (`0x85`: no UART line, whose writes stall the fetches of the CPU, during the error) and an `it_user_i` pulse (LED1 = 1), and with fault injection after an error in CPU0 (`led_diff_o`); compared with the pins, resets `11` |
 | `jtag_cpu_user` | 27 (lock-step, with the injection TAP), 25 (TMR, without) | `user*`, `USER_CPU_DEBUG_ENABLE` | Debugger of the user CPU through the chain: dtmcs `0x00005071`, `dmactive`, `dmstatus` running, `havereset` acknowledged; `haltreq`: `allhalted`; halted, LED0 does not follow the switches; `resumereq`: `allresumeack`, `allrunning`, LED0 follows again; `led_diff_o` stays 0 (lock-step: no reset counted by the supervisor; TMR: no difference flag): the copies of the CPU halt and resume together; `ndmreset`: the user SoC in reset (LED0 = 0, STATUS resets `10` with the injection TAP), then the firmware runs again |
 | `jtag_cpu_supervisor` | 26 | `user*`, `SUPERVISOR_CPU_DEBUG_ENABLE` | Debugger of the supervisor CPU: as above; halted, an error (`inject_error_i`) is not handled (`led_diff_o` = 0); resumed, the user SoC is reset and the error counted; `ndmreset`: the supervisor SoC in reset holds the user SoC in reset (STATUS resets `00`), then both run again |
 | `hello` | 4 x `USER_NB_CPU` + 4 | `hello` | The first 4 x `USER_NB_CPU` UART lines are `CPU <id> - Loop <counter>` with a valid id and the counter 0, 1, 2, ... (mutual exclusion, shared counter in RAM2); every CPU takes the lock (LED1) and the counter progresses (LED0); `led_diff_o` stays 0 during the whole scenario: with lock-step or TMR, the copies of every cluster read the same `mhartid` (no difference flag, no error counted by the supervisor) |
@@ -634,6 +645,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc3_wardrv_fsm_fault_c_user_uart_jtag` | `tb_PicoSoC` | Reference configuration of the JTAG scenarios: supervisor, lock-step, fault injection, `DEBUG_ENABLE`, both CPU debuggers (chain of 3 TAPs), `it_user_i` and `inject_error_i` active low; build only |
 | `sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_<name>` | `tb_PicoSoC` | One target per scenario: `_pad_mux`, `_jtag_chain`, `_jtag_inject`, `_jtag_status`, `_jtag_cpu_user`, `_jtag_cpu_supervisor` |
 | `sim_soc5_wardrv_fsm_c_user_uart_jtag` | `tb_PicoSoC` | `pad_mux`, `jtag_chain`, `jtag_cpu_user`: no supervisor, TMR, user CPU debugger only, no `DEBUG_ENABLE` (`01` idle, chain of 1 TAP) |
+| `sim_soc1x2_wardrv_fsm_c_user_jtag` | `tb_PicoSoC` | `jtag_chain`: 2 user CPU clusters, each with its debug unit, and the injection / status TAP (chain of 3 TAPs) |
 | `sim_soc2_<cpu>_fault_c_user_hwla` | `tb_PicoSoC` | `hwla`, with `DEBUG_ENABLE = true` and a SoC clock of 1.152 MHz (`FSYS_INT`): 10 clock cycles per bit at 115200 baud, a capture of 50 ms (OpenBlaze8) or 62 ms (WardRV_fsm) of simulated time in about a minute |
 | `sim_soc3_<cpu>_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_lock_step` |
 | `sim_soc4_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_tmr`, with `it_user_i` and `inject_error_i` active low (as on the board) |
@@ -656,6 +668,8 @@ The integration scenarios were validated with 45 integration mutants, each one r
 The scenario `hwla` was validated with 21 mutants in copies of the RTL, both CPUs (42 runs): trigger tied low or high, `arm_i` tied low, probe bits swapped (data address, instruction address, instruction bits 0 / 1 and 4 / 5, read / write strobes, write / read data, read data taken from the write data), baud tick of `FSYS_INT/115200` (no `- 1`), of `FSYS/115200 - 1` and of 9600 baud, parity enabled, CTS high, `debug_uart_tx_o` driven by a copy of `uart_tx_o` or by `'1'`, `PRE_TRIGGER` 31, `DEPTH` 128, `CHANGE_ONLY` false, `TIMESTAMP_WIDTH` 8: all are killed. Only the swap of the instruction bits 0 and 1 survives with WardRV_fsm, where both bits are always 1 (RV32I): it is killed with OpenBlaze8.
 
 The UART pads and the JTAG scenarios were validated with 30 mutants in copies of the RTL, each scenario run alone on the 3 JTAG configurations (and `fault_diff` for the buttons), 420 runs: pad select decode (`10`, `01`, wrong switch bit), TDO of the chain from another TAP, a CPU TAP missing from the chain, injection without the buttons, without the TDR, ORed before the polarity or inverted, INJECT / STATUS decoded the other way round, diff not read, STATUS fields swapped, output enables stuck or wrong in one mode (RTS* / TMS stuck at 1 or 0, CTS* / TDO driven in a UART mode, TX / TDI driven in the JTAG mode, TDO always driven), CTS* default inactive, debug requests not reaching CPU1 (lock-step) or CPU2 (TMR), debug memory answers of CPU1 not delayed, `ndmreset` not connected, no synchronizer input: 27 are killed. The 3 survivors are not observable with the fault model of the SoC or the firmware: RX default `0` (the break received by the user UART out of its modes only feeds the echo, which goes to the unselected TX pad), no compare and no vote of the debug memory accesses of the copies (`inject_error_i` flips the instructions of the program ROM, the debug code comes from the Debug Module: a fault never reaches these accesses).
+
+The debug units in `cpu_wrapper` were validated with 10 more mutants (each scenario alone on the JTAG configurations, 100 runs): a copy of the CPU without the JTAG pins (CPU1 lock-step or TMR, CPU2 TMR), the JTAG pins of CPU1 not delayed, the OpenBlaze8 wire broken (TDO = 0) and the supervisor SoC before the user SoC in the chain are killed. Equivalent with the fault model of the SoC (the copies stay identical, `inject_error_i` never reaches the debug units): TDO and `ndmreset` not compared (lock-step) or not voted (TMR). TCK not resynchronized also passes in simulation: the race it avoids (a TCK edge seen one SoC clock earlier by CPU0 than through the lock-step delay line) needs an edge at the same time as a clock edge, a metastable case of the board.
 
 ### How to Run
 
@@ -705,7 +719,7 @@ Outside the CI, GHDL writes a waveform `dut.fst`.
 | `asylum:component:ram` | [asylum-component-ram](https://github.com/deuskane/asylum-component-ram) | `sbi_ram` |
 | `asylum:component:fifo` | [asylum-component-fifo](https://github.com/deuskane/asylum-component-fifo) | FIFOs of the peripherals |
 | `asylum:processor:OpenBlaze8` | [asylum-processor-OpenBlaze8](https://github.com/deuskane/asylum-processor-OpenBlaze8) | `sbi_OpenBlaze8` |
-| `asylum:processor:WardRV` | [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) | `sbi_WardRV_fsm`, `WardRV_debug` (CPU debuggers, >= 1.2.0: TAP of asylum-debug-jtag) |
+| `asylum:processor:WardRV` | [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) | `sbi_WardRV_fsm`, `WardRV_debug` (debug units in `cpu_wrapper`, >= 1.2.0: TAP of asylum-debug-jtag) |
 | `asylum:utils:generators` | [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators) | `pbcc_gen` / `rvcc_gen` (firmware to ROM), regtool of the peripherals |
 | `asylum:utils:ghdl_synth`, `asylum:utils:yosys_synth` | [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators) | `lint_ghdl_synth_*` check, `syn_*` synthesis |
 | `bitvis:verification:uvvm` | [UVVM](https://github.com/UVVM/UVVM) | Verification library, UART and I2C VIPs |
