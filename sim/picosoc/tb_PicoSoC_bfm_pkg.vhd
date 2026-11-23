@@ -25,6 +25,7 @@
 -- 2026-11-23  1.4      mrosiere uart_get_line_quiet, uart_quiet, uart_echo
 --                               (esw/user.c prints a loop line at every
 --                               iteration)
+-- 2026-11-23  1.5      mrosiere C_MUX_* : codes of debug_mux_sel_i
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -72,8 +73,14 @@ package tb_PicoSoC_bfm_pkg is
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)
     uart       : t_uart_bfm_config;  -- UART VIP configuration (bit time of the DUT)
-    bitbang    : t_uart_bfm_config;  -- UART VIP configuration of JTAG over the UART (switches 11, JTAG_BAUD_RATE)
+    bitbang    : t_uart_bfm_config;  -- UART VIP configuration of JTAG over the UART (debug_mux_sel_i 11, JTAG_BAUD_RATE)
   end record t_tb_cfg;
+
+  -- Function of the UART pads (debug_mux_sel_i of PicoSoC_top)
+  constant C_MUX_UART    : std_logic_vector(2-1 downto 0) := "00";  -- user UART
+  constant C_MUX_HWLA    : std_logic_vector(2-1 downto 0) := "01";  -- HWLA UART
+  constant C_MUX_JTAG    : std_logic_vector(2-1 downto 0) := "10";  -- JTAG chain
+  constant C_MUX_BITBANG : std_logic_vector(2-1 downto 0) := "11";  -- JTAG over the UART
 
   -- Never set : the UART receiver ends on a line feed or on its timeout
   signal   uart_no_terminate : std_logic := '0';

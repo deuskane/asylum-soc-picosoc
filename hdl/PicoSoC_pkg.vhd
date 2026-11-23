@@ -37,6 +37,7 @@
 -- 2026-11-23  1.17     mrosiere PicoSoC_clkrst component
 -- 2026-11-23  1.18     mrosiere PicoSoC_jtag_over_uart component
 -- 2026-11-23  1.19     mrosiere HWLA_BAUD_RATE (PicoSoC_top, PicoSoC_hwla components)
+-- 2026-11-23  1.20     mrosiere debug_mux_sel_i (PicoSoC_top, PicoSoC_pads components)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -228,8 +229,8 @@ component PicoSoC_pads is
     (clk_i            : in    std_logic
     ;arst_b_i         : in    std_logic
 
-    -- Selection of the UART pads : the two MSBs of the switches (asynchronous)
-    ;switch_i         : in    std_logic_vector(2-1 downto 0)
+    -- Function of the UART pads (asynchronous)
+    ;debug_mux_sel_i  : in    std_logic_vector(2-1 downto 0)
 
     -- Pads : UART / JTAG (FTDI MPSSE AD0 to AD3), SPI, I2C
     ;uart_rx_i        : in    std_logic -- RX   / TCK
@@ -249,8 +250,8 @@ component PicoSoC_pads is
     ;uart_rts_b_i     : in    std_logic
     -- HWLA UART (TX only)
     ;debug_uart_tx_i  : in    std_logic
-    -- JTAG chain : driven by the JTAG pads (switches 10) or by jtag_bitbang
-    -- (switches 11)
+    -- JTAG chain : driven by the JTAG pads (debug_mux_sel_i 10) or by
+    -- jtag_bitbang (debug_mux_sel_i 11)
     ;jtag_ini_o       : out   jtag_ini_t
     ;jtag_tgt_i       : in    jtag_tgt_t
     -- JTAG over the UART (jtag_bitbang and its UART)
@@ -336,7 +337,7 @@ component PicoSoC_top is
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
-    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -382,7 +383,11 @@ component PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- Function of the UART pads (asynchronous) : 00 user UART, 01 HWLA
+    -- UART, 10 JTAG, 11 JTAG over the UART
+    ;debug_mux_sel_i  : in  std_logic_vector(             2-1 downto 0)
+
+    -- UART Interface, shared with the HWLA UART and JTAG (debug_mux_sel_i) :
     -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
     ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
     ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)

@@ -29,6 +29,7 @@
 --                               before each scenario
 -- 2026-11-22  2.1      mrosiere uart_tx_io, uart_cts_b_io, uart_rts_b_io
 --                               (inout pads of PicoSoC_top)
+-- 2026-11-23  2.2      mrosiere debug_mux_sel_i 00 (user UART)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -151,6 +152,7 @@ begin  -- architecture tb
     (clk_i            => clk_i
     ,arst_i           => arst_i
     ,switch_i         => switch_i
+    ,debug_mux_sel_i  => "00"                -- UART pads : user UART
     ,led0_o           => led0_o
     ,led1_o           => led1_o
     ,led_diff_o       => led_diff_o

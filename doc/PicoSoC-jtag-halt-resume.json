@@ -97,33 +97,33 @@
    "name": "switch_i",
    "wave": "=...........|=.....|=.....|=.....|=...........|=.....|=.....|=.....",
    "data": [
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0xA5",
-    "0xA5",
-    "0xA5",
-    "0xA5"
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x25",
+    "0x25",
+    "0x25",
+    "0x25"
    ]
   },
   {
    "name": "led0_o",
    "wave": "=...........|=.....|=.....|=.....|=...........|=.....|=.....|=.....",
    "data": [
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0x9A",
-    "0xA5"
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x1A",
+    "0x25"
    ]
   }
  ],
  "head": {
-  "text": "Halt and resume of the user CPU through the JTAG pads (switches 10, TCK 1 us) : scenario jtag_cpu_user"
+  "text": "Halt and resume of the user CPU through the JTAG pads (debug_mux_sel_i 10, TCK 1 us) : scenario jtag_cpu_user"
  },
  "foot": {
   "text": "Simulation of sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user (WardRV_fsm, lock-step, SoC clock 12.5 MHz), from 0.92 to 2.26 ms, compressed at each |. write / read: DMI accesses of the debug unit (IR DMI, DR scans of 41 bits + 2 BYPASS bits). Halted, the CPU runs the park loop of the Debug Module: no user ROM fetch (cpu_ics low)."

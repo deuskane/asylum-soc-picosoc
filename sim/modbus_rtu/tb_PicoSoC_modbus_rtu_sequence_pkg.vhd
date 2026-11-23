@@ -6,10 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario sequence of tb_PicoSoC_modbus_rtu, from reset :
---              each switch alone read through Modbus, then written into LED0,
---              but the two MSBs : they select the function of the UART pads
---              (only 00 keeps the user UART : 01 HWLA UART, 10 JTAG, 11 JTAG
---              over the UART)
+--              each switch alone read through Modbus, then written into LED0
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -19,6 +16,8 @@
 -- 2026-11-22  1.1      mrosiere The two MSBs together (UART pads)
 -- 2026-11-23  1.2      mrosiere Switches 0 to 5 only (MSBs 11 : JTAG over the
 --                               UART pads)
+-- 2026-11-23  1.3      mrosiere Switches 0 to 7 again (the UART pads are
+--                               selected by debug_mux_sel_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -32,7 +31,7 @@ use     work.tb_PicoSoC_modbus_rtu_bfm_pkg.all;
 
 package tb_PicoSoC_modbus_rtu_sequence_pkg is
 
-  -- Each switch read, then written into LED0 (the two MSBs together)
+  -- Each switch read, then written into LED0
   procedure run
     (constant cfg      : in    t_tb_cfg
     ;signal   uart_rx  : inout std_logic
@@ -56,8 +55,7 @@ package body tb_PicoSoC_modbus_rtu_sequence_pkg is
   begin
     log(ID_SEQUENCER, "sequence : each switch alone read, then written into LED0", C_TB_SCOPE);
 
-    -- The MSBs (6 and 7) stay 00 : the UART pads would leave the user UART
-    for i in 0 to 5 loop
+    for i in 0 to 7 loop
       v_sw    := (others => '0');
       v_sw(i) := '1';
       wait for C_FRAME_GAP;

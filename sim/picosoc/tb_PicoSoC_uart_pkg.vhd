@@ -35,6 +35,8 @@
 -- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
 --                               echo with CTS* held (uart_echo), in the
 --                               first loop line
+-- 2026-11-23  1.3      mrosiere Switches 0xA5 again (the UART pads are
+--                               selected by debug_mux_sel_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -79,8 +81,9 @@ package body tb_PicoSoC_uart_pkg is
     ) is
     constant C_BANNER  : string   := "Welcome Back, Commander";
     constant C_NB_LOOP : positive := 6;
-    -- MSBs 00 : the UART pads stay with the user UART
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"25";
+    -- The UART pads stay with the user UART (debug_mux_sel_i 00) whatever
+    -- the switches
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"A5";
     constant C_ECHO    : std_logic_vector(8-1 downto 0) := x"3F";  -- '?' : not in a loop line
     variable v_line    : string(1 to 128);
     variable v_len     : natural;

@@ -9,7 +9,7 @@
 --              user*, DEBUG_ENABLE, fault injection, no supervisor or
 --              lock-step) : an error injected in CPU1 through the TDR
 --              PICOSOC_JTAG_IR_INJECT of the injection TAP (JTAG on the UART
---              pads, switches 10) has the effect of the inject_error_i
+--              pads, debug_mux_sel_i 10) has the effect of the inject_error_i
 --              button, and the same TDR reads diff
 --              * the scan that starts the injection reads diff = 000
 --              * no supervisor : led_diff_o shows the difference flags of
@@ -29,6 +29,8 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
+-- 2026-11-23  1.2      mrosiere UART pads to JTAG with debug_mux_sel_i (was
+--                               the switch MSBs) : switches 0x1A
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -54,6 +56,7 @@ package tb_PicoSoC_jtag_inject_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   led_diff : in    std_logic_vector
     ;signal   jtag_if  : inout t_jtag_if
@@ -67,11 +70,12 @@ package body tb_PicoSoC_jtag_inject_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   led_diff : in    std_logic_vector
     ;signal   jtag_if  : inout t_jtag_if
     ) is
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"9A";  -- MSBs 10 : JTAG
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"1A";
     constant C_TAP     : natural  := cfg.jtag.inject;
     -- No more change during C_SETTLE cycles
     constant C_SETTLE  : positive := 2000*cfg.clk_ratio;
@@ -82,6 +86,7 @@ package body tb_PicoSoC_jtag_inject_pkg is
 
     v_diff := "011" when cfg.tmr else "001";
 
+    set_slv    (C_MUX_JTAG, clk, mux_sel);
     set_slv    (C_SW, clk, switch);
     wait_value (led0, C_SW, cfg, "LED0 = switches 0x" & to_hstring(C_SW) & " : UART pads to JTAG");
     check_value(led_diff, "000", ERROR, "led_diff : no difference before the injection", C_TB_SCOPE);

@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
 -- Description: Scenario bitbang_chain of tb_PicoSoC, from reset (at least one
 --              TAP) : the JTAG chain through JTAG over the UART pads
---              (switches 11, remote_bitbang bytes on uart_rx_i, answers on
+--              (debug_mux_sel_i 11, remote_bitbang bytes on uart_rx_i, answers on
 --              the TX pad)
 --              * after Test-Logic-Reset, one DR scan reads the IDCODE of
 --                every TAP of the chain, in the chain order
@@ -21,6 +21,9 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere UART pads to JTAG over the UART with
+--                               debug_mux_sel_i (was the switch MSBs) :
+--                               switches 0x03
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -44,6 +47,7 @@ package tb_PicoSoC_bitbang_chain_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   bitbang  : in    t_bitbang_rsp
@@ -57,12 +61,13 @@ package body tb_PicoSoC_bitbang_chain_pkg is
     (constant cfg      : in    t_tb_cfg
     ;signal   clk      : in    std_logic
     ;signal   switch   : out   std_logic_vector
+    ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   bitbang  : in    t_bitbang_rsp
     ) is
     constant C_NB      : positive := cfg.jtag.nb_tap;
-    constant C_SW      : std_logic_vector(8-1 downto 0) := x"C3";  -- MSBs 11 : JTAG over the UART
+    constant C_SW      : std_logic_vector(8-1 downto 0) := x"03";
     constant C_PATTERN : std_logic_vector(16-1 downto 0) := x"B4E3";
     variable v_ids     : std_logic_vector(32*C_NB-1 downto 0);
     variable v_exp     : std_logic_vector(32*C_NB-1 downto 0);
@@ -73,6 +78,7 @@ package body tb_PicoSoC_bitbang_chain_pkg is
   begin
     log(ID_SEQUENCER, "bitbang_chain : " & integer'image(C_NB) & " TAP(s) through JTAG over the UART pads", C_TB_SCOPE);
 
+    set_slv    (C_MUX_BITBANG, clk, mux_sel);
     set_slv    (C_SW, clk, switch);
     wait_value (led0, C_SW, cfg, "LED0 = switches 0x" & to_hstring(C_SW) & " : UART pads to JTAG over the UART");
 

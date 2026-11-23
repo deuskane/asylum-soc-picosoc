@@ -9,7 +9,7 @@
 -- Platform   :
 -- Standard   : VHDL'2008
 -------------------------------------------------------------------------------
--- Description: JTAG over the UART pads of PicoSoC_top (switches 11) :
+-- Description: JTAG over the UART pads of PicoSoC_top (debug_mux_sel_i 11) :
 --              jtag_bitbang of asylum-debug-jtag behind a UART (8 data bits,
 --              no parity, 1 stop bit, JTAG_BAUD_RATE). OpenOCD
 --              (remote_bitbang adapter, socat to the serial port) sends one

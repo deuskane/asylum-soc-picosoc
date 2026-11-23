@@ -54,6 +54,8 @@
 -- 2026-11-23  2.18     mrosiere Clock and resets in PicoSoC_clkrst
 -- 2026-11-23  2.19     mrosiere JTAG over the UART in PicoSoC_jtag_over_uart
 -- 2026-11-23  2.20     mrosiere HWLA_BAUD_RATE (UART of the HWLA, was 115200)
+-- 2026-11-23  2.21     mrosiere debug_mux_sel_i selects the function of the
+--                               UART pads (was the two MSBs of switch_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -72,7 +74,7 @@ entity PicoSoC_top is
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
-    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
+    ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
 
@@ -118,7 +120,11 @@ entity PicoSoC_top is
     ;led_diff_o       : out std_logic_vector(             3-1 downto 0)
     ;it_user_i        : in  std_logic
 
-    -- UART Interface, shared with the HWLA UART and JTAG (switch_i MSBs) :
+    -- Function of the UART pads (asynchronous) : 00 user UART, 01 HWLA
+    -- UART, 10 JTAG, 11 JTAG over the UART
+    ;debug_mux_sel_i  : in  std_logic_vector(             2-1 downto 0)
+
+    -- UART Interface, shared with the HWLA UART and JTAG (debug_mux_sel_i) :
     -- UART / JTAG pins of an FTDI MPSSE cable (FT232H, FT2232H)
     ;uart_rx_i        : in    std_logic -- RX   / TCK (FTDI AD0 : TXD  / TCK)
     ;uart_tx_io       : inout std_logic -- TX   / TDI (FTDI AD1 : RXD  / TDI)
@@ -192,7 +198,7 @@ architecture rtl of PicoSoC_top is
   signal   user_ndmreset                : std_logic;
   signal   supervisor_ndmreset          : std_logic;
 
-  -- JTAG over the UART pads (switches 11) : UART of jtag_bitbang, its JTAG
+  -- JTAG over the UART pads (debug_mux_sel_i 11) : UART of jtag_bitbang, its JTAG
   -- pins (to the chain through PicoSoC_pads). Only with a TAP in the chain
   constant BITBANG_ENABLE               : boolean := DEBUG_ENABLE or USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE;
   signal   bitbang_rx                   : std_logic;
@@ -382,7 +388,7 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- Pads : UART pads shared by the user UART, the HWLA UART and the JTAG
-  -- chain (selected by the two MSBs of switch_i), SPI and I2C pads
+  -- chain (selected by debug_mux_sel_i), SPI and I2C pads
   -----------------------------------------------------------------------------
   ins_pads : PicoSoC_pads
     generic map
@@ -391,7 +397,7 @@ begin  -- architecture rtl
     port map
     (clk_i                => clk
     ,arst_b_i             => arst_b_supervisor
-    ,switch_i             => switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2)
+    ,debug_mux_sel_i      => debug_mux_sel_i
     ,uart_rx_i            => uart_rx_i
     ,uart_tx_io           => uart_tx_io
     ,uart_cts_b_io        => uart_cts_b_io
@@ -427,7 +433,7 @@ begin  -- architecture rtl
     );
 
   -----------------------------------------------------------------------------
-  -- JTAG over the UART pads (switches 11), in PicoSoC_jtag_over_uart :
+  -- JTAG over the UART pads (debug_mux_sel_i 11), in PicoSoC_jtag_over_uart :
   -- jtag_bitbang behind a UART (JTAG_BAUD_RATE), OpenOCD remote_bitbang. Its
   -- JTAG pins drive the JTAG chain in place of the JTAG pads (PicoSoC_pads).
   -- Clock and reset of the supervisor : a reset of the user SoC keeps the
