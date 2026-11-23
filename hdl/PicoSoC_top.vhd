@@ -45,6 +45,7 @@
 -- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
 -- 2026-11-23  2.13     mrosiere HWLA and its UART in PicoSoC_hwla
 -- 2026-11-23  2.14     mrosiere Injection / status TAP in PicoSoC_tap
+-- 2026-11-23  2.15     mrosiere cpu_ics in the HWLA probes
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -510,11 +511,13 @@ begin  -- architecture rtl
   gen_debug: if DEBUG_ENABLE = True
   generate
     -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
-    -- data, read data), then instruction bus (address, instruction).
+    -- data, read data), then instruction bus (fetch strobe ics, address,
+    -- instruction).
     -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i.
     -- One term per field ('length does not exist on the std_logic fields)
     signal   hwla_probe          : std_logic_vector(debug_user.cpu_idata 'length +
                                                     debug_user.cpu_iaddr 'length +
+                                                    1 +                             -- cpu_ics
                                                     debug_user.cpu_drdata'length +
                                                     debug_user.cpu_dwdata'length +
                                                     debug_user.cpu_daddr 'length +
@@ -527,6 +530,7 @@ begin  -- architecture rtl
   begin
     hwla_probe   <= debug_user.cpu_idata
                   & debug_user.cpu_iaddr
+                  & debug_user.cpu_ics
                   & debug_user.cpu_drdata
                   & debug_user.cpu_dwdata
                   & debug_user.cpu_daddr

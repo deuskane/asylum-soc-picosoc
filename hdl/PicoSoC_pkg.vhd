@@ -29,6 +29,8 @@
 -- 2026-11-23  1.11     mrosiere PicoSoC_pads component
 -- 2026-11-23  1.12     mrosiere PicoSoC_hwla component
 -- 2026-11-23  1.13     mrosiere PicoSoC_tap component
+-- 2026-11-23  1.14     mrosiere PicoSoC_user_debug_t : cpu_ics (instruction
+--                               fetch strobe of the user CPU)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -105,6 +107,7 @@ package PicoSoC_pkg is
 
   type PicoSoC_user_debug_t is record
     arst_b      : std_logic;
+    cpu_ics     : std_logic;
     cpu_iaddr   : std_logic_vector(ROM_user_ADDR_WIDTH-1 downto 0);
     cpu_idata   : std_logic_vector(ROM_user_DATA_WIDTH-1 downto 0);
                 
