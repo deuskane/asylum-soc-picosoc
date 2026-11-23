@@ -1,7 +1,7 @@
 default                                                        : Default Target (DON'T RUN)
 emu_ng_medium_soc1_openblaze8                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc1_openblaze8_modbus_rtu                       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-emu_ng_medium_soc1_wardrv_fsm                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+emu_ng_medium_soc1_wardrv_fsm                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, switches 10)
 emu_ng_medium_soc1_wardrv_fsm_modbus_rtu                       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
 emu_ng_medium_soc2_openblaze8                                  : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
 emu_ng_medium_soc2_openblaze8_fault                            : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
@@ -106,7 +106,7 @@ sim_soc4_wardrv_fsm_c_user_uart                                : Simulation of t
 sim_soc4_wardrv_fsm_fault_c_user                               : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
 sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu                    : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
 sim_soc4x2_wardrv_fsm_c_hello_uart                             : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
-sim_tmr_wardrv_fsm_c_user_uart_jtag                            : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety TMR      , Without Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU TAP only (no DEBUG_ENABLE)
+sim_soc5_wardrv_fsm_c_user_uart_jtag                           : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety TMR      , Without Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU TAP only (no DEBUG_ENABLE)
 syn_soc1                                                       : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
 syn_soc4_ng_medium                                             : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics
 syn_wardrv_soc1                                                : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc1 (no supervisor, no safety)
