@@ -53,6 +53,7 @@
 --                               (one line each)
 -- 2026-11-23  2.18     mrosiere Clock and resets in PicoSoC_clkrst
 -- 2026-11-23  2.19     mrosiere JTAG over the UART in PicoSoC_jtag_over_uart
+-- 2026-11-23  2.20     mrosiere HWLA_BAUD_RATE (UART of the HWLA, was 115200)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -70,6 +71,7 @@ entity PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
@@ -139,7 +141,7 @@ entity PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART 115200 8N1 (DEBUG_ENABLE), else 1
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART HWLA_BAUD_RATE 8N1 (DEBUG_ENABLE), else 1
      
     );
 end PicoSoC_top;
@@ -487,7 +489,7 @@ begin  -- architecture rtl
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
   -- in PicoSoC_hwla
   -- * Trigger : a difference between the redundant CPUs (OR of diff)
-  -- * Captures sent byte per byte on debug_uart_tx_o : UART 115200 baud,
+  -- * Captures sent byte per byte on debug_uart_tx_o : UART HWLA_BAUD_RATE,
   --   8 bits, no parity, 1 stop bit (tools/hwla2vcd.py of asylum-debug-hwla)
   -- * One clock (clk) and the reset of the supervisor : a capture survives
   --   the reset of the user SoC by the supervisor
@@ -529,6 +531,7 @@ begin  -- architecture rtl
     ins_hwla : PicoSoC_hwla
       generic map
       (FSYS_INT             => FSYS_INT
+      ,HWLA_BAUD_RATE       => HWLA_BAUD_RATE
       )
       port map
       (clk_i                => clk

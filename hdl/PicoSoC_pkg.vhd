@@ -36,6 +36,7 @@
 -- 2026-11-23  1.16     mrosiere active_high (polarity of the inputs)
 -- 2026-11-23  1.17     mrosiere PicoSoC_clkrst component
 -- 2026-11-23  1.18     mrosiere PicoSoC_jtag_over_uart component
+-- 2026-11-23  1.19     mrosiere HWLA_BAUD_RATE (PicoSoC_top, PicoSoC_hwla components)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -185,6 +186,7 @@ end component PicoSoC_clkrst;
 component PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
+    ;HWLA_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART of the captures
     );
   port
     (clk_i            : in  std_logic
@@ -194,7 +196,7 @@ component PicoSoC_hwla is
     ;probe_i          : in  std_logic_vector
     ;trigger_i        : in  std_logic
 
-    -- Captures : UART 115200 8N1
+    -- Captures : UART 8N1, HWLA_BAUD_RATE
     ;uart_tx_o        : out std_logic
     );
 end component PicoSoC_hwla;
@@ -333,6 +335,7 @@ component PicoSoC_top is
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
+    ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (switches 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
@@ -402,7 +405,7 @@ component PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART 115200 8N1 (DEBUG_ENABLE), else 1
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART HWLA_BAUD_RATE 8N1 (DEBUG_ENABLE), else 1
      
     );
 end component PicoSoC_top;

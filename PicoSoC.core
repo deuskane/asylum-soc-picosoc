@@ -2805,6 +2805,12 @@ parameters :
     default     : 9600
     paramtype   : generic
 
+  HWLA_BAUD_RATE :
+    description : Baud rate of the UART of the HWLA captures (DEBUG_ENABLE)
+    datatype    : int
+    default     : 115200
+    paramtype   : generic
+
   JTAG_BAUD_RATE :
     description : Baud rate of JTAG over the UART pads (switches 11)
     datatype    : int
