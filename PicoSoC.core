@@ -85,9 +85,16 @@ CAPI=2:
 #                               (USER_CPU_DEBUG_ENABLE, SUPERVISOR_CPU_DEBUG_ENABLE), TAP of
 #                               fault injection and status (DEBUG_ENABLE); tb : JTAG BFM
 #                               (asylum:verification:uvvm 1.1.0), scenarios pad_mux, jtag_*
+# 2026-11-23  4.2.0    mrosiere Switch code 11 = JTAG over the UART pads (asylum:debug:jtag
+#                               jtag_bitbang, OpenOCD remote_bitbang, JTAG_BAUD_RATE, SRST
+#                               resets the user SoC); TMR vote with vote of sbi_pkg
+#                               (asylum:utils:pkg 1.11.0); PicoSoC_hwla, PicoSoC_tap; cpu_ics in
+#                               the HWLA probes; tb : JTAG BFM chain fields
+#                               (asylum:verification:uvvm 1.2.0), scenarios bitbang_*,
+#                               jtag_last
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.1.0
+name        : asylum:soc:PicoSoC:4.2.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
