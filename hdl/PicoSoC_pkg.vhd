@@ -26,6 +26,7 @@
 --                               injection / status TAP
 -- 2026-11-22  1.10     mrosiere JTAG : IDCODE of the CPU debuggers,
 --                               components with the JTAG ports
+-- 2026-11-23  1.11     mrosiere PicoSoC_pads component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -141,6 +142,56 @@ package PicoSoC_pkg is
   -- Component
   -----------------------------------------------------------------------------
 -- [COMPONENT_INSERT][BEGIN]
+component PicoSoC_pads is
+  generic
+    (USER_SPI_NB_IO   : natural  := 8          -- SPI data lanes with a pad (up to 8)
+    );
+  port
+    (clk_i            : in    std_logic
+    ;arst_b_i         : in    std_logic
+
+    -- Selection of the UART pads : the two MSBs of the switches (asynchronous)
+    ;switch_i         : in    std_logic_vector(2-1 downto 0)
+
+    -- Pads : UART / JTAG (FTDI MPSSE AD0 to AD3), SPI, I2C
+    ;uart_rx_i        : in    std_logic -- RX   / TCK
+    ;uart_tx_io       : inout std_logic -- TX   / TDI
+    ;uart_cts_b_io    : inout std_logic -- CTS* / TDO
+    ;uart_rts_b_io    : inout std_logic -- RTS* / TMS
+    ;spi_sclk_io      : inout std_logic
+    ;spi_cs_b_io      : inout std_logic
+    ;spi_io_io        : inout std_logic_vector(USER_SPI_NB_IO-1 downto 0)
+    ;i2c_scl_io       : inout std_logic
+    ;i2c_sda_io       : inout std_logic
+
+    -- User UART
+    ;uart_tx_i        : in    std_logic
+    ;uart_rx_o        : out   std_logic
+    ;uart_cts_b_o     : out   std_logic
+    ;uart_rts_b_i     : in    std_logic
+    -- HWLA UART (TX only)
+    ;debug_uart_tx_i  : in    std_logic
+    -- JTAG chain
+    ;jtag_ini_o       : out   jtag_ini_t
+    ;jtag_tgt_i       : in    jtag_tgt_t
+    -- SPI (8 data lanes of the SPI)
+    ;spi_sclk_i       : in    std_logic
+    ;spi_sclk_oe_i    : in    std_logic
+    ;spi_cs_b_i       : in    std_logic
+    ;spi_cs_b_oe_i    : in    std_logic
+    ;spi_io_i         : in    std_logic_vector(8-1 downto 0)
+    ;spi_io_oe_i      : in    std_logic_vector(8-1 downto 0)
+    ;spi_io_o         : out   std_logic_vector(8-1 downto 0)
+    -- I2C (open drain : the output enable pulls the line low)
+    ;i2c_scl_i        : in    std_logic
+    ;i2c_scl_oe_i     : in    std_logic
+    ;i2c_scl_o        : out   std_logic
+    ;i2c_sda_i        : in    std_logic
+    ;i2c_sda_oe_i     : in    std_logic
+    ;i2c_sda_o        : out   std_logic
+    );
+end component PicoSoC_pads;
+
 component PicoSoC_supervisor is
   generic
     (NB_LED0               : positive := 8

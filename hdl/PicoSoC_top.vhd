@@ -42,6 +42,7 @@
 --                               SUPERVISOR_CPU_DEBUG_ENABLE : debug units of
 --                               the user / supervisor CPUs (cpu_wrapper) in
 --                               the JTAG chain
+-- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -166,36 +167,6 @@ architecture rtl of PicoSoC_top is
   signal   uart_cts_b                   : std_logic;
   signal   uart_rts_b                   : std_logic;
 
-  -- UART pads : 3 functions selected by the two MSBs of switch_i
-  -- (synchronized). The pads of each function are given by the constants
-  -- PAD_* and by the block "Pad multiplexer" below (one place to change).
-  -- Pads in the order of the FTDI MPSSE pins AD0 to AD3
-  constant NB_FUNC                      : positive := 3;
-  constant FUNC_UART                    : natural  := 0; -- switches 00 and 11 : user UART
-  constant FUNC_HWLA                    : natural  := 1; -- switches 01        : HWLA UART (TX only)
-  constant FUNC_JTAG                    : natural  := 2; -- switches 10        : JTAG chain
-  constant PAD_RX                       : natural  := 0; -- uart_rx_i     : RX   (in)  / TCK (in)
-  constant PAD_TX                       : natural  := 1; -- uart_tx_io    : TX   (out) / TDI (in)
-  constant PAD_CTS_B                    : natural  := 2; -- uart_cts_b_io : CTS* (in)  / TDO (out)
-  constant PAD_RTS_B                    : natural  := 3; -- uart_rts_b_io : RTS* (out) / TMS (in)
-  -- Pad inputs seen by the unselected functions : RX idle (1), CTS* active
-  -- (0 : the user UART keeps sending, its firmware never waits on a pad it
-  -- does not own), TCK stopped, TDI 1, TMS 1 (the TAPs stay in
-  -- Test-Logic-Reset)
-  constant PAD_IN_DEFAULT               : std_logic_vector(4-1 downto 0) := (PAD_RX    => '1'
-                                                                            ,PAD_TX    => '1'
-                                                                            ,PAD_CTS_B => '0'
-                                                                            ,PAD_RTS_B => '1');
-
-  signal   pad_switch                   : std_logic_vector(2-1 downto 0);
-  signal   pad_sel                      : natural range 0 to NB_FUNC-1;
-  signal   pad_func_out                 : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
-  signal   pad_func_oe                  : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
-  signal   pad_func_in                  : pad_array_t(0 to NB_FUNC-1)(4-1 downto 0);
-  signal   pad_out                      : std_logic_vector(4-1 downto 0);
-  signal   pad_oe                       : std_logic_vector(4-1 downto 0);
-  signal   pad_in                       : std_logic_vector(4-1 downto 0);
-
   signal   debug_uart_tx                : std_logic;
 
   -- JTAG chain : TDI -> user SoC (TAP of the CPU of each cluster) ->
@@ -228,9 +199,6 @@ architecture rtl of PicoSoC_top is
   signal   spi_sclk_oe_o                : std_logic;
   signal   spi_cs_b_o                   : std_logic;
   signal   spi_cs_b_oe_o                : std_logic;
-  signal   spi_io_o                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal   spi_io_i                     : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
-  signal   spi_io_oe_o                  : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
   signal   spi_io_o_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_i_user                : std_logic_vector(8-1 downto 0);
   signal   spi_io_oe_o_user             : std_logic_vector(8-1 downto 0);
@@ -389,15 +357,6 @@ begin  -- architecture rtl
     ,ndmreset_o           => user_ndmreset
     );
 
-  spi_io_o     <= spi_io_o_user   (spi_io_o   'range);
-  spi_io_oe_o  <= spi_io_oe_o_user(spi_io_oe_o'range);
-  -- Only USER_SPI_NB_IO lines have a pad : the other inputs of the SPI are tied to 0
-  spi_io_i_user<= std_logic_vector(resize(unsigned(spi_io_i),8));
-
-  assert USER_SPI_NB_IO <= 8
-    report "PicoSoC_top : USER_SPI_NB_IO ("&integer'image(USER_SPI_NB_IO)&") must be <= 8"
-    severity failure;
-
   pwm_o        <= pwm;
 
   -----------------------------------------------------------------------------
@@ -470,152 +429,47 @@ begin  -- architecture rtl
   inject_error <= inject_error_button or inject_error_jtag;
 
   -----------------------------------------------------------------------------
-  -- SPI PAD
+  -- Pads : UART pads shared by the user UART, the HWLA UART and the JTAG
+  -- chain (selected by the two MSBs of switch_i), SPI and I2C pads
   -----------------------------------------------------------------------------
-  PAD_SPI_SCLK : obuf
-    port map
-     (buf_io     => spi_sclk_io
-     ,d_i        => spi_sclk_o
-     ,oe_i       => spi_sclk_oe_o
-     );
-
-  PAD_SPI_CS_B : obuf
-    port map
-     (buf_io     => spi_cs_b_io
-     ,d_i        => spi_cs_b_o
-     ,oe_i       => spi_cs_b_oe_o
-     );
-
-  gen_pad_spi_io:
-  for i in 0 to USER_SPI_NB_IO-1 
-  generate
-    PAD_SPI_IO : iobuf
-      port map
-       (buf_io     => spi_io_io   (i)
-       ,d_i        => spi_io_o    (i)
-       ,d_o        => spi_io_i    (i)
-       ,oe_i       => spi_io_oe_o (i)
-       ,ie_i       => '1'
-       );
-  end generate;
-
-  -----------------------------------------------------------------------------
-  -- I2C PAD
-  -- Open drain : the line is pulled low when the output enable of the I2C is
-  -- set (its output is 0), released ('Z') otherwise : the pull-up of the
-  -- board gives the high level
-  -----------------------------------------------------------------------------
-  PAD_I2C_SCL : iobuf
-    port map
-     (buf_io     => i2c_scl_io
-     ,d_i        => i2c_scl_o
-     ,d_o        => i2c_scl_i
-     ,oe_i       => i2c_scl_oe_o
-     ,ie_i       => '1'
-     );
-
-  PAD_I2C_SDA : iobuf
-    port map
-     (buf_io     => i2c_sda_io
-     ,d_i        => i2c_sda_o
-     ,d_o        => i2c_sda_i
-     ,oe_i       => i2c_sda_oe_o
-     ,ie_i       => '1'
-     );
-
-  -----------------------------------------------------------------------------
-  -- UART PAD
-  -- Pad multiplexer (jtag_pad_mux) : the 4 UART pads are given to one
-  -- function, selected by the two MSBs of switch_i, synchronized on clk :
-  --   00, 11 : user UART (RX, TX, CTS*, RTS*)
-  --   01     : HWLA UART (TX only : the captures, also on debug_uart_tx_o)
-  --   10     : JTAG chain (TCK, TDI, TDO, TMS ; no TRST*)
-  -- Change the switches while the functions are idle : the multiplexer has
-  -- no clock. Switch the FPGA before the cable (terminal or OpenOCD) : two
-  -- drivers on TX / TDI and RTS* / TMS otherwise
-  -----------------------------------------------------------------------------
-  ins_switch_sync1 : sync2dffrn
-    port map
-    (clk_i                => clk
-    ,arst_b_i             => arst_b_supervisor
-    ,d_i                  => switch_i(USER_NB_SWITCH-2)
-    ,q_o                  => pad_switch(0)
-    );
-
-  ins_switch_sync2 : sync2dffrn
-    port map
-    (clk_i                => clk
-    ,arst_b_i             => arst_b_supervisor
-    ,d_i                  => switch_i(USER_NB_SWITCH-1)
-    ,q_o                  => pad_switch(1)
-    );
-
-  -- A 4th function (switches 11) : one more line here and NB_FUNC = 4
-  pad_sel <= FUNC_HWLA when pad_switch = "01" else
-             FUNC_JTAG when pad_switch = "10" else
-             FUNC_UART;
-
-  -- Pad multiplexer : outputs, output enables and inputs of each function
-  -- (with the PAD_* constants, the only place of the pad mapping)
-  pad_func_out(FUNC_UART) <= (PAD_TX => uart_tx, PAD_RTS_B => uart_rts_b, others => '0');
-  pad_func_oe (FUNC_UART) <= (PAD_TX => '1'    , PAD_RTS_B => '1'       , others => '0');
-  uart_rx                 <= pad_func_in(FUNC_UART)(PAD_RX   );
-  uart_cts_b              <= pad_func_in(FUNC_UART)(PAD_CTS_B);
-
-  pad_func_out(FUNC_HWLA) <= (PAD_TX => debug_uart_tx, others => '0');
-  pad_func_oe (FUNC_HWLA) <= (PAD_TX => '1'          , others => '0');
-
-  pad_func_out(FUNC_JTAG) <= (PAD_CTS_B => jtag_tgt.tdo   , others => '0');
-  pad_func_oe (FUNC_JTAG) <= (PAD_CTS_B => jtag_tgt.tdo_en, others => '0');
-  jtag_ini                <= (tck    => pad_func_in(FUNC_JTAG)(PAD_RX   )
-                             ,tdi    => pad_func_in(FUNC_JTAG)(PAD_TX   )
-                             ,tms    => pad_func_in(FUNC_JTAG)(PAD_RTS_B)
-                             ,trst_n => '1');                         -- No TRST* pad
-
-  ins_pad_mux : jtag_pad_mux
+  ins_pads : PicoSoC_pads
     generic map
-    (NB_FUNC              => NB_FUNC
-    ,NB_PAD               => 4
-    ,PAD_IN_DEFAULT       => PAD_IN_DEFAULT
+    (USER_SPI_NB_IO       => USER_SPI_NB_IO
     )
     port map
-    (sel_i                => pad_sel
-    ,func_out_i           => pad_func_out
-    ,func_oe_i            => pad_func_oe
-    ,func_in_o            => pad_func_in
-    ,pad_out_o            => pad_out
-    ,pad_oe_o             => pad_oe
-    ,pad_in_i             => pad_in
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,switch_i             => switch_i(USER_NB_SWITCH-1 downto USER_NB_SWITCH-2)
+    ,uart_rx_i            => uart_rx_i
+    ,uart_tx_io           => uart_tx_io
+    ,uart_cts_b_io        => uart_cts_b_io
+    ,uart_rts_b_io        => uart_rts_b_io
+    ,spi_sclk_io          => spi_sclk_io
+    ,spi_cs_b_io          => spi_cs_b_io
+    ,spi_io_io            => spi_io_io
+    ,i2c_scl_io           => i2c_scl_io
+    ,i2c_sda_io           => i2c_sda_io
+    ,uart_tx_i            => uart_tx
+    ,uart_rx_o            => uart_rx
+    ,uart_cts_b_o         => uart_cts_b
+    ,uart_rts_b_i         => uart_rts_b
+    ,debug_uart_tx_i      => debug_uart_tx
+    ,jtag_ini_o           => jtag_ini
+    ,jtag_tgt_i           => jtag_tgt
+    ,spi_sclk_i           => spi_sclk_o
+    ,spi_sclk_oe_i        => spi_sclk_oe_o
+    ,spi_cs_b_i           => spi_cs_b_o
+    ,spi_cs_b_oe_i        => spi_cs_b_oe_o
+    ,spi_io_i             => spi_io_o_user
+    ,spi_io_oe_i          => spi_io_oe_o_user
+    ,spi_io_o             => spi_io_i_user
+    ,i2c_scl_i            => i2c_scl_o
+    ,i2c_scl_oe_i         => i2c_scl_oe_o
+    ,i2c_scl_o            => i2c_scl_i
+    ,i2c_sda_i            => i2c_sda_o
+    ,i2c_sda_oe_i         => i2c_sda_oe_o
+    ,i2c_sda_o            => i2c_sda_i
     );
-
-  pad_in(PAD_RX) <= uart_rx_i;
-
-  PAD_UART_TX : iobuf
-    port map
-     (buf_io     => uart_tx_io
-     ,d_i        => pad_out(PAD_TX)
-     ,d_o        => pad_in (PAD_TX)
-     ,oe_i       => pad_oe (PAD_TX)
-     ,ie_i       => '1'
-     );
-
-  PAD_UART_CTS_B : iobuf
-    port map
-     (buf_io     => uart_cts_b_io
-     ,d_i        => pad_out(PAD_CTS_B)
-     ,d_o        => pad_in (PAD_CTS_B)
-     ,oe_i       => pad_oe (PAD_CTS_B)
-     ,ie_i       => '1'
-     );
-
-  PAD_UART_RTS_B : iobuf
-    port map
-     (buf_io     => uart_rts_b_io
-     ,d_i        => pad_out(PAD_RTS_B)
-     ,d_o        => pad_in (PAD_RTS_B)
-     ,oe_i       => pad_oe (PAD_RTS_B)
-     ,ie_i       => '1'
-     );
 
   -----------------------------------------------------------------------------
   -- JTAG chain
