@@ -3087,6 +3087,33 @@ targets:
       - TESTS_LIST=pad_mux,jtag_chain,jtag_cpu_user
 
   #---------------------------------------
+  sim_soc1x2_wardrv_fsm_c_user_jtag:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, 2 user CPU clusters, JTAG chain of their 2 debug units and the injection / status TAP (user.c is single-cluster, scenario jtag_chain only)
+    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - USER_NB_CPU=2
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=jtag_chain
+
+  #---------------------------------------
   sim_soc4_wardrv_fsm_fault_c_user:
   #---------------------------------------
     << : *sim
@@ -3903,13 +3930,13 @@ parameters :
     paramtype   : generic
 
   USER_CPU_DEBUG_ENABLE :
-    description : Debugger (WardRV_debug) of the user CPU in the JTAG chain (WardRV_fsm)
+    description : Debug unit (WardRV_debug, in cpu_wrapper) of the user CPU of every cluster, in the JTAG chain (WardRV_fsm)
     datatype    : bool
     default     : false
     paramtype   : generic
 
   SUPERVISOR_CPU_DEBUG_ENABLE :
-    description : Debugger (WardRV_debug) of the supervisor CPU in the JTAG chain (WardRV_fsm)
+    description : Debug unit (WardRV_debug, in cpu_wrapper) of the supervisor CPU, in the JTAG chain (WardRV_fsm)
     datatype    : bool
     default     : false
     paramtype   : generic

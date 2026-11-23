@@ -41,8 +41,8 @@
 -- 2026-11-21  3.13     mrosiere Add I2C (master and slave)
 -- 2026-11-21  3.14     mrosiere Add PWM
 -- 2026-11-21  3.15     mrosiere Debug record : data of the CPU0 bus
--- 2026-11-22  3.16     mrosiere CPU_DEBUG_ENABLE : debug ports of the CPU of
---                               cluster 0 (WardRV_debug in PicoSoC_top)
+-- 2026-11-23  3.16     mrosiere CPU_DEBUG_ENABLE : debug unit of the CPU of
+--                               every cluster, JTAG chain of the clusters
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -80,8 +80,7 @@ use     asylum.pwm_pkg.all;
 use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_user_pkg.all;
-use     asylum.WardRV_pkg.all;
-use     asylum.WardRV_debug_pkg.all;
+use     asylum.jtag_pkg.all;
 
 entity PicoSoC_user is
   generic
@@ -108,7 +107,8 @@ entity PicoSoC_user is
     ;MAILBOX_FIFO0_DEPTH_RX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_TX : natural  := 4
     ;MAILBOX_FIFO1_DEPTH_RX : natural  := 4
-    ;CPU_DEBUG_ENABLE       : boolean  := False -- Debug ports of the CPU of cluster 0 (WardRV_fsm)
+    ;CPU_DEBUG_ENABLE       : boolean  := False -- Debug unit of the CPU of every cluster (WardRV_fsm)
+    ;IDCODE_VALUE           : std_logic_vector(31 downto 0) := x"10000001" -- IDCODE of the TAP of cluster 0, + i * 0x10000 for cluster i
     );
   port
     (clk_i                 : in  std_logic
@@ -152,11 +152,12 @@ entity PicoSoC_user is
                                  
     ;debug_o               : out PicoSoC_user_debug_t
 
-    -- CPU debug (CPU_DEBUG_ENABLE, CPU of cluster 0) : to / from the Debug
-    -- Module of WardRV_debug
-    ;dbg_hart_req_i        : in  dbg_hart_req_t := DBG_HART_REQ_NULL
-    ;dbg_mem_ini_o         : out dmem_ini_t
-    ;dbg_mem_tgt_i         : in  dmem_tgt_t     := DMEM_TGT_NULL
+    -- CPU debug (CPU_DEBUG_ENABLE) : JTAG chain of the clusters (TDI ->
+    -- cluster 0 -> ... -> TDO), power-on reset of the debug units, ndmreset
+    ;dbg_arst_b_i          : in  std_logic := '1'
+    ;jtag_ini_i            : in  jtag_ini_t
+    ;jtag_tgt_o            : out jtag_tgt_t
+    ;ndmreset_o            : out std_logic
     );
 end PicoSoC_user;
 
@@ -293,6 +294,13 @@ architecture rtl of PicoSoC_user is
   -- Signals Safety
   type     diff_vector_t              is array (natural range <>) of std_logic_vector(3-1 downto 0);
   signal   cpu_diff                   : diff_vector_t(NB_CPU-1 downto 0); -- diff of each CPU cluster
+
+  -- JTAG chain of the clusters : jtag_chain(i) = TDO before cluster i, with
+  -- the OR of the TDO enables (a CPU without debug unit is a wire, never
+  -- drives TDO)
+  type     jtag_tgts_t                is array (natural range <>) of jtag_tgt_t;
+  signal   jtag_chain                 : jtag_tgts_t(0 to NB_CPU);
+  signal   cpu_ndmreset               : std_logic_vector(NB_CPU-1 downto 0);
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -313,6 +321,13 @@ begin  -- architecture rtl
     end loop;
     diff_o <= v_diff;
   end process p_diff;
+
+  -----------------------------------------------------------------------------
+  -- JTAG chain of the clusters, ndmreset of any debug unit
+  -----------------------------------------------------------------------------
+  jtag_chain(0) <= (tdo => jtag_ini_i.tdi, tdo_en => '0');
+  jtag_tgt_o    <= jtag_chain(NB_CPU);
+  ndmreset_o    <= reduce_or(cpu_ndmreset);
 
   -----------------------------------------------------------------------------
   -- CPU with Safety Logic
@@ -343,10 +358,9 @@ begin  -- architecture rtl
   -- Interruption Vector
   signal   gic_it_vector              : std_logic_vector(GIC_WIDTH-1 downto 0);
 
-  -- CPU debug (cluster 0 only)
-  signal   cpu_dbg_hart_req           : dbg_hart_req_t;
-  signal   cpu_dbg_mem_ini            : dmem_ini_t;
-  signal   cpu_dbg_mem_tgt            : dmem_tgt_t;
+  -- JTAG of the cluster
+  signal   cpu_jtag_ini               : jtag_ini_t;
+  signal   cpu_jtag_tgt               : jtag_tgt_t;
 
   begin
 
@@ -362,18 +376,6 @@ begin  -- architecture rtl
       debug_o.cpu_dwdata  <= cpu_sbi_ini.wdata                ;
       debug_o.cpu_drdata  <= cpu_sbi_tgt.rdata                ;
       debug_o.cpu_dready  <= cpu_sbi_tgt.ready                ;
-
-      -- CPU debug : the debug unit sees the CPU of cluster 0
-      cpu_dbg_hart_req    <= dbg_hart_req_i;
-      dbg_mem_ini_o       <= cpu_dbg_mem_ini;
-      cpu_dbg_mem_tgt     <= dbg_mem_tgt_i;
-    end generate;
-
-    gen_cpu_debug_b :
-    if i /= 0
-    generate
-      cpu_dbg_hart_req    <= DBG_HART_REQ_NULL;
-      cpu_dbg_mem_tgt     <= DMEM_TGT_NULL;
     end generate;
 
     ins_cpu_safety : cpu_safety
@@ -383,7 +385,8 @@ begin  -- architecture rtl
       ,FAULT_INJECTION      => FAULT_INJECTION
       ,CPU_MODEL            => CPU_MODEL
       ,HARTID               => std_logic_vector(to_unsigned(i, 32))
-      ,DEBUG_ENABLE         => CPU_DEBUG_ENABLE and (i = 0)
+      ,DEBUG_ENABLE         => CPU_DEBUG_ENABLE
+      ,IDCODE_VALUE         => std_logic_vector(unsigned(IDCODE_VALUE) + to_unsigned(i * 16#10000#, 32))
       ,IMEM_ADDR_WIDTH      => CPU_IMEM_ADDR_WIDTH
       ,IMEM_DATA_WIDTH      => CPU_IMEM_DATA_WIDTH
       ,DMEM_ADDR_WIDTH      => CPU_DMEM_ADDR_WIDTH
@@ -402,10 +405,15 @@ begin  -- architecture rtl
       ,interrupt_ack_o      => cpu_it_ack
       ,inject_error_i       => inject_error_i
       ,diff_o               => cpu_diff(i)
-      ,dbg_hart_req_i       => cpu_dbg_hart_req
-      ,dbg_mem_ini_o        => cpu_dbg_mem_ini
-      ,dbg_mem_tgt_i        => cpu_dbg_mem_tgt
+      ,dbg_arst_b_i         => dbg_arst_b_i
+      ,jtag_ini_i           => cpu_jtag_ini
+      ,jtag_tgt_o           => cpu_jtag_tgt
+      ,ndmreset_o           => cpu_ndmreset(i)
       );
+
+    -- JTAG chain : TDI from the previous cluster
+    cpu_jtag_ini      <= (tck => jtag_ini_i.tck, trst_n => jtag_ini_i.trst_n, tms => jtag_ini_i.tms, tdi => jtag_chain(i).tdo);
+    jtag_chain(i+1)   <= (tdo => cpu_jtag_tgt.tdo, tdo_en => cpu_jtag_tgt.tdo_en or jtag_chain(i).tdo_en);
 
     icn1_sbi_inim(0)    <= cpu_sbi_ini;
     cpu_sbi_tgt         <= icn1_sbi_tgtm(0);

@@ -124,7 +124,7 @@ architecture tb of tb_PicoSoC is
   constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
 
   -- JTAG chain of the DUT
-  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_CPU_DEBUG_ENABLE, SUPERVISOR_CPU_DEBUG_ENABLE, DEBUG_ENABLE);
+  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE, DEBUG_ENABLE);
 
   constant C_CFG                   : t_tb_cfg := (
     clk_period => TB_PERIOD,

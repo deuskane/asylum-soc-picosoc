@@ -21,6 +21,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere Switches 0x85 (no UART line during the error)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -72,7 +73,9 @@ package body tb_PicoSoC_jtag_status_pkg is
     constant C_TAP     : natural := cfg.jtag.inject;
     -- Switches with the MSBs 10 : JTAG
     constant C_SW1     : std_logic_vector(8-1 downto 0) := x"9A";
-    constant C_SW2     : std_logic_vector(8-1 downto 0) := x"A5";
+    -- switch(5) clear : no UART line, the CPU fetches (an UART write with
+    -- FIFO depth 0 stalls the bus and the fetches for a character time)
+    constant C_SW2     : std_logic_vector(8-1 downto 0) := x"85";
     variable v_diff    : std_logic_vector(3-1 downto 0);
 
     -- Status read through JTAG : resets 11 (running), switches sw,

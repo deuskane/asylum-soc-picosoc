@@ -24,10 +24,13 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-22  1.0      mrosiere Created
+-- 2026-11-23  1.1      mrosiere TCK 1 us (resynchronized in cpu_safety), one
+--                               user CPU TAP per cluster
 -------------------------------------------------------------------------------
 
 library ieee;
 use     ieee.std_logic_1164.all;
+use     ieee.numeric_std.all;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
@@ -47,15 +50,16 @@ package tb_PicoSoC_jtag_pkg is
   constant C_JTAG_IR_IDCODE : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "00001";
   constant C_JTAG_IR_BYPASS : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0) := "11111";
 
-  -- BFM configuration for a chain of nb_tap TAPs : TCK 100 ns, IR scan of
+  -- BFM configuration for a chain of nb_tap TAPs : TCK 1 us, IR scan of
   -- the IRs of every TAP
   function jtag_config
     (nb_tap   : positive
     ) return t_jtag_bfm_config;
 
-  -- Chain of PicoSoC_top with the TAPs present (CPU debuggers, injection)
+  -- Chain of PicoSoC_top with the TAPs present (CPU debuggers of nb_user
+  -- clusters, supervisor CPU debugger, injection)
   function jtag_chain
-    (user       : boolean
+    (nb_user    : natural
     ;supervisor : boolean
     ;inject     : boolean
     ) return t_jtag_chain;
@@ -134,24 +138,26 @@ package body tb_PicoSoC_jtag_pkg is
     ) return t_jtag_bfm_config is
     variable v_config : t_jtag_bfm_config := C_JTAG_BFM_CONFIG_DEFAULT;
   begin
-    v_config.tck_period  := 100 ns;
+    -- TCK resynchronized in cpu_safety : slow against the SoC clock
+    v_config.tck_period  := 1 us;
     v_config.ir_width    := PICOSOC_JTAG_IR_WIDTH*nb_tap;
     v_config.trst_enable := false;  -- No TRST* pad
     return v_config;
   end function;
 
   function jtag_chain
-    (user       : boolean
+    (nb_user    : natural
     ;supervisor : boolean
     ;inject     : boolean
     ) return t_jtag_chain is
-    variable v_chain : t_jtag_chain := (nb_tap => 0, user => -1, supervisor => -1, inject => -1);
+    variable v_chain : t_jtag_chain := (nb_tap => 0, user => -1, nb_user => nb_user, supervisor => -1, inject => -1);
   begin
-    -- Chain order from TDI : user CPU, supervisor CPU, injection
-    if user
+    -- Chain order from TDI : user CPUs (cluster 0 first), supervisor CPU,
+    -- injection
+    if nb_user > 0
     then
       v_chain.user       := v_chain.nb_tap;
-      v_chain.nb_tap     := v_chain.nb_tap + 1;
+      v_chain.nb_tap     := v_chain.nb_tap + nb_user;
     end if;
     if supervisor
     then
@@ -171,9 +177,9 @@ package body tb_PicoSoC_jtag_pkg is
     ;tap      : natural
     ) return std_logic_vector is
   begin
-    if    tap = cfg.jtag.user
+    if    cfg.jtag.nb_user > 0 and tap >= cfg.jtag.user and tap < cfg.jtag.user + cfg.jtag.nb_user
     then
-      return PICOSOC_JTAG_IDCODE_USER_CPU;
+      return std_logic_vector(unsigned(PICOSOC_JTAG_IDCODE_USER_CPU) + to_unsigned((tap - cfg.jtag.user) * 16#10000#, 32));
     elsif tap = cfg.jtag.supervisor
     then
       return PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU;

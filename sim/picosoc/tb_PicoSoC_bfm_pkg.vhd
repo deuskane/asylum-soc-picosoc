@@ -45,7 +45,8 @@ package tb_PicoSoC_bfm_pkg is
   -- from TDI (0 : first TAP after TDI), -1 : absent
   type t_jtag_chain is record
     nb_tap     : natural;
-    user       : integer;            -- user CPU debugger (USER_CPU_DEBUG_ENABLE)
+    user       : integer;            -- user CPU debugger of cluster 0 (USER_CPU_DEBUG_ENABLE), cluster i at user + i
+    nb_user    : natural;            -- user CPU debuggers (one per cluster)
     supervisor : integer;            -- supervisor CPU debugger (SUPERVISOR_CPU_DEBUG_ENABLE)
     inject     : integer;            -- injection / status TAP (DEBUG_ENABLE)
   end record t_jtag_chain;
