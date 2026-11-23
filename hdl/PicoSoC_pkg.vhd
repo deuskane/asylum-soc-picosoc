@@ -28,6 +28,7 @@
 --                               components with the JTAG ports
 -- 2026-11-23  1.11     mrosiere PicoSoC_pads component
 -- 2026-11-23  1.12     mrosiere PicoSoC_hwla component
+-- 2026-11-23  1.13     mrosiere PicoSoC_tap component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -243,6 +244,24 @@ component PicoSoC_supervisor is
     ;ndmreset_o            : out std_logic
      );
 end component PicoSoC_supervisor;
+
+component PicoSoC_tap is
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic  -- Power-on reset of the TAP, reset of the synchronizers
+
+    -- JTAG pins of this TAP (one stage of the JTAG chain)
+    ;jtag_ini_i       : in  jtag_ini_t
+    ;jtag_tgt_o       : out jtag_tgt_t
+
+    -- Values read through JTAG
+    ;diff_i           : in  std_logic_vector(3-1 downto 0)
+    ;status_i         : in  std_logic_vector
+
+    -- Error injection written through JTAG (synchronized on clk_i, active high)
+    ;inject_error_o   : out std_logic_vector(3-1 downto 0)
+    );
+end component PicoSoC_tap;
 
 component PicoSoC_top is
   generic

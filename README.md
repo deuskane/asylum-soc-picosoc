@@ -344,9 +344,10 @@ The NG-MEDIUM board targets (`emu_ng_medium_*`) need NXmap, which is not in the 
 
 | File | Unit | Role |
 |------|------|------|
-| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, pads, JTAG chain (user SoC, supervisor SoC, injection / status TAP), HWLA (`PicoSoC_hwla`, `DEBUG_ENABLE`) |
+| [hdl/PicoSoC_top.vhd](hdl/PicoSoC_top.vhd) | `PicoSoC_top` | Top level: reset resynchronization, clock divider, polarities, user and supervisor SoCs, pads, JTAG chain (user SoC, supervisor SoC, injection / status TAP `PicoSoC_tap`), HWLA (`PicoSoC_hwla`, `DEBUG_ENABLE`) |
 | [hdl/PicoSoC_pads.vhd](hdl/PicoSoC_pads.vhd) | `PicoSoC_pads` | Pads: UART pads shared by the user UART, the HWLA UART and the JTAG chain (`jtag_pad_mux`, switch MSB synchronizers and select), SPI pads (`obuf`, `iobuf`), I2C open-drain pads |
 | [hdl/PicoSoC_hwla.vhd](hdl/PicoSoC_hwla.vhd) | `PicoSoC_hwla` | HWLA of the top: `hwla` on the probes (unconstrained `probe_i`: the width comes from the actual) and the trigger, its captures on a UART 115200 8N1 (`uart_tx_axis`, `uart_baud_rate_gen`) |
+| [hdl/PicoSoC_tap.vhd](hdl/PicoSoC_tap.vhd) | `PicoSoC_tap` | Injection / status TAP of the top (`DEBUG_ENABLE`): `jtag_tap`, the instruction decoder, the INJECT (`jtag_tdr_inout`, read diff) and STATUS (`jtag_tdr_in`, unconstrained `status_i`) registers, the synchronizers of the injection; one stage of the JTAG chain (the top chains the stages) |
 | [hdl/PicoSoC_user.vhd](hdl/PicoSoC_user.vhd) | `PicoSoC_user` | User SoC: CPU clusters (`cpu_safety`, `ROM_user`, ICN1, GIC, RAM1), ICN2 and the shared peripherals |
 | [hdl/PicoSoC_supervisor.vhd](hdl/PicoSoC_supervisor.vhd) | `PicoSoC_supervisor` | Supervisor SoC: CPU, `ROM_supervisor`, ICN, 2 GPIO, GIC, RAM |
 | [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd) | `cpu_safety` | 1, 2 or 3 CPUs, lock-step delay line and compare, TMR vote, fault injection, JTAG pins of the copies (TCK resynchronized) |
@@ -458,7 +459,7 @@ Switch the mode of the FPGA before starting the terminal or OpenOCD on the cable
 
 The IDCODEs (`PICOSOC_JTAG_IDCODE_*` of `PicoSoC_pkg`) are version 1, manufacturer 0, part number `0x0001` + `0x10` x `i` for the user CPU of cluster `i`, 2 for the supervisor CPU, 3 for the injection / status TAP.
 
-**Injection / status TAP** (`DEBUG_ENABLE`): a `jtag_tap` with its instruction decoder and two test data registers, in the TCK domain:
+**Injection / status TAP** (`DEBUG_ENABLE`, `PicoSoC_tap` in [hdl/PicoSoC_tap.vhd](hdl/PicoSoC_tap.vhd)): a `jtag_tap` with its instruction decoder and two test data registers, in the TCK domain:
 
 | Instruction | TDR | Bits (from the LSB, first shifted out) |
 |-------------|-----|----------------------------------------|

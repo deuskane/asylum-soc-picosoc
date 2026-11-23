@@ -593,6 +593,7 @@ filesets:
       - hdl/PicoSoC_pkg.vhd
       - hdl/PicoSoC_pads.vhd
       - hdl/PicoSoC_hwla.vhd
+      - hdl/PicoSoC_tap.vhd
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd
       - hdl/PicoSoC_supervisor.vhd

@@ -44,6 +44,7 @@
 --                               the JTAG chain
 -- 2026-11-23  2.12     mrosiere Pads in PicoSoC_pads
 -- 2026-11-23  2.13     mrosiere HWLA and its UART in PicoSoC_hwla
+-- 2026-11-23  2.14     mrosiere Injection / status TAP in PicoSoC_tap
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -556,114 +557,36 @@ begin  -- architecture rtl
   end generate gen_debug_b;
 
   -----------------------------------------------------------------------------
-  -- Debug : JTAG TAP of fault injection and status, last TAP of the chain
-  -- (IDCODE PICOSOC_JTAG_IDCODE_INJECT), its instruction decoder and 2 test
-  -- data registers (TCK domain) :
-  -- * PICOSOC_JTAG_IR_INJECT : jtag_tdr_inout, 3 bits : writes the error
-  --   injection (bit i : CPU i, like inject_error_i), reads diff
-  -- * PICOSOC_JTAG_IR_STATUS : jtag_tdr_in, reads (from the LSB) led0_o,
-  --   led1_o, led_diff_o, switch_i, then the resets : user SoC, supervisor
-  --   SoC (1 : running)
-  -- The read values are quasi-static (LEDs, switches, sticky diff, resets) :
-  -- sampled directly in Capture-DR, without synchronizer (a value that
-  -- changes during the capture may give a mix of old and new bits)
-  -- The injection is synchronized on clk (2 flip-flops per bit)
+  -- Debug : JTAG TAP of fault injection and status, last TAP of the chain,
+  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK domain) :
+  -- * PICOSOC_JTAG_IR_INJECT : writes the error injection (bit i : CPU i,
+  --   like inject_error_i, synchronized on clk), reads diff
+  -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,
+  --   led_diff_o, switch_i, then the resets : user SoC, supervisor SoC
+  --   (1 : running)
   -----------------------------------------------------------------------------
   gen_debug_jtag: if DEBUG_ENABLE = True
   generate
     signal   inject_ini          : jtag_ini_t;
     signal   inject_tgt          : jtag_tgt_t;
-    signal   inject_tck          : std_logic;
-    signal   inject_trst_b       : std_logic;
-    signal   inject_tlr          : std_logic;
-    signal   inject_ir           : std_logic_vector(PICOSOC_JTAG_IR_WIDTH-1 downto 0);
-    signal   inject_capture_dr   : std_logic;
-    signal   inject_shift_dr     : std_logic;
-    signal   inject_update_dr    : std_logic;
-    signal   inject_tdi          : std_logic;
-    signal   inject_user_tdo_en  : std_logic;
-    signal   inject_user_tdo     : std_logic;
-    signal   sel_inject          : std_logic;
-    signal   sel_status          : std_logic;
-    signal   tdo_inject          : std_logic;
-    signal   tdo_status          : std_logic;
-    signal   inject_tck_domain   : std_logic_vector(3-1 downto 0);
+    -- A signal : GHDL 6.0.0 crashes on an expression actual of status_i
     signal   status              : std_logic_vector(2+USER_NB_SWITCH+3+USER_NB_LED1+USER_NB_LED0-1 downto 0);
   begin
     inject_ini    <= (tck => jtag_ini.tck, tdi => jtag_chain(2).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
     jtag_chain(3) <= (tdo => inject_tgt.tdo, tdo_en => inject_tgt.tdo_en or jtag_chain(2).tdo_en);
 
-    ins_jtag_tap : jtag_tap
-      generic map
-      (IR_WIDTH             => PICOSOC_JTAG_IR_WIDTH
-      ,IDCODE_VALUE         => PICOSOC_JTAG_IDCODE_INJECT
-      ,TRST_ENABLE          => false
-      )
-      port map
-      (arst_b_i             => arst_b_supervisor
-      ,jtag_ini_i           => inject_ini
-      ,jtag_tgt_o           => inject_tgt
-      ,tck_o                => inject_tck
-      ,trst_b_o             => inject_trst_b
-      ,tlr_o                => inject_tlr
-      ,ir_o                 => inject_ir
-      ,capture_dr_o         => inject_capture_dr
-      ,shift_dr_o           => inject_shift_dr
-      ,update_dr_o          => inject_update_dr
-      ,tdi_o                => inject_tdi
-      ,user_tdo_en_i        => inject_user_tdo_en
-      ,user_tdo_i           => inject_user_tdo
-      );
-
-    -- Instruction decoder
-    sel_inject         <= '1' when inject_ir = PICOSOC_JTAG_IR_INJECT else
-                          '0';
-    sel_status         <= '1' when inject_ir = PICOSOC_JTAG_IR_STATUS else
-                          '0';
-    inject_user_tdo_en <= sel_inject or sel_status;
-    inject_user_tdo    <= tdo_inject when sel_inject = '1' else
-                          tdo_status;
-
-    ins_jtag_tdr_inject : jtag_tdr_inout
-      port map
-      (tck_i                => inject_tck
-      ,trst_b_i             => inject_trst_b
-      ,tlr_i                => inject_tlr
-      ,sel_i                => sel_inject
-      ,capture_dr_i         => inject_capture_dr
-      ,shift_dr_i           => inject_shift_dr
-      ,update_dr_i          => inject_update_dr
-      ,tdi_i                => inject_tdi
-      ,tdo_o                => tdo_inject
-      ,data_i               => diff
-      ,data_o               => inject_tck_domain
-      );
-
     status <= arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
 
-    ins_jtag_tdr_status : jtag_tdr_in
+    ins_tap : PicoSoC_tap
       port map
-      (tck_i                => inject_tck
-      ,trst_b_i             => inject_trst_b
-      ,sel_i                => sel_status
-      ,capture_dr_i         => inject_capture_dr
-      ,shift_dr_i           => inject_shift_dr
-      ,update_dr_i          => inject_update_dr
-      ,tdi_i                => inject_tdi
-      ,tdo_o                => tdo_status
-      ,data_i               => status
+      (clk_i                => clk
+      ,arst_b_i             => arst_b_supervisor
+      ,jtag_ini_i           => inject_ini
+      ,jtag_tgt_o           => inject_tgt
+      ,diff_i               => diff
+      ,status_i             => status
+      ,inject_error_o       => inject_error_jtag
       );
-
-    gen_inject_sync: for i in 0 to 3-1
-    generate
-      ins_inject_sync : sync2dffrn
-        port map
-        (clk_i              => clk
-        ,arst_b_i           => arst_b_supervisor
-        ,d_i                => inject_tck_domain(i)
-        ,q_o                => inject_error_jtag(i)
-        );
-    end generate gen_inject_sync;
   end generate gen_debug_jtag;
 
   gen_debug_jtag_b: if DEBUG_ENABLE = False
