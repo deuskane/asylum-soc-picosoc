@@ -104,9 +104,11 @@ CAPI=2:
 #                               inside uart_core) ; top : USER_CPU_DEBUG_ENABLE and
 #                               SUPERVISOR_CPU_DEBUG_ENABLE in the USER / SUPERVISOR groups of
 #                               generics
+# 2026-11-24  4.5.0    mrosiere top : HWLA_DEPTH, HWLA_PRE_TRIGGER, HWLA_TIMESTAMP_WIDTH (HWLA of
+#                               PicoSoC_hwla, were 64, 32, 16) ; doc : page jtag names uart_core
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.4.0
+name        : asylum:soc:PicoSoC:4.5.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -2158,6 +2160,9 @@ targets:
 
       # Debug
       - DEBUG_ENABLE=true
+      - HWLA_DEPTH=128
+      - HWLA_PRE_TRIGGER=48
+      - HWLA_TIMESTAMP_WIDTH=24
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
@@ -2821,6 +2826,24 @@ parameters :
     description : Baud rate of the UART of the HWLA captures (DEBUG_ENABLE)
     datatype    : int
     default     : 115200
+    paramtype   : generic
+
+  HWLA_DEPTH :
+    description : Samples of a capture of the HWLA, power of 2 (DEBUG_ENABLE)
+    datatype    : int
+    default     : 64
+    paramtype   : generic
+
+  HWLA_PRE_TRIGGER :
+    description : Samples of the HWLA before the trigger sample, 0 to HWLA_DEPTH-1 (DEBUG_ENABLE)
+    datatype    : int
+    default     : 32
+    paramtype   : generic
+
+  HWLA_TIMESTAMP_WIDTH :
+    description : Width of the timestamp of a sample of the HWLA (DEBUG_ENABLE)
+    datatype    : int
+    default     : 16
     paramtype   : generic
 
   JTAG_BAUD_RATE :

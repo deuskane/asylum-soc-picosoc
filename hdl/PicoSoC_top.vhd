@@ -56,6 +56,8 @@
 -- 2026-11-23  2.20     mrosiere HWLA_BAUD_RATE (UART of the HWLA, was 115200)
 -- 2026-11-23  2.21     mrosiere debug_mux_sel_i selects the function of the
 --                               UART pads (was the two MSBs of switch_i)
+-- 2026-11-24  2.22     mrosiere HWLA_DEPTH, HWLA_PRE_TRIGGER,
+--                               HWLA_TIMESTAMP_WIDTH (were 64, 32, 16)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -72,6 +74,9 @@ entity PicoSoC_top is
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
+    ;HWLA_DEPTH                  : positive := 64          -- DEBUG_ENABLE : samples of a capture of the HWLA (power of 2)
+    ;HWLA_PRE_TRIGGER            : natural  := 32          -- DEBUG_ENABLE : samples of the HWLA before the trigger sample (0 to HWLA_DEPTH-1)
+    ;HWLA_TIMESTAMP_WIDTH        : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample of the HWLA
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
@@ -538,6 +543,9 @@ begin  -- architecture rtl
       generic map
       (FSYS_INT             => FSYS_INT
       ,HWLA_BAUD_RATE       => HWLA_BAUD_RATE
+      ,HWLA_DEPTH           => HWLA_DEPTH
+      ,HWLA_PRE_TRIGGER     => HWLA_PRE_TRIGGER
+      ,HWLA_TIMESTAMP_WIDTH => HWLA_TIMESTAMP_WIDTH
       )
       port map
       (clk_i                => clk

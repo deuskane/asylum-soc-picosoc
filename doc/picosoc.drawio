@@ -1705,7 +1705,7 @@
         <mxCell id="picosoc-jtag-36" value="PicoSoC_hwla" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="640" y="200" width="110" height="20" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-37" value="hwla, uart_tx_axis : TX only&lt;br&gt;(DEBUG_ENABLE, else 1)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-37" value="hwla, uart_core TX only (HWLA_BAUD_RATE)&lt;br&gt;(DEBUG_ENABLE, else 1)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
           <mxGeometry x="650" y="225" width="200" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-38" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
@@ -1732,7 +1732,7 @@
         <mxCell id="picosoc-jtag-43" value="PicoSoC_jtag_over_uart" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="640" y="280" width="170" height="20" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-44" value="jtag_bitbang, uart_rx_axis,&lt;br&gt;uart_tx_axis (JTAG_BAUD_RATE),&lt;br&gt;remote_bitbang of OpenOCD" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-44" value="jtag_bitbang, uart_core&lt;br&gt;(TX and RX, JTAG_BAUD_RATE),&lt;br&gt;remote_bitbang of OpenOCD" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
           <mxGeometry x="650" y="305" width="200" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-45" value="only with a TAP in the chain ; SRST not connected" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">

@@ -10,8 +10,10 @@
 -- Standard   : VHDL'2008
 -------------------------------------------------------------------------------
 -- Description: HWLA (logic analyzer) of PicoSoC_top and its UART
---              * hwla of asylum-debug-hwla : 64 samples, 32 before the
---                trigger, 16-bit timestamp, changes only ; probe_i is
+--              * hwla of asylum-debug-hwla : HWLA_DEPTH samples (64 by
+--                default), HWLA_PRE_TRIGGER before the trigger (32),
+--                HWLA_TIMESTAMP_WIDTH-bit timestamp (16), changes only ;
+--                probe_i is
 --                unconstrained (the width of the probes comes from the
 --                actual : map a signal, GHDL 6.0.0 crashes on an expression)
 --              * captures sent byte per byte on uart_tx_o : uart_core
@@ -29,6 +31,8 @@
 -- 2026-11-23  1.1      mrosiere HWLA_BAUD_RATE (was the constant 115200)
 -- 2026-11-23  1.2      mrosiere uart_core (TX only) in place of uart_tx_axis
 --                               and uart_baud_rate_gen
+-- 2026-11-24  1.3      mrosiere HWLA_DEPTH, HWLA_PRE_TRIGGER,
+--                               HWLA_TIMESTAMP_WIDTH (were 64, 32, 16)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -42,6 +46,9 @@ entity PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
     ;HWLA_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART of the captures
+    ;HWLA_DEPTH       : positive := 64         -- Samples of a capture (power of 2) : a few tens of instructions
+    ;HWLA_PRE_TRIGGER : natural  := 32         -- Samples before the trigger sample (0 to HWLA_DEPTH-1)
+    ;HWLA_TIMESTAMP_WIDTH : natural := 16      -- Timestamp of a sample (16 : a sample at least every 65536 cycles)
     );
   port
     (clk_i            : in  std_logic
@@ -69,9 +76,9 @@ begin  -- architecture rtl
 
   ins_hwla : hwla
     generic map
-    (DEPTH                => 64    -- Small RAM (64 x probes + timestamp) : a few tens of instructions
-    ,PRE_TRIGGER          => 32    -- Half of the capture before the trigger
-    ,TIMESTAMP_WIDTH      => 16    -- A sample at least every 65536 cycles
+    (DEPTH                => HWLA_DEPTH
+    ,PRE_TRIGGER          => HWLA_PRE_TRIGGER
+    ,TIMESTAMP_WIDTH      => HWLA_TIMESTAMP_WIDTH
     ,CHANGE_ONLY          => true  -- A CPU waiting on the bus fills no sample
     ,TDATA_WIDTH          => 8     -- One byte per beat, for the UART
     )
