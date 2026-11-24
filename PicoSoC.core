@@ -99,9 +99,14 @@ CAPI=2:
 #                               PicoSoC_jtag_over_uart ; HWLA_BAUD_RATE ; debug_mux_sel_i
 #                               (function of the UART pads, was the switch MSBs ; NG-MEDIUM :
 #                               4 user switches) ; core : one YAML anchor per configuration
+# 2026-11-23  4.4.0    mrosiere uart_core (asylum:communication:uart 3.1.0) in PicoSoC_hwla
+#                               (transmitter only) and PicoSoC_jtag_over_uart (RX synchronizer
+#                               inside uart_core) ; top : USER_CPU_DEBUG_ENABLE and
+#                               SUPERVISOR_CPU_DEBUG_ENABLE in the USER / SUPERVISOR groups of
+#                               generics
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.3.0
+name        : asylum:soc:PicoSoC:4.4.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -621,7 +626,7 @@ filesets:
       - ">=asylum:component:clock_divider:1.0.0"
       - ">=asylum:component:GPIO:1.0.0"
       - ">=asylum:component:crc:1.0.0"
-      - ">=asylum:communication:uart:3.0.0"
+      - ">=asylum:communication:uart:3.1.0" # uart_core
       - ">=asylum:communication:SPI:1.0.0"
       - ">=asylum:infrastructure:icn:1.0.0"
       - ">=asylum:system:GIC:2.0.0"

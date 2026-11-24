@@ -71,8 +71,6 @@ entity PicoSoC_top is
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
-    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
-    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
@@ -80,6 +78,7 @@ entity PicoSoC_top is
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
+    ;USER_CPU_DEBUG_ENABLE       : boolean  := False       -- Debug unit of the user CPU of every cluster (cpu_wrapper) : TAPs in the JTAG chain
     ;USER_ICN_TARGET_SEL         : string   := "or"
     ;USER_ICN_MASTER_SEL         : string   := "fix"
     ;USER_RAM1_DEPTH             : natural  := 128         -- Up to 128 bytes
@@ -106,6 +105,7 @@ entity PicoSoC_top is
 
     -- SUPERVISOR SoC
     ;SUPERVISOR                  : boolean  := True 
+    ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean  := False       -- Debug unit of the supervisor CPU (cpu_wrapper) : its TAP in the JTAG chain
     ;SUPERVISOR_ICN_TARGET_SEL   : string   := "or"
     ;SUPERVISOR_ICN_MASTER_SEL   : string   := "fix"
     ;SUPERVISOR_RAM_DEPTH        : natural  := 128         -- Up to 128 bytes
