@@ -5,48 +5,41 @@
 -- File       : tb_PicoSoC_bitbang_pkg.vhd
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
--- Description: JTAG over the UART pads (switches 11) in tb_PicoSoC : the
---              bytes of the OpenOCD remote_bitbang adapter (as the bitbang
---              driver of OpenOCD 0.12 sends them), sent to uart_rx_i with
---              the UART VIP (cfg.bitbang) ; the answers of jtag_bitbang to
---              'R' are received on the TX pad by the process p_bitbang of
---              tb_PicoSoC (t_bitbang_rsp)
---              * bitbang_send  : one command byte
---              * bitbang_tms   : TCK cycles with a TMS sequence, TCK low at
---                the end (bitbang_state_move of OpenOCD)
---              * bitbang_reset : Test-Logic-Reset, then Run-Test/Idle
---              * bitbang_idle  : Run-Test/Idle cycles
---              * bitbang_dmi   : DMI access of a RISC-V DTM (IR DMI already
+-- Description: JTAG over the UART pads (debug_mux_sel_i 11) in tb_PicoSoC,
+--              PicoSoC part : the scenarios send the bytes of the OpenOCD
+--              remote_bitbang adapter with the remote_bitbang BFM
+--              rbb_bfm_pkg of asylum-verification-uvvm (UART frames on
+--              uart_rx_i, answers to 'R' received on the TX pad by
+--              rbb_uart_monitor in tb_PicoSoC)
+--              * rbb_config  : BFM configuration of tb_PicoSoC (UART frames
+--                at JTAG_BAUD_RATE, timeout of the testbench)
+--              * bitbang_reset, bitbang_write_ir, bitbang_scan_dr : one BFM
+--                call each (rbb_reset, rbb_write_ir, rbb_scan_dr) with the
+--                configuration of tb_PicoSoC and the JTAG BFM configuration
+--                of a TAP of the chain (jtag_config of tb_PicoSoC_jtag_pkg)
+--              * bitbang_dmi : DMI access of a RISC-V DTM (IR DMI already
 --                selected) : request scan, idle cycles, nop scan that reads
 --                the result (never busy at the byte rate of the UART)
---              * bitbang_write_ir, bitbang_scan_dr : IR / DR scan from
---                Run-Test/Idle to Run-Test/Idle, of the target TAP of the
---                JTAG BFM configuration (head / tail fields : the other TAPs
---                in BYPASS, as jtag_write_ir / jtag_scan_dr of the BFM) ;
---                each bit : TCK low with TMS and TDI, 'R', TCK high
---              Same jobs as tb_bitbang_bfm_pkg of asylum-debug-jtag, on the
---              records of tb_PicoSoC (a remote_bitbang BFM in
---              asylum-verification-uvvm would serve both)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created
+-- 2026-11-24  1.1      mrosiere Bytes, TMS moves, scans and answers by
+--                               rbb_bfm_pkg (asylum:verification:uvvm
+--                               1.3.0), one BFM call per helper
 -------------------------------------------------------------------------------
 
 library ieee;
 use     ieee.std_logic_1164.all;
-use     ieee.numeric_std.all;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
 
-library bitvis_vip_uart;
-use     bitvis_vip_uart.uart_bfm_pkg.all;
-
 library asylum_uvvm;
 use     asylum_uvvm.jtag_bfm_pkg.all;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.WardRV_debug_pkg.all;
@@ -57,42 +50,17 @@ use     work.tb_PicoSoC_jtag_pkg.all;
 
 package tb_PicoSoC_bitbang_pkg is
 
-  -- Answers kept : longer than the longest scan of the scenarios
-  constant C_BITBANG_DEPTH : positive := 256;
-
-  -- Answers of jtag_bitbang to 'R', received on the TX pad
-  type t_bitbang_rsp is record
-    cnt        : natural;                                      -- answers received since the start
-    tdo        : std_logic_vector(C_BITBANG_DEPTH-1 downto 0); -- the last answers, the last one in the LSB
-  end record t_bitbang_rsp;
-
-  constant C_BITBANG_RSP_INIT : t_bitbang_rsp := (cnt => 0, tdo => (others => '0'));
-
-  -- One command byte
-  procedure bitbang_send
-    (constant cmd      : in    character
-    ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    );
-
-  -- TCK cycles with the TMS sequence (left first), then TCK low
-  procedure bitbang_tms
-    (constant tms      : in    std_logic_vector
-    ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    );
+  -- remote_bitbang BFM configuration : UART frames of cfg.bitbang
+  -- (JTAG_BAUD_RATE), answers waited for cfg.timeout
+  function rbb_config
+    (cfg      : t_tb_cfg
+    ) return t_rbb_bfm_config;
 
   -- Test-Logic-Reset (5 TCK with TMS = 1), then Run-Test/Idle
   procedure bitbang_reset
     (constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    );
-
-  -- num_cycles TCK cycles in Run-Test/Idle
-  procedure bitbang_idle
-    (constant num_cycles : in    natural
-    ;constant cfg        : in    t_tb_cfg
-    ;signal   uart_rx    : inout std_logic
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
     );
 
   -- IR scan of the target TAP of config (ones to the other TAPs) ; checks
@@ -101,8 +69,9 @@ package tb_PicoSoC_bitbang_pkg is
     (constant ir_value : in    std_logic_vector
     ;constant msg      : in    string
     ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    ;signal   rsp      : in    t_bitbang_rsp
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ;constant config   : in    t_jtag_bfm_config
     );
 
@@ -113,8 +82,9 @@ package tb_PicoSoC_bitbang_pkg is
     ;variable data_out   : out   std_logic_vector
     ;constant msg        : in    string
     ;constant cfg        : in    t_tb_cfg
-    ;signal   uart_rx    : inout std_logic
-    ;signal   rsp        : in    t_bitbang_rsp
+    ;signal   clk        : in    std_logic
+    ;signal   rbb_if     : inout t_rbb_if
+    ;signal   bitbang    : in    t_rbb_answers
     ;constant config     : in    t_jtag_bfm_config
     );
 
@@ -132,156 +102,58 @@ package tb_PicoSoC_bitbang_pkg is
     ;variable rdata    : out   std_logic_vector(32-1 downto 0)
     ;constant cfg      : in    t_tb_cfg
     ;constant tap      : in    natural
-    ;signal   uart_rx  : inout std_logic
-    ;signal   rsp      : in    t_bitbang_rsp
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     );
 
 end package tb_PicoSoC_bitbang_pkg;
 
 package body tb_PicoSoC_bitbang_pkg is
 
-  procedure bitbang_send
-    (constant cmd      : in    character
-    ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    ) is
+  function rbb_config
+    (cfg      : t_tb_cfg
+    ) return t_rbb_bfm_config is
+    variable v_config : t_rbb_bfm_config := C_RBB_BFM_CONFIG_DEFAULT;
   begin
-    uart_transmit(data_value => std_logic_vector(to_unsigned(character'pos(cmd), 8)),
-                  msg        => "remote_bitbang '" & cmd & "'",
-                  tx         => uart_rx,
-                  config     => cfg.bitbang,
-                  scope      => C_TB_SCOPE);
-  end procedure;
-
-  -- '0'..'7' : TCK, TMS, TDI = bits 2, 1, 0
-  procedure bitbang_write
-    (constant tck      : in    std_logic
-    ;constant tms      : in    std_logic
-    ;constant tdi      : in    std_logic
-    ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    ) is
-  begin
-    bitbang_send(character'val(character'pos('0') + to_integer(unsigned'(tck & tms & tdi))), cfg, uart_rx);
-  end procedure;
-
-  procedure bitbang_tms
-    (constant tms      : in    std_logic_vector
-    ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    ) is
-  begin
-    for i in tms'range loop
-      bitbang_write('0', tms(i), '0', cfg, uart_rx);
-      bitbang_write('1', tms(i), '0', cfg, uart_rx);
-    end loop;
-    bitbang_write('0', tms(tms'right), '0', cfg, uart_rx);
-  end procedure;
+    v_config.uart        := true;
+    v_config.uart_config := cfg.bitbang;
+    v_config.timeout     := cfg.timeout;
+    return v_config;
+  end function;
 
   procedure bitbang_reset
     (constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
     ) is
   begin
-    bitbang_tms("111110", cfg, uart_rx);
-    log(ID_BFM, "bitbang_reset : Test-Logic-Reset, Run-Test/Idle", C_TB_SCOPE);
-  end procedure;
-
-  procedure bitbang_idle
-    (constant num_cycles : in    natural
-    ;constant cfg        : in    t_tb_cfg
-    ;signal   uart_rx    : inout std_logic
-    ) is
-  begin
-    for i in 1 to num_cycles loop
-      bitbang_tms("0", cfg, uart_rx);
-    end loop;
-  end procedure;
-
-  -- IR (ir) or DR scan from Run-Test/Idle to Run-Test/Idle : head bits,
-  -- data, tail bits (LSB first), the answers of the data bits in data_out
-  procedure bitbang_scan
-    (constant ir         : in    boolean
-    ;constant data_value : in    std_logic_vector
-    ;variable data_out   : out   std_logic_vector
-    ;constant cfg        : in    t_tb_cfg
-    ;signal   uart_rx    : inout std_logic
-    ;signal   rsp        : in    t_bitbang_rsp
-    ;constant config     : in    t_jtag_bfm_config
-    ) is
-    alias    v_data      : std_logic_vector(data_value'length-1 downto 0) is data_value;
-    variable v_out       : std_logic_vector(data_value'length-1 downto 0);
-    variable v_head      : natural;
-    variable v_tail      : natural;
-    variable v_pad       : std_logic;
-    variable v_tms       : std_logic;
-    variable v_tdi       : std_logic;
-    variable v_nb        : natural;
-    constant C_FIRST     : natural := rsp.cnt;
-  begin
-    if ir
-    then
-      v_head := config.head_ir;
-      v_tail := config.tail_ir;
-      v_pad  := '1';  -- BYPASS
-    else
-      v_head := config.head_dr;
-      v_tail := config.tail_dr;
-      v_pad  := '0';
-    end if;
-    v_nb := v_head + v_data'length + v_tail;
-    check_value(v_nb <= C_BITBANG_DEPTH, TB_ERROR, "bitbang scan longer than C_BITBANG_DEPTH", C_TB_SCOPE, ID_NEVER);
-
-    -- Run-Test/Idle -> Select-DR (-> Select-IR) -> Capture -> Shift
-    if ir
-    then
-      bitbang_tms("1100", cfg, uart_rx);
-    else
-      bitbang_tms("100" , cfg, uart_rx);
-    end if;
-
-    -- Shift, the last bit with TMS = 1 (Exit1)
-    for i in 0 to v_nb-1 loop
-      v_tms := '1' when i = v_nb-1 else '0';
-      if (i >= v_head) and (i < v_head + v_data'length)
-      then
-        v_tdi := v_data(i-v_head);
-      else
-        v_tdi := v_pad;
-      end if;
-      bitbang_write('0', v_tms, v_tdi, cfg, uart_rx);
-      bitbang_send ('R', cfg, uart_rx);
-      bitbang_write('1', v_tms, v_tdi, cfg, uart_rx);
-    end loop;
-
-    -- Exit1 -> Update -> Run-Test/Idle
-    bitbang_tms("10", cfg, uart_rx);
-
-    -- Answers : bit i of the scan is the answer C_FIRST+i
-    if rsp.cnt < C_FIRST + v_nb
-    then
-      wait until rsp.cnt >= C_FIRST + v_nb for cfg.timeout;
-    end if;
-    check_value(rsp.cnt = C_FIRST + v_nb, ERROR, "bitbang scan : " & integer'image(rsp.cnt - C_FIRST) & " answers to 'R' for " & integer'image(v_nb) & " bits", C_TB_SCOPE, ID_NEVER);
-    for i in 0 to v_data'length-1 loop
-      v_out(i) := rsp.tdo(v_nb-1-(v_head+i));
-    end loop;
-    data_out := v_out;
+    rbb_reset(msg         => "Test-Logic-Reset, Run-Test/Idle",
+              clk         => clk,
+              rbb_if      => rbb_if,
+              scope       => C_TB_SCOPE,
+              config      => rbb_config(cfg),
+              jtag_config => jtag_config(cfg.jtag.nb_tap));  -- No TRST*
   end procedure;
 
   procedure bitbang_write_ir
     (constant ir_value : in    std_logic_vector
     ;constant msg      : in    string
     ;constant cfg      : in    t_tb_cfg
-    ;signal   uart_rx  : inout std_logic
-    ;signal   rsp      : in    t_bitbang_rsp
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ;constant config   : in    t_jtag_bfm_config
     ) is
-    variable v_capture : std_logic_vector(ir_value'length-1 downto 0);
   begin
-    bitbang_scan(true, ir_value, v_capture, cfg, uart_rx, rsp, config);
-    check_value(v_capture(1 downto 0), "01", ERROR, "bitbang_write_ir(x" & to_hstring(ir_value) & ") Capture-IR. " & msg, C_TB_SCOPE, msg_id => ID_NEVER);
-    log(ID_BFM, "bitbang_write_ir(x" & to_hstring(ir_value) & ") completed. " & msg, C_TB_SCOPE);
+    rbb_write_ir(ir_value    => ir_value,
+                 msg         => msg,
+                 clk         => clk,
+                 rbb_if      => rbb_if,
+                 answers     => bitbang,
+                 scope       => C_TB_SCOPE,
+                 config      => rbb_config(cfg),
+                 jtag_config => config);
   end procedure;
 
   procedure bitbang_scan_dr
@@ -289,15 +161,21 @@ package body tb_PicoSoC_bitbang_pkg is
     ;variable data_out   : out   std_logic_vector
     ;constant msg        : in    string
     ;constant cfg        : in    t_tb_cfg
-    ;signal   uart_rx    : inout std_logic
-    ;signal   rsp        : in    t_bitbang_rsp
+    ;signal   clk        : in    std_logic
+    ;signal   rbb_if     : inout t_rbb_if
+    ;signal   bitbang    : in    t_rbb_answers
     ;constant config     : in    t_jtag_bfm_config
     ) is
-    variable v_out       : std_logic_vector(data_value'length-1 downto 0);
   begin
-    bitbang_scan(false, data_value, v_out, cfg, uart_rx, rsp, config);
-    log(ID_BFM, "bitbang_scan_dr(x" & to_hstring(data_value) & ") => x" & to_hstring(v_out) & ". " & msg, C_TB_SCOPE);
-    data_out := v_out;
+    rbb_scan_dr(data_value  => data_value,
+                data_out    => data_out,
+                msg         => msg,
+                clk         => clk,
+                rbb_if      => rbb_if,
+                answers     => bitbang,
+                scope       => C_TB_SCOPE,
+                config      => rbb_config(cfg),
+                jtag_config => config);
   end procedure;
 
   procedure bitbang_dmi
@@ -307,17 +185,29 @@ package body tb_PicoSoC_bitbang_pkg is
     ;variable rdata    : out   std_logic_vector(32-1 downto 0)
     ;constant cfg      : in    t_tb_cfg
     ;constant tap      : in    natural
-    ;signal   uart_rx  : inout std_logic
-    ;signal   rsp      : in    t_bitbang_rsp
+    ;signal   clk      : in    std_logic
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ) is
     -- Run-Test/Idle cycles after a dmi scan (dtmcs.idle)
     constant C_DMI_IDLE  : natural := 5;
     variable v_dmi       : std_logic_vector(DMI_ABITS+32+2-1 downto 0);
+
+    procedure idle(constant msg : in string) is
+    begin
+      rbb_idle(num_cycles => C_DMI_IDLE,
+               msg        => msg,
+               clk        => clk,
+               rbb_if     => rbb_if,
+               scope      => C_TB_SCOPE,
+               config     => rbb_config(cfg));
+    end procedure;
+
   begin
-    bitbang_scan_dr(addr & wdata & op, v_dmi, "dmi request", cfg, uart_rx, rsp, jtag_config(cfg, tap));
-    bitbang_idle   (C_DMI_IDLE, cfg, uart_rx);
-    bitbang_scan_dr(addr & x"00000000" & DMI_OP_NOP, v_dmi, "dmi result", cfg, uart_rx, rsp, jtag_config(cfg, tap));
-    bitbang_idle   (C_DMI_IDLE, cfg, uart_rx);
+    bitbang_scan_dr(addr & wdata       & op        , v_dmi, "dmi request", cfg, clk, rbb_if, bitbang, jtag_config(cfg, tap));
+    idle           ("after the dmi request");
+    bitbang_scan_dr(addr & x"00000000" & DMI_OP_NOP, v_dmi, "dmi result" , cfg, clk, rbb_if, bitbang, jtag_config(cfg, tap));
+    idle           ("after the dmi result");
     check_value    (v_dmi(1 downto 0), DMI_OP_NOP, ERROR, "DMI access 0x" & to_hstring(addr) & " : result op (not busy)", C_TB_SCOPE, msg_id => ID_NEVER);
     log(ID_BFM, "DMI 0x" & to_hstring(addr) & " : op " & to_string(op) & ", 0x" & to_hstring(wdata) & " => 0x" & to_hstring(v_dmi(33 downto 2)), C_TB_SCOPE);
     rdata := v_dmi(33 downto 2);

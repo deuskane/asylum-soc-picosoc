@@ -23,6 +23,8 @@
 -- 2026-11-23  1.1      mrosiere UART pads to JTAG over the UART with
 --                               debug_mux_sel_i (was the switch MSBs) :
 --                               switches 0x1A, 0x25
+-- 2026-11-24  1.2      mrosiere remote_bitbang BFM rbb_bfm_pkg (rbb_if, answers
+--                               t_rbb_answers)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -30,6 +32,9 @@ use     ieee.std_logic_1164.all;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
+
+library asylum_uvvm;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.WardRV_debug_pkg.all;
@@ -48,8 +53,8 @@ package tb_PicoSoC_bitbang_cpu_pkg is
     ;signal   switch   : out   std_logic_vector
     ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     );
 
 end package tb_PicoSoC_bitbang_cpu_pkg;
@@ -62,8 +67,8 @@ package body tb_PicoSoC_bitbang_cpu_pkg is
     ;signal   switch   : out   std_logic_vector
     ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ) is
     constant C_TAP       : natural := cfg.jtag.user;
     constant C_SW1       : std_logic_vector(8-1 downto 0) := x"1A";
@@ -80,7 +85,7 @@ package body tb_PicoSoC_bitbang_cpu_pkg is
       ;variable rdata  : out std_logic_vector(32-1 downto 0)
       ) is
     begin
-      bitbang_dmi(op, addr, wdata, rdata, cfg, C_TAP, uart_rx, bitbang);
+      bitbang_dmi(op, addr, wdata, rdata, cfg, C_TAP, clk, rbb_if, bitbang);
     end procedure;
 
   begin
@@ -89,15 +94,15 @@ package body tb_PicoSoC_bitbang_cpu_pkg is
     set_slv    (C_MUX_BITBANG, clk, mux_sel);
     set_slv    (C_SW1, clk, switch);
     wait_value (led0, C_SW1, cfg, "LED0 = switches 0x" & to_hstring(C_SW1) & " : UART pads to JTAG over the UART");
-    bitbang_reset(cfg, uart_rx);
+    bitbang_reset(cfg, clk, rbb_if);
 
     -- DTM
-    bitbang_write_ir(JTAG_IR_DTMCS, "dtmcs", cfg, uart_rx, bitbang, jtag_config(cfg, C_TAP));
-    bitbang_scan_dr (x"00000000", v_data, "dtmcs", cfg, uart_rx, bitbang, jtag_config(cfg, C_TAP));
+    bitbang_write_ir(JTAG_IR_DTMCS, "dtmcs", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+    bitbang_scan_dr (x"00000000", v_data, "dtmcs", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
     check_value     (v_data, x"00005071", ERROR, "user CPU dtmcs : idle 5, dmistat 0, abits 7, version 1", C_TB_SCOPE);
 
     -- Halt
-    bitbang_write_ir(JTAG_IR_DMI, "dmi", cfg, uart_rx, bitbang, jtag_config(cfg, C_TAP));
+    bitbang_write_ir(JTAG_IR_DMI, "dmi", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
     dmi(DMI_OP_WRITE, DM_DMCONTROL, x"00000001", v_data);                           -- dmactive
     dmi(DMI_OP_WRITE, DM_DMCONTROL, x"80000001", v_data);                           -- haltreq
     for i in 1 to 20 loop

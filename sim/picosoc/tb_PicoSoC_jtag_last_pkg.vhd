@@ -25,6 +25,8 @@
 -- 2026-11-23  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere UART pads with debug_mux_sel_i (was the switch
 --                               MSBs) : switches 0x0C, 0x09
+-- 2026-11-24  1.2      mrosiere remote_bitbang BFM rbb_bfm_pkg (rbb_if, answers
+--                               t_rbb_answers)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -35,6 +37,7 @@ context uvvm_util.uvvm_util_context;
 
 library asylum_uvvm;
 use     asylum_uvvm.jtag_bfm_pkg.all;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.WardRV_debug_pkg.all;
@@ -55,8 +58,8 @@ package tb_PicoSoC_jtag_last_pkg is
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     );
 
 end package tb_PicoSoC_jtag_last_pkg;
@@ -71,8 +74,8 @@ package body tb_PicoSoC_jtag_last_pkg is
     ;signal   led0     : in    std_logic_vector
     ;signal   tdo_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ) is
     constant C_NB      : positive := cfg.jtag.nb_tap;
     constant C_TAP     : natural  := cfg.jtag.user;
@@ -111,11 +114,11 @@ package body tb_PicoSoC_jtag_last_pkg is
     set_slv         (C_MUX_BITBANG, clk, mux_sel);
     set_slv         (C_SW11, clk, switch);
     wait_value      (led0, C_SW11, cfg, "LED0 = switches 0x" & to_hstring(C_SW11) & " : UART pads to JTAG over the UART");
-    bitbang_reset   (cfg, uart_rx);
-    bitbang_scan_dr (v_exp xor v_exp, v_ids, "IDCODE of every TAP", cfg, uart_rx, bitbang, jtag_config(C_NB));
+    bitbang_reset   (cfg, clk, rbb_if);
+    bitbang_scan_dr (v_exp xor v_exp, v_ids, "IDCODE of every TAP", cfg, clk, rbb_if, bitbang, jtag_config(C_NB));
     check_value     (v_ids, v_exp, ERROR, "IDCODE of every TAP through JTAG over the UART", C_TB_SCOPE);
-    bitbang_write_ir(JTAG_IR_DMI, "dmi", cfg, uart_rx, bitbang, jtag_config(cfg, C_TAP));
-    bitbang_dmi     (DMI_OP_READ, DM_DMSTATUS, x"00000000", v_data, cfg, C_TAP, uart_rx, bitbang);
+    bitbang_write_ir(JTAG_IR_DMI, "dmi", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+    bitbang_dmi     (DMI_OP_READ, DM_DMSTATUS, x"00000000", v_data, cfg, C_TAP, clk, rbb_if, bitbang);
     check_value     (v_data(11 downto 8), "1100", ERROR, "dmstatus of the user CPU through JTAG over the UART : allrunning", C_TB_SCOPE);
   end procedure;
 

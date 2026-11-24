@@ -34,6 +34,9 @@
 --                               line)
 -- 2026-11-23  1.10     mrosiere mux_sel (debug_mux_sel_i) to the scenarios of
 --                               the UART pads
+-- 2026-11-24  1.11     mrosiere rbb_if, bitbang (t_rbb_answers) of the
+--                               remote_bitbang BFM to the scenarios bitbang_*,
+--                               jtag_last
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -47,13 +50,13 @@ use     bitvis_vip_i2c.i2c_bfm_pkg.all;
 
 library asylum_uvvm;
 use     asylum_uvvm.jtag_bfm_pkg.all;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.string_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
-use     work.tb_PicoSoC_bitbang_pkg.all;
 
 package tb_PicoSoC_tests_pkg is
 
@@ -101,7 +104,8 @@ package tb_PicoSoC_tests_pkg is
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -176,7 +180,8 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   cts_pad  : in    std_logic
     ;signal   rts_pad  : in    std_logic
     ;signal   jtag_if  : inout t_jtag_if
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
     ;signal   debug_tx : in    std_logic
@@ -225,16 +230,16 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_jtag_cpu_pkg.run(cfg, true , clk, switch, mux_sel, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "bitbang_chain")
     then
-      work.tb_PicoSoC_bitbang_chain_pkg.run(cfg, clk, switch, mux_sel, led0, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_chain_pkg.run(cfg, clk, switch, mux_sel, led0, rbb_if, bitbang);
     elsif string_eq(name, "bitbang_inject")
     then
-      work.tb_PicoSoC_bitbang_inject_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_inject_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, rbb_if, bitbang);
     elsif string_eq(name, "bitbang_cpu")
     then
-      work.tb_PicoSoC_bitbang_cpu_pkg.run(cfg, clk, switch, mux_sel, led0, uart_rx, bitbang);
+      work.tb_PicoSoC_bitbang_cpu_pkg.run(cfg, clk, switch, mux_sel, led0, rbb_if, bitbang);
     elsif string_eq(name, "jtag_last")
     then
-      work.tb_PicoSoC_jtag_last_pkg.run(cfg, clk, switch, mux_sel, led0, cts_pad, jtag_if, uart_rx, bitbang);
+      work.tb_PicoSoC_jtag_last_pkg.run(cfg, clk, switch, mux_sel, led0, cts_pad, jtag_if, rbb_if, bitbang);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);

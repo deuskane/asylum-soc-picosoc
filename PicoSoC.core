@@ -691,7 +691,7 @@ filesets:
       - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
-      - ">=asylum:verification:uvvm:1.2.0" # jtag_bfm_pkg (JTAG BFM, chain fields)
+      - ">=asylum:verification:uvvm:1.3.0" # jtag_bfm_pkg (JTAG BFM, chain fields), rbb_bfm_pkg (remote_bitbang BFM)
 
   #---------------------------------------
   files_ng_medium:
