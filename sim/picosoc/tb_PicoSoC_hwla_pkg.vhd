@@ -33,7 +33,8 @@
 --                  at the address of the previous sample when its fetch
 --                  strobe (ics) is set, else the instruction of the previous
 --                  sample (ROM not enabled)
---              Sample (HWLA, from the LSB) : probes, then a 16-bit timestamp.
+--              Sample (HWLA, from the LSB) : probes, then the timestamp
+--              (HWLA_TIMESTAMP_WIDTH bits).
 --              Probes (PicoSoC_top) : cs, re, we, ready, address, write data,
 --              read data of the data bus, then fetch strobe (ics), address
 --              and instruction of the instruction bus.
@@ -47,6 +48,8 @@
 --                               follows the fetch strobe of the previous one
 -- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
 --                               read of the switches of the next iteration
+-- 2026-11-24  1.3      mrosiere DEPTH, PRE_TRIGGER and timestamp width from
+--                               the generics of the DUT (cfg)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -96,10 +99,10 @@ package body tb_PicoSoC_hwla_pkg is
     ;signal   rom_addr      : out   std_logic_vector
     ;signal   rom_data      : in    std_logic_vector
     ) is
-    -- Configuration of the HWLA in PicoSoC_top
-    constant C_DEPTH        : positive := 64;
-    constant C_PRE_TRIGGER  : natural  := 32;
-    constant C_TS_WIDTH     : positive := 16;
+    -- Configuration of the HWLA in PicoSoC_top (generics HWLA_*)
+    constant C_DEPTH        : positive := cfg.hwla_depth;
+    constant C_PRE_TRIGGER  : natural  := cfg.hwla_pre_trigger;
+    constant C_TS_WIDTH     : positive := cfg.hwla_ts_width;
     constant C_BIT_TIME     : time     := 1 sec / 115200;
 
     -- Sample : probes (fields below, from the LSB), then the timestamp
@@ -239,7 +242,7 @@ package body tb_PicoSoC_hwla_pkg is
     -- Capture size : the next capture starts after the extraction of this
     -- one, not a few cycles after its last sample
     check_value(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1)) > 1000, ERROR,
-                "Next capture : first sample " & integer'image(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1))) & " cycles (modulo 65536) after the capture", C_TB_SCOPE);
+                "Next capture : first sample " & integer'image(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1))) & " cycles (modulo 2**C_TS_WIDTH) after the capture", C_TB_SCOPE);
 
     -- Each pair of consecutive samples : timestamps, changes only (but the
     -- trigger sample and the timestamp 0), instruction bus

@@ -26,6 +26,8 @@
 --                               (esw/user.c prints a loop line at every
 --                               iteration)
 -- 2026-11-23  1.5      mrosiere C_MUX_* : codes of debug_mux_sel_i
+-- 2026-11-24  1.6      mrosiere t_tb_cfg : hwla_depth, hwla_pre_trigger,
+--                               hwla_ts_width (HWLA generics of the DUT)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -66,6 +68,9 @@ package tb_PicoSoC_bfm_pkg is
     nb_cpu     : positive;           -- user CPUs (hello)
     tmr        : boolean;            -- USER_SAFETY = "tmr" (fault_diff)
     debug      : boolean;            -- DEBUG_ENABLE (HWLA)
+    hwla_depth       : positive;     -- HWLA_DEPTH
+    hwla_pre_trigger : natural;      -- HWLA_PRE_TRIGGER
+    hwla_ts_width    : natural;      -- HWLA_TIMESTAMP_WIDTH
     fault      : boolean;            -- USER_FAULT_INJECTION with redundant CPUs : an injected error raises diff
     supervisor : boolean;            -- SUPERVISOR
     jtag       : t_jtag_chain;       -- JTAG chain

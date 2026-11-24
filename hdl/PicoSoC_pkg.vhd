@@ -188,6 +188,9 @@ component PicoSoC_hwla is
   generic
     (FSYS_INT         : positive := 50_000_000 -- Frequency of clk_i (Hz)
     ;HWLA_BAUD_RATE   : integer  := 115200     -- Baud rate of the UART of the captures
+    ;HWLA_DEPTH       : positive := 64         -- Samples of a capture (power of 2) : a few tens of instructions
+    ;HWLA_PRE_TRIGGER : natural  := 32         -- Samples before the trigger sample (0 to HWLA_DEPTH-1)
+    ;HWLA_TIMESTAMP_WIDTH : natural := 16      -- Timestamp of a sample (16 : a sample at least every 65536 cycles)
     );
   port
     (clk_i            : in  std_logic
@@ -335,6 +338,9 @@ component PicoSoC_top is
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
     ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
+    ;HWLA_DEPTH                  : positive := 64          -- DEBUG_ENABLE : samples of a capture of the HWLA (power of 2)
+    ;HWLA_PRE_TRIGGER            : natural  := 32          -- DEBUG_ENABLE : samples of the HWLA before the trigger sample (0 to HWLA_DEPTH-1)
+    ;HWLA_TIMESTAMP_WIDTH        : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample of the HWLA
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"

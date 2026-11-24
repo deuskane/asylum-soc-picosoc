@@ -53,6 +53,8 @@
 -- 2026-11-23  2.9      mrosiere debug_mux_sel_i (function of the UART pads)
 --                               driven by the scenarios (was the two MSBs of
 --                               switch_i)
+-- 2026-11-24  2.10     mrosiere HWLA_DEPTH, HWLA_PRE_TRIGGER,
+--                               HWLA_TIMESTAMP_WIDTH (HWLA of the DUT)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -94,6 +96,9 @@ entity tb_PicoSoC is
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
     ;DEBUG_ENABLE          : boolean  := True
+    ;HWLA_DEPTH            : positive := 64          -- DEBUG_ENABLE : samples of a capture
+    ;HWLA_PRE_TRIGGER      : natural  := 32          -- DEBUG_ENABLE : samples before the trigger sample
+    ;HWLA_TIMESTAMP_WIDTH  : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample
     ;USER_CPU_DEBUG_ENABLE       : boolean := False
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean := False
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
@@ -142,6 +147,9 @@ architecture tb of tb_PicoSoC is
     nb_cpu     => USER_NB_CPU,
     tmr        => USER_SAFETY = "tmr",
     debug      => DEBUG_ENABLE,
+    hwla_depth       => HWLA_DEPTH,
+    hwla_pre_trigger => HWLA_PRE_TRIGGER,
+    hwla_ts_width    => HWLA_TIMESTAMP_WIDTH,
     fault      => USER_FAULT_INJECTION and USER_SAFETY /= "none",
     supervisor => SUPERVISOR,
     jtag       => C_JTAG,
@@ -244,6 +252,9 @@ begin  -- architecture tb
     ,USER_SPI_NB_IO        => USER_SPI_NB_IO
     ,RESET_POLARITY        => RESET_POLARITY
     ,DEBUG_ENABLE          => DEBUG_ENABLE
+    ,HWLA_DEPTH            => HWLA_DEPTH
+    ,HWLA_PRE_TRIGGER      => HWLA_PRE_TRIGGER
+    ,HWLA_TIMESTAMP_WIDTH  => HWLA_TIMESTAMP_WIDTH
     ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
     ,SUPERVISOR            => SUPERVISOR

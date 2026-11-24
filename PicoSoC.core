@@ -2158,6 +2158,9 @@ targets:
 
       # Debug
       - DEBUG_ENABLE=true
+      - HWLA_DEPTH=128
+      - HWLA_PRE_TRIGGER=48
+      - HWLA_TIMESTAMP_WIDTH=24
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
@@ -2821,6 +2824,24 @@ parameters :
     description : Baud rate of the UART of the HWLA captures (DEBUG_ENABLE)
     datatype    : int
     default     : 115200
+    paramtype   : generic
+
+  HWLA_DEPTH :
+    description : Samples of a capture of the HWLA, power of 2 (DEBUG_ENABLE)
+    datatype    : int
+    default     : 64
+    paramtype   : generic
+
+  HWLA_PRE_TRIGGER :
+    description : Samples of the HWLA before the trigger sample, 0 to HWLA_DEPTH-1 (DEBUG_ENABLE)
+    datatype    : int
+    default     : 32
+    paramtype   : generic
+
+  HWLA_TIMESTAMP_WIDTH :
+    description : Width of the timestamp of a sample of the HWLA (DEBUG_ENABLE)
+    datatype    : int
+    default     : 16
     paramtype   : generic
 
   JTAG_BAUD_RATE :
