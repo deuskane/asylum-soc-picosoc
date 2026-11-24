@@ -106,9 +106,13 @@ CAPI=2:
 #                               generics
 # 2026-11-24  4.5.0    mrosiere top : HWLA_DEPTH, HWLA_PRE_TRIGGER, HWLA_TIMESTAMP_WIDTH (HWLA of
 #                               PicoSoC_hwla, were 64, 32, 16) ; doc : page jtag names uart_core
+# 2026-11-24  4.6.0    mrosiere tb : JTAG over the UART on the remote_bitbang BFM rbb_bfm_pkg
+#                               (asylum:verification:uvvm 1.3.0) ; OpenOCD + GDB co-simulation of
+#                               debug_mux_sel_i 10 and 11 (asylum:verification:openocd 1.0.0,
+#                               gdb_lib.py of WardRV 1.5.0), sim/openocd/picosoc.cfg
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.5.0
+name        : asylum:soc:PicoSoC:4.6.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
