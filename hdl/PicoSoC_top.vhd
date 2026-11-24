@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : PicoSoC
+-- Title      : PicoSoC_top
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : PicoSoC.vhd
+-- File       : PicoSoC_top.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-01-15
