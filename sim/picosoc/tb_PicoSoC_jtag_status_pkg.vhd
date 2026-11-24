@@ -26,7 +26,7 @@
 -- 2026-11-23  1.1      mrosiere Switches 0x85 (no UART line during the error)
 -- 2026-11-23  1.2      mrosiere Target TAP with the chain fields of the BFM
 --                               (jtag_config(cfg, tap))
--- 2026-11-23  1.3      mrosiere Loop line at every iteration (esw/user.c) :
+-- 2026-11-23  1.3      mrosiere Loop line at every iteration (esw/demo/user.c) :
 --                               error held until the difference flag
 -- 2026-11-23  1.4      mrosiere UART pads to JTAG with debug_mux_sel_i (was
 --                               the switch MSBs) : switches 0x1A, 0x05

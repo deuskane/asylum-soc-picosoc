@@ -411,7 +411,7 @@ begin  -- architecture tb
   end generate;
 
   -----------------------------------------------------------------------------
-  -- UART console of the integration firmwares (esw/test_<ip>.c) : logs their
+  -- UART console of the integration firmwares (esw/test/test_<ip>.c) : logs their
   -- lines (no timeout : the scenarios check what they expect) and stops on
   -- "FAIL <step>" (esw/include/test.h), whatever the scenario waits for.
   -- Other firmwares : off (a reset between two scenarios may cut a byte)

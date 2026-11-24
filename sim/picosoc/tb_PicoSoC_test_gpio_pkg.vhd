@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_gpio of tb_PicoSoC, from reset (firmware
---              esw/test_gpio.c) : pins of the 3 GPIOs of the user SoC
+--              esw/test/test_gpio.c) : pins of the 3 GPIOs of the user SoC
 --              * LED0 = 0xA5 and LED1 = 0x5A written by the firmware
 --              * switches set to 0x3C (rising edges polled by the
 --                firmware), copied into LED0, then cleared (falling edges)

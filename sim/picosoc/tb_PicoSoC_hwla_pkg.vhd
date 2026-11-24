@@ -47,7 +47,7 @@
 -- 2026-11-21  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Probe ics : the instruction of a sample
 --                               follows the fetch strobe of the previous one
--- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
+-- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/demo/user.c) :
 --                               read of the switches of the next iteration
 -- 2026-11-24  1.3      mrosiere DEPTH, PRE_TRIGGER and timestamp width from
 --                               the generics of the DUT (cfg)

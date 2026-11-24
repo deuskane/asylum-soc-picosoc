@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_uart of tb_PicoSoC, from reset (firmware
---              esw/test_uart.c) : uart_tx_o and uart_rx_i of the UART
+--              esw/test/test_uart.c) : uart_tx_o and uart_rx_i of the UART
 --              * '>' then 0x5A sent : read by polling
 --              * '>' then 0xA5 sent : read by the interrupt routine (UART
 --                source of the user GIC), copied into LED0, one interrupt

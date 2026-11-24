@@ -36,7 +36,7 @@
 -- 2026-11-22  1.0      mrosiere Created
 -- 2026-11-23  1.1      mrosiere Switches 11 : JTAG over the UART (was the
 --                               user UART)
--- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
+-- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/demo/user.c) :
 --                               echo with CTS* held (uart_echo), back to 00
 --                               after a quiet line (uart_quiet)
 -- 2026-11-23  1.3      mrosiere Functions selected by debug_mux_sel_i (was the

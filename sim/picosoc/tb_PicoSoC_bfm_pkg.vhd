@@ -10,7 +10,7 @@
 --              clk_i, reset pulse, UART line receiver (UART VIP), quiet
 --              UART line (CTS*) and echo during the loop lines, hexa
 --              conversions of the UART lines printed by the firmware and
---              result line of the integration firmwares (esw/test_<ip>.c)
+--              result line of the integration firmwares (esw/test/test_<ip>.c)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -23,7 +23,7 @@
 -- 2026-11-23  1.3      mrosiere t_tb_cfg : bitbang (UART of JTAG over the
 --                               UART pads)
 -- 2026-11-23  1.4      mrosiere uart_get_line_quiet, uart_quiet, uart_echo
---                               (esw/user.c prints a loop line at every
+--                               (esw/demo/user.c prints a loop line at every
 --                               iteration)
 -- 2026-11-23  1.5      mrosiere C_MUX_* : codes of debug_mux_sel_i
 -- 2026-11-24  1.6      mrosiere t_tb_cfg : hwla_depth, hwla_pre_trigger,

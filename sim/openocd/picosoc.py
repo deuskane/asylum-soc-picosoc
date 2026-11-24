@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------------
 # Description: gdb-multiarch -batch -x picosoc.py, on the GDB server of
 #              OpenOCD (remote_bitbang.cfg, picosoc.cfg) connected to
-#              tb_PicoSoC_openocd (firmware esw/user.c : LED0 = switches),
+#              tb_PicoSoC_openocd (firmware esw/demo/user.c : LED0 = switches),
 #              through the JTAG pins (debug_mux_sel_i 10) or JTAG over the
 #              UART (debug_mux_sel_i 11) :
 #                chain  : OpenOCD found every TAP with its IDCODE
