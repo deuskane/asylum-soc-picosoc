@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : kcpsm3 file for identity fonction
+// Title      : Supervisor of the user SoC
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : identity.c
+// File       : supervisor.c
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:

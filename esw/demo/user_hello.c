@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : kcpsm3 file for identity fonction
+// Title      : Multi-core test of the user SoC
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : identity.c
+// File       : user_hello.c
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:

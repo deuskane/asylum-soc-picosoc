@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro to define Address Map for user soc
+// Title      : Constants of the Modbus RTU protocol
 // Project    : Asylum
 //-----------------------------------------------------------------------------
 // File       : modbus_rtu.h

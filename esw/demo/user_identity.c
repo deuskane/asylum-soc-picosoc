@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : kcpsm3 file for identity fonction
+// Title      : Identity function : switches to LED0
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : identity.c
+// File       : user_identity.c
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:

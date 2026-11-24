@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title      : kcpsm3 file for identity fonction
+// Title      : Peripheral test of the user SoC
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : identity.c
+// File       : user.c
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:

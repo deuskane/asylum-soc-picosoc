@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro to define Address Map for user soc
+// Title      : Modbus RTU server on the UART
 // Project    : Asylum
 //-----------------------------------------------------------------------------
 // File       : user_modbus_rtu.c
