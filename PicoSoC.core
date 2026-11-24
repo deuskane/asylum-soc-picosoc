@@ -110,9 +110,11 @@ CAPI=2:
 #                               (asylum:verification:uvvm 1.3.0) ; OpenOCD + GDB co-simulation of
 #                               debug_mux_sel_i 10 and 11 (asylum:verification:openocd 1.0.0,
 #                               gdb_lib.py of WardRV 1.5.0), sim/openocd/picosoc.cfg
+# 2026-11-24  4.6.1    mrosiere esw sorted into system / demo / protocol / test,
+#                               user_xmodem.c removed (did not compile)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.6.0
+name        : asylum:soc:PicoSoC:4.6.1
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
