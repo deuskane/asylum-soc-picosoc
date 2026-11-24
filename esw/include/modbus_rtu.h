@@ -1,11 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title      : Macro to define Address Map for user soc
+// Title      : Constants of the Modbus RTU protocol
 // Project    : Asylum
 //-----------------------------------------------------------------------------
 // File       : modbus_rtu.h
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
+// Constants of the Modbus RTU server (user_modbus_rtu.c) : slave address,
+// function codes and exception codes
 //-----------------------------------------------------------------------------
 // Copyright (c) 2025
 //-----------------------------------------------------------------------------

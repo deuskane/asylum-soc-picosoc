@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario uart of tb_PicoSoC, from reset (firmware user_uart*) :
---              lines printed by esw/user.c on uart_tx_o
+--              lines printed by esw/demo/user.c on uart_tx_o
 --              * "Welcome Back, Commander" after the reset
 --              * then one line per loop iteration :
 --                "Loop CCCCCCCC-SS-PP Lock 00 FF MB0 00 01 02 03 04 05 06 07 "
@@ -32,7 +32,7 @@
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
 -- 2026-11-22  1.1      mrosiere Switches 0x25 (MSBs 00 : the UART pads stay
 --                               with the user UART)
--- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/user.c) :
+-- 2026-11-23  1.2      mrosiere Loop line at every iteration (esw/demo/user.c) :
 --                               echo with CTS* held (uart_echo), in the
 --                               first loop line
 -- 2026-11-23  1.3      mrosiere Switches 0xA5 again (the UART pads are

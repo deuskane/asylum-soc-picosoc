@@ -9,7 +9,7 @@
 --              firmware and configurations where each one applies, and
 --              dispatch (run_test) to the package of each scenario
 --              (tb_PicoSoC_<name>_pkg) ; an integration scenario test_<ip>
---              has the name of its firmware (esw/test_<ip>.c)
+--              has the name of its firmware (esw/test/test_<ip>.c)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ use     work.tb_PicoSoC_bfm_pkg.all;
 
 package tb_PicoSoC_tests_pkg is
 
-  -- Integration firmwares (esw/test_<ip>.c) : each one is also the name of
+  -- Integration firmwares (esw/test/test_<ip>.c) : each one is also the name of
   -- the scenario that checks it
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
@@ -126,7 +126,7 @@ package body tb_PicoSoC_tests_pkg is
     ;debug      : boolean
     ;jtag       : t_jtag_chain
     ) return boolean is
-    -- esw/user.c, with or without UART
+    -- esw/demo/user.c, with or without UART
     constant C_USER : boolean := list_contains("user,user_uart,user_uart_spi,user_uart_spi_mem", firmware);
     constant C_UART : boolean := list_contains(     "user_uart,user_uart_spi,user_uart_spi_mem", firmware);
   begin

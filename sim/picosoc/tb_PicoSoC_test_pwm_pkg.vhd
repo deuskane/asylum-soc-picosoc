@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_pwm of tb_PicoSoC, from reset (firmware
---              esw/test_pwm.c) : LED0 gives the step of the firmware, the
+--              esw/test/test_pwm.c) : LED0 gives the step of the firmware, the
 --              switches acknowledge it
 --              * step 1 (configured, disabled) : pwm_o low since the reset
 --              * steps 2 and 3 (duty C_DUTY1, then C_DUTY2) : period and
@@ -55,7 +55,7 @@ package body tb_PicoSoC_test_pwm_pkg is
     ;signal   pwm      : in    std_logic
     ;signal   uart_tx  : in    std_logic
     ) is
-    -- Configuration of esw/test_pwm.c
+    -- Configuration of esw/test/test_pwm.c
     constant C_PRESCALER : natural := 3;
     constant C_PERIOD    : natural := 9;
     constant C_DUTY1     : natural := 3;

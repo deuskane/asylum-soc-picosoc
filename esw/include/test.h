@@ -6,7 +6,7 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
-// The integration firmwares (esw/test_<ip>.c) print their result on the
+// The integration firmwares (esw/test/test_<ip>.c) print their result on the
 // UART, one line read by the testbench (tb_PicoSoC) :
 //   "PASS"        every check passed
 //   "FAIL <step>" the check <step> (hexa) failed, the firmware stops

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario fault_tmr of tb_PicoSoC, from reset (firmware user*,
---              supervisor with esw/supervisor.c -DSAFETY_TMR, TMR, fault
+--              supervisor with esw/system/supervisor.c -DSAFETY_TMR, TMR, fault
 --              injection) : the voter masks a first error (the supervisor
 --              only masks its difference lines, no reset); a second error on
 --              a line still unmasked resets the user SoC and increments

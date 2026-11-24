@@ -19,7 +19,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (split of tb_PicoSoC)
--- 2026-11-23  1.1      mrosiere Loop line at every iteration (esw/user.c)
+-- 2026-11-23  1.1      mrosiere Loop line at every iteration (esw/demo/user.c)
 -------------------------------------------------------------------------------
 
 library ieee;

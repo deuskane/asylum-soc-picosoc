@@ -11,7 +11,7 @@
 -- Standard   : VHDL-2008
 -------------------------------------------------------------------------------
 -- Description: Self-checking UVVM testbench of PicoSoC_top with the firmware
---              esw/user_modbus_rtu.c : a Modbus RTU master on the UART reads
+--              esw/protocol/user_modbus_rtu.c : a Modbus RTU master on the UART reads
 --              and writes the SoC addresses
 --              TESTS_LIST : scenarios run in sequence, separated by ','
 --                           (tb_PicoSoC_modbus_rtu_tests_pkg), each one

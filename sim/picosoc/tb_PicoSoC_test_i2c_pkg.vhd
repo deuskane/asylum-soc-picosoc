@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_i2c of tb_PicoSoC, from reset (firmware
---              esw/test_i2c.c, I2C master and slave of the SoC) with the
+--              esw/test/test_i2c.c, I2C master and slave of the SoC) with the
 --              UVVM I2C BFM :
 --              * BFM slave at C_SLAVE : write of C_MASTER_DATA by the SoC
 --                (address, bytes and ACKs checked), then read : the BFM
@@ -65,7 +65,7 @@ package body tb_PicoSoC_test_i2c_pkg is
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   uart_tx  : in    std_logic
     ) is
-    -- Constants of esw/test_i2c.c
+    -- Constants of esw/test/test_i2c.c
     constant C_SLAVE       : natural      := 16#50#;          -- I2C_SLAVE : BFM slave
     constant C_NO_SLAVE    : natural      := 16#51#;          -- I2C_NO_SLAVE
     constant C_ME          : natural      := 16#3A#;          -- I2C_ME : slave of the SoC

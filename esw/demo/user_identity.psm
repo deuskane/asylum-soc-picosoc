@@ -1,8 +1,8 @@
 ; ;-----------------------------------------------------------------------------
-; ; Title      : kcpsm3 file for identity fonction
+; ; Title      : kcpsm3 file for identity function
 ; ; Project    : Asylum
 ; ;-----------------------------------------------------------------------------
-; ; File       : identity.psm
+; ; File       : user_identity.psm
 ; ; Author     : mrosiere
 ; ;-----------------------------------------------------------------------------
 ; ; Description:

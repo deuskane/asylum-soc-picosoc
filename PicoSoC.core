@@ -92,7 +92,7 @@ CAPI=2:
 #                               the HWLA probes; tb : JTAG BFM chain fields
 #                               (asylum:verification:uvvm 1.2.0), scenarios bitbang_*,
 #                               jtag_last
-# 2026-11-23  4.3.0    mrosiere esw/user.c prints the loop line at every iteration (tb :
+# 2026-11-23  4.3.0    mrosiere esw/demo/user.c prints the loop line at every iteration (tb :
 #                               echo on a quiet line with CTS*), mailbox test on hart 0 only ;
 #                               cpu_safety : one record per CPU, a loop over the copies ;
 #                               polarities with active_high ; PicoSoC_clkrst,
@@ -110,9 +110,11 @@ CAPI=2:
 #                               (asylum:verification:uvvm 1.3.0) ; OpenOCD + GDB co-simulation of
 #                               debug_mux_sel_i 10 and 11 (asylum:verification:openocd 1.0.0,
 #                               gdb_lib.py of WardRV 1.5.0), sim/openocd/picosoc.cfg
+# 2026-11-24  4.6.1    mrosiere esw sorted into system / demo / protocol / test,
+#                               user_xmodem.c removed (did not compile)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.6.0
+name        : asylum:soc:PicoSoC:4.6.1
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
@@ -123,7 +125,7 @@ generate:
   gen_picoblaze3_user_asm_identity:
     generator : pbcc_gen
     parameters:
-      file         : esw/user_identity.psm
+      file         : esw/demo/user_identity.psm
       type         : pblazeide
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
@@ -132,7 +134,7 @@ generate:
   gen_picoblaze3_user_c_identity_inverted:
     generator : pbcc_gen
     parameters:
-      file         : esw/user_identity.c
+      file         : esw/demo/user_identity.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DINVERT_SWITCH
@@ -141,7 +143,7 @@ generate:
   gen_picoblaze3_user_c_identity:
     generator : pbcc_gen
     parameters:
-      file         : esw/user_identity.c
+      file         : esw/demo/user_identity.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
@@ -150,7 +152,7 @@ generate:
   gen_picoblaze3_user_c :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
@@ -159,7 +161,7 @@ generate:
   gen_picoblaze3_user_c_uart_921600 :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -168,7 +170,7 @@ generate:
   gen_picoblaze3_user_c_uart_9600 :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
@@ -177,7 +179,7 @@ generate:
   gen_picoblaze3_user_c_uart_9600_spi :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
@@ -186,7 +188,7 @@ generate:
   gen_picoblaze3_user_c_uart_921600_spi :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
@@ -195,7 +197,7 @@ generate:
   gen_picoblaze3_user_c_uart_921600_spi_mem :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
@@ -204,25 +206,16 @@ generate:
   gen_picoblaze3_user_c_uart_9600_spi_mem :
     generator : pbcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
       logical_name : asylum
 
-  gen_picoblaze3_user_xmodem_c :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/user_xmodem.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
   gen_picoblaze3_user_modbus_rtu_921600 :
     generator : pbcc_gen
     parameters :
-      file         : esw/user_modbus_rtu.c
+      file         : esw/protocol/user_modbus_rtu.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -231,7 +224,7 @@ generate:
   gen_picoblaze3_user_modbus_rtu_9600 :
     generator : pbcc_gen
     parameters :
-      file         : esw/user_modbus_rtu.c
+      file         : esw/protocol/user_modbus_rtu.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
@@ -240,7 +233,7 @@ generate:
   gen_picoblaze3_user_test_gpio :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_gpio.c
+      file         : esw/test/test_gpio.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -249,7 +242,7 @@ generate:
   gen_picoblaze3_user_test_uart :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_uart.c
+      file         : esw/test/test_uart.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -258,7 +251,7 @@ generate:
   gen_picoblaze3_user_test_spi :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_spi.c
+      file         : esw/test/test_spi.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
@@ -267,7 +260,7 @@ generate:
   gen_picoblaze3_user_test_timer :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_timer.c
+      file         : esw/test/test_timer.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -276,7 +269,7 @@ generate:
   gen_picoblaze3_user_test_crc :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_crc.c
+      file         : esw/test/test_crc.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -285,7 +278,7 @@ generate:
   gen_picoblaze3_user_test_spinlock :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_spinlock.c
+      file         : esw/test/test_spinlock.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -294,7 +287,7 @@ generate:
   gen_picoblaze3_user_test_gic :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_gic.c
+      file         : esw/test/test_gic.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -303,7 +296,7 @@ generate:
   gen_picoblaze3_user_test_mailbox :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_mailbox.c
+      file         : esw/test/test_mailbox.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -312,7 +305,7 @@ generate:
   gen_picoblaze3_user_test_i2c :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_i2c.c
+      file         : esw/test/test_i2c.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -321,7 +314,7 @@ generate:
   gen_picoblaze3_user_test_pwm :
     generator : pbcc_gen
     parameters :
-      file         : esw/test_pwm.c
+      file         : esw/test/test_pwm.c
       type         : c
       entity       : ROM_user
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -330,7 +323,7 @@ generate:
   gen_picoblaze3_supervisor_c :
     generator : pbcc_gen
     parameters :
-      file         : esw/supervisor.c
+      file         : esw/system/supervisor.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
@@ -339,7 +332,7 @@ generate:
   gen_picoblaze3_supervisor_c_tmr :
     generator : pbcc_gen
     parameters :
-      file         : esw/supervisor.c
+      file         : esw/system/supervisor.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DSAFETY_TMR
@@ -348,7 +341,7 @@ generate:
   gen_picoblaze3_supervisor_c_dummy :
     generator  : pbcc_gen
     parameters :
-      file         : esw/dummy.c
+      file         : esw/system/dummy.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
@@ -357,7 +350,7 @@ generate:
   gen_rv32i_user_c_identity_inverted:
     generator : rvcc_gen
     parameters:
-      file         : esw/user_identity.c
+      file         : esw/demo/user_identity.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DINVERT_SWITCH
@@ -366,7 +359,7 @@ generate:
   gen_rv32i_user_c_identity:
     generator : rvcc_gen
     parameters:
-      file         : esw/user_identity.c
+      file         : esw/demo/user_identity.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose
@@ -375,7 +368,7 @@ generate:
   gen_rv32i_user_c :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose
@@ -384,7 +377,7 @@ generate:
   gen_rv32i_user_c_uart_921600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -393,7 +386,7 @@ generate:
   gen_rv32i_user_c_uart_9600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
@@ -402,7 +395,7 @@ generate:
   gen_rv32i_user_c_uart_9600_spi :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
@@ -411,7 +404,7 @@ generate:
   gen_rv32i_user_c_uart_921600_spi :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
@@ -420,7 +413,7 @@ generate:
   gen_rv32i_user_c_uart_921600_spi_mem :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
@@ -429,25 +422,16 @@ generate:
   gen_rv32i_user_c_uart_9600_spi_mem :
     generator : rvcc_gen
     parameters :
-      file         : esw/user.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
       logical_name : asylum
 
-  gen_rv32i_user_xmodem_c :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/user_xmodem.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
   gen_rv32i_user_modbus_rtu_921600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/user_modbus_rtu.c
+      file         : esw/protocol/user_modbus_rtu.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -456,7 +440,7 @@ generate:
   gen_rv32i_user_modbus_rtu_9600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/user_modbus_rtu.c
+      file         : esw/protocol/user_modbus_rtu.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
@@ -465,7 +449,7 @@ generate:
   gen_rv32i_user_hello_921600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/user_hello.c
+      file         : esw/demo/user_hello.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -474,7 +458,7 @@ generate:
   gen_rv32i_user_test_gpio :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_gpio.c
+      file         : esw/test/test_gpio.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -483,7 +467,7 @@ generate:
   gen_rv32i_user_test_uart :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_uart.c
+      file         : esw/test/test_uart.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -492,7 +476,7 @@ generate:
   gen_rv32i_user_test_spi :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_spi.c
+      file         : esw/test/test_spi.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
@@ -501,7 +485,7 @@ generate:
   gen_rv32i_user_test_timer :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_timer.c
+      file         : esw/test/test_timer.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -510,7 +494,7 @@ generate:
   gen_rv32i_user_test_crc :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_crc.c
+      file         : esw/test/test_crc.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -519,7 +503,7 @@ generate:
   gen_rv32i_user_test_spinlock :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_spinlock.c
+      file         : esw/test/test_spinlock.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -528,7 +512,7 @@ generate:
   gen_rv32i_user_test_gic :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_gic.c
+      file         : esw/test/test_gic.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -537,7 +521,7 @@ generate:
   gen_rv32i_user_test_ram :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_ram.c
+      file         : esw/test/test_ram.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -546,7 +530,7 @@ generate:
   gen_rv32i_user_test_mailbox :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_mailbox.c
+      file         : esw/test/test_mailbox.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -555,7 +539,7 @@ generate:
   gen_rv32i_user_test_i2c :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_i2c.c
+      file         : esw/test/test_i2c.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -564,7 +548,7 @@ generate:
   gen_rv32i_user_test_pwm :
     generator : rvcc_gen
     parameters :
-      file         : esw/test_pwm.c
+      file         : esw/test/test_pwm.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
@@ -573,7 +557,7 @@ generate:
   gen_rv32i_supervisor_c :
     generator : rvcc_gen
     parameters :
-      file         : esw/supervisor.c
+      file         : esw/system/supervisor.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Iesw/include --verbose
@@ -582,7 +566,7 @@ generate:
   gen_rv32i_supervisor_c_tmr :
     generator : rvcc_gen
     parameters :
-      file         : esw/supervisor.c
+      file         : esw/system/supervisor.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Iesw/include --verbose -DSAFETY_TMR
@@ -591,7 +575,7 @@ generate:
   gen_rv32i_supervisor_c_dummy :
     generator  : rvcc_gen
     parameters :
-      file         : esw/dummy.c
+      file         : esw/system/dummy.c
       type         : c
       entity       : ROM_supervisor
       cflags       : -Iesw/include --verbose
@@ -1034,7 +1018,7 @@ targets:
   #---------------------------------------
   emu_ng_medium_soc4_openblaze8_fault_spi: &emu_ng_medium_default
   #---------------------------------------
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c (SPI)          - With    Supervisor, Safety TMR      , With    Fault Injection
     default_tool      : nxmap
     filesets          :
       - files_hdl
@@ -1079,7 +1063,7 @@ targets:
   emu_ng_medium_soc1_openblaze8:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_9600_spi_mem,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_openblaze8
     parameters_append :
@@ -1094,7 +1078,7 @@ targets:
   emu_ng_medium_soc1_openblaze8_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : &cfg_ng_medium_openblaze8_modbus_rtu
       - CPU_MODEL=OpenBlaze8
@@ -1126,7 +1110,7 @@ targets:
   emu_ng_medium_soc2_openblaze8:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_openblaze8
     parameters_append :
@@ -1141,7 +1125,7 @@ targets:
   emu_ng_medium_soc2_openblaze8_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
     parameters_append :
@@ -1156,7 +1140,7 @@ targets:
   emu_ng_medium_soc2_openblaze8_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c]
     parameters        : *cfg_ng_medium_openblaze8
     parameters_append :
@@ -1171,7 +1155,7 @@ targets:
   emu_ng_medium_soc2_openblaze8_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
     parameters_append :
@@ -1186,7 +1170,7 @@ targets:
   emu_ng_medium_soc3_openblaze8_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c]
     parameters        : *cfg_ng_medium_openblaze8
     parameters_append :
@@ -1201,7 +1185,7 @@ targets:
   emu_ng_medium_soc3_openblaze8_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c]
     parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
     parameters_append :
@@ -1216,7 +1200,7 @@ targets:
   emu_ng_medium_soc4_openblaze8_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c_tmr]
     parameters        : *cfg_ng_medium_openblaze8
     parameters_append :
@@ -1231,7 +1215,7 @@ targets:
   emu_ng_medium_soc4_openblaze8_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_tmr]
     parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
     parameters_append :
@@ -1246,7 +1230,7 @@ targets:
   sim_soc1_openblaze8_asm_identity:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_identity.psm
+    description       : Simulation of the test esw/demo/user_identity.psm
     generate          : [gen_picoblaze3_user_asm_identity,gen_picoblaze3_supervisor_c_dummy]
     parameters        : &cfg_soc1_openblaze8
       - CPU_MODEL=OpenBlaze8
@@ -1270,7 +1254,7 @@ targets:
   sim_soc1_openblaze8_c_identity:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_identity.c, SoC clock = clk_i (no division)
+    description  : Simulation of the test esw/demo/user_identity.c, SoC clock = clk_i (no division)
     generate     : [gen_picoblaze3_user_c_identity,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1298,7 +1282,7 @@ targets:
   sim_soc1_openblaze8_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -1311,7 +1295,7 @@ targets:
   sim_soc1_openblaze8_c_user_uart:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -1324,7 +1308,7 @@ targets:
   sim_soc1_openblaze8_c_user_uart_spi:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_921600_spi,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -1337,7 +1321,7 @@ targets:
   sim_soc1_openblaze8_c_user_uart_spi_mem:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_921600_spi_mem,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -1350,7 +1334,7 @@ targets:
   sim_soc1_openblaze8_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_dummy]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc1_openblaze8
@@ -1361,7 +1345,7 @@ targets:
   sim_soc2_openblaze8_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
     parameters        : &cfg_soc2_openblaze8
       - CPU_MODEL=OpenBlaze8
@@ -1385,7 +1369,7 @@ targets:
   sim_soc2_openblaze8_fault_c_user:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection
     generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1413,7 +1397,7 @@ targets:
   sim_soc2_openblaze8_fault_c_user_hwla:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
     generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1438,7 +1422,7 @@ targets:
   sim_soc2_openblaze8_fault_c_user_uart_jtag:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG over the UART pads (115200 baud)
+    description  : Simulation of the test esw/demo/user.c (UART)         - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG over the UART pads (115200 baud)
     generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1466,7 +1450,7 @@ targets:
   sim_soc2_openblaze8_c_user_uart:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc2_openblaze8
     parameters_append :
@@ -1479,7 +1463,7 @@ targets:
   sim_soc2_openblaze8_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_dummy]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc2_openblaze8
@@ -1490,7 +1474,7 @@ targets:
   sim_soc3_openblaze8_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c]
     parameters        : &cfg_soc3_openblaze8
       - CPU_MODEL=OpenBlaze8
@@ -1514,7 +1498,7 @@ targets:
   sim_soc3_openblaze8_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc3_openblaze8
@@ -1525,7 +1509,7 @@ targets:
   sim_soc3_openblaze8_fault_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c]
     parameters        : &cfg_soc3_openblaze8_fault
       - CPU_MODEL=OpenBlaze8
@@ -1549,7 +1533,7 @@ targets:
   sim_soc3_openblaze8_fault_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc3_openblaze8_fault
@@ -1560,7 +1544,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user: &sim_soc4_openblaze8_fault_c_user
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_<test>)
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_<test>)
     generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_tmr]
     parameters        : &cfg_soc4_openblaze8_fault
       - CPU_MODEL=OpenBlaze8
@@ -1584,7 +1568,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_switch:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario switch
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario switch
     parameters_append :
       - TESTS_LIST=switch
 
@@ -1592,7 +1576,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_it_user:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario it_user
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario it_user
     parameters_append :
       - TESTS_LIST=it_user
 
@@ -1600,7 +1584,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_fault_tmr:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
     parameters_append :
       - TESTS_LIST=fault_tmr
 
@@ -1608,7 +1592,7 @@ targets:
   sim_soc4_openblaze8_c_user_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
+    description  : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , Without Fault Injection
     generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_tmr]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -1636,7 +1620,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_modbus_rtu: &sim_soc4_openblaze8_fault_c_user_modbus_rtu
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_modbus_rtu_<test>)
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_modbus_rtu_<test>)
     generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_tmr]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc4_openblaze8_fault
@@ -1647,7 +1631,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario basic
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario basic
     parameters_append :
       - TESTS_LIST=basic
 
@@ -1655,7 +1639,7 @@ targets:
   sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
     parameters_append :
       - TESTS_LIST=fault_tmr
 
@@ -1663,14 +1647,14 @@ targets:
   sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence:
   #---------------------------------------
     << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario sequence
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario sequence
     parameters_append :
       - TESTS_LIST=sequence
 
   #---------------------------------------
   emu_ng_medium_soc4_wardrv_fsm_fault_spi:
   #---------------------------------------
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c (SPI)      - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c (SPI)          - With    Supervisor, Safety TMR      , With    Fault Injection
     default_tool      : nxmap
     filesets          :
       - files_hdl
@@ -1715,7 +1699,7 @@ targets:
   emu_ng_medium_soc1_wardrv_fsm:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, debug_mux_sel_i 10)
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, debug_mux_sel_i 10)
     generate          : [gen_rv32i_user_c_uart_9600_spi_mem,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
@@ -1731,7 +1715,7 @@ targets:
   emu_ng_medium_soc1_wardrv_fsm_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
     parameters        : &cfg_ng_medium_wardrv_fsm_modbus_rtu
       - CPU_MODEL=WardRV_fsm
@@ -1763,7 +1747,7 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, Without Fault Injection
     generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
@@ -1778,7 +1762,7 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
     parameters_append :
@@ -1793,7 +1777,7 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - Without Supervisor, Safety Lock Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, With    Fault Injection
     generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
@@ -1808,7 +1792,7 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
     parameters_append :
@@ -1823,7 +1807,7 @@ targets:
   emu_ng_medium_soc3_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
@@ -1838,7 +1822,7 @@ targets:
   emu_ng_medium_soc3_wardrv_fsm_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
     parameters_append :
@@ -1853,7 +1837,7 @@ targets:
   emu_ng_medium_soc4_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection
     generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
@@ -1868,7 +1852,7 @@ targets:
   emu_ng_medium_soc4_wardrv_fsm_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
+    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_tmr]
     parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
     parameters_append :
@@ -1883,7 +1867,7 @@ targets:
   sim_soc1_wardrv_fsm_c_identity:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_identity.c
+    description       : Simulation of the test esw/demo/user_identity.c
     generate          : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
     parameters        : &cfg_soc1_wardrv_fsm
       - CPU_MODEL=WardRV_fsm
@@ -1907,7 +1891,7 @@ targets:
   sim_soc1_wardrv_fsm_c_user_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, reset active high
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, reset active high
     generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -1936,7 +1920,7 @@ targets:
   sim_soc1_wardrv_fsm_c_user_uart_spi:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_rv32i_user_c_uart_921600_spi,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -1949,7 +1933,7 @@ targets:
   sim_soc1_wardrv_fsm_c_user_uart_spi_mem:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_rv32i_user_c_uart_921600_spi_mem,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -1962,7 +1946,7 @@ targets:
   sim_soc1_wardrv_fsm_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_dummy]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc1_wardrv_fsm
@@ -1974,7 +1958,7 @@ targets:
   sim_soc1x2_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
+    description       : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
     generate          : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
     toplevel          : tb_PicoSoC
     parameters        : &cfg_soc1x2_wardrv_fsm
@@ -2000,7 +1984,7 @@ targets:
   sim_soc1x4_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
+    description  : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
     toplevel     : tb_PicoSoC
     parameters   :
@@ -2030,7 +2014,7 @@ targets:
   sim_soc1x6_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_hello.c      - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
+    description  : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
     toplevel     : tb_PicoSoC
     parameters   :
@@ -2060,7 +2044,7 @@ targets:
   sim_soc3x2_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs
+    description  : Simulation of the test esw/demo/user_hello.c          - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c]
     toplevel     : tb_PicoSoC
     parameters   :
@@ -2090,7 +2074,7 @@ targets:
   sim_soc4x2_wardrv_fsm_c_hello_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user_hello.c      - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
+    description  : Simulation of the test esw/demo/user_hello.c          - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
     generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_tmr]
     toplevel     : tb_PicoSoC
     parameters   :
@@ -2119,7 +2103,7 @@ targets:
   sim_soc2_wardrv_fsm_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
     parameters        : &cfg_soc2_wardrv_fsm
       - CPU_MODEL=WardRV_fsm
@@ -2143,7 +2127,7 @@ targets:
   sim_soc2_wardrv_fsm_c_user_uart:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc2_wardrv_fsm
     parameters_append :
@@ -2156,7 +2140,7 @@ targets:
   sim_soc2_wardrv_fsm_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_dummy]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc2_wardrv_fsm
@@ -2167,7 +2151,7 @@ targets:
   sim_soc2_wardrv_fsm_fault_c_user_hwla:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
     generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2203,7 +2187,7 @@ targets:
   sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag: &sim_openocd
   #---------------------------------------
     << : *default
-    description       : OpenOCD + GDB co-simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
     default_tool      : ghdl
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
@@ -2243,7 +2227,7 @@ targets:
   _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang:
   #---------------------------------------
     << : *sim_openocd
-    description       : OpenOCD + GDB co-simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
     parameters_append :
       - DEBUG_MUX_SEL=11
 
@@ -2251,7 +2235,7 @@ targets:
   sim_soc3_wardrv_fsm_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     parameters        : &cfg_soc3_wardrv_fsm
       - CPU_MODEL=WardRV_fsm
@@ -2275,7 +2259,7 @@ targets:
   sim_soc3_wardrv_fsm_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc3_wardrv_fsm
@@ -2286,7 +2270,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     parameters        : &cfg_soc3_wardrv_fsm_fault
       - CPU_MODEL=WardRV_fsm
@@ -2310,7 +2294,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
     generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc3_wardrv_fsm_fault
@@ -2321,7 +2305,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag: &sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, build check (one scenario per target sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_<test>)
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, build check (one scenario per target sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_<test>)
     generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c]
     parameters        : &cfg_soc3_wardrv_fsm_fault_jtag
       - CPU_MODEL=WardRV_fsm
@@ -2347,7 +2331,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_pad_mux:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario pad_mux
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario pad_mux
     parameters_append :
       - TESTS_LIST=pad_mux
 
@@ -2355,7 +2339,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_chain:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_chain
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_chain
     parameters_append :
       - TESTS_LIST=jtag_chain
 
@@ -2363,7 +2347,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject
     parameters_append :
       - TESTS_LIST=jtag_inject
 
@@ -2371,7 +2355,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_status
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_status
     parameters_append :
       - TESTS_LIST=jtag_status
 
@@ -2379,7 +2363,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_user
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_user
     parameters_append :
       - TESTS_LIST=jtag_cpu_user
 
@@ -2387,7 +2371,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_supervisor:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_supervisor
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_supervisor
     parameters_append :
       - TESTS_LIST=jtag_cpu_supervisor
 
@@ -2395,7 +2379,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
     parameters_append :
       - TESTS_LIST=bitbang_chain
 
@@ -2403,7 +2387,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_inject (JTAG over the UART pads, 921600 baud)
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_inject (JTAG over the UART pads, 921600 baud)
     parameters_append :
       - TESTS_LIST=bitbang_inject
 
@@ -2411,7 +2395,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/user.c (UART)     - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_cpu (JTAG over the UART pads, 921600 baud)
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_cpu (JTAG over the UART pads, 921600 baud)
     parameters_append :
       - TESTS_LIST=bitbang_cpu
 
@@ -2419,7 +2403,7 @@ targets:
   sim_soc5_wardrv_fsm_c_user_uart_jtag:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c (UART)     - Without Supervisor, Safety TMR      , Without Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU TAP only (no DEBUG_ENABLE)
+    description  : Simulation of the test esw/demo/user.c (UART)         - Without Supervisor, Safety TMR      , Without Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU TAP only (no DEBUG_ENABLE)
     generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2448,7 +2432,7 @@ targets:
   sim_soc1_wardrv_fsm_c_user_jtag_last:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, generics of emu_ng_medium_soc1_wardrv_fsm (the TAP of the user CPU is the only TAP, the last stages of the JTAG chain are wires), JTAG pads and JTAG over the UART pads (921600 baud)
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, generics of emu_ng_medium_soc1_wardrv_fsm (the TAP of the user CPU is the only TAP, the last stages of the JTAG chain are wires), JTAG pads and JTAG over the UART pads (921600 baud)
     generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2478,7 +2462,7 @@ targets:
   sim_soc1x2_wardrv_fsm_c_user_jtag:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - Without Supervisor, Safety None     , Without Fault Injection, 2 user CPU clusters, JTAG chain of their 2 debug units and the injection / status TAP (user.c is single-cluster, scenario jtag_chain only)
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, 2 user CPU clusters, JTAG chain of their 2 debug units and the injection / status TAP (user.c is single-cluster, scenario jtag_chain only)
     generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2505,7 +2489,7 @@ targets:
   sim_soc4_wardrv_fsm_fault_c_user:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_tmr]
     parameters        : &cfg_soc4_wardrv_fsm_fault
       - CPU_MODEL=WardRV_fsm
@@ -2531,7 +2515,7 @@ targets:
   sim_soc4_wardrv_fsm_c_user_uart:
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/user.c            - With    Supervisor, Safety TMR      , Without Fault Injection
+    description  : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , Without Fault Injection
     generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_tmr]
     parameters   :
       - CPU_MODEL=WardRV_fsm
@@ -2559,7 +2543,7 @@ targets:
   sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
+    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
     generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_tmr]
     toplevel          : tb_PicoSoC_modbus_rtu
     parameters        : *cfg_soc4_wardrv_fsm_fault
@@ -2570,7 +2554,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_gpio:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+    description       : Integration test esw/test/test_gpio.c - GPIO registers, LED and switch pins, edges polled
     generate          : [gen_rv32i_user_test_gpio,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2583,7 +2567,7 @@ targets:
   sim_soc1_openblaze8_c_test_gpio:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+    description       : Integration test esw/test/test_gpio.c - GPIO registers, LED and switch pins, edges polled
     generate          : [gen_picoblaze3_user_test_gpio,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2596,7 +2580,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_uart:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
+    description       : Integration test esw/test/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
     generate          : [gen_rv32i_user_test_uart,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2609,7 +2593,7 @@ targets:
   sim_soc1_openblaze8_c_test_uart:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
+    description       : Integration test esw/test/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
     generate          : [gen_picoblaze3_user_test_uart,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2622,7 +2606,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_spi:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+    description       : Integration test esw/test/test_spi.c - SPI registers, SPI flash model (status, read, page program)
     generate          : [gen_rv32i_user_test_spi,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2635,7 +2619,7 @@ targets:
   sim_soc1_openblaze8_c_test_spi:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+    description       : Integration test esw/test/test_spi.c - SPI registers, SPI flash model (status, read, page program)
     generate          : [gen_picoblaze3_user_test_spi,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2648,7 +2632,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_timer:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
+    description       : Integration test esw/test/test_timer.c - Timer registers, period and interrupt through the GIC
     generate          : [gen_rv32i_user_test_timer,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2661,7 +2645,7 @@ targets:
   sim_soc1_openblaze8_c_test_timer:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_timer.c - Timer registers, period and interrupt through the GIC
+    description       : Integration test esw/test/test_timer.c - Timer registers, period and interrupt through the GIC
     generate          : [gen_picoblaze3_user_test_timer,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2674,7 +2658,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_crc:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+    description       : Integration test esw/test/test_crc.c - CRC registers, CRC16 Modbus of known vectors
     generate          : [gen_rv32i_user_test_crc,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2687,7 +2671,7 @@ targets:
   sim_soc1_openblaze8_c_test_crc:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+    description       : Integration test esw/test/test_crc.c - CRC registers, CRC16 Modbus of known vectors
     generate          : [gen_picoblaze3_user_test_crc,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2700,7 +2684,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_spinlock:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
+    description       : Integration test esw/test/test_spinlock.c - Spinlock registers, test-and-set and release
     generate          : [gen_rv32i_user_test_spinlock,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2713,7 +2697,7 @@ targets:
   sim_soc1_openblaze8_c_test_spinlock:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_spinlock.c - Spinlock registers, test-and-set and release
+    description       : Integration test esw/test/test_spinlock.c - Spinlock registers, test-and-set and release
     generate          : [gen_picoblaze3_user_test_spinlock,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2726,7 +2710,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_gic:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+    description       : Integration test esw/test/test_gic.c - GIC registers, it_user_i masked, pending and taken
     generate          : [gen_rv32i_user_test_gic,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2739,7 +2723,7 @@ targets:
   sim_soc1_openblaze8_c_test_gic:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_gic.c - GIC registers, it_user_i masked, pending and taken
+    description       : Integration test esw/test/test_gic.c - GIC registers, it_user_i masked, pending and taken
     generate          : [gen_picoblaze3_user_test_gic,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2752,7 +2736,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_ram:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_ram.c - RAM1 and RAM2 address and data, unmapped address
+    description       : Integration test esw/test/test_ram.c - RAM1 and RAM2 address and data, unmapped address
     generate          : [gen_rv32i_user_test_ram,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2765,7 +2749,7 @@ targets:
   sim_soc1x2_wardrv_fsm_c_test_mailbox:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
+    description       : Integration test esw/test/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
     generate          : [gen_rv32i_user_test_mailbox,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1x2_wardrv_fsm
     parameters_append :
@@ -2778,7 +2762,7 @@ targets:
   sim_soc1x2_openblaze8_c_test_mailbox:
   #---------------------------------------
     << : *sim
-    description  : Integration test esw/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
+    description  : Integration test esw/test/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
     generate     : [gen_picoblaze3_user_test_mailbox,gen_picoblaze3_supervisor_c_dummy]
     parameters   :
       - CPU_MODEL=OpenBlaze8
@@ -2807,7 +2791,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_i2c:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
+    description       : Integration test esw/test/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
     generate          : [gen_rv32i_user_test_i2c,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2820,7 +2804,7 @@ targets:
   sim_soc1_openblaze8_c_test_i2c:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
+    description       : Integration test esw/test/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
     generate          : [gen_picoblaze3_user_test_i2c,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
@@ -2833,7 +2817,7 @@ targets:
   sim_soc1_wardrv_fsm_c_test_pwm:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
+    description       : Integration test esw/test/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
     generate          : [gen_rv32i_user_test_pwm,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
@@ -2846,7 +2830,7 @@ targets:
   sim_soc1_openblaze8_c_test_pwm:
   #---------------------------------------
     << : *sim
-    description       : Integration test esw/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
+    description       : Integration test esw/test/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
     generate          : [gen_picoblaze3_user_test_pwm,gen_picoblaze3_supervisor_c_dummy]
     parameters        : *cfg_soc1_openblaze8
     parameters_append :
