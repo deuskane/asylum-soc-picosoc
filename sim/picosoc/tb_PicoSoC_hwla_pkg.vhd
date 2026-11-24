@@ -34,7 +34,8 @@
 --                  strobe (ics) is set, else the instruction of the previous
 --                  sample (ROM not enabled)
 --              Sample (HWLA, from the LSB) : probes, then the timestamp
---              (HWLA_TIMESTAMP_WIDTH bits).
+--              (HWLA_TIMESTAMP_WIDTH bits ; 0 : no timestamp, the checks of
+--              the timestamps are skipped).
 --              Probes (PicoSoC_top) : cs, re, we, ready, address, write data,
 --              read data of the data bus, then fetch strobe (ics), address
 --              and instruction of the instruction bus.
@@ -50,6 +51,7 @@
 --                               read of the switches of the next iteration
 -- 2026-11-24  1.3      mrosiere DEPTH, PRE_TRIGGER and timestamp width from
 --                               the generics of the DUT (cfg)
+-- 2026-11-24  1.4      mrosiere HWLA_TIMESTAMP_WIDTH = 0 (no timestamp)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -102,7 +104,7 @@ package body tb_PicoSoC_hwla_pkg is
     -- Configuration of the HWLA in PicoSoC_top (generics HWLA_*)
     constant C_DEPTH        : positive := cfg.hwla_depth;
     constant C_PRE_TRIGGER  : natural  := cfg.hwla_pre_trigger;
-    constant C_TS_WIDTH     : positive := cfg.hwla_ts_width;
+    constant C_TS_WIDTH     : natural  := cfg.hwla_ts_width;  -- 0 : no timestamp
     constant C_BIT_TIME     : time     := 1 sec / 115200;
 
     -- Sample : probes (fields below, from the LSB), then the timestamp
@@ -163,6 +165,17 @@ package body tb_PicoSoC_hwla_pkg is
     function ts_delta (s1, s0 : t_sample) return natural is
     begin
       return to_integer(unsigned(field(s1, C_TS, C_TS_WIDTH)) - unsigned(field(s0, C_TS, C_TS_WIDTH)));
+    end function;
+
+    -- Timestamp 0 : a sample stored even when the probes did not change
+    -- (never without timestamp)
+    function ts_zero (s : t_sample) return boolean is
+    begin
+      if C_TS_WIDTH = 0
+      then
+        return false;
+      end if;
+      return unsigned(field(s, C_TS, C_TS_WIDTH)) = 0;
     end function;
 
   begin
@@ -233,7 +246,7 @@ package body tb_PicoSoC_hwla_pkg is
     check_value(v_read  >= 0                            , ERROR, "Sample " & integer'image(v_read ) & " : read of the new switches after the write (next loop iteration)", C_TB_SCOPE);
 
     -- Trigger sample : sample PRE_TRIGGER
-    if v_write >= 0
+    if (v_write >= 0) and (C_TS_WIDTH > 0)
     then
       check_value(ts_delta(v_capture(C_PRE_TRIGGER), v_capture(v_write)), v_cycles + C_TRIGGER_DELAY, ERROR,
                   "Trigger sample " & integer'image(C_PRE_TRIGGER) & " : cycles after the write of LED0", C_TB_SCOPE);
@@ -241,16 +254,23 @@ package body tb_PicoSoC_hwla_pkg is
 
     -- Capture size : the next capture starts after the extraction of this
     -- one, not a few cycles after its last sample
-    check_value(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1)) > 1000, ERROR,
-                "Next capture : first sample " & integer'image(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1))) & " cycles (modulo 2**C_TS_WIDTH) after the capture", C_TB_SCOPE);
+    if C_TS_WIDTH > 0
+    then
+      check_value(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1)) > 1000, ERROR,
+                  "Next capture : first sample " & integer'image(ts_delta(v_capture(C_DEPTH), v_capture(C_DEPTH-1))) & " cycles (modulo 2**C_TS_WIDTH) after the capture", C_TB_SCOPE);
+    end if;
 
     -- Each pair of consecutive samples : timestamps, changes only (but the
     -- trigger sample and the timestamp 0), instruction bus
     for s in 1 to C_DEPTH-1 loop
-      v_delta := ts_delta(v_capture(s), v_capture(s-1));
+      v_delta := 1;
+      if C_TS_WIDTH > 0
+      then
+        v_delta := ts_delta(v_capture(s), v_capture(s-1));
+      end if;
       if (v_delta = 0) or (v_delta > 1000) or
          ((field(v_capture(s), 0, C_NB_PROBE) = field(v_capture(s-1), 0, C_NB_PROBE)) and
-          (s /= C_PRE_TRIGGER) and (unsigned(field(v_capture(s), C_TS, C_TS_WIDTH)) /= 0))
+          (s /= C_PRE_TRIGGER) and not ts_zero(v_capture(s)))
       then
         v_err_sample := v_err_sample + 1;
         log(ID_SEQUENCER_SUB, "Sample " & integer'image(s) & " : " & integer'image(v_delta) & " cycles after the previous one, same probes", C_TB_SCOPE);
@@ -273,7 +293,7 @@ package body tb_PicoSoC_hwla_pkg is
         log(ID_SEQUENCER_SUB, "Sample " & integer'image(s) & " : instruction " & to_hstring(v_idata) & ", ROM " & to_hstring(v_rom), C_TB_SCOPE);
       end if;
     end loop;
-    check_value(v_err_sample, 0, ERROR, "Samples : timestamps increase, probes change (but the trigger sample)", C_TB_SCOPE);
+    check_value(v_err_sample, 0, ERROR, "Samples : timestamps increase (if any), probes change (but the trigger sample)", C_TB_SCOPE);
     check_value(v_err_rom   , 0, ERROR, "Instruction bus of the capture matches the user ROM", C_TB_SCOPE);
   end procedure;
 
