@@ -6,6 +6,8 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
+// Constants of the Modbus RTU server (user_modbus_rtu.c) : slave address,
+// function codes and exception codes
 //-----------------------------------------------------------------------------
 // Copyright (c) 2025
 //-----------------------------------------------------------------------------

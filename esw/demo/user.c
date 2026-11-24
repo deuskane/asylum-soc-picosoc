@@ -6,8 +6,8 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
-// Read  switch
-// Write led
+// Peripheral test : LED0 = switches, LED1 counts it_user_i, UART echo ; one
+// UART line per loop (counter, switches, SPI byte, spinlock and mailbox tests)
 //-----------------------------------------------------------------------------
 // Copyright (c) 2021
 //-----------------------------------------------------------------------------

@@ -6,8 +6,8 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
-// Read  switch
-// Write led
+// Multi-core test (WardRV) : each CPU prints "CPU <hartid> - Loop <counter>"
+// under the spinlock, LED0 = shared counter, LED1 = CPUs seen
 //-----------------------------------------------------------------------------
 // Copyright (c) 2021
 //-----------------------------------------------------------------------------

@@ -6,8 +6,9 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
-// Read  switch
-// Write led
+// Supervisor of the user SoC : releases the reset of the user CPUs ; on a
+// difference interrupt (GIC) resets them again and counts it on LED
+// (SAFETY_TMR : the first error is only masked, the vote goes on)
 //-----------------------------------------------------------------------------
 // Copyright (c) 2021
 //-----------------------------------------------------------------------------

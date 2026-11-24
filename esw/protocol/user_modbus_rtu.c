@@ -6,6 +6,9 @@
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
+// Modbus RTU server on the UART : slave 0x5A, functions 0x03 (read) and 0x06
+// (write) of a SoC address, CRC16 by the CRC IP, end of frame after 3.5 bytes
+// of silence (timer)
 //-----------------------------------------------------------------------------
 // Copyright (c) 2025
 //-----------------------------------------------------------------------------
