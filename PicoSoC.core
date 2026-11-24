@@ -2193,6 +2193,8 @@ targets:
   # (debug_mux_sel_i 10, PIN mode of asylum:verification:openocd) or JTAG
   # over the UART (11, BYTE mode). Needs gcc, openocd and gdb-multiarch
   # (hooks rbb/cosim.sh of the kit, run in the work root). No waveform.
+  # The mode 11 target runs 18 to 34 minutes : leading '_', no CI job, not
+  # in nonreg, run by hand (make _sim_...).
   #---------------------------------------
   sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag: &sim_openocd
   #---------------------------------------
@@ -2234,7 +2236,7 @@ targets:
       post_run          : [cosim_check]
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang:
+  _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang:
   #---------------------------------------
     << : *sim_openocd
     description       : OpenOCD + GDB co-simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
