@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_gic of tb_PicoSoC, from reset (firmware
---              esw/test_gic.c) : one it_user_i pulse on each request of
+--              esw/test/test_gic.c) : one it_user_i pulse on each request of
 --              the firmware (LED0 = 1, 2, 3)
 --              * pulse 1 : masked, no interrupt (LED1 = 0)
 --              * pulse 2 : masked, taken when unmasked (LED1 = 1)

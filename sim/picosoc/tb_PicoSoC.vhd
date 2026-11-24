@@ -55,6 +55,10 @@
 --                               switch_i)
 -- 2026-11-24  2.10     mrosiere HWLA_DEPTH, HWLA_PRE_TRIGGER,
 --                               HWLA_TIMESTAMP_WIDTH (HWLA of the DUT)
+-- 2026-11-24  2.11     mrosiere JTAG over the UART with the remote_bitbang
+--                               BFM rbb_bfm_pkg : commands rbb_if.tx on
+--                               uart_rx_i, answers by rbb_uart_monitor
+--                               (was p_bitbang)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -72,6 +76,7 @@ use     bitvis_vip_i2c.i2c_bfm_pkg.all;
 
 library asylum_uvvm;
 use     asylum_uvvm.jtag_bfm_pkg.all;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
@@ -218,11 +223,13 @@ architecture tb of tb_PicoSoC is
   signal  uart_cts_b               : std_logic := '0';
   signal  jtag_if                  : t_jtag_if := init_jtag_if_signals;
   signal  jtag_mode                : boolean;
-  -- JTAG over the UART (debug_mux_sel_i 11) : the cable is a UART, the answers of
-  -- jtag_bitbang are received on the TX pad
+  -- JTAG over the UART (debug_mux_sel_i 11) : the cable is a UART, the
+  -- commands of the remote_bitbang BFM on RX, the answers of jtag_bitbang
+  -- received on the TX pad
   signal  bitbang_mode             : boolean;
   signal  bitbang_off              : std_logic;
-  signal  bitbang                  : t_bitbang_rsp := C_BITBANG_RSP_INIT;
+  signal  rbb_if                   : t_rbb_if      := init_rbb_if_signals;
+  signal  bitbang                  : t_rbb_answers := C_RBB_ANSWERS_INIT;
 
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
@@ -299,7 +306,9 @@ begin  -- architecture tb
   uart_rts_b_io <= 'H';
 
   jtag_mode     <= debug_mux_sel_i = C_MUX_JTAG;
-  uart_rx_i     <= jtag_if.tck   when jtag_mode else uart_rx;
+  uart_rx_i     <= jtag_if.tck   when jtag_mode    else
+                   rbb_if.tx     when bitbang_mode else
+                   uart_rx;
   uart_tx_io    <= jtag_if.tdi   when jtag_mode else 'Z';
   uart_cts_b_io <= 'Z'           when jtag_mode else uart_cts_b;
   uart_rts_b_io <= jtag_if.tms   when jtag_mode else 'Z';
@@ -312,29 +321,11 @@ begin  -- architecture tb
   bitbang_mode  <= debug_mux_sel_i = C_MUX_BITBANG;
   bitbang_off   <= '0' when bitbang_mode else '1';
 
-  p_bitbang : process
-    variable v_byte    : std_logic_vector(8-1 downto 0);
-  begin
-    if not (bitbang_mode and uart_tx_io = '1')
-    then
-      wait until bitbang_mode and uart_tx_io = '1';  -- idle line in the mode 11
-    end if;
-    uart_receive(data_value     => v_byte,
-                 msg            => "answer of jtag_bitbang",
-                 rx             => uart_tx_io,
-                 terminate_loop => bitbang_off,
-                 config         => C_CFG.bitbang,
-                 scope          => C_SCOPE);
-    if bitbang_off = '0'
-    then
-      if v_byte /= x"30" and v_byte /= x"31"
-      then
-        alert(ERROR, "jtag_bitbang : answer x" & to_hstring(v_byte) & " is not '0' or '1'", C_SCOPE);
-      end if;
-      bitbang <= (cnt => bitbang.cnt + 1,
-                  tdo => bitbang.tdo(C_BITBANG_DEPTH-2 downto 0) & v_byte(0));
-    end if;
-  end process;
+  rbb_uart_monitor(rx      => uart_tx_io,
+                   stop    => bitbang_off,
+                   answers => bitbang,
+                   scope   => C_SCOPE,
+                   config  => rbb_config(C_CFG));
 
   -- Capture-IR value of the whole chain ("00001" per TAP) at each IR scan
   gen_jtag_monitor:
@@ -420,7 +411,7 @@ begin  -- architecture tb
   end generate;
 
   -----------------------------------------------------------------------------
-  -- UART console of the integration firmwares (esw/test_<ip>.c) : logs their
+  -- UART console of the integration firmwares (esw/test/test_<ip>.c) : logs their
   -- lines (no timeout : the scenarios check what they expect) and stops on
   -- "FAIL <step>" (esw/include/test.h), whatever the scenario waits for.
   -- Other firmwares : off (a reset between two scenarios may cut a byte)
@@ -487,6 +478,7 @@ begin  -- architecture tb
       uart_rx        <= '1';
       uart_cts_b     <= '0';
       jtag_if        <= init_jtag_if_signals;
+      rbb_if         <= init_rbb_if_signals;
       i2c_if         <= init_i2c_if_signals(VOID);
       if (SPI_MODEL /= "none") and (now < C_MEM_POWER_UP)
       then
@@ -496,7 +488,7 @@ begin  -- architecture tb
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
       run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, debug_mux_sel_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
-               uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, bitbang, i2c_if, pwm_o,
+               uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, rbb_if, bitbang, i2c_if, pwm_o,
                debug_uart_tx_o, rom_addr, rom_data);
     end loop;
 

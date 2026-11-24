@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_mailbox of tb_PicoSoC, from reset (firmware
---              esw/test_mailbox.c, 2 CPU clusters) : the requester counts
+--              esw/test/test_mailbox.c, 2 CPU clusters) : the requester counts
 --              the answers of the responder on LED1 and shows the last one
 --              on LED0
 --              * LED1 = 1, 2, 3, 4 in turn (one answer per request)
@@ -49,7 +49,7 @@ package body tb_PicoSoC_test_mailbox_pkg is
     ;signal   led1     : in    std_logic_vector
     ;signal   uart_tx  : in    std_logic
     ) is
-    constant C_NB      : positive := 4; -- requests (NB_REQUEST of esw/test_mailbox.c)
+    constant C_NB      : positive := 4; -- requests (NB_REQUEST of esw/test/test_mailbox.c)
   begin
     log(ID_SEQUENCER, "test_mailbox : requests and answers between " & integer'image(cfg.nb_cpu) & " CPUs", C_TB_SCOPE);
     check_value(cfg.nb_cpu = 2, TB_ERROR, "test_mailbox needs 2 CPU clusters", C_TB_SCOPE);

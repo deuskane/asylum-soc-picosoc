@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Scenario test_timer of tb_PicoSoC, from reset (firmware
---              esw/test_timer.c) : LED0 counts the interrupts of the timer
+--              esw/test/test_timer.c) : LED0 counts the interrupts of the timer
 --              (periodic, C_PERIOD cycles of the SoC clock)
 --              * time between the counts 1, 2, 3 and 4 : C_PERIOD cycles,
 --                within the interrupt latency (C_JITTER cycles)
@@ -47,7 +47,7 @@ package body tb_PicoSoC_test_timer_pkg is
     ;signal   led0     : in    std_logic_vector
     ;signal   uart_tx  : in    std_logic
     ) is
-    constant C_PERIOD  : positive := 2000; -- SoC clock cycles (TIMER_PERIOD of esw/test_timer.c)
+    constant C_PERIOD  : positive := 2000; -- SoC clock cycles (TIMER_PERIOD of esw/test/test_timer.c)
     constant C_JITTER  : positive := 10;   -- latency difference of two interrupts (SoC clock cycles)
     constant C_NB      : positive := 4;    -- periods counted by the firmware
     constant C_CYCLE   : time     := cfg.clk_period * cfg.clk_ratio;

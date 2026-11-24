@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
 -- Description: Helpers of the tb_PicoSoC_modbus_rtu scenarios : Modbus RTU
 --              master on the UART of the SoC (UART VIP), read / write of a
---              SoC address by esw/user_modbus_rtu.c (function codes 0x03 /
+--              SoC address by esw/protocol/user_modbus_rtu.c (function codes 0x03 /
 --              0x06, CRC16 0xA001), error injection
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026

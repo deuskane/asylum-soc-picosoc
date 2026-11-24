@@ -24,6 +24,8 @@
 -- 2026-11-23  1.1      mrosiere UART pads to JTAG over the UART with
 --                               debug_mux_sel_i (was the switch MSBs) :
 --                               switches 0x03
+-- 2026-11-24  1.2      mrosiere remote_bitbang BFM rbb_bfm_pkg (rbb_if, answers
+--                               t_rbb_answers)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -31,6 +33,9 @@ use     ieee.std_logic_1164.all;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
+
+library asylum_uvvm;
+use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
@@ -49,8 +54,8 @@ package tb_PicoSoC_bitbang_chain_pkg is
     ;signal   switch   : out   std_logic_vector
     ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     );
 
 end package tb_PicoSoC_bitbang_chain_pkg;
@@ -63,8 +68,8 @@ package body tb_PicoSoC_bitbang_chain_pkg is
     ;signal   switch   : out   std_logic_vector
     ;signal   mux_sel  : out   std_logic_vector
     ;signal   led0     : in    std_logic_vector
-    ;signal   uart_rx  : inout std_logic
-    ;signal   bitbang  : in    t_bitbang_rsp
+    ;signal   rbb_if   : inout t_rbb_if
+    ;signal   bitbang  : in    t_rbb_answers
     ) is
     constant C_NB      : positive := cfg.jtag.nb_tap;
     constant C_SW      : std_logic_vector(8-1 downto 0) := x"03";
@@ -86,19 +91,19 @@ package body tb_PicoSoC_bitbang_chain_pkg is
     for p in 0 to C_NB-1 loop
       v_exp(32*(C_NB-p)-1 downto 32*(C_NB-1-p)) := idcode(cfg, p);
     end loop;
-    bitbang_reset   (cfg, uart_rx);
-    bitbang_scan_dr (v_exp xor v_exp, v_ids, "IDCODE of every TAP", cfg, uart_rx, bitbang, jtag_config(C_NB));
+    bitbang_reset   (cfg, clk, rbb_if);
+    bitbang_scan_dr (v_exp xor v_exp, v_ids, "IDCODE of every TAP", cfg, clk, rbb_if, bitbang, jtag_config(C_NB));
     check_value     (v_ids, v_exp, ERROR, "IDCODE of every TAP after Test-Logic-Reset, in the chain order (JTAG over the UART)", C_TB_SCOPE);
 
     -- Every TAP in BYPASS : one bit (captured 0) per TAP
-    bitbang_write_ir(v_ir, "BYPASS", cfg, uart_rx, bitbang, jtag_config(C_NB));
-    bitbang_scan_dr (not v_zero & C_PATTERN, v_bypass, "BYPASS", cfg, uart_rx, bitbang, jtag_config(C_NB));
+    bitbang_write_ir(v_ir, "BYPASS", cfg, clk, rbb_if, bitbang, jtag_config(C_NB));
+    bitbang_scan_dr (not v_zero & C_PATTERN, v_bypass, "BYPASS", cfg, clk, rbb_if, bitbang, jtag_config(C_NB));
     check_value     (v_bypass, C_PATTERN & v_zero, ERROR, "BYPASS : one bit per TAP (JTAG over the UART)", C_TB_SCOPE);
 
     -- IDCODE of each TAP alone : position of the TAP in the chain
     for p in 0 to C_NB-1 loop
-      bitbang_write_ir(C_JTAG_IR_IDCODE, "IDCODE of TAP " & integer'image(p), cfg, uart_rx, bitbang, jtag_config(cfg, p));
-      bitbang_scan_dr (x"00000000", v_id, "IDCODE of TAP " & integer'image(p), cfg, uart_rx, bitbang, jtag_config(cfg, p));
+      bitbang_write_ir(C_JTAG_IR_IDCODE, "IDCODE of TAP " & integer'image(p), cfg, clk, rbb_if, bitbang, jtag_config(cfg, p));
+      bitbang_scan_dr (x"00000000", v_id, "IDCODE of TAP " & integer'image(p), cfg, clk, rbb_if, bitbang, jtag_config(cfg, p));
       check_value     (v_id, idcode(cfg, p), ERROR, "IDCODE of TAP " & integer'image(p) & ", the others in BYPASS (JTAG over the UART)", C_TB_SCOPE);
     end loop;
   end procedure;

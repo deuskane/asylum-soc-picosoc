@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title      : kcpsm3 file for identity fonction
+// Title      : Multi-core test of the user SoC
 // Project    : Asylum
 //-----------------------------------------------------------------------------
-// File       : identity.c
+// File       : user_hello.c
 // Author     : mrosiere
 //-----------------------------------------------------------------------------
 // Description:
-// Read  switch
-// Write led
+// Multi-core test (WardRV) : each CPU prints "CPU <hartid> - Loop <counter>"
+// under the spinlock, LED0 = shared counter, LED1 = CPUs seen
 //-----------------------------------------------------------------------------
 // Copyright (c) 2021
 //-----------------------------------------------------------------------------
