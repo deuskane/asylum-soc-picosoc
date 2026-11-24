@@ -694,6 +694,23 @@ filesets:
       - ">=asylum:verification:uvvm:1.3.0" # jtag_bfm_pkg (JTAG BFM, chain fields), rbb_bfm_pkg (remote_bitbang BFM)
 
   #---------------------------------------
+  # OpenOCD + GDB co-simulation (tb_PicoSoC_openocd) : OpenOCD and GDB
+  # configuration copied to openocd/ of the work root, next to gdb_lib.py
+  # of WardRV (default target of asylum:processor:WardRV)
+  #---------------------------------------
+  files_sim_openocd:
+  #---------------------------------------
+    files:
+      - sim/openocd/tb_PicoSoC_openocd.vhd
+      - sim/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
+      - sim/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
+      - sim/openocd/picosoc.py         : {file_type : user, copyto : openocd/picosoc.py}
+    file_type : vhdlSource-2008
+    depend :
+      - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
+      - ">=asylum:processor:WardRV:1.5.0"     # gdb_lib.py
+
+  #---------------------------------------
   files_ng_medium:
   #---------------------------------------
     files:
@@ -2171,6 +2188,60 @@ targets:
       - TESTS_LIST=hwla
 
   #---------------------------------------
+  # OpenOCD + GDB co-simulation (tb_PicoSoC_openocd, GDB scenario
+  # sim/openocd/picosoc.py) through the UART pads : JTAG pins
+  # (debug_mux_sel_i 10, PIN mode of asylum:verification:openocd) or JTAG
+  # over the UART (11, BYTE mode). Needs gcc, openocd and gdb-multiarch
+  # (hooks rbb/cosim.sh of the kit, run in the work root). No waveform.
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag: &sim_openocd
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD + GDB co-simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    filesets_append   :
+      - files_sim
+      - files_sim_openocd
+      - pbcc_dep
+    parameters        : &cfg_soc2_wardrv_fsm_fault_openocd
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+      - JTAG_BAUD_RATE=921600
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+    parameters_append :
+      - DEBUG_MUX_SEL=10
+    tools :
+      ghdl :
+        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
+        run_options     : ["$(GHDL_RUN_OPTION)","--ieee-asserts=disable"]
+    hooks :
+      pre_build         : [cosim_build]
+      pre_run           : [cosim_start]
+      post_run          : [cosim_check]
+
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang:
+  #---------------------------------------
+    << : *sim_openocd
+    description       : OpenOCD + GDB co-simulation of the test esw/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    parameters_append :
+      - DEBUG_MUX_SEL=11
+
+  #---------------------------------------
   sim_soc3_wardrv_fsm_c_user:
   #---------------------------------------
     << : *sim
@@ -2794,6 +2865,19 @@ scripts:
   yosys_synth :
     cmd : [bash, yosys_synth.sh]
 
+  #---------------------------------------
+  # Hooks of sim_*_openocd_* (cwd = work_root, rbb/cosim.sh of the kit
+  # asylum:verification:openocd) : librbb.so, OpenOCD + GDB, result
+  #---------------------------------------
+  cosim_build :
+    cmd : [bash, rbb/cosim.sh, build]
+
+  cosim_start :
+    cmd : [bash, rbb/cosim.sh, start, openocd/remote_bitbang.cfg, openocd/picosoc.py]
+
+  cosim_check :
+    cmd : [bash, rbb/cosim.sh, check]
+
 #=========================================
 parameters :
 #=========================================
@@ -2981,6 +3065,12 @@ parameters :
     description : Program of the user ROM for tb_PicoSoC (identity / user / user_uart / user_uart_spi / user_uart_spi_mem / hello)
     datatype    : str
     default     : user
+    paramtype   : generic
+
+  DEBUG_MUX_SEL :
+    description : Function of the UART pads in tb_PicoSoC_openocd, 10 (JTAG pins) or 11 (JTAG over the UART)
+    datatype    : str
+    default     : 10
     paramtype   : generic
 
   TB_WATCHDOG :
