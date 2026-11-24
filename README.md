@@ -558,7 +558,6 @@ The first bytes of such a scan, one column per byte (TCK low then high around ea
 | [esw/demo/user.c](esw/demo/user.c) | Peripheral test: LED0 = switches, LED1 counts the `it_user_i` interrupts, UART echo in the interrupt routine; one UART line per loop with the loop counter, the switches, an SPI byte (loopback or flash, `HAVE_SPI` / `HAVE_SPI_MEMORY`), a spinlock test and a mailbox test that also checks the mailbox sources of the GIC (prints `KO` and stops on a mismatch; on hart 0 only: with several clusters, the others share the mailbox and its GIC sources and skip it) |
 | [esw/demo/user_hello.c](esw/demo/user_hello.c) | Multi-core test (WardRV): each CPU prints `CPU <hartid> - Loop <counter>` under the spinlock, shows the shared counter on LED0 and the CPUs seen on LED1 |
 | [esw/protocol/user_modbus_rtu.c](esw/protocol/user_modbus_rtu.c) | Modbus RTU server on the UART (slave id `0x5A`, functions `0x03` read and `0x06` write of a SoC address, CRC16 by the CRC IP) |
-| [esw/protocol/user_xmodem.c](esw/protocol/user_xmodem.c) | XModem receiver (generators defined, no target uses it) |
 | [esw/test/test_&lt;ip&gt;.c](esw/test/) | Integration firmwares, see below |
 
 ### Integration firmwares

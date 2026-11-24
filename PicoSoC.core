@@ -210,15 +210,6 @@ generate:
       cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
       logical_name : asylum
 
-  gen_picoblaze3_user_xmodem_c :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/protocol/user_xmodem.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
   gen_picoblaze3_user_modbus_rtu_921600 :
     generator : pbcc_gen
     parameters :
@@ -433,15 +424,6 @@ generate:
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
-      logical_name : asylum
-
-  gen_rv32i_user_xmodem_c :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/protocol/user_xmodem.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
   gen_rv32i_user_modbus_rtu_921600 :
