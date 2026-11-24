@@ -20,7 +20,7 @@
 --                       of the kit (BYTE mode) sent on uart_rx_i, the answers
 --                       received on uart_tx_io (UART VIP, JTAG_BAUD_RATE) ;
 --                       an unknown TDO ('U' of a data read that no target
---                       answers) reads 1, as with rbb_jtag
+--                       answers) is sent as 1 by rbb_axis, with a warning
 --              The firmware copies the switches to LED0. Before OpenOCD : the
 --              firmware runs, no difference flag ; after OpenOCD quits : the
 --              difference flag of CPU0 vs CPU1 raised by the injection of
@@ -32,6 +32,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-24  1.0      mrosiere Created
+-- 2026-11-24  1.1      mrosiere Unknown TDO left to rbb_axis of the kit
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -267,14 +268,8 @@ begin  -- architecture tb
                    terminate_loop => uart_stop,
                    config         => C_BITBANG,
                    scope          => C_SCOPE);
-      -- Bit 0 is TDO : unknown ('U' of a data read that no target answers,
-      -- e.g. GDB reads the memory at pc, the user ROM is not on the data
-      -- bus) reads 1, as the TDO of rbb_jtag
-      if is_x(v_byte(0))
-      then
-        v_byte(0) := '1';
-      end if;
-      if v_byte /= x"30" and v_byte /= x"31"
+      -- x30 or x31 : bit 0 is TDO, an unknown one is sent as 1 by rbb_axis
+      if v_byte(8-1 downto 1) /= "0011000"
       then
         alert(ERROR, "Answer x" & to_hstring(v_byte) & " to 'R' is not '0' or '1'", C_SCOPE);
       end if;
