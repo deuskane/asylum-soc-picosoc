@@ -116,9 +116,11 @@ CAPI=2:
 #                               (sim_soc3x2_wardrv_fsm_c_user_openocd_chain, chain.cfg :
 #                               IDCODEs, 3 riscv targets) ; picosoc.cfg : chain given by
 #                               picosoc_chain
+# 2026-11-25  4.7.1    mrosiere NG-MEDIUM : UART pads and debug_uart_tx_o on
+#                               Bank0 (3.3V, TP2) ; Bank5 and Bank12 at 2.5V
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.7.0
+name        : asylum:soc:PicoSoC:4.7.1
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
