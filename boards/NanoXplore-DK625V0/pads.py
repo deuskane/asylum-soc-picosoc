@@ -55,51 +55,54 @@ p.addPad('spi_cs_b_io'       ,{'location':'USER_D8'     }) # USER_* have predefi
 p.addPad('spi_io_io[0]'      ,{'location':'USER_D11'    }) # USER_* have predefined parameters (MOSI)
 p.addPad('spi_io_io[1]'      ,{'location':'USER_D10'    }) # USER_* have predefined parameters (MISO)
                                                         
-# Bank5 spare I/Os                                      
-p.addPad('debug_uart_tx_o'   ,{'location':'IOB5_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left
-#                             {'location':'IOB5_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 3 from left
-# UART pads, shared with the HWLA UART and JTAG (debug_mux_sel_i), FTDI MPSSE
-# pinout : rx = TCK (AD0), tx = TDI (AD1, pull-up : TDI idle high), cts_b =
-# TDO (AD2, pull-down : CTS* active without a cable), rts_b = TMS (AD3,
-# pull-up : TMS idle high)
-p.addPad('uart_rts_b_io'     ,{'location':'IOB5_D01P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 4 from left
-p.addPad('uart_cts_b_io'     ,{'location':'IOB5_D01N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullDown'}) # 5 from left
-p.addPad('uart_tx_io'        ,{'location':'IOB5_D03P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 6 from left
-p.addPad('uart_rx_i'         ,{'location':'IOB5_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 7 from left
+# Bank5 spare I/Os (TP5 test point) : not used. Bank5 is supplied by the
+# HSMC supply (2.5V), too low for the usual 3.3V USB-UART cables : the UART
+# pads are on Bank0 (3.3V, TP2 test point)
+#                             {'location':'IOB5_D03N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 2
+#                             {'location':'IOB5_D03P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 3
+#                             {'location':'IOB5_D01N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 4
+#                             {'location':'IOB5_D01P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 5
+#                             {'location':'IOB5_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 6
+#                             {'location':'IOB5_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP5 pin 7
                                                         
-# Bank0 spare I/Os (I2C : open drain, weak pull-ups of the pads, external
-# pull-ups expected on the I2C bus)
-p.addPad('i2c_scl_io'        ,{'location':'IOB0_D06P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 2  from bottom (I2C SCL, open drain)
-p.addPad('i2c_sda_io'        ,{'location':'IOB0_D07P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 3  from bottom (I2C SDA, open drain)
-p.addPad('pwm_o'             ,{'location':'IOB0_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 4  from bottom (PWM)
-#                             {'location':'IOB0_D09P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 5  from bottom
-#                             {'location':'IOB0_D01N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 6  from bottom
-#                             {'location':'IOB0_D08P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 7  from bottom
-#                             {'location':'IOB0_D10N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 8  from bottom
-#                             {'location':'IOB0_D02N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 9  from bottom
-#                             {'location':'IOB0_D04N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 1 from left 10 from bottom
-#                             {'location':'IOB0_D06N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 2  from bottom
-#                             {'location':'IOB0_D07N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 3  from bottom
-#                             {'location':'IOB0_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 4  from bottom
-#                             {'location':'IOB0_D09N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 5  from bottom
-#                             {'location':'IOB0_D11N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 6  from bottom
-#                             {'location':'IOB0_D08N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 7  from bottom
-#                             {'location':'IOB0_D02P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 8  from bottom
-#                             {'location':'IOB0_D04P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # 2 from left 9  from bottom
+# Bank0 spare I/Os (3.3V) : TP1 and TP2 test points (pin 1 : GND)
+# I2C : open drain, weak pull-ups of the pads, external pull-ups expected on
+# the I2C bus
+p.addPad('i2c_scl_io'        ,{'location':'IOB0_D06P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP1 pin 2 (I2C SCL, open drain)
+p.addPad('i2c_sda_io'        ,{'location':'IOB0_D07P'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP1 pin 3 (I2C SDA, open drain)
+p.addPad('pwm_o'             ,{'location':'IOB0_D05P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 4 (PWM)
+#                             {'location':'IOB0_D09P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 5
+#                             {'location':'IOB0_D01N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 6
+#                             {'location':'IOB0_D08P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 7
+#                             {'location':'IOB0_D10N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 8
+#                             {'location':'IOB0_D02N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 9
+#                             {'location':'IOB0_D04N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 10
+# UART pads (TP2 pins 2 to 5), shared with the HWLA UART and JTAG
+# (debug_mux_sel_i), FTDI MPSSE pinout : rx = TCK (AD0), tx = TDI (AD1,
+# pull-up : TDI idle high), cts_b = TDO (AD2, pull-down : CTS* active without
+# a cable), rts_b = TMS (AD3, pull-up : TMS idle high)
+p.addPad('uart_rx_i'         ,{'location':'IOB0_D06N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 2 (cable TXD / AD0)
+p.addPad('uart_tx_io'        ,{'location':'IOB0_D07N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP2 pin 3 (cable RXD / AD1)
+p.addPad('uart_cts_b_io'     ,{'location':'IOB0_D05N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullDown'}) # TP2 pin 4 (cable RTS# / AD2)
+p.addPad('uart_rts_b_io'     ,{'location':'IOB0_D09N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP2 pin 5 (cable CTS# / AD3)
+#                             {'location':'IOB0_D11N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 6
+p.addPad('debug_uart_tx_o'   ,{'location':'IOB0_D08N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 7 (HWLA UART TX)
+#                             {'location':'IOB0_D02P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 8
+#                             {'location':'IOB0_D04P'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 9
 
-# Bank12 spare I/Os
-#                             {'location':'IOB12_D10P'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 2  from bottom
-#                             {'location':'IOB12_D05P'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 3  from bottom
-#                             {'location':'IOB12_D07N'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # 1 from left 4  from bottom
-#                             {'location':'IOB12_D08N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 1 from left 5  from bottom
-#                             {'location':'IOB12_D11P'  , 'standard':'LVCMOS', 'drive':'16mA'} # 1 from left 6  from bottom
-#                             {'location':'IOB12_D06P'  , 'standard':'LVCMOS', 'drive':'16mA'} # 1 from left 7  from bottom
-#                             {'location':'IOB12_D10N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 2  from bottom
-#                             {'location':'IOB12_D05N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 3  from bottom
-#                             {'location':'IOB12_D07P'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 4  from bottom
-#                             {'location':'IOB12_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 5  from bottom
-#                             {'location':'IOB12_D11N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 6  from bottom
-#                             {'location':'IOB12_D06N'  , 'standard':'LVCMOS', 'drive':'16mA'} # 2 from left 7  from bottom
+# Bank12 spare I/Os (2.5V) : TP3 and TP4 test points (pin 1 : GND)
+#                             {'location':'IOB12_D10P'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP3 pin 2
+#                             {'location':'IOB12_D05P'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP3 pin 3
+#                             {'location':'IOB12_D07N'  , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP3 pin 4
+#                             {'location':'IOB12_D08N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP3 pin 5
+#                             {'location':'IOB12_D11P'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP3 pin 6
+#                             {'location':'IOB12_D06P'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP3 pin 7
+#                             {'location':'IOB12_D10N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 2
+#                             {'location':'IOB12_D05N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 3
+#                             {'location':'IOB12_D07P'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 4
+#                             {'location':'IOB12_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 5
+#                             {'location':'IOB12_D11N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 6
+#                             {'location':'IOB12_D06N'  , 'standard':'LVCMOS', 'drive':'16mA'} # TP4 pin 7 (calibration pin of bank 12)
 
 # Banks definition
 p.addBank('IOB0'  ,{'voltage':'3.3'})
@@ -107,11 +110,11 @@ p.addBank('IOB1'  ,{'voltage':'3.3'})
 p.addBank('IOB2'  ,{'voltage':'2.5'})
 p.addBank('IOB3'  ,{'voltage':'2.5'})
 p.addBank('IOB4'  ,{'voltage':'2.5'})
-p.addBank('IOB5'  ,{'voltage':'3.3'})
+p.addBank('IOB5'  ,{'voltage':'2.5'}) # HSMC supply (HVDD, TP5 pin 8)
 p.addBank('IOB6'  ,{'voltage':'2.5'})
 p.addBank('IOB7'  ,{'voltage':'2.5'})
 p.addBank('IOB8'  ,{'voltage':'2.5'})
 p.addBank('IOB9'  ,{'voltage':'2.5'})
 p.addBank('IOB10' ,{'voltage':'1.8'})
 p.addBank('IOB11' ,{'voltage':'1.8'})
-p.addBank('IOB12' ,{'voltage':'3.3'})
+p.addBank('IOB12' ,{'voltage':'2.5'})
