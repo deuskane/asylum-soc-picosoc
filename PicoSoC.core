@@ -117,7 +117,9 @@ CAPI=2:
 #                               IDCODEs, 3 riscv targets) ; picosoc.cfg : chain given by
 #                               picosoc_chain
 # 2026-11-25  4.7.1    mrosiere NG-MEDIUM : UART pads and debug_uart_tx_o on
-#                               Bank0 (3.3V, TP2) ; Bank5 and Bank12 at 2.5V
+#                               Bank0 (3.3V, TP2) ; Bank5 and Bank12 at 2.5V ;
+#                               HWLA_BAUD_RATE and JTAG_BAUD_RATE at 9600 like
+#                               USER_BAUD_RATE (UART pads shared)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.1
@@ -809,6 +811,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -855,6 +859,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -879,6 +885,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -937,6 +945,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -972,6 +982,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -996,6 +1008,8 @@ targets:
       - FSYS_INT=12500000
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -1044,6 +1058,8 @@ targets:
       - USER_FAULT_POLARITY=low
       # SoC User Configuration
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -1099,6 +1115,8 @@ targets:
       - USER_FAULT_POLARITY=low
       # SoC User Configuration
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -1680,6 +1698,8 @@ targets:
       - USER_FAULT_POLARITY=low
       # SoC User Configuration
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
@@ -1736,6 +1756,8 @@ targets:
       - USER_FAULT_POLARITY=low
       # SoC User Configuration
       - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
       - USER_SPI_DEPTH_CMD=4
