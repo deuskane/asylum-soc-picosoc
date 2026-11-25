@@ -112,9 +112,13 @@ CAPI=2:
 #                               gdb_lib.py of WardRV 1.5.0), sim/openocd/picosoc.cfg
 # 2026-11-24  4.6.1    mrosiere esw sorted into system / demo / protocol / test,
 #                               user_xmodem.c removed (did not compile)
+# 2026-11-25  4.7.0    mrosiere tb : OpenOCD co-simulation of the JTAG chain of 4 TAPs
+#                               (sim_soc3x2_wardrv_fsm_c_user_openocd_chain, chain.cfg :
+#                               IDCODEs, 3 riscv targets) ; picosoc.cfg : chain given by
+#                               picosoc_chain
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.6.1
+name        : asylum:soc:PicoSoC:4.7.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
