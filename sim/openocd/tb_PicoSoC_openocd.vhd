@@ -5,11 +5,12 @@
 -- File       : tb_PicoSoC_openocd.vhd
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
--- Description: OpenOCD + GDB co-simulation of PicoSoC_top : OpenOCD (adapter
+-- Description: OpenOCD co-simulation of PicoSoC_top : OpenOCD (adapter
 --              remote_bitbang, sim/openocd/remote_bitbang.cfg) drives the JTAG
---              chain through the UART pads, GDB runs sim/openocd/picosoc.py
---              (hooks rbb/cosim.sh of the co-simulation kit
---              asylum:verification:openocd)
+--              chain through the UART pads (hooks rbb/cosim.sh of the
+--              co-simulation kit asylum:verification:openocd), with the
+--              scenario of the target : GDB runs sim/openocd/picosoc.py, or
+--              OpenOCD runs the checks of sim/openocd/chain.cfg
 --              DEBUG_MUX_SEL : function of the UART pads (debug_mux_sel_i)
 --                "10" : JTAG pins, driven by rbb_jtag of the kit (PIN mode) :
 --                       TCK = uart_rx_i, TDI = uart_tx_io, TMS =
@@ -23,9 +24,11 @@
 --                       answers) is sent as 1 by rbb_axis, with a warning
 --              The firmware copies the switches to LED0. Before OpenOCD : the
 --              firmware runs, no difference flag ; after OpenOCD quits : the
---              difference flag of CPU0 vs CPU1 raised by the injection of
---              the GDB scenario (INJECT), the firmware still runs (LED0
---              follows new switches). Error after C_COSIM_TIMEOUT.
+--              firmware still runs (LED0 follows new switches) ; with
+--              USER_FAULT_INJECTION the difference flag of CPU0 vs CPU1
+--              raised by the injection of the GDB scenario (INJECT), else no
+--              difference flag (no scenario injects). Error after
+--              C_COSIM_TIMEOUT.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -33,6 +36,8 @@
 -- Date        Version  Author   Description
 -- 2026-11-24  1.0      mrosiere Created
 -- 2026-11-24  1.1      mrosiere Unknown TDO left to rbb_axis of the kit
+-- 2026-11-25  1.2      mrosiere USER_NB_CPU ; no difference flag expected
+--                               without USER_FAULT_INJECTION (chain.cfg)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -57,6 +62,7 @@ entity tb_PicoSoC_openocd is
     (FSYS                  : positive := 25_000_000
     ;FSYS_INT              : positive := 12_500_000
     ;JTAG_BAUD_RATE        : integer  := 921_600     -- JTAG over the UART pads (debug_mux_sel_i 11)
+    ;USER_NB_CPU           : natural  := 1           -- User CPU clusters
     ;SUPERVISOR            : boolean  := False
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
@@ -93,6 +99,20 @@ architecture tb of tb_PicoSoC_openocd is
   end function;
 
   constant C_BITBANG        : t_uart_bfm_config := bitbang_config;
+
+  -- Difference flags after OpenOCD : CPU0 vs CPU1, from the INJECT of the
+  -- GDB scenario, only with the fault injection
+  function diff_after return std_logic_vector is
+  begin
+    if USER_FAULT_INJECTION
+    then
+      return "001";
+    else
+      return "000";
+    end if;
+  end function;
+
+  constant C_DIFF_AFTER     : std_logic_vector(3-1 downto 0) := diff_after;
 
   -- Switches copied to LED0 by the firmware, before and after OpenOCD
   constant C_SW1            : std_logic_vector(8-1 downto 0) := x"5A";
@@ -145,6 +165,7 @@ begin  -- architecture tb
     ,JTAG_BAUD_RATE        => JTAG_BAUD_RATE
     ,RESET_POLARITY        => "high"
     ,DEBUG_ENABLE          => DEBUG_ENABLE
+    ,USER_NB_CPU           => USER_NB_CPU
     ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
     ,SUPERVISOR            => SUPERVISOR
@@ -286,7 +307,8 @@ begin  -- architecture tb
   -----------------------------------------------------------------------------
   p_main : process
   begin
-    log(ID_LOG_HDR, "OpenOCD + GDB co-simulation, debug_mux_sel_i " & DEBUG_MUX_SEL & " : CPU_MODEL = " & CPU_MODEL &
+    log(ID_LOG_HDR, "OpenOCD co-simulation, debug_mux_sel_i " & DEBUG_MUX_SEL & " : CPU_MODEL = " & CPU_MODEL &
+                    ", USER_NB_CPU = " & integer'image(USER_NB_CPU) &
                     ", SUPERVISOR = " & boolean'image(SUPERVISOR) & ", USER_SAFETY = " & USER_SAFETY, C_SCOPE);
     if DEBUG_MUX_SEL /= "10" and DEBUG_MUX_SEL /= "11"
     then
@@ -300,7 +322,7 @@ begin  -- architecture tb
     await_value(led0_o, C_SW1, 0 ns, C_TIMEOUT, ERROR, "LED0 = switches 0x" & to_hstring(C_SW1) & " : the firmware runs", C_SCOPE);
     check_value(led_diff_o, "000", ERROR, "led_diff : no difference before OpenOCD", C_SCOPE);
 
-    -- OpenOCD + GDB (picosoc.py)
+    -- OpenOCD and the scenario of the target
     rbb_start <= '1';
     wait until quit = '1' for C_COSIM_TIMEOUT;
     if quit /= '1'
@@ -310,7 +332,7 @@ begin  -- architecture tb
     log(ID_LOG_HDR, "OpenOCD quit at " & integer'image(now / 1 us) & " us", C_SCOPE);
 
     -- Seen by the testbench after the debug session
-    check_value(led_diff_o, "001", ERROR, "led_diff : CPU0 vs CPU1, error injected in CPU1 by OpenOCD (INJECT)", C_SCOPE);
+    check_value(led_diff_o, C_DIFF_AFTER, ERROR, "led_diff : CPU0 vs CPU1 only with an error injected in CPU1 by OpenOCD (INJECT)", C_SCOPE);
     set_slv    (C_SW2, clk_i, switch_i);
     await_value(led0_o, C_SW2, 0 ns, C_TIMEOUT, ERROR, "LED0 = switches 0x" & to_hstring(C_SW2) & " : the firmware runs after the debug session", C_SCOPE);
 
