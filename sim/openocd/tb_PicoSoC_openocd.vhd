@@ -18,7 +18,7 @@
 --                       TCK = uart_rx_i, TDI = uart_tx_io, TMS =
 --                       uart_rts_b_io, TDO = uart_cts_b_io ; one pin change
 --                       every C_CLK_DIV clk_i cycles : TCK = FSYS_INT / 8
---                       (the limit of the TCK resynchronized in cpu_safety)
+--                       (the limit of the TCK resynchronized in PicoSoC_top)
 --                "11" : JTAG over the UART, the bytes of OpenOCD from rbb_axis
 --                       of the kit (BYTE mode) sent on uart_rx_i, the answers
 --                       received on uart_tx_io (UART VIP, JTAG_BAUD_RATE) ;

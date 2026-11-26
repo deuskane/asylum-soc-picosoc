@@ -1774,6 +1774,15 @@
         <mxCell id="picosoc-jtag-52" value="TCK, TMS, TDI / TDO" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
           <mxGeometry x="580" y="445" width="200" height="20" as="geometry"/>
         </mxCell>
+        <mxCell id="picosoc-jtag-tck-sync" value="sync2dffrn : TCK on clk&lt;br&gt;(one for the whole chain)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="385" y="440" width="150" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-tck-sync-link" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="535" y="460" as="sourcePoint"/>
+            <mxPoint x="575" y="460" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="picosoc-jtag-53" value="JTAG chain" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontStyle=1;align=left;" vertex="1" parent="1">
           <mxGeometry x="40" y="490" width="120" height="20" as="geometry"/>
         </mxCell>
@@ -1861,7 +1870,7 @@
             <mxPoint x="240.0" y="700" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
-        <mxCell id="picosoc-jtag-75" value="cpu_safety : TCK resynchronized, JTAG to every copy (cpu_wrapper), TDO compared / voted" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-75" value="cpu_safety : JTAG to every copy (cpu_wrapper), TDO compared / voted" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="140" y="700" width="200" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-76" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1">

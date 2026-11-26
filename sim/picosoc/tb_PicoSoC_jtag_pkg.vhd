@@ -128,7 +128,7 @@ package body tb_PicoSoC_jtag_pkg is
     ) return t_jtag_bfm_config is
     variable v_config : t_jtag_bfm_config := C_JTAG_BFM_CONFIG_DEFAULT;
   begin
-    -- TCK resynchronized in cpu_safety : slow against the SoC clock
+    -- TCK resynchronized on the SoC clock in PicoSoC_top : slow against it
     v_config.tck_period  := 1 us;
     v_config.ir_width    := PICOSOC_JTAG_IR_WIDTH*nb_tap;
     v_config.trst_enable := false;  -- No TRST* pad
