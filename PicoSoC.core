@@ -120,9 +120,14 @@ CAPI=2:
 #                               Bank0 (3.3V, TP2) ; Bank5 and Bank12 at 2.5V ;
 #                               HWLA_BAUD_RATE and JTAG_BAUD_RATE at 9600 like
 #                               USER_BAUD_RATE (UART pads shared)
+# 2026-11-26  4.7.2    mrosiere tools/modbus and tools/openocd (OpenOCD files of the
+#                               board) ; adapters ft232r.cfg, ft232h.cfg,
+#                               remote_bitbang.cfg (adapter only) ; JTAG chain discovery
+#                               discover.cfg (sim_soc3x2_wardrv_fsm_c_user_openocd_discover,
+#                               sim_soc1_wardrv_fsm_c_user_openocd_discover)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.7.1
+name        : asylum:soc:PicoSoC:4.7.2
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
