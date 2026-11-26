@@ -158,7 +158,9 @@ CAPI=2:
 #                               PicoSoC_supervisor and PicoSoC_tap removed ;
 #                               trap of the error injection cleared on the rising edge of any
 #                               difference flag of the copy, the same for lock-step and TMR
-#                               (PicoSoC_inject without SAFETY)
+#                               (PicoSoC_inject without SAFETY) ; tb fault_tmr : requests of one
+#                               SoC cycle, CPU2 again leaves its trap pending (error after the
+#                               next reset, then CPU0 resets)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
