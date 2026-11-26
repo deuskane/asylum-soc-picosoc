@@ -701,9 +701,11 @@ filesets:
       - sim/openocd/tb_PicoSoC_openocd.vhd
       - tools/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
       - tools/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
+      - tools/openocd/discover.cfg       : {file_type : user, copyto : openocd/discover.cfg}
       - sim/openocd/gdb.cfg              : {file_type : user, copyto : openocd/gdb.cfg}
       - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
       - sim/openocd/chain.cfg            : {file_type : user, copyto : openocd/chain.cfg}
+      - sim/openocd/discover_check.cfg   : {file_type : user, copyto : openocd/discover_check.cfg}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
@@ -2276,7 +2278,7 @@ targets:
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     filesets_append   : *filesets_openocd
-    parameters        :
+    parameters        : &cfg_soc3x2_wardrv_fsm_openocd
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -2301,6 +2303,61 @@ targets:
     hooks :
       pre_build         : [cosim_build]
       pre_run           : [cosim_start_chain]
+      post_run          : [cosim_check]
+
+  #---------------------------------------
+  # OpenOCD co-simulation of the discovery of the JTAG chain
+  # (tb_PicoSoC_openocd, OpenOCD script sim/openocd/discover_check.cfg on
+  # tools/openocd/discover.cfg, no GDB) : the printed number of TAPs,
+  # IDCODEs and picosoc_chain line against the chain of the generics
+  # (PICOSOC_CHAIN of cosim.cfg, written by the testbench). Own hooks, as
+  # sim_soc3x2_wardrv_fsm_c_user_openocd_chain
+  #---------------------------------------
+  sim_soc3x2_wardrv_fsm_c_user_openocd_discover:
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs, JTAG chain of 4 TAPs (2 user CPUs, supervisor CPU, injection), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), discovery of the chain tools/openocd/discover.cfg checked by sim/openocd/discover_check.cfg (number of TAPs, IDCODEs, picosoc_chain)
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    filesets_append   : *filesets_openocd
+    parameters        : *cfg_soc3x2_wardrv_fsm_openocd
+    tools             : *tools_openocd
+    hooks :
+      pre_build         : [cosim_build]
+      pre_run           : [cosim_start_discover]
+      post_run          : [cosim_check]
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_user_openocd_discover:
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - Without Supervisor, Safety None     , Without Fault Injection, JTAG chain of 1 TAP (user CPU, as emu_ng_medium_soc1_wardrv_fsm), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), discovery of the chain tools/openocd/discover.cfg checked by sim/openocd/discover_check.cfg (number of TAPs, IDCODEs, picosoc_chain)
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    filesets_append   : *filesets_openocd
+    parameters        :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+
+      # Debug
+      - DEBUG_ENABLE=false
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - DEBUG_MUX_SEL=10
+    tools             : *tools_openocd
+    hooks :
+      pre_build         : [cosim_build]
+      pre_run           : [cosim_start_discover]
       post_run          : [cosim_check]
 
   #---------------------------------------
@@ -2939,6 +2996,9 @@ scripts:
 
   cosim_start_chain :
     cmd : [bash, rbb/cosim.sh, start, openocd/chain.cfg]
+
+  cosim_start_discover :
+    cmd : [bash, rbb/cosim.sh, start, openocd/discover_check.cfg]
 
   cosim_check :
     cmd : [bash, rbb/cosim.sh, check]

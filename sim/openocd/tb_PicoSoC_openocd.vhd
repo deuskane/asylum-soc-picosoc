@@ -10,7 +10,8 @@
 --              JTAG chain through the UART pads (hooks rbb/cosim.sh of the
 --              co-simulation kit asylum:verification:openocd), with the
 --              scenario of the target : GDB runs sim/openocd/picosoc.py, or
---              OpenOCD runs the checks of sim/openocd/chain.cfg
+--              OpenOCD runs the checks of sim/openocd/chain.cfg or of
+--              sim/openocd/discover_check.cfg
 --              DEBUG_MUX_SEL : function of the UART pads (debug_mux_sel_i)
 --                "10" : JTAG pins, driven by rbb_jtag of the kit (PIN mode) :
 --                       TCK = uart_rx_i, TDI = uart_tx_io, TMS =
@@ -29,6 +30,10 @@
 --              raised by the injection of the GDB scenario (INJECT), else no
 --              difference flag (no scenario injects). Error after
 --              C_COSIM_TIMEOUT.
+--              cosim.cfg (read by the hooks of the kit, exported to
+--              OpenOCD) : PICOSOC_CHAIN, the JTAG chain of the generics
+--              (chip, TAP, IDCODE of each TAP from TDO, as discover.cfg
+--              prints it), checked by discover_check.cfg
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -38,10 +43,13 @@
 -- 2026-11-24  1.1      mrosiere Unknown TDO left to rbb_axis of the kit
 -- 2026-11-25  1.2      mrosiere USER_NB_CPU ; no difference flag expected
 --                               without USER_FAULT_INJECTION (chain.cfg)
+-- 2026-11-26  1.3      mrosiere PICOSOC_CHAIN in cosim.cfg (discover_check.cfg)
 -------------------------------------------------------------------------------
 
 library ieee;
 use     ieee.std_logic_1164.all;
+use     ieee.numeric_std.all;
+use     std.textio.all;
 
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
@@ -306,7 +314,33 @@ begin  -- architecture tb
   -- Sequencer
   -----------------------------------------------------------------------------
   p_main : process
+    file     f_cfg  : text;
+    variable v_line : line;
   begin
+    -- JTAG chain from TDO for the OpenOCD scripts : injection / status TAP,
+    -- supervisor CPU, user CPU of each cluster (the last one first)
+    file_open(f_cfg, "cosim.cfg", write_mode);
+    write(v_line, string'("PICOSOC_CHAIN="""));
+    if DEBUG_ENABLE
+    then
+      write(v_line, " picosoc inject 0x" & to_hstring(PICOSOC_JTAG_IDCODE_INJECT));
+    end if;
+    if SUPERVISOR and SUPERVISOR_CPU_DEBUG_ENABLE
+    then
+      write(v_line, " supervisor cpu 0x" & to_hstring(PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU));
+    end if;
+    if USER_CPU_DEBUG_ENABLE
+    then
+      for i in USER_NB_CPU-1 downto 0 loop
+        write(v_line, " user cpu" & integer'image(i) & " 0x" &
+                      to_hstring(unsigned(PICOSOC_JTAG_IDCODE_USER_CPU) + i * 16#10000#));
+      end loop;
+    end if;
+    write(v_line, string'(""""));
+    log(ID_LOG_HDR, "Co-simulation : " & v_line.all, C_SCOPE);
+    writeline(f_cfg, v_line);
+    file_close(f_cfg);
+
     log(ID_LOG_HDR, "OpenOCD co-simulation, debug_mux_sel_i " & DEBUG_MUX_SEL & " : CPU_MODEL = " & CPU_MODEL &
                     ", USER_NB_CPU = " & integer'image(USER_NB_CPU) &
                     ", SUPERVISOR = " & boolean'image(SUPERVISOR) & ", USER_SAFETY = " & USER_SAFETY, C_SCOPE);
