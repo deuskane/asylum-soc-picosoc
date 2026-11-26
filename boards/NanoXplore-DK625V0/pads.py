@@ -10,9 +10,9 @@ p.addPad('switch_i[0]'       ,{'location':'IOB10_D04P'  , 'standard':'LVCMOS', '
 p.addPad('switch_i[1]'       ,{'location':'IOB10_D03N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA03 (Switch S3)
 p.addPad('switch_i[2]'       ,{'location':'IOB10_D03P'  , 'standard':'LVCMOS', 'drive':'16mA'}) # PA03 (Switch S2)
 p.addPad('switch_i[3]'       ,{'location':'IOB10_D09P'  , 'standard':'LVCMOS', 'drive':'16mA'}) # PA09 (Switch S1)
-# Function of the UART pads (S6 S5) : 00 user UART, 01 HWLA UART, 10 JTAG, 11 JTAG over the UART
-p.addPad('debug_mux_sel_i[0]',{'location':'IOB10_D04N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA09 (Switch S5)
-p.addPad('debug_mux_sel_i[1]',{'location':'IOB10_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA04 (Switch S6)
+# Function of the UART pads (S5 S6, left to right) : 00 user UART, 01 HWLA UART, 10 JTAG, 11 JTAG over the UART
+p.addPad('debug_mux_sel_i[0]',{'location':'IOB10_D04N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA04 (Switch S6)
+p.addPad('debug_mux_sel_i[1]',{'location':'IOB10_D09N'  , 'standard':'LVCMOS', 'drive':'16mA'}) # NA09 (Switch S5)
 
 #------------------------------------------------------------------
 # Push Buttons

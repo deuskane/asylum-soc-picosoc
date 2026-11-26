@@ -132,7 +132,9 @@ CAPI=2:
 #                               picosoc.cfg generic : without picosoc_chain, the chain is
 #                               discovered (discover.tcl, shared with discover.cfg)
 #                               (sim_soc1_wardrv_fsm_c_user_openocd_generic,
-#                               sim_soc3x2_wardrv_fsm_c_user_openocd_generic)
+#                               sim_soc3x2_wardrv_fsm_c_user_openocd_generic) ;
+#                               NG-MEDIUM : switch comments of pads.py fixed
+#                               (debug_mux_sel_i(1) = S5, (0) = S6, S5 S6 left to right)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2

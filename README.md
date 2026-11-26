@@ -113,9 +113,9 @@ A target names its firmware with its `generate` entries (see [PicoSoC.core](Pico
 
 The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK625V0) with NXmap and program it (`program: True`); pads in [boards/NanoXplore-DK625V0/pads.py](boards/NanoXplore-DK625V0/pads.py): 25 MHz clock, 4 user switches (S1 to S4, `USER_NB_SWITCH = 4`) and 2 switches for `debug_mux_sel_i` (S5, S6), push buttons on `arst_i`, `it_user_i` and `inject_error_i` (active low), 8 + 8 + 3 LEDs, UART, SPI flash (`USER_SPI_NB_IO = 2`), I2C (`i2c_scl_io`, `i2c_sda_io`, weak pull-ups of the pads) and `pwm_o` on spare pads of Bank0, the 4 UART pads and `debug_uart_tx_o` on spare pads of Bank0 (3.3V, test point TP2: pin 1 GND, pins 2 to 5 RX, TX, CTS*, RTS*, pin 7 `debug_uart_tx_o`; weak pull-ups on TDI and TMS; CTS* has the default pull-up of the pads, the NG-MEDIUM has no pull-down: see [UART pads and JTAG](#uart-pads-and-jtag)), for a 3.3V USB-UART or FTDI cable. Bank5 (TP5) is supplied at 2.5V by the HSMC supply and Bank12 at 2.5V: the bank voltages of `pads.py` follow the DK625 user guide. The `emu_ng_medium_*` targets set the three UARTs of the UART pads to 9600 baud (`USER_BAUD_RATE`, `HWLA_BAUD_RATE`, `JTAG_BAUD_RATE`): the terminal keeps its setting when `debug_mux_sel_i` changes. They set `DEBUG_ENABLE = false` (no HWLA, `debug_uart_tx_o` at `'1'`, no injection / status TAP): set it to `true` in a target to get the captures of the HWLA and the injection / status TAP. `emu_ng_medium_soc1_wardrv_fsm` has the debugger of the user CPU (`USER_CPU_DEBUG_ENABLE = true`, the only TAP of its JTAG chain, IDCODE `0x10001001`): OpenOCD + GDB through the UART pads with `debug_mux_sel_i` `10` (FT232R or FTDI MPSSE cable) or `11` (any USB-UART cable, 9600 baud; see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)); the other targets have no TAP (the JTAG mode of the UART pads drives no pad).
 
-**Switches of the board:** S1 to S4 are the user switches (`switch_i`); S6 and S5 are `debug_mux_sel_i(1)` and `debug_mux_sel_i(0)` ([pads.py](boards/NanoXplore-DK625V0/pads.py)), the function of the UART pads (see [UART pads and JTAG](#uart-pads-and-jtag)):
+**Switches of the board:** S1 to S4 are the user switches (`switch_i`); S5 and S6 (left to right on the board) are `debug_mux_sel_i(1)` and `debug_mux_sel_i(0)` (pads `IOB10_D09N` / NA09 and `IOB10_D04N` / NA04 of [pads.py](boards/NanoXplore-DK625V0/pads.py), DK625 user guide), the function of the UART pads (see [UART pads and JTAG](#uart-pads-and-jtag)): read left to right, S5 S6 is the value of `debug_mux_sel_i`:
 
-| `debug_mux_sel_i` | S6 | S5 | Function | Pads | Cable and host tool |
+| `debug_mux_sel_i` | S5 | S6 | Function | Pads | Cable and host tool |
 |-------------------|----|----|----------|------|---------------------|
 | `00` | 0 | 0 | User UART (`sbi_UART`, `USER_BAUD_RATE`) | RX, TX, CTS*, RTS* | Any 3.3V USB-UART cable: a terminal at 9600 baud, or the Modbus scripts with the Modbus firmware |
 | `01` | 0 | 1 | UART of the HWLA (`HWLA_BAUD_RATE`), with `DEBUG_ENABLE` only | TX | Any USB-UART cable: `hwla2vcd.py` of asylum-debug-hwla (see [Debug: HWLA](#debug-hwla)) |
@@ -590,14 +590,14 @@ Names given by `picosoc_tap` of `discover.tcl` (the IDCODEs of [UART pads and JT
 Steps (an FT232R cable in mode `10`; with the FTDI MPSSE cable use `ft232h.cfg`):
 
 1. Build and program a bitstream with at least one TAP: `make emu_ng_medium_soc1_wardrv_fsm` (the debugger of the user CPU, the only TAP of its chain); the other `emu_ng_medium_*` targets have no TAP.
-2. Stop the terminal on the cable, then set S6 S5 to `10` (see [Board](#board)).
+2. Stop the terminal on the cable, then set S5 S6 to `10` (S5 1, S6 0; see [Board](#board)).
 3. Start OpenOCD with the adapter file and `picosoc.cfg`, no argument: it discovers the chain, prints it, creates the riscv targets and starts a GDB server per CPU.
 4. Connect GDB to the GDB port of the CPU (3333 for the first CPU of the chain, from TDO).
-5. Quit GDB and OpenOCD, set S6 S5 back to `00` for the user UART.
+5. Quit GDB and OpenOCD, set S5 S6 back to `00` for the user UART.
 
 ```bash
 make emu_ng_medium_soc1_wardrv_fsm                                  # TOOL=nxmap
-openocd -f tools/openocd/ft232r.cfg -f tools/openocd/picosoc.cfg    # S6 S5 = 10
+openocd -f tools/openocd/ft232r.cfg -f tools/openocd/picosoc.cfg    # S5 S6 = 10
 gdb-multiarch -ex "set architecture riscv:rv32" -ex "mem 0x80000040 0x80000100 rw" -ex "target extended-remote localhost:3333"
 ```
 
@@ -623,7 +623,7 @@ openocd -f tools/openocd/ft232r.cfg -c "set picosoc_chain {user cpu0 0x10001001}
 JTAG over the UART (mode `11`, any USB-UART cable): `socat` links the TCP port 9824 of `remote_bitbang.cfg` to the serial port, at the baud rate of the bitstream (`JTAG_BAUD_RATE`); the rest is the same:
 
 ```bash
-socat TCP-LISTEN:9824,reuseaddr /dev/ttyUSB0,raw,echo=0,b9600 &    # S6 S5 = 11
+socat TCP-LISTEN:9824,reuseaddr /dev/ttyUSB0,raw,echo=0,b9600 &    # S5 S6 = 11
 openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg
 ```
 
