@@ -23,12 +23,16 @@
 #              lsusb) and its access (sudo otherwise), the serial port free
 #              (ft232r), the TCP port of remote_bitbang open, the GDB /
 #              telnet / TCL ports free.
+#              After a reset of the board (button S11 : the TAPs back in
+#              Test-Logic-Reset), restart OpenOCD or run jtag arp_init.
 #-----------------------------------------------------------------------------
 # Copyright (c) 2026
 #-----------------------------------------------------------------------------
 # Revisions  :
 # Date        Version  Author   Description
 # 2026-11-26  1.0      mrosiere Created
+# 2026-11-26  1.1      mrosiere Hint : after a reset of the board, restart
+#                               OpenOCD or jtag arp_init
 #-----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -167,5 +171,6 @@ if [ "${CHAIN}" = picosoc ]
 then
     echo "Then   : GDB on localhost:3333 (and the next ports), telnet localhost 4444"
 fi
+echo "Reset  : after a reset of the board (S11), restart OpenOCD or run 'jtag arp_init' (telnet, or 'monitor jtag arp_init' in GDB)"
 
 exec ${SUDO} "${OPENOCD}" -f "${ADAPTER_CFG}" -f "${CHAIN_CFG}" "$@"
