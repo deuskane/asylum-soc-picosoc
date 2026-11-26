@@ -128,7 +128,11 @@ CAPI=2:
 #                               NG-MEDIUM : no pull-down on CTS* / TDO (the pads
 #                               have no pull-down, default pull-up) ;
 #                               modbus_server_debug.py : base address as integer ;
-#                               ft232r.cfg : adapter speed 10 kHz (checked on the board)
+#                               ft232r.cfg : adapter speed 10 kHz (checked on the board) ;
+#                               picosoc.cfg generic : without picosoc_chain, the chain is
+#                               discovered (discover.tcl, shared with discover.cfg)
+#                               (sim_soc1_wardrv_fsm_c_user_openocd_generic,
+#                               sim_soc3x2_wardrv_fsm_c_user_openocd_generic)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
@@ -711,10 +715,13 @@ filesets:
       - tools/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
       - tools/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
       - tools/openocd/discover.cfg       : {file_type : user, copyto : openocd/discover.cfg}
+      - tools/openocd/discover.tcl       : {file_type : user, copyto : openocd/discover.tcl}
       - sim/openocd/gdb.cfg              : {file_type : user, copyto : openocd/gdb.cfg}
+      - sim/openocd/generic.cfg          : {file_type : user, copyto : openocd/generic.cfg}
       - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
       - sim/openocd/chain.cfg            : {file_type : user, copyto : openocd/chain.cfg}
       - sim/openocd/discover_check.cfg   : {file_type : user, copyto : openocd/discover_check.cfg}
+      - sim/openocd/generic_check.cfg    : {file_type : user, copyto : openocd/generic_check.cfg}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
@@ -2346,7 +2353,7 @@ targets:
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
     filesets_append   : *filesets_openocd
-    parameters        :
+    parameters        : &cfg_soc1_wardrv_fsm_openocd
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
@@ -2367,6 +2374,46 @@ targets:
     hooks :
       pre_build         : [cosim_build]
       pre_run           : [cosim_start_discover]
+      post_run          : [cosim_check]
+
+  #---------------------------------------
+  # OpenOCD co-simulations of tools/openocd/picosoc.cfg without
+  # picosoc_chain (tb_PicoSoC_openocd) : the chain discovered, the TAPs
+  # and targets created from the IDCODEs, checked against the chain of
+  # the generics (PICOSOC_CHAIN of cosim.cfg). Chain of 1 TAP : GDB
+  # scenario sim/openocd/picosoc.py on sim/openocd/generic.cfg ; chain of
+  # 4 TAPs : OpenOCD script sim/openocd/generic_check.cfg, no GDB. Own
+  # hooks, as sim_soc3x2_wardrv_fsm_c_user_openocd_chain
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_user_openocd_generic:
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety None     , Without Fault Injection, JTAG chain of 1 TAP (user CPU, as emu_ng_medium_soc1_wardrv_fsm), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), tools/openocd/picosoc.cfg without picosoc_chain (chain discovered), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU)
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    filesets_append   : *filesets_openocd
+    parameters        : *cfg_soc1_wardrv_fsm_openocd
+    tools             : *tools_openocd
+    hooks :
+      pre_build         : [cosim_build]
+      pre_run           : [cosim_start_generic]
+      post_run          : [cosim_check]
+
+  #---------------------------------------
+  sim_soc3x2_wardrv_fsm_c_user_openocd_generic:
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs, JTAG chain of 4 TAPs (2 user CPUs, supervisor CPU, injection), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), tools/openocd/picosoc.cfg without picosoc_chain (chain discovered) checked by sim/openocd/generic_check.cfg (IDCODEs, riscv targets named and examined, halt / resume, INJECT)
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    filesets_append   : *filesets_openocd
+    parameters        : *cfg_soc3x2_wardrv_fsm_openocd
+    tools             : *tools_openocd
+    hooks :
+      pre_build         : [cosim_build]
+      pre_run           : [cosim_start_generic_check]
       post_run          : [cosim_check]
 
   #---------------------------------------
@@ -3008,6 +3055,12 @@ scripts:
 
   cosim_start_discover :
     cmd : [bash, rbb/cosim.sh, start, openocd/discover_check.cfg]
+
+  cosim_start_generic :
+    cmd : [bash, rbb/cosim.sh, start, openocd/generic.cfg, openocd/picosoc.py]
+
+  cosim_start_generic_check :
+    cmd : [bash, rbb/cosim.sh, start, openocd/generic_check.cfg]
 
   cosim_check :
     cmd : [bash, rbb/cosim.sh, check]

@@ -6,19 +6,25 @@
 # Author     : mrosiere
 #-----------------------------------------------------------------------------
 # Description: gdb-multiarch -batch -x picosoc.py, on the GDB server of
-#              OpenOCD (gdb.cfg : remote_bitbang.cfg, picosoc.cfg) connected to
-#              tb_PicoSoC_openocd (firmware esw/demo/user.c : LED0 = switches),
-#              through the JTAG pins (debug_mux_sel_i 10) or JTAG over the
-#              UART (debug_mux_sel_i 11) :
-#                chain  : OpenOCD found every TAP with its IDCODE
+#              OpenOCD connected to tb_PicoSoC_openocd (firmware
+#              esw/demo/user.c : LED0 = switches), through the JTAG pins
+#              (debug_mux_sel_i 10) or JTAG over the UART (debug_mux_sel_i
+#              11). OpenOCD : remote_bitbang.cfg, picosoc.cfg with the chain
+#              given (gdb.cfg) or discovered (generic.cfg). The chain of the
+#              testbench is PICOSOC_CHAIN (cosim.cfg, exported by the hooks of
+#              the kit : chip, TAP, IDCODE of each TAP from TDO), its first
+#              CPU on the GDB port 3333 is the user CPU :
+#                chain  : OpenOCD found every TAP with its IDCODE (line of
+#                         the scan of a TAP given, or line of the chain
+#                         discovered)
 #                halt   : GDB halts the user hart, pc in the user ROM, sp in
 #                         the stack of the firmware (GDB reads the RAM of the
 #                         firmware only : mem)
 #                resume : the user hart runs again (dmstatus)
-#                inject : INJECT of the injection / status TAP
-#                         (picosoc_inject : irscan, drscan) : an error in
-#                         CPU1 raises the difference flag CPU0 vs CPU1, read
-#                         back by the next scan
+#                inject : with the injection / status TAP in the chain,
+#                         INJECT (picosoc_inject : irscan, drscan) : an error
+#                         in CPU1 raises the difference flag CPU0 vs CPU1,
+#                         read back by the next scan
 #              The testbench checks the difference flag on led_diff_o and
 #              that the firmware runs after the session.
 #              Prints ok / ERROR for each check, then SCENARIO PASS / FAIL.
@@ -30,6 +36,8 @@
 # Revisions  :
 # Date        Version  Author   Description
 # 2026-11-24  1.0      mrosiere Created
+# 2026-11-26  1.1      mrosiere Chain of PICOSOC_CHAIN (given or discovered),
+#                               inject only with the injection TAP
 #-----------------------------------------------------------------------------
 
 import os
@@ -39,9 +47,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from   gdb_lib import check, run, u32, cause, monitor_value, connect, resume, openocd_log, main
 from   gdb_lib import HALTREQ
 
-# JTAG chain of tb_PicoSoC_openocd (picosoc.cfg) : TAP, IDCODE
-CHAIN         = {"picosoc.inject" : 0x10003001,
-                 "user.cpu"       : 0x10001001}
+# JTAG chain of tb_PicoSoC_openocd : (chip.TAP, IDCODE) of each TAP, from TDO
+_LIST         = os.environ["PICOSOC_CHAIN"].split()
+CHAIN         = [(f"{_LIST[i]}.{_LIST[i+1]}", int(_LIST[i+2], 16)) for i in range(0, len(_LIST), 3)]
 ROM_SIZE      = 0x1000                             # user ROM (rvcc_gen, addr_width 10)
 RAM           = (0x80000040, 0x80000100)           # RAM_GLB and RAM_LOC of link.ld (rvcc_gen)
 STACK         = (0x80000080, 0x80000100)           # RAM_LOC
@@ -62,8 +70,10 @@ def inject(bits):
 #--------------------------------------------
 def step_chain():
     log = openocd_log()
-    for tap, idcode in CHAIN.items():
-        check(f"JTAG tap: {tap} tap/device found: 0x{idcode:08x}" in log, f"{tap} : IDCODE 0x{idcode:08X}")
+    for k, (tap, idcode) in enumerate(CHAIN):
+        given      = f"JTAG tap: {tap} tap/device found: 0x{idcode:08x}" in log
+        discovered = f"TAP {k} : IDCODE 0x{idcode:08x} : {tap}" in log
+        check(given or discovered, f"{tap} : IDCODE 0x{idcode:08X}")
     check("UNEXPECTED" not in log, "no unexpected IDCODE")
     check("Examined RISC-V core" in log, "user CPU examined")
 
@@ -100,4 +110,4 @@ def step_inject():
     check(diff == 0b001, f"INJECT : difference flags 0b{diff:03b}, CPU0 vs CPU1")
     check(inject(0b000) == 0b001, "INJECT : end of the injection, the flag is sticky")
 
-main([step_chain, step_halt, step_resume, step_inject])
+main([step_chain, step_halt, step_resume] + ([step_inject] if ("picosoc.inject", 0x10003001) in CHAIN else []))
