@@ -532,7 +532,7 @@ With the switches `11`, the UART pads carry a UART (`PicoSoC_jtag_over_uart`: `u
 - TCK: in mode `11`, TCK is the register `tck_r` of `jtag_bitbang`, clocked by the SoC clock, with a TCK edge per command byte. The CPU debug units resynchronize it on the SoC clock (`cpu_safety`) as the TCK of the pads: nothing changes for them. The injection / status TAP (`PicoSoC_tap`) uses TCK as its clock: on an FPGA, the TCK net of the chain is driven by the pad (mode `10`) or by `tck_r` (mode `11`) through the selection of `PicoSoC_pads`. Give it a clock net and declare both sources, for example Vivado `create_clock` on `uart_rx_i` (TCK of the probe) and `create_generated_clock -divide_by 2` on `tck_r/Q`, the two TCK clocks exclusive (`set_clock_groups -logically_exclusive`) and asynchronous to the SoC clock, or false paths between the SoC clock and the TCK domain: OpenOCD changes TMS and TDI a byte before the rising edge of TCK and reads TDO a byte after its falling edge.
 - Speed: a scanned bit read by OpenOCD costs 3 bytes (TCK low with TMS and TDI, `'R'`, TCK high), a TMS move 2 bytes. At 115200 baud (11520 bytes/s), TCK is about 3.8 kHz during the scans (about 320 Hz at 9600 baud, the baud rate of the NG-MEDIUM targets): the IDCODE of a TAP (about 110 bytes) takes about 10 ms, a DMI access of a CPU debug unit (two DR scans of 41 bits and the BYPASS bits of the other TAPs, about 310 bytes) about 27 ms. The speed scales with `JTAG_BAUD_RATE` (the testbench uses 921600 baud); `adapter speed` of OpenOCD has no effect.
 
-On the host, `socat` links the TCP port 9824 of the OpenOCD adapter `remote_bitbang` ([tools/openocd/remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg), the adapter of the co-simulation) to the serial port: see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board).
+On the host, [tools/openocd/remote_bitbang_setup.sh](tools/openocd/remote_bitbang_setup.sh) (`socat`) links the TCP port 9824 of the OpenOCD adapter `remote_bitbang` ([tools/openocd/remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg), the adapter of the co-simulation) to the serial port: see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board).
 
 The same halt and resume through JTAG over the UART, from the simulation of the scenario `bitbang_cpu` (921600 baud): each step is a DMI access, two DR scans of 43 bits (the target and the BYPASS bits of the 2 other TAPs), 3 command bytes per bit:
 
@@ -620,12 +620,16 @@ openocd -f tools/openocd/ft232r.cfg -f tools/openocd/discover.cfg
 openocd -f tools/openocd/ft232r.cfg -c "set picosoc_chain {user cpu0 0x10001001}" -f tools/openocd/picosoc.cfg
 ```
 
-JTAG over the UART (mode `11`, any USB-UART cable): `socat` links the TCP port 9824 of `remote_bitbang.cfg` to the serial port, at the baud rate of the bitstream (`JTAG_BAUD_RATE`); the rest is the same:
+JTAG over the UART (mode `11`, any USB-UART cable): [tools/openocd/remote_bitbang_setup.sh](tools/openocd/remote_bitbang_setup.sh) links the TCP port 9824 of `remote_bitbang.cfg` to the serial port, at the baud rate of the bitstream (`JTAG_BAUD_RATE`); the rest is the same:
 
 ```bash
-socat TCP-LISTEN:9824,reuseaddr /dev/ttyUSB0,raw,echo=0,b9600 &    # S5 S6 = 11
-openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg
+tools/openocd/remote_bitbang_setup.sh /dev/ttyUSB0 9600   # S5 S6 = 11 ; Ctrl-C to stop
+openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg   # in another terminal
 ```
+
+- The script sets the serial port with `stty` (raw, 8N1, no flow control) and runs `socat` without termios option: some `socat` versions fail with `Inappropriate ioctl for device` on the options `raw,echo=0,b9600` of a serial port.
+- The link stays for the next OpenOCD session (`fork`).
+- Without read / write access to the serial port, the script runs `stty` and `socat` with `sudo`. To avoid it, add the user to the group of the port: `sudo usermod -aG dialout $USER`, then log out and in.
 
 With the injection / status TAP in the chain (`DEBUG_ENABLE`), GDB drives it through OpenOCD:
 
@@ -644,7 +648,8 @@ Install on the host:
 
 - OpenOCD >= 0.11 (the `ft232r` driver and the RISC-V target), for example xPack OpenOCD 0.12 on CentOS 8; the co-simulations use OpenOCD 0.12 of the asylum-env image.
 - A RISC-V GDB: `gdb-multiarch` (asylum-env image) or `riscv-none-elf-gdb`.
-- `socat` for JTAG over the UART.
+- `socat` for JTAG over the UART (`remote_bitbang_setup.sh`).
+- Access to the serial port without `sudo`: the user in the group `dialout` (`sudo usermod -aG dialout $USER`, then log out and in).
 
 ## Programmer's Guide
 
