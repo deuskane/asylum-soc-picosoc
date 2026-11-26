@@ -79,11 +79,12 @@ p.addPad('pwm_o'             ,{'location':'IOB0_D05P'   , 'standard':'LVCMOS', '
 #                             {'location':'IOB0_D04N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP1 pin 10
 # UART pads (TP2 pins 2 to 5), shared with the HWLA UART and JTAG
 # (debug_mux_sel_i), FTDI MPSSE pinout : rx = TCK (AD0), tx = TDI (AD1,
-# pull-up : TDI idle high), cts_b = TDO (AD2, pull-down : CTS* active without
-# a cable), rts_b = TMS (AD3, pull-up : TMS idle high)
+# pull-up : TDI idle high), cts_b = TDO (AD2, no pull-down on the NG-MEDIUM :
+# default 30 kOhm pull-up, CTS* inactive and TDO at 1 without a cable),
+# rts_b = TMS (AD3, pull-up : TMS idle high)
 p.addPad('uart_rx_i'         ,{'location':'IOB0_D06N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 2 (cable TXD / AD0)
 p.addPad('uart_tx_io'        ,{'location':'IOB0_D07N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP2 pin 3 (cable RXD / AD1)
-p.addPad('uart_cts_b_io'     ,{'location':'IOB0_D05N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullDown'}) # TP2 pin 4 (cable RTS# / AD2)
+p.addPad('uart_cts_b_io'     ,{'location':'IOB0_D05N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 4 (cable RTS# / AD2)
 p.addPad('uart_rts_b_io'     ,{'location':'IOB0_D09N'   , 'standard':'LVCMOS', 'drive':'16mA', 'weakTermination':'PullUp'}) # TP2 pin 5 (cable CTS# / AD3)
 #                             {'location':'IOB0_D11N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 6
 p.addPad('debug_uart_tx_o'   ,{'location':'IOB0_D08N'   , 'standard':'LVCMOS', 'drive':'16mA'}) # TP2 pin 7 (HWLA UART TX)

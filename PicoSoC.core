@@ -124,7 +124,10 @@ CAPI=2:
 #                               board) ; adapters ft232r.cfg, ft232h.cfg,
 #                               remote_bitbang.cfg (adapter only) ; JTAG chain discovery
 #                               discover.cfg (sim_soc3x2_wardrv_fsm_c_user_openocd_discover,
-#                               sim_soc1_wardrv_fsm_c_user_openocd_discover)
+#                               sim_soc1_wardrv_fsm_c_user_openocd_discover) ;
+#                               NG-MEDIUM : no pull-down on CTS* / TDO (the pads
+#                               have no pull-down, default pull-up) ;
+#                               modbus_server_debug.py : base address as integer
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
