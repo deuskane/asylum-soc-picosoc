@@ -132,6 +132,8 @@ CAPI=2:
 #                               remote_bitbang.cfg, ft232r.cfg : transport select jtag ;
 #                               tools/openocd/remote_bitbang_setup.sh (stty + socat,
 #                               JTAG over the UART on the board) ;
+#                               tools/openocd/openocd.sh (checks of the host, then
+#                               OpenOCD with an adapter and a chain file) ;
 #                               emu_ng_medium_soc3_wardrv_fsm_fault_debug (HWLA,
 #                               injection / status TAP, both CPU debuggers) ;
 #                               picosoc.cfg generic : without picosoc_chain, the chain is

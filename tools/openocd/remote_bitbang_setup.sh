@@ -15,7 +15,7 @@
 #                tools/openocd/remote_bitbang_setup.sh [device] [baud] [port]
 #                (default : /dev/ttyUSB0 9600 9824)
 #              then, in another terminal :
-#                openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg
+#                tools/openocd/openocd.sh remote_bitbang
 #              The serial port is set by stty (raw, 8N1, no flow control) ;
 #              socat only copies the bytes, without termios option (socat
 #              termios options can fail with "Inappropriate ioctl for
@@ -31,6 +31,7 @@
 # Revisions  :
 # Date        Version  Author   Description
 # 2026-11-26  1.0      mrosiere Created
+# 2026-11-26  1.1      mrosiere OpenOCD through openocd.sh
 #-----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -67,7 +68,7 @@ ${SUDO} stty -F "${DEV}" "${BAUD}" raw -echo -echoe -echok -echoctl -echoke \
 
 echo "JTAG over the UART : 127.0.0.1:${PORT} (OpenOCD remote_bitbang) <-> ${DEV} at ${BAUD} baud"
 echo "Board  : switches S5 S6 = 11, bitstream with JTAG_BAUD_RATE = ${BAUD}"
-echo "OpenOCD: openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg"
+echo "OpenOCD: tools/openocd/openocd.sh remote_bitbang (in another terminal)"
 echo "Ctrl-C to stop"
 
 exec ${SUDO} socat TCP-LISTEN:"${PORT}",bind=127.0.0.1,reuseaddr,fork OPEN:"${DEV}",rdwr,noctty

@@ -550,6 +550,13 @@ OpenOCD takes an adapter file (the cable), then a chain file (the TAPs), both in
 openocd -f tools/openocd/<adapter>.cfg -f tools/openocd/<chain>.cfg
 ```
 
+[tools/openocd/openocd.sh](tools/openocd/openocd.sh) checks the host, then runs this command: `tools/openocd/openocd.sh <adapter> [picosoc|discover] [OpenOCD options]` (adapter `ft232r`, `ft232h` or `remote_bitbang`; chain `picosoc` by default).
+
+- OpenOCD >= 0.11 (`OPENOCD=<path>` for another binary than `openocd`).
+- `ft232r`, `ft232h`: the cable on USB (`lsusb`, VID:PID `0403:6001` / `0403:6014`); without access to its USB device, OpenOCD runs with `sudo` (the udev rules `contrib/60-openocd.rules` of OpenOCD avoid it); `ft232r`: a warning when a terminal still holds a `/dev/ttyUSB*`.
+- `remote_bitbang`: `remote_bitbang_setup.sh` listens on the TCP port 9824.
+- The ports 3333, 4444 and 6666 are free (no other OpenOCD running).
+
 | Adapter file | Cable | OpenOCD driver | `debug_mux_sel_i` | TCK |
 |--------------|-------|----------------|-------------------|-----|
 | [ft232r.cfg](tools/openocd/ft232r.cfg) | USB-UART cable with an FT232R (TXD, RXD, RTS#, CTS#, 3.3V; for example DSD TECH SH-U09G), `vid_pid 0x0403 0x6001` | `ft232r`, synchronous bitbang (the `ftdi` driver needs an MPSSE chip, the FT232R has none) | `10` | `adapter speed 10` (kHz; checked on the board: 100 kHz finds no TAP) |
@@ -597,7 +604,7 @@ Steps (an FT232R cable in mode `10`; with the FTDI MPSSE cable use `ft232h.cfg`)
 
 ```bash
 make emu_ng_medium_soc1_wardrv_fsm                                  # TOOL=nxmap
-openocd -f tools/openocd/ft232r.cfg -f tools/openocd/picosoc.cfg    # S5 S6 = 10
+tools/openocd/openocd.sh ft232r                                     # S5 S6 = 10
 gdb-multiarch -ex "set architecture riscv:rv32" -ex "mem 0x80000040 0x80000100 rw" -ex "target extended-remote localhost:3333"
 ```
 
@@ -624,7 +631,7 @@ JTAG over the UART (mode `11`, any USB-UART cable): [tools/openocd/remote_bitban
 
 ```bash
 tools/openocd/remote_bitbang_setup.sh /dev/ttyUSB0 9600   # S5 S6 = 11 ; Ctrl-C to stop
-openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg   # in another terminal
+tools/openocd/openocd.sh remote_bitbang                                     # in another terminal
 ```
 
 - The script sets the serial port with `stty` (raw, 8N1, no flow control) and runs `socat` without termios option: some `socat` versions fail with `Inappropriate ioctl for device` on the options `raw,echo=0,b9600` of a serial port.
