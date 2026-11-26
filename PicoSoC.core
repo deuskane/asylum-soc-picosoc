@@ -690,18 +690,19 @@ filesets:
       - ">=asylum:verification:uvvm:1.3.0" # jtag_bfm_pkg (JTAG BFM, chain fields), rbb_bfm_pkg (remote_bitbang BFM)
 
   #---------------------------------------
-  # OpenOCD co-simulations (tb_PicoSoC_openocd) : OpenOCD and GDB
-  # configuration copied to openocd/ of the work root, next to gdb_lib.py
-  # of WardRV (default target of asylum:processor:WardRV)
+  # OpenOCD co-simulations (tb_PicoSoC_openocd) : OpenOCD configurations
+  # of the board (tools/openocd) and scenarios (sim/openocd) copied to
+  # openocd/ of the work root, next to gdb_lib.py of WardRV (default target
+  # of asylum:processor:WardRV)
   #---------------------------------------
   files_sim_openocd:
   #---------------------------------------
     files:
       - sim/openocd/tb_PicoSoC_openocd.vhd
-      - sim/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
-      - sim/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
-      - sim/openocd/picosoc.py         : {file_type : user, copyto : openocd/picosoc.py}
-      - sim/openocd/chain.cfg          : {file_type : user, copyto : openocd/chain.cfg}
+      - tools/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
+      - tools/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
+      - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
+      - sim/openocd/chain.cfg            : {file_type : user, copyto : openocd/chain.cfg}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh

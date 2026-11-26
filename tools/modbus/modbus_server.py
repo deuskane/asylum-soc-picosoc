@@ -64,7 +64,7 @@ if __name__ == "__main__":
         parity        = 'N'  # Options: 'N', 'E', 'O', 'M', 'S'
         slave_id      = 0x5A
 
-        addrmap_hjson = hjson.loads(Path("addrmap_user.hjson").read_text(encoding="utf-8"))
+        addrmap_hjson = hjson.loads((Path(__file__).parent / "addrmap_user.hjson").read_text(encoding="utf-8"))
         addrmap       = {item["name"]: int(item["base"],16) for item in addrmap_hjson}
                       
         client        = modbus_connect(port=port_name, baudrate=baudrate, parity=parity)

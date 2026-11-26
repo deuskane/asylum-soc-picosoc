@@ -6,8 +6,8 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: OpenOCD co-simulation of PicoSoC_top : OpenOCD (adapter
---              remote_bitbang, sim/openocd/remote_bitbang.cfg) drives the JTAG
---              chain through the UART pads (hooks rbb/cosim.sh of the
+--              remote_bitbang, tools/openocd/remote_bitbang.cfg) drives the
+--              JTAG chain through the UART pads (hooks rbb/cosim.sh of the
 --              co-simulation kit asylum:verification:openocd), with the
 --              scenario of the target : GDB runs sim/openocd/picosoc.py, or
 --              OpenOCD runs the checks of sim/openocd/chain.cfg

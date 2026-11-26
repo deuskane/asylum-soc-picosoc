@@ -118,7 +118,7 @@ The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK
 make emu_ng_medium_soc4_wardrv_fsm_fault      # TOOL=nxmap (mk/defs.mk)
 ```
 
-[tools/modbus_server.py](tools/modbus_server.py) and [tools/modbus_server_debug.py](tools/modbus_server_debug.py) talk to the Modbus firmware on the board through the serial port.
+[tools/modbus/modbus_server.py](tools/modbus/modbus_server.py) and [tools/modbus/modbus_server_debug.py](tools/modbus/modbus_server_debug.py) talk to the Modbus firmware on the board through the serial port.
 
 To use PicoSoC in another design, instantiate `PicoSoC_top` (library `asylum`, component in `asylum.PicoSoC_pkg`) and generate the two ROMs as the targets do (`ROM_user_pkg` is used by `PicoSoC_pkg`):
 
@@ -312,7 +312,7 @@ Interrupt sources of the user GIC (the same vector on the GIC of every cluster):
 | `0x40`-`0x41` | GIC, sources = difference flags (0 CPU0 vs CPU1, 1 CPU1 vs CPU2, 2 CPU2 vs CPU0) | `sbi_GIC` | [GIC_csr.md](https://github.com/deuskane/asylum-system-gic/blob/main/hdl/csr/GIC_csr.md) |
 | `0x80`-`0xFF` | RAM | `sbi_ram`, `SUPERVISOR_RAM_DEPTH` bytes | - |
 
-[tools/addrmap_user.hjson](tools/addrmap_user.hjson) (read by the Modbus tools) repeats the user base addresses: keep it aligned with `PicoSoC_pkg` and `addrmap_user.h`.
+[tools/modbus/addrmap_user.hjson](tools/modbus/addrmap_user.hjson) (read by the Modbus tools) repeats the user base addresses: keep it aligned with `PicoSoC_pkg` and `addrmap_user.h`.
 
 ## Resources
 
@@ -497,11 +497,11 @@ The injection written by an Update-DR (falling edge of TCK) goes through a `sync
 
 A probe faster than this limit can miss TCK pulses (the scans then fail). The testbench uses TCK = 1 µs; the co-simulation with OpenOCD runs at the limit (TCK = `FSYS_INT` / 8, see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)). JTAG over the UART (mode `11`) is always far below this limit: a TCK edge per command byte, at least 10 bit times.
 
-On the host, OpenOCD runs with the files of the co-simulation (see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)): [sim/openocd/picosoc.cfg](sim/openocd/picosoc.cfg) declares the JTAG chain, the riscv target of the user CPU and the command `picosoc_inject`, after the lines of the adapter. With the FTDI cable (`debug_mux_sel_i` `10`, TCK below `FSYS_INT` / 8, see JTAG timing):
+On the host, OpenOCD runs with the files of the co-simulation (see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)): [tools/openocd/picosoc.cfg](tools/openocd/picosoc.cfg) declares the JTAG chain, the riscv target of the user CPU and the command `picosoc_inject`, after the lines of the adapter. With the FTDI cable (`debug_mux_sel_i` `10`, TCK below `FSYS_INT` / 8, see JTAG timing):
 
 ```bash
 openocd -c "adapter driver ftdi; ftdi vid_pid 0x0403 0x6014; ftdi layout_init 0x0008 0x000b; adapter speed 500" \
-        -f sim/openocd/picosoc.cfg       # FT232H (FT2232H : vid_pid 0x0403 0x6010, channel A) ; TCK AD0, TDI AD1, TDO AD2, TMS AD3
+        -f tools/openocd/picosoc.cfg       # FT232H (FT2232H : vid_pid 0x0403 0x6010, channel A) ; TCK AD0, TDI AD1, TDO AD2, TMS AD3
 gdb-multiarch -ex "set architecture riscv:rv32" -ex "mem 0x80000040 0x80000100 rw" -ex "target extended-remote localhost:3333"
 (gdb) monitor picosoc_inject 0x1          # inject an error in CPU0 (INJECT), prints the difference flags
 (gdb) monitor picosoc_inject 0x0          # end of the injection
@@ -528,11 +528,11 @@ With the switches `11`, the UART pads carry a UART (`PicoSoC_jtag_over_uart`: `u
 - TCK: in mode `11`, TCK is the register `tck_r` of `jtag_bitbang`, clocked by the SoC clock, with a TCK edge per command byte. The CPU debug units resynchronize it on the SoC clock (`cpu_safety`) as the TCK of the pads: nothing changes for them. The injection / status TAP (`PicoSoC_tap`) uses TCK as its clock: on an FPGA, the TCK net of the chain is driven by the pad (mode `10`) or by `tck_r` (mode `11`) through the selection of `PicoSoC_pads`. Give it a clock net and declare both sources, for example Vivado `create_clock` on `uart_rx_i` (TCK of the probe) and `create_generated_clock -divide_by 2` on `tck_r/Q`, the two TCK clocks exclusive (`set_clock_groups -logically_exclusive`) and asynchronous to the SoC clock, or false paths between the SoC clock and the TCK domain: OpenOCD changes TMS and TDI a byte before the rising edge of TCK and reads TDO a byte after its falling edge.
 - Speed: a scanned bit read by OpenOCD costs 3 bytes (TCK low with TMS and TDI, `'R'`, TCK high), a TMS move 2 bytes. At 115200 baud (11520 bytes/s), TCK is about 3.8 kHz during the scans (about 320 Hz at 9600 baud, the baud rate of the NG-MEDIUM targets): the IDCODE of a TAP (about 110 bytes) takes about 10 ms, a DMI access of a CPU debug unit (two DR scans of 41 bits and the BYPASS bits of the other TAPs, about 310 bytes) about 27 ms. The speed scales with `JTAG_BAUD_RATE` (the testbench uses 921600 baud); `adapter speed` of OpenOCD has no effect.
 
-On the host, `socat` links the TCP port of the adapter to the serial port, and OpenOCD uses [sim/openocd/remote_bitbang.cfg](sim/openocd/remote_bitbang.cfg), the file of the co-simulation of the mode `11` (adapter `remote_bitbang` on the port 9824, then `picosoc.cfg`, to adapt to the chain as above):
+On the host, `socat` links the TCP port of the adapter to the serial port, and OpenOCD uses [tools/openocd/remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg), the file of the co-simulation of the mode `11` (adapter `remote_bitbang` on the port 9824, then `picosoc.cfg`, to adapt to the chain as above):
 
 ```bash
 socat TCP-LISTEN:9824,reuseaddr /dev/ttyUSB0,raw,echo=0,b9600 &
-openocd -f sim/openocd/remote_bitbang.cfg
+openocd -f tools/openocd/remote_bitbang.cfg
 gdb-multiarch -ex "set architecture riscv:rv32" -ex "mem 0x80000040 0x80000100 rw" -ex "target extended-remote localhost:3333"
 ```
 
@@ -686,8 +686,8 @@ The debug modes of the UART pads are also checked with the real debugger: OpenOC
 
 | File | Role |
 |------|------|
-| [sim/openocd/picosoc.cfg](sim/openocd/picosoc.cfg) | JTAG chain of the list `picosoc_chain`, declared from TDO, by default the injection / status TAP (`picosoc.inject`, `0x10003001`), then the user CPU (`user.cpu`, `0x10001001`); a riscv target for each CPU TAP (GDB ports from 3333); `picosoc_inject <errors>`: INJECT of the injection / status TAP (errors injected, bit `i` in CPU `i`), returns the difference flags |
-| [sim/openocd/remote_bitbang.cfg](sim/openocd/remote_bitbang.cfg) | Adapter `remote_bitbang` on `127.0.0.1:9824` (the port of the kit), then `picosoc.cfg` |
+| [tools/openocd/picosoc.cfg](tools/openocd/picosoc.cfg) | JTAG chain of the list `picosoc_chain`, declared from TDO, by default the injection / status TAP (`picosoc.inject`, `0x10003001`), then the user CPU (`user.cpu`, `0x10001001`); a riscv target for each CPU TAP (GDB ports from 3333); `picosoc_inject <errors>`: INJECT of the injection / status TAP (errors injected, bit `i` in CPU `i`), returns the difference flags |
+| [tools/openocd/remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg) | Adapter `remote_bitbang` on `127.0.0.1:9824` (the port of the kit), then `picosoc.cfg` |
 | [sim/openocd/picosoc.py](sim/openocd/picosoc.py) | GDB scenario, on the GDB helpers `gdb_lib.py` of [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) (>= 1.5.0: its default target copies it to `openocd/` of the work root) |
 | [sim/openocd/chain.cfg](sim/openocd/chain.cfg) | OpenOCD script of the chain of 4 TAPs, no GDB: `picosoc_chain` of the 4 TAPs, then `remote_bitbang.cfg`; checks with `check` / `scenario_end` of `rbb/check.tcl` of the kit (see below) |
 
