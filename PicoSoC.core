@@ -151,7 +151,8 @@ CAPI=2:
 #                               error injection trapped (PicoSoC_inject) : a request, even of
 #                               one cycle (button resynchronized, or TAP), stays until the
 #                               difference flags of the copy (TMR : both pairs) or a 1 -> 0 of
-#                               the TAP request, power-on reset
+#                               the TAP request, power-on reset ; tb : inject_error of one SoC
+#                               cycle, scenarios trap_cpu0, trap_cpu1, trap_reset, trap_tap
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
@@ -698,6 +699,9 @@ filesets:
       - sim/picosoc/tb_PicoSoC_bitbang_cpu_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_last_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_glitch_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_trap_pulse_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_trap_reset_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_trap_tap_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -2629,6 +2633,56 @@ targets:
     description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_glitch (bounces on TCK of the JTAG pads)
     parameters_append :
       - TESTS_LIST=jtag_glitch
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu0:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_cpu0 (request of one cycle in CPU0, trapped until diff, one reset)
+    parameters_append :
+      - TESTS_LIST=trap_cpu0
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu1:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_cpu1 (request of one cycle in CPU1, cleared by diff(0), one reset)
+    parameters_append :
+      - TESTS_LIST=trap_cpu1
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_reset:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_reset (trap set while the supervisor holds the user SoC in reset, kept by this reset)
+    parameters_append :
+      - TESTS_LIST=trap_reset
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, injection / status TAP and user CPU debugger (chain of 2 TAPs), scenario trap_tap (no difference flag, the trap cleared by a 1 -> 0 of INJECT)
+    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=trap_tap
 
   #---------------------------------------
   sim_soc5_wardrv_fsm_c_user_uart_jtag:

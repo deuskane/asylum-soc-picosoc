@@ -28,6 +28,9 @@
 -- 2026-11-23  1.5      mrosiere C_MUX_* : codes of debug_mux_sel_i
 -- 2026-11-24  1.6      mrosiere t_tb_cfg : hwla_depth, hwla_pre_trigger,
 --                               hwla_ts_width (HWLA generics of the DUT)
+-- 2026-11-26  1.7      mrosiere inject_error : one SoC clock cycle (the
+--                               trap of PicoSoC_inject keeps the error), was
+--                               100 cycles
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -112,9 +115,11 @@ package tb_PicoSoC_bfm_pkg is
     ;signal   target   : out   std_logic
     );
 
-  -- Error injected in a CPU : inject_error_i(cpu) active during C_INJECT_CYCLES
-  -- cycles (an instruction bit of this CPU flipped)
-  constant C_INJECT_CYCLES : positive := 100;
+  -- Error injected in a CPU : inject_error_i(cpu) active during one cycle of
+  -- the SoC clock (cfg.clk_ratio cycles of clk) : the request sets the trap
+  -- of the CPU (PicoSoC_inject), which flips an instruction bit of this CPU
+  -- until the compare flags it. A longer request may outlive the reset of the
+  -- user SoC that follows the detection and set the trap again
 
   procedure inject_error
     (constant cpu      : in    natural
@@ -266,7 +271,7 @@ package body tb_PicoSoC_bfm_pkg is
     wait until falling_edge(clk);
     inject      <= (inject'range => not cfg.fault_on);
     inject(cpu) <= cfg.fault_on;
-    for i in 1 to C_INJECT_CYCLES loop
+    for i in 1 to cfg.clk_ratio loop
       wait until falling_edge(clk);
     end loop;
     inject      <= (inject'range => not cfg.fault_on);

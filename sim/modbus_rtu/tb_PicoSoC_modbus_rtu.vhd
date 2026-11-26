@@ -30,6 +30,8 @@
 -- 2026-11-22  2.1      mrosiere uart_tx_io, uart_cts_b_io, uart_rts_b_io
 --                               (inout pads of PicoSoC_top)
 -- 2026-11-23  2.2      mrosiere debug_mux_sel_i 00 (user UART)
+-- 2026-11-26  2.3      mrosiere soc_clk_period (request of the error
+--                               injection)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -90,6 +92,7 @@ architecture tb of tb_PicoSoC_modbus_rtu is
 
   constant C_CFG                   : t_tb_cfg := (
     clk_period => C_CLK_PERIOD,
+    soc_clk_period => 1 sec / FSYS_INT,
     fault_on   => C_FAULT_ON,
     uart       => (
       -- Bit time of the DUT : the baud tick counter divides the internal clock by FSYS_INT/USER_BAUD_RATE

@@ -39,6 +39,8 @@
 --                               jtag_last
 -- 2026-11-26  1.12     mrosiere jtag_glitch (bounces on TCK of the JTAG
 --                               pads)
+-- 2026-11-26  1.13     mrosiere trap_cpu0, trap_cpu1, trap_reset, trap_tap
+--                               (trap of the error injection)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -67,7 +69,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,hello," & C_INTEGRATION;
@@ -151,6 +153,10 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "bitbang_cpu"    ) then return C_USER and jtag.user >= 0;
     elsif string_eq(name, "jtag_last"      ) then return C_USER and jtag.user >= 0;
     elsif string_eq(name, "jtag_glitch"    ) then return C_USER and jtag.nb_tap > 0;
+    elsif string_eq(name, "trap_cpu0"      ) then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
+    elsif string_eq(name, "trap_cpu1"      ) then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
+    elsif string_eq(name, "trap_reset"     ) then return C_USER and supervisor and fault and string_eq(safety, "lock-step") and jtag.supervisor >= 0;
+    elsif string_eq(name, "trap_tap"       ) then return C_USER and fault and string_eq(safety, "none") and debug and jtag.user >= 0;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
@@ -246,6 +252,18 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_glitch")
     then
       work.tb_PicoSoC_jtag_glitch_pkg.run(cfg, clk, switch, mux_sel, led0, jtag_if);
+    elsif string_eq(name, "trap_cpu0")
+    then
+      work.tb_PicoSoC_trap_pulse_pkg.run(cfg, 0, clk, switch, inject, led0, led_diff);
+    elsif string_eq(name, "trap_cpu1")
+    then
+      work.tb_PicoSoC_trap_pulse_pkg.run(cfg, 1, clk, switch, inject, led0, led_diff);
+    elsif string_eq(name, "trap_reset")
+    then
+      work.tb_PicoSoC_trap_reset_pkg.run(cfg, clk, switch, mux_sel, inject, led0, led_diff, jtag_if);
+    elsif string_eq(name, "trap_tap")
+    then
+      work.tb_PicoSoC_trap_tap_pkg.run(cfg, clk, switch, mux_sel, inject, led0, led_diff, jtag_if);
     elsif string_eq(name, "hello")
     then
       work.tb_PicoSoC_hello_pkg.run(cfg, led0, led1, led_diff, uart_tx);

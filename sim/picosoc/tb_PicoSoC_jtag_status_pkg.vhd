@@ -13,9 +13,9 @@
 --              * after reset (LED1 = 0, led_diff = 0)
 --              * new switches (LED0) and an it_user_i pulse (LED1 = 1)
 --              * with fault injection : an error (inject_error_i) in CPU0,
---                held until the difference flag (the CPU waits on the
---                UART most of the time : a short error may see no fetch),
---                led_diff_o = difference flags (no supervisor) or number of
+--                a request of one cycle trapped until the difference flag
+--                (the CPU waits on the UART most of the time : the trap of
+--                PicoSoC_inject waits for its fetch), led_diff_o = difference flags (no supervisor) or number of
 --                errors (supervisor)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
@@ -30,6 +30,8 @@
 --                               error held until the difference flag
 -- 2026-11-23  1.4      mrosiere UART pads to JTAG with debug_mux_sel_i (was
 --                               the switch MSBs) : switches 0x1A, 0x05
+-- 2026-11-26  1.5      mrosiere Error : a request of one cycle (trapped),
+--                               no longer held until the difference flag
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -126,16 +128,12 @@ package body tb_PicoSoC_jtag_status_pkg is
       else
         v_diff := "101" when cfg.tmr else "001";
       end if;
-      -- Error until the difference flag : an UART write with FIFO depth 0
-      -- stalls the bus and the fetches for a character time
-      wait until falling_edge(clk);
-      inject(0) <= cfg.fault_on;
-      if led_diff = "000"
-      then
-        wait until led_diff /= "000" for cfg.timeout;
-      end if;
-      wait until falling_edge(clk);
-      inject(0) <= not cfg.fault_on;
+      -- A request of one cycle : the trap keeps the error until the
+      -- difference flag (an UART write with FIFO depth 0 stalls the bus and
+      -- the fetches for a character time). A request held until led_diff
+      -- changes would outlive the reset of the user SoC and set the trap
+      -- again (a second error)
+      inject_error(0, cfg, clk, inject);
       wait_value  (led_diff, v_diff, cfg, "led_diff after an error in CPU0");
       if cfg.supervisor
       then

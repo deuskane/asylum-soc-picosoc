@@ -15,6 +15,9 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-20  1.0      mrosiere Created (helpers of tb_PicoSoC_modbus_rtu)
+-- 2026-11-26  1.1      mrosiere inject_error : 2 cycles of the SoC clock
+--                               (soc_clk_period, the trap of PicoSoC_inject
+--                               keeps the error), was 2 us
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -38,12 +41,12 @@ package tb_PicoSoC_modbus_rtu_bfm_pkg is
   -- Constants of the scenarios (computed from the generics in tb_PicoSoC_modbus_rtu)
   type t_tb_cfg is record
     clk_period : time;               -- period of clk_i
+    soc_clk_period : time;           -- period of the SoC clock (FSYS_INT)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)
     uart       : t_uart_bfm_config;  -- UART VIP configuration
   end record t_tb_cfg;
 
   -- =====[ Timing ]==============================
-  constant C_ERROR_DURATION  : time    :=   2 us; -- Error injection pulse
   constant C_ERROR_LATENCY   : time    :=  20 us; -- Time between error injection and error detection
   constant C_RESET_LATENCY   : time    := 200 us; -- Firmware ready after a reset
   constant C_FRAME_GAP       : time    :=  35 us; -- Silence before a Modbus frame
@@ -99,7 +102,10 @@ package tb_PicoSoC_modbus_rtu_bfm_pkg is
     ;constant msg      : in    string
     );
 
-  -- Error injected in a CPU during C_ERROR_DURATION, then C_ERROR_LATENCY
+  -- Error requested in a CPU during 2 cycles of the SoC clock (at least one
+  -- SoC clock edge : the request sets the trap of the CPU, which keeps the
+  -- error until the compare flags it ; a longer request may outlive the reset
+  -- of the user SoC that follows and set the trap again), then C_ERROR_LATENCY
   procedure inject_error
     (constant cpu      : in    natural
     ;constant cfg      : in    t_tb_cfg
@@ -320,7 +326,7 @@ package body tb_PicoSoC_modbus_rtu_bfm_pkg is
     log(ID_SEQUENCER_SUB, "Inject an error in CPU" & integer'image(cpu), C_TB_SCOPE);
     inject      <= (inject'range => not cfg.fault_on);
     inject(cpu) <= cfg.fault_on;
-    wait for C_ERROR_DURATION;
+    wait for 2*cfg.soc_clk_period;
     inject      <= (inject'range => not cfg.fault_on);
     wait for C_ERROR_LATENCY;
   end procedure;
