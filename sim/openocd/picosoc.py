@@ -23,8 +23,9 @@
 #                resume : the user hart runs again (dmstatus)
 #                inject : with the injection / status TAP in the chain,
 #                         INJECT (picosoc_inject : irscan, drscan) : an error
-#                         in CPU1 raises the difference flag CPU0 vs CPU1,
-#                         read back by the next scan
+#                         in CPU1 (trapped until it is flagged) raises the
+#                         difference flag CPU0 vs CPU1, read back by the next
+#                         scan
 #              The testbench checks the difference flag on led_diff_o and
 #              that the firmware runs after the session.
 #              Prints ok / ERROR for each check, then SCENARIO PASS / FAIL.
