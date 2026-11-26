@@ -145,7 +145,9 @@ CAPI=2:
 #                               NG-MEDIUM : switch comments of pads.py fixed
 #                               (debug_mux_sel_i(1) = S5, (0) = S6, S5 S6 left to right) ;
 #                               every TAP of the JTAG chain resynchronizes TCK on the SoC
-#                               clock (PicoSoC_tap, PicoSoC_supervisor, as cpu_safety)
+#                               clock (PicoSoC_tap, PicoSoC_supervisor, as cpu_safety) ;
+#                               tb : scenario jtag_glitch (bounces on TCK,
+#                               sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
@@ -690,6 +692,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_bitbang_inject_pkg.vhd
       - sim/picosoc/tb_PicoSoC_bitbang_cpu_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_last_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_glitch_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -2613,6 +2616,14 @@ targets:
     description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_cpu (JTAG over the UART pads, 921600 baud)
     parameters_append :
       - TESTS_LIST=bitbang_cpu
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_glitch (bounces on TCK of the JTAG pads)
+    parameters_append :
+      - TESTS_LIST=jtag_glitch
 
   #---------------------------------------
   sim_soc5_wardrv_fsm_c_user_uart_jtag:
