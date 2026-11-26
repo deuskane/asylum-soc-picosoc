@@ -129,6 +129,7 @@ CAPI=2:
 #                               have no pull-down, default pull-up) ;
 #                               modbus_server_debug.py : base address as integer ;
 #                               ft232r.cfg : adapter speed 10 kHz (checked on the board) ;
+#                               remote_bitbang.cfg, ft232r.cfg : transport select jtag ;
 #                               picosoc.cfg generic : without picosoc_chain, the chain is
 #                               discovered (discover.tcl, shared with discover.cfg)
 #                               (sim_soc1_wardrv_fsm_c_user_openocd_generic,
