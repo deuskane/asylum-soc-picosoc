@@ -701,6 +701,7 @@ filesets:
       - sim/openocd/tb_PicoSoC_openocd.vhd
       - tools/openocd/remote_bitbang.cfg : {file_type : user, copyto : openocd/remote_bitbang.cfg}
       - tools/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
+      - sim/openocd/gdb.cfg              : {file_type : user, copyto : openocd/gdb.cfg}
       - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
       - sim/openocd/chain.cfg            : {file_type : user, copyto : openocd/chain.cfg}
     file_type : vhdlSource-2008
@@ -2934,7 +2935,7 @@ scripts:
     cmd : [bash, rbb/cosim.sh, build]
 
   cosim_start :
-    cmd : [bash, rbb/cosim.sh, start, openocd/remote_bitbang.cfg, openocd/picosoc.py]
+    cmd : [bash, rbb/cosim.sh, start, openocd/gdb.cfg, openocd/picosoc.py]
 
   cosim_start_chain :
     cmd : [bash, rbb/cosim.sh, start, openocd/chain.cfg]
