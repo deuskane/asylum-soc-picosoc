@@ -76,7 +76,7 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 - Debug (`DEBUG_ENABLE`): HWLA logic analyzer on the bus of the user CPU, triggered by a difference of the redundant CPUs, captures sent on `debug_uart_tx_o` (UART, `HWLA_BAUD_RATE`, 115200 baud by default); JTAG TAP of fault injection (ORed with `inject_error_i`) and status (LEDs, switches, resets)
 - UART pads shared by 4 functions (`jtag_pad_mux` of [asylum-debug-jtag](https://github.com/deuskane/asylum-debug-jtag)), selected by `debug_mux_sel_i`: user UART, UART of the HWLA, JTAG chain on the JTAG pinout of an FTDI cable (FT232R USB-UART cable with the OpenOCD `ft232r` driver, or FT232H / FT2232H MPSSE cable: one cable is the UART and the JTAG probe), JTAG over the UART (`jtag_bitbang`: OpenOCD `remote_bitbang` through any USB-UART cable, `JTAG_BAUD_RATE`)
 - JTAG chain: RISC-V debug units (`WardRV_debug` in `cpu_wrapper`, Debug Specification 1.0, for OpenOCD + GDB) of the user CPUs (one TAP per cluster, `USER_CPU_DEBUG_ENABLE`) and of the supervisor CPU (`SUPERVISOR_CPU_DEBUG_ENABLE`), then the injection / status TAP; the JTAG pins reach every redundant copy of the CPU, whose TDO is compared or voted; an OpenBlaze8 (or a CPU without debug unit) is a wire in the chain (TDO = TDI)
-- Host tools: OpenOCD configurations of the board in [tools/openocd](tools/openocd) (adapters FT232R, FT232H and `remote_bitbang`, JTAG chain and riscv targets, discovery of the chain), Modbus scripts in [tools/modbus](tools/modbus)
+- Host tools: OpenOCD configurations of the board in [tools/openocd](tools/openocd) (adapters FT232R, FT232H and `remote_bitbang`, JTAG chain discovered or given and riscv targets, discovery of the chain), Modbus scripts in [tools/modbus](tools/modbus)
 - Self-checking UVVM testbenches driven by the firmware, with an SPI flash model, and NG-MEDIUM board targets
 
 ## Block Diagram
@@ -569,48 +569,62 @@ With `ft232r`, RXD and CTS# are outputs of the cable and RTS# an input (`ft232r 
 
 | Chain file | Role |
 |------------|------|
-| [picosoc.cfg](tools/openocd/picosoc.cfg) | Declares the TAPs of the list `picosoc_chain` (chip, TAP and IDCODE of each TAP, from TDO; 5-bit IR, `-expected-id`), a riscv target for each TAP named `cpu*` (GDB ports 3333, 3334 ... in the order of the list) and the command `picosoc_inject <errors>` (INJECT of the injection / status TAP), then `init`. Default list: the injection / status TAP, then the user CPU (the chain of `sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag`). Another chain: set the list before the file, `-c "set picosoc_chain {...}"` |
-| [discover.cfg](tools/openocd/discover.cfg) | Declares no TAP and no target: `init` probes the chain after Test-Logic-Reset (OpenOCD autoprobe: TAPs `auto0.tap`, `auto1.tap` ... from TDO, IR length from the Capture-IR value), then it prints the number of TAPs, the IDCODE of each TAP (`jtag cget <tap> -idcode`) with its PicoSoC name, the line `set picosoc_chain {...}` for `picosoc.cfg`, and quits (`shutdown`) |
+| [picosoc.cfg](tools/openocd/picosoc.cfg) | The JTAG chain (the list `picosoc_chain`: chip, TAP and IDCODE of each TAP, from TDO), a riscv target for each CPU TAP (GDB ports 3333, 3334 ... in the order of the chain), the command `picosoc_inject <errors>` (INJECT of the injection / status TAP), then `init`. Any PicoSoC bitstream, no argument: see the two modes below |
+| [discover.cfg](tools/openocd/discover.cfg) | Declares no TAP and no target: `picosoc_discover` probes and prints the chain, then the file prints the line `set picosoc_chain {...}` (the chain to give to `picosoc.cfg`) and quits (`shutdown`) |
+| [discover.tcl](tools/openocd/discover.tcl) | Sourced by `picosoc.cfg` and `discover.cfg` (one copy of the discovery): `picosoc_discover` runs `jtag init` in the configuration stage: the adapter starts and OpenOCD probes the chain after Test-Logic-Reset (autoprobe: TAPs `auto0.tap`, `auto1.tap` ... from TDO, IR length from the Capture-IR value); it reads the IDCODEs from `scan_chain` (`jtag cget <tap> -idcode` needs the exec stage), prints the number of TAPs and the IDCODE and PicoSoC name of each TAP (`picosoc_tap`, table below), and returns the chain as a `picosoc_chain` list |
 
-Names given by `discover.cfg` (the IDCODEs of [UART pads and JTAG](#uart-pads-and-jtag)):
+| `picosoc.cfg` mode | TAPs | riscv targets | Checks |
+|--------------------|------|---------------|--------|
+| `picosoc_chain` not set (default) | Discovered: `picosoc_discover` prints the chain; the TAPs keep the names of the OpenOCD autoprobe (`auto<k>.tap`) | One per CPU TAP, named from its IDCODE (`supervisor.cpu`, `user.cpu<i>`); a TAP of unknown IDCODE stays in the chain without target (`Warn : TAP auto<k>.tap (IDCODE ...) : not a PicoSoC TAP, no target`) | None: the chain is the one found |
+| `picosoc_chain` set before the file (`-c "set picosoc_chain {...}"`, the line printed by `discover.cfg`) | Declared: `<chip>.<tap>`, 5-bit IR, `-expected-id` | One per TAP named `cpu*`, named `<chip>.<tap>` | `init` checks each IDCODE against its `-expected-id` |
+
+Names given by `picosoc_tap` of `discover.tcl` (the IDCODEs of [UART pads and JTAG](#uart-pads-and-jtag)):
 
 | IDCODE | TAP | In `picosoc_chain` (riscv target) |
 |--------|-----|-----------------------------------|
 | `0x10001001` + `i` x `0x10000` | `WardRV_debug` of the user CPU of cluster `i` | `user cpu<i>` (`user.cpu<i>`) |
 | `0x10002001` | `WardRV_debug` of the supervisor CPU | `supervisor cpu` (`supervisor.cpu`) |
 | `0x10003001` | Injection / status TAP | `picosoc inject` (no target) |
-| Any other value | Not a PicoSoC TAP (`picosoc.cfg` would declare it with a 5-bit IR) | `unknown tap<k>` |
+| Any other value | Not a PicoSoC TAP: no target (given in `picosoc_chain`, `picosoc.cfg` declares it with a 5-bit IR) | `unknown tap<k>` |
 
 Steps (an FT232R cable in mode `10`; with the FTDI MPSSE cable use `ft232h.cfg`):
 
 1. Build and program a bitstream with at least one TAP: `make emu_ng_medium_soc1_wardrv_fsm` (the debugger of the user CPU, the only TAP of its chain); the other `emu_ng_medium_*` targets have no TAP.
 2. Stop the terminal on the cable, then set S6 S5 to `10` (see [Board](#board)).
-3. Discover the chain: OpenOCD prints the TAPs and the `picosoc_chain` line, then quits.
-4. Start OpenOCD with that line before `picosoc.cfg` (without it, `picosoc.cfg` declares its default chain).
-5. Connect GDB to the GDB port of the CPU (3333 for the first riscv target of the list).
-6. Quit GDB and OpenOCD, set S6 S5 back to `00` for the user UART.
+3. Start OpenOCD with the adapter file and `picosoc.cfg`, no argument: it discovers the chain, prints it, creates the riscv targets and starts a GDB server per CPU.
+4. Connect GDB to the GDB port of the CPU (3333 for the first CPU of the chain, from TDO).
+5. Quit GDB and OpenOCD, set S6 S5 back to `00` for the user UART.
 
 ```bash
 make emu_ng_medium_soc1_wardrv_fsm                                  # TOOL=nxmap
-openocd -f tools/openocd/ft232r.cfg -f tools/openocd/discover.cfg   # S6 S5 = 10
-openocd -f tools/openocd/ft232r.cfg -c "set picosoc_chain {user cpu0 0x10001001}" -f tools/openocd/picosoc.cfg
+openocd -f tools/openocd/ft232r.cfg -f tools/openocd/picosoc.cfg    # S6 S5 = 10
 gdb-multiarch -ex "set architecture riscv:rv32" -ex "mem 0x80000040 0x80000100 rw" -ex "target extended-remote localhost:3333"
 ```
 
-The discovery prints, for the chain of `emu_ng_medium_soc1_wardrv_fsm` (lines of the co-simulation `sim_soc1_wardrv_fsm_c_user_openocd_discover`, after the OpenOCD lines `JTAG tap: auto0.tap tap/device found: 0x10001001` and `AUTO auto0.tap - use "jtag newtap auto0 tap -irlen 5 -expected-id 0x10001001"`):
+For the chain of `emu_ng_medium_soc1_wardrv_fsm`, `picosoc.cfg` prints (lines of the co-simulation `sim_soc1_wardrv_fsm_c_user_openocd_generic`, the same command on `remote_bitbang.cfg`):
 
 ```
+Info : JTAG tap: auto0.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
+Warn : AUTO auto0.tap - use "jtag newtap auto0 tap -irlen 5 -expected-id 0x10001001"
 PicoSoC JTAG chain : 1 TAP(s), from TDO
 TAP 0 : IDCODE 0x10001001 : user.cpu0
-set picosoc_chain {user cpu0 0x10001001}
+Info : JTAG tap: auto0.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
+Info : Examined RISC-V core; found 1 harts
+Info : starting gdb server for user.cpu0 on 3333
+```
+
+The chain can also be given, its IDCODEs then checked by `init` (`-expected-id`): `discover.cfg` prints the chain and its `picosoc_chain` line (here `set picosoc_chain {user cpu0 0x10001001}`, lines of `sim_soc1_wardrv_fsm_c_user_openocd_discover`), then quits; give that line before `picosoc.cfg`:
+
+```bash
+openocd -f tools/openocd/ft232r.cfg -f tools/openocd/discover.cfg
+openocd -f tools/openocd/ft232r.cfg -c "set picosoc_chain {user cpu0 0x10001001}" -f tools/openocd/picosoc.cfg
 ```
 
 JTAG over the UART (mode `11`, any USB-UART cable): `socat` links the TCP port 9824 of `remote_bitbang.cfg` to the serial port, at the baud rate of the bitstream (`JTAG_BAUD_RATE`); the rest is the same:
 
 ```bash
 socat TCP-LISTEN:9824,reuseaddr /dev/ttyUSB0,raw,echo=0,b9600 &    # S6 S5 = 11
-openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/discover.cfg
-openocd -f tools/openocd/remote_bitbang.cfg -c "set picosoc_chain {user cpu0 0x10001001}" -f tools/openocd/picosoc.cfg
+openocd -f tools/openocd/remote_bitbang.cfg -f tools/openocd/picosoc.cfg
 ```
 
 With the injection / status TAP in the chain (`DEBUG_ENABLE`), GDB drives it through OpenOCD:
@@ -621,9 +635,10 @@ With the injection / status TAP in the chain (`DEBUG_ENABLE`), GDB drives it thr
 ```
 
 - GDB reads the memory of the RAM of the firmware only (`mem`, the data RAM of the `rvcc_gen` link script): without it, GDB reads the code around pc through the data bus of the hart, where the user ROM is not, so these reads reach the peripherals (a spinlock taken, a FIFO popped; in a co-simulation, a read that never ended left the abstract command busy).
-- Several riscv targets in one chain work with OpenOCD 0.12: the co-simulation `sim_soc3x2_wardrv_fsm_c_user_openocd_chain` examines, halts and resumes the 3 CPUs of a chain of 4 TAPs.
+- Several riscv targets in one chain work with OpenOCD 0.12: the co-simulations `sim_soc3x2_wardrv_fsm_c_user_openocd_chain` (chain given) and `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` (chain discovered) examine, halt and resume the 3 CPUs of a chain of 4 TAPs.
+- A discovered chain keeps the TAP names of the autoprobe (`auto<k>.tap`): OpenOCD 0.12 can neither rename nor remove a TAP, and a `jtag newtap` after the probe adds a TAP after them (checked in a co-simulation of the chain of 1 TAP: `user.cpu0` declared after `jtag init` is a second TAP at `init`, `UNEXPECTED: 0xffffffff`, `IR capture error`, the target is not examined). The targets carry the PicoSoC names, and `picosoc_inject` uses the TAP of IDCODE `0x10003001`.
 - `picosoc_inject` is defined even when the chain has no injection / status TAP: it then fails in OpenOCD.
-- A bitstream without TAP: nothing drives TDO. TDO at one (mode `10`: the default pull-up of the NG-MEDIUM pad; mode `11`: `jtag_bitbang` answers `'1'`) gives `JTAG scan chain interrogation failed: all ones` and the discovery prints `0 TAP(s)` and a line `No TAP : ...` (checked with a co-simulation without TAP, TDO pulled up). TDO at zero (an adapter or a board that pulls TDO down) is read by the OpenOCD autoprobe as a chain of TAPs without IDCODE, `unknown` with `0x00000000` (seen with the OpenOCD `dummy` adapter, whose TDO is 0).
+- A bitstream without TAP: nothing drives TDO. TDO at one (mode `10`: the default pull-up of the NG-MEDIUM pad; mode `11`: `jtag_bitbang` answers `'1'`) gives `JTAG scan chain interrogation failed: all ones` and the discovery prints `0 TAP(s)` and a line `No TAP : ...` (checked with a co-simulation without TAP, TDO pulled up); `picosoc.cfg` then creates no target. TDO at zero (an adapter or a board that pulls TDO down) is read by the OpenOCD autoprobe as a chain of TAPs without IDCODE, `unknown` with `0x00000000` (seen with the OpenOCD `dummy` adapter, whose TDO is 0): `picosoc.cfg` warns for each one and creates no target.
 
 Install on the host:
 
@@ -769,17 +784,20 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 
 ### Co-simulation with OpenOCD and GDB
 
-The debug modes of the UART pads are also checked with the real debugger: OpenOCD 0.12 (adapter `remote_bitbang`) and GDB (`gdb-multiarch`) drive `tb_PicoSoC_openocd` through the OpenOCD co-simulation kit `asylum:verification:openocd` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm): its TCP server `rbb_server.c`, called by the testbench through VHPIDIRECT, its testbench entities `rbb_jtag` / `rbb_axis` and its hooks `rbb/cosim.sh` (build `librbb.so`; start OpenOCD with `openocd/gdb.cfg`, then GDB with `openocd/picosoc.py` on the GDB port 3333, or OpenOCD alone with `openocd/chain.cfg` or `openocd/discover_check.cfg`; at the end, print the logs and fail without the line `SCENARIO PASS`). The OpenOCD files of [tools/openocd](tools/openocd) are the ones of the board (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)); the core copies them with the scenarios of [sim/openocd](sim/openocd) into `openocd/` of the work root:
+The debug modes of the UART pads are also checked with the real debugger: OpenOCD 0.12 (adapter `remote_bitbang`) and GDB (`gdb-multiarch`) drive `tb_PicoSoC_openocd` through the OpenOCD co-simulation kit `asylum:verification:openocd` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm): its TCP server `rbb_server.c`, called by the testbench through VHPIDIRECT, its testbench entities `rbb_jtag` / `rbb_axis` and its hooks `rbb/cosim.sh` (build `librbb.so`; start OpenOCD with `openocd/gdb.cfg` or `openocd/generic.cfg`, then GDB with `openocd/picosoc.py` on the GDB port 3333, or OpenOCD alone with `openocd/chain.cfg`, `openocd/discover_check.cfg` or `openocd/generic_check.cfg`; at the end, print the logs and fail without the line `SCENARIO PASS`). The OpenOCD files of [tools/openocd](tools/openocd) are the ones of the board (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)); the core copies them with the scenarios of [sim/openocd](sim/openocd) into `openocd/` of the work root:
 
 | File | Role |
 |------|------|
-| [tools/openocd/picosoc.cfg](tools/openocd/picosoc.cfg) | JTAG chain of the list `picosoc_chain`, declared from TDO, by default the injection / status TAP (`picosoc.inject`, `0x10003001`), then the user CPU (`user.cpu`, `0x10001001`); a riscv target for each CPU TAP (GDB ports from 3333); `picosoc_inject <errors>`: INJECT of the injection / status TAP (errors injected, bit `i` in CPU `i`), returns the difference flags |
+| [tools/openocd/picosoc.cfg](tools/openocd/picosoc.cfg) | JTAG chain given by `picosoc_chain` (from TDO, `-expected-id`) or, without it, discovered (`discover.tcl`); a riscv target for each CPU TAP (GDB ports from 3333); `picosoc_inject <errors>`: INJECT of the injection / status TAP (errors injected, bit `i` in CPU `i`), returns the difference flags |
+| [tools/openocd/discover.tcl](tools/openocd/discover.tcl) | `picosoc_discover`: discovery of the chain, shared by `picosoc.cfg` and `discover.cfg` |
 | [tools/openocd/remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg) | Adapter `remote_bitbang` on `127.0.0.1:9824` (the port of the kit), adapter only |
-| [sim/openocd/gdb.cfg](sim/openocd/gdb.cfg) | OpenOCD configuration of the GDB targets: `remote_bitbang.cfg`, then `picosoc.cfg` (the hook of the kit takes one file) |
-| [sim/openocd/picosoc.py](sim/openocd/picosoc.py) | GDB scenario, on the GDB helpers `gdb_lib.py` of [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) (>= 1.5.0: its default target copies it to `openocd/` of the work root) |
+| [sim/openocd/gdb.cfg](sim/openocd/gdb.cfg) | OpenOCD configuration of the GDB targets of `soc2`: `picosoc_chain` given (`picosoc inject 0x10003001`, `user cpu0 0x10001001`), then `remote_bitbang.cfg` and `picosoc.cfg` (the hook of the kit takes one file) |
+| [sim/openocd/generic.cfg](sim/openocd/generic.cfg) | OpenOCD configuration of the GDB target on a discovered chain: `remote_bitbang.cfg`, then `picosoc.cfg` without `picosoc_chain` (the board command) |
+| [sim/openocd/picosoc.py](sim/openocd/picosoc.py) | GDB scenario (the chain of the testbench read from `PICOSOC_CHAIN`), on the GDB helpers `gdb_lib.py` of [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) (>= 1.5.0: its default target copies it to `openocd/` of the work root) |
 | [sim/openocd/chain.cfg](sim/openocd/chain.cfg) | OpenOCD script of the chain of 4 TAPs, no GDB: `picosoc_chain` of the 4 TAPs, then `remote_bitbang.cfg` and `picosoc.cfg`; checks with `check` / `scenario_end` of `rbb/check.tcl` of the kit (see below) |
 | [tools/openocd/discover.cfg](tools/openocd/discover.cfg) | Discovery of the chain, no TAP declared (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)) |
 | [sim/openocd/discover_check.cfg](sim/openocd/discover_check.cfg) | OpenOCD script of the discovery targets, no GDB: `remote_bitbang.cfg`, then `discover.cfg` with its printed lines captured (`capture`, its `shutdown` made a no-op while it runs), checked against `PICOSOC_CHAIN` (see below) |
+| [sim/openocd/generic_check.cfg](sim/openocd/generic_check.cfg) | OpenOCD script of the chain of 4 TAPs discovered, no GDB: `generic.cfg`, then the TAPs and targets checked against `PICOSOC_CHAIN` (see below) |
 
 | `debug_mux_sel_i` | Target | Kit | Path of the JTAG commands |
 |-------------------|--------|-----|---------------------------|
@@ -787,17 +805,18 @@ The debug modes of the UART pads are also checked with the real debugger: OpenOC
 | `11` | `_sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang` (by hand, not in the CI) | `rbb_axis` (BYTE mode: the bytes of OpenOCD) | JTAG over the UART: a UART bridge of the testbench (UART VIP, 921600 baud) sends the bytes of OpenOCD on `uart_rx_i` and returns the answers to `'R'` received on `uart_tx_io`; `jtag_bitbang` of the SoC decodes them. An unknown TDO bit (`'U'` of a data read that no target answers, or of a stack word never written) is sent to OpenOCD as 1 by `rbb_axis`, with a warning, as with `rbb_jtag`; any other answer than `'0'` / `'1'` is an error |
 | `10` | `sim_soc3x2_wardrv_fsm_c_user_openocd_chain` | `rbb_jtag` (PIN mode) | Same pins, the chain of 4 TAPs and `chain.cfg` (see below) |
 | `10` | `sim_soc3x2_wardrv_fsm_c_user_openocd_discover`, `sim_soc1_wardrv_fsm_c_user_openocd_discover` | `rbb_jtag` (PIN mode) | Same pins, `discover_check.cfg` on the chain of 4 TAPs and on the chain of 1 TAP of `emu_ng_medium_soc1_wardrv_fsm` (see below) |
+| `10` | `sim_soc1_wardrv_fsm_c_user_openocd_generic`, `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` | `rbb_jtag` (PIN mode) | Same pins, `picosoc.cfg` without `picosoc_chain`: GDB scenario on the chain of 1 TAP, `generic_check.cfg` on the chain of 4 TAPs (see below) |
 | `01` | none | none | UART of the HWLA, no JTAG: nothing for OpenOCD (the captures are checked by the scenario `hwla`) |
 
-The two GDB targets use the configuration `soc2` with the CPU debugger: WardRV_fsm, no supervisor, lock-step, fault injection, `DEBUG_ENABLE` and `USER_CPU_DEBUG_ENABLE` (a chain of 2 TAPs), firmware [esw/demo/user.c](esw/demo/user.c) without UART (LED0 = switches). Without the supervisor, an error injected through INJECT leaves the difference flag set (sticky) and the user SoC running on CPU0; with it, the supervisor would reset the user SoC, the hart under the debugger and the flag. The TAP of the supervisor CPU is the same `WardRV_debug` (checked by the scenario `jtag_cpu_supervisor`), and a second riscv target would double the work of OpenOCD (it is checked without GDB by the chain target below).
+The two GDB targets of `soc2` give their chain to `picosoc.cfg` (`gdb.cfg`) and use the configuration `soc2` with the CPU debugger: WardRV_fsm, no supervisor, lock-step, fault injection, `DEBUG_ENABLE` and `USER_CPU_DEBUG_ENABLE` (a chain of 2 TAPs), firmware [esw/demo/user.c](esw/demo/user.c) without UART (LED0 = switches). Without the supervisor, an error injected through INJECT leaves the difference flag set (sticky) and the user SoC running on CPU0; with it, the supervisor would reset the user SoC, the hart under the debugger and the flag. The TAP of the supervisor CPU is the same `WardRV_debug` (checked by the scenario `jtag_cpu_supervisor`), and a second riscv target would double the work of OpenOCD (it is checked without GDB by the chain target below).
 
 | Step | Checks |
 |------|--------|
 | testbench | Before OpenOCD: LED0 = switches `0x5A`, `led_diff_o` = `000` |
-| `step_chain` | OpenOCD found `picosoc.inject` (`0x10003001`) and `user.cpu` (`0x10001001`), no unexpected IDCODE, the RISC-V core examined |
+| `step_chain` | For each TAP of `PICOSOC_CHAIN`, OpenOCD found its IDCODE: `JTAG tap: picosoc.inject tap/device found: 0x10003001` and `user.cpu0` `0x10001001` with the chain given, the line `TAP <k> : IDCODE <idcode> : <chip>.<tap>` of a discovered chain; no unexpected IDCODE, the RISC-V core examined |
 | `step_halt` | GDB, limited to the RAM of the firmware (`mem`), connects (the user hart halts): pc in the user ROM, `dcsr.cause` = halt request, `sp` in the stack of the firmware |
 | `step_resume` | `monitor resume`: `dmstatus` allrunning and anyrunning |
-| `step_inject` | `picosoc_inject 0x2` (error in CPU1): diff `000` before; again after `runtest 100` until CPU1 differs: `001`; `picosoc_inject 0x0` (end of the injection): `001`, sticky |
+| `step_inject` | Only with the injection / status TAP in `PICOSOC_CHAIN`: `picosoc_inject 0x2` (error in CPU1): diff `000` before; again after `runtest 100` until CPU1 differs: `001`; `picosoc_inject 0x0` (end of the injection): `001`, sticky |
 | testbench | After OpenOCD quits: `led_diff_o` = `001`, LED0 follows the new switches `0xA5` (the firmware runs after the session) |
 
 Each GDB target prints 4 `=> OK` (testbench) and 11 GDB `ok` lines. Run times (asylum-env image, build included): `_openocd_jtag` about 80 to 110 s (15 ms of simulated time), `_openocd_bitbang` 18 to 34 minutes (650 ms of simulated time; 921600 baud: 3 bytes of 10 bits per scanned bit, against 16 `clk_i` cycles with the pins). The mode `11` target is too long for the CI: its name starts with `_`, so it has no CI job and is not in `make nonreg_sim`; run it by hand with `make _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang`. They need `gcc`, `openocd` and `gdb-multiarch` (in the asylum-env image) and the free TCP ports 9824, 3333 and 6666 (one co-simulation at a time per host; a container has its own network). A fault that leaves OpenOCD waiting for an answer of the simulation (BYTE mode) is ended by the timeouts of the kit (`COSIM_TIMEOUT`, 1800 s, of OpenOCD and of GDB) or of the testbench (10 s of simulated time).
@@ -825,13 +844,13 @@ The testbench writes the chain of its generics in `cosim.cfg` (`PICOSOC_CHAIN`: 
 | Step | Checks |
 |------|--------|
 | testbench | Before OpenOCD: LED0 = switches `0x5A`, `led_diff_o` = `000` |
-| `discover.cfg` | `init` with no TAP declared: the OpenOCD autoprobe finds each TAP (`auto<k>.tap`, IR length 5); the lines are printed |
+| `discover.cfg` | `jtag init` with no TAP declared: the OpenOCD autoprobe finds each TAP (`auto<k>.tap`, IR length 5); the lines are printed |
 | number of TAPs | Line `PicoSoC JTAG chain : <n> TAP(s)`: `n` is the number of TAPs of `PICOSOC_CHAIN` |
 | IDCODEs | Line `TAP <k> : IDCODE <idcode>` of each TAP: the IDCODE of the `k`-th TAP of `PICOSOC_CHAIN` |
 | `picosoc_chain` | The printed line `set picosoc_chain {...}` is `PICOSOC_CHAIN` (names included) |
 | testbench | After OpenOCD quits: `led_diff_o` = `000`, LED0 follows the new switches `0xA5` |
 
-The 4-TAP target prints 4 `=> OK` (testbench) and 6 OpenOCD `OK   :` lines, the 1-TAP target 4 and 3, then `SCENARIO PASS`; about 90 s each (asylum-env image, build included; OpenOCD quits at 0.70 ms and 0.59 ms of simulated time). Lines of the 4-TAP target:
+The 4-TAP target prints 4 `=> OK` (testbench) and 6 OpenOCD `OK   :` lines, the 1-TAP target 4 and 3, then `SCENARIO PASS`; about 90 to 120 s each (asylum-env image, build included; OpenOCD quits at 0.71 ms and 0.63 ms of simulated time). Lines of the 4-TAP target:
 
 ```
 Info : JTAG tap: auto0.tap tap/device found: 0x10003001 (mfg: 0x000 (<invalid>), part: 0x0003, ver: 0x1)
@@ -847,6 +866,33 @@ set picosoc_chain {picosoc inject 0x10003001 supervisor cpu 0x10002001 user cpu1
 ```
 
 The printed `picosoc_chain` of the 4-TAP target is the list of `chain.cfg`.
+
+**`picosoc.cfg` on a discovered chain** (`sim_soc1_wardrv_fsm_c_user_openocd_generic` with GDB, `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` without GDB): `picosoc.cfg` without `picosoc_chain`, as on the board, on the two chains of the discovery targets, `debug_mux_sel_i` `10`. `jtag init` of `picosoc_discover` probes the chain in the configuration stage, the targets are created on the TAPs of the autoprobe, then `init` scans the chain again and examines them.
+
+- Chain of 1 TAP (`soc1`, the chain of `emu_ng_medium_soc1_wardrv_fsm`): [generic.cfg](sim/openocd/generic.cfg), then the GDB scenario `picosoc.py` on the target `user.cpu0` (port 3333): `step_chain` (the printed line `TAP 0 : IDCODE 0x10001001 : user.cpu0`), `step_halt`, `step_resume`; no `step_inject` (no injection / status TAP). It prints 4 `=> OK` (testbench) and 7 GDB `ok` lines, then `SCENARIO PASS`; about 2 minutes (12 ms of simulated time).
+- Chain of 4 TAPs (`soc3x2`): [generic_check.cfg](sim/openocd/generic_check.cfg) runs `generic.cfg`, then checks against `PICOSOC_CHAIN`:
+
+| Step | Checks |
+|------|--------|
+| testbench | Before OpenOCD: LED0 = switches `0x5A`, `led_diff_o` = `000` |
+| TAPs | Number of TAPs of `jtag names`, then the IDCODE of each TAP (`jtag cget <tap> -idcode`), from TDO (5 checks) |
+| riscv targets | Number of targets, then each target named `<chip>.<tap>` of its CPU TAP and on that TAP (`-chain-position`), in the order of the chain (4 checks) |
+| halt / resume | Each target examined, halted (`halt`, `curstate` halted), resumed (`resume`, running) (9 checks) |
+| `picosoc_inject` | With the injection / status TAP in `PICOSOC_CHAIN`: `picosoc_inject 0` on the TAP found by the discovery reads `000` (1 check) |
+| testbench | After OpenOCD quits: `led_diff_o` = `000`, LED0 follows the new switches `0xA5` |
+
+It prints 4 `=> OK` (testbench) and 19 OpenOCD `OK   :` lines, then `SCENARIO PASS`; about 2 to 3.5 minutes (asylum-env image, build included; 27 ms of simulated time). Lines of the 4-TAP target:
+
+```
+PicoSoC JTAG chain : 4 TAP(s), from TDO
+TAP 0 : IDCODE 0x10003001 : picosoc.inject
+TAP 1 : IDCODE 0x10002001 : supervisor.cpu
+TAP 2 : IDCODE 0x10011001 : user.cpu1
+TAP 3 : IDCODE 0x10001001 : user.cpu0
+Info : starting gdb server for supervisor.cpu on 3333
+Info : starting gdb server for user.cpu1 on 3334
+Info : starting gdb server for user.cpu0 on 3335
+```
 
 921600 baud is 13 SoC clock cycles per bit: at 1562500 baud (8 cycles per bit) the receiver of `uart_core` samples the start bit too late (its synchronizer, its state machine and the half-bit tick of `uart_baud_rate_gen` add about 6 cycles) and loses the frames. OpenOCD 0.12 behaviours found by the co-simulation: OpenOCD lists the TAPs from TDO (the injection / status TAP first); the riscv target polls the hart before each OpenOCD command and its scans select its own IR (DMI) again, so a DR scan of another TAP after its `irscan` in a separate command stops OpenOCD (`Assertion 'active == tap' failed`): `picosoc_inject` turns the poll off around its IR and DR scans.
 
@@ -872,6 +918,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag`, `_sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang` | `tb_PicoSoC_openocd` | OpenOCD + GDB co-simulation through the JTAG pins (`debug_mux_sel_i` `10`) and JTAG over the UART (`11`, 921600 baud): no supervisor, lock-step, fault injection, `DEBUG_ENABLE`, user CPU debugger (see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)). The mode `11` one runs 18 to 34 minutes: the leading `_` keeps it out of the CI and of `nonreg_sim`, run it by hand (`make _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang`) |
 | `sim_soc3x2_wardrv_fsm_c_user_openocd_chain` | `tb_PicoSoC_openocd` | OpenOCD co-simulation (no GDB) of the JTAG chain of 4 TAPs: 2 user clusters with their debuggers, supervisor CPU debugger, injection / status TAP; supervisor, lock-step, no fault injection; script `chain.cfg`: IDCODE of every TAP, the 3 riscv targets examined, halted and resumed |
 | `sim_soc3x2_wardrv_fsm_c_user_openocd_discover`, `sim_soc1_wardrv_fsm_c_user_openocd_discover` | `tb_PicoSoC_openocd` | OpenOCD co-simulation (no GDB) of the discovery of the chain, `discover.cfg` checked by `discover_check.cfg`: the chain of 4 TAPs of `soc3x2` above, and the chain of 1 TAP of `emu_ng_medium_soc1_wardrv_fsm` (user CPU debugger only, no supervisor, no safety, no `DEBUG_ENABLE`) |
+| `sim_soc1_wardrv_fsm_c_user_openocd_generic`, `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` | `tb_PicoSoC_openocd` | OpenOCD co-simulation of `picosoc.cfg` without `picosoc_chain` (chain discovered): GDB scenario `picosoc.py` on the chain of 1 TAP; `generic_check.cfg` (TAPs, targets named and examined, halt / resume, `picosoc_inject`) on the chain of 4 TAPs |
 | `sim_soc2_<cpu>_fault_c_user_hwla` | `tb_PicoSoC` | `hwla`, with `DEBUG_ENABLE = true` and a SoC clock of 1.152 MHz (`FSYS_INT`): 10 clock cycles per bit at 115200 baud, a capture of 56 ms (OpenBlaze8) or 62 ms (WardRV_fsm) of simulated time in about a minute |
 | `sim_soc3_<cpu>_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_lock_step` |
 | `sim_soc4_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `switch`, `it_user`, `fault_tmr`, with `it_user_i` and `inject_error_i` active low (as on the board) |
@@ -909,6 +956,8 @@ The co-simulation of the chain of 4 TAPs was validated with 3 mutants, each kill
 
 The co-simulation of the discovery of the chain was validated with 3 mutants, each killed by `sim_soc3x2_wardrv_fsm_c_user_openocd_discover` (`SCENARIO FAIL`): the supervisor stage of the chain made a wire in a copy of the RTL (`PicoSoC_top`: 3 TAPs printed, the number of TAPs and 3 IDCODEs fail), the cluster of a user TAP taken from the bits 23 to 12 of its IDCODE in a copy of `discover.cfg` (`user cpu17`, `user cpu1`: the `picosoc_chain` line fails) and the TAPs printed from TDI (`lreverse` of `jtag names`: 4 IDCODEs fail).
 
+The co-simulations of `picosoc.cfg` on a discovered chain were validated with 4 mutants of scratch copies, each killed: a wrong IDCODE table entry in `discover.tcl` (supervisor `0x10004001`: the supervisor TAP is `unknown`, 2 targets instead of 3, `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` `SCENARIO FAIL`), the chain read from TDI in `picosoc_discover` (`lreverse` of the `scan_chain` lines: the targets on the wrong TAPs, not examined, `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` fails), the TAPs of `jtag names` taken from TDI in `picosoc.cfg` (`lreverse`: same failure) and a wrong user CPU entry in `discover.tcl` (`0x10001002`: no target, no GDB server, `sim_soc1_wardrv_fsm_c_user_openocd_generic` fails at the timeout of the kit).
+
 ### How to Run
 
 From a clone of [asylum-project](https://github.com/deuskane/asylum-project) (in the asylum-env image, or with GHDL, FuseSoC and the toolchains installed):
@@ -921,6 +970,7 @@ make sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag  # OpenOCD + GDB co-simulatio
 make _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang  # the same over the UART, 18 to 34 min: by hand only, not in the CI
 make sim_soc3x2_wardrv_fsm_c_user_openocd_chain  # OpenOCD co-simulation of the chain of 4 TAPs (openocd, gcc)
 make sim_soc1_wardrv_fsm_c_user_openocd_discover  # OpenOCD co-simulation of tools/openocd/discover.cfg (openocd, gcc)
+make sim_soc1_wardrv_fsm_c_user_openocd_generic   # OpenOCD + GDB co-simulation of tools/openocd/picosoc.cfg, chain discovered (openocd, gcc, gdb-multiarch)
 make nonreg_sim                                  # every sim_* target
 make nonreg_lint                                 # every lint_* target
 make nonreg_syn                                  # every syn_* target (Yosys, figures of Resources)
