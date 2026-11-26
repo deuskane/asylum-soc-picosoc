@@ -643,12 +643,26 @@ With the injection / status TAP in the chain (`DEBUG_ENABLE`), GDB drives it thr
 ```bash
 (gdb) monitor picosoc_inject 0x1          # inject an error in CPU0 (INJECT), prints the difference flags
 (gdb) monitor picosoc_inject 0x0          # end of the injection
+(gdb) monitor picosoc_status              # STATUS : led0, led1, led_diff, switch, user / supervisor SoC running
 ```
+
+`picosoc_status [nb_switch [nb_led0 [nb_led1]]]` reads the register STATUS (IR `0x03`) of the injection / status TAP and prints its fields, for example `led0=0x9 led1=0x0 led_diff=0x2 switch=0x9 user_running=0x1 supervisor_running=0x1`:
+
+| Field | Bits (from the LSB) | Signal |
+|-------|---------------------|--------|
+| `led0` | `USER_NB_LED0` | `led0_o` (the firmware `user.c` copies the switches) |
+| `led1` | `USER_NB_LED1` | `led1_o` (count of `it_user_i` in `user.c`) |
+| `led_diff` | 3 | `led_diff_o`: LEDs of the supervisor (its count of the resets of the user SoC) |
+| `switch` | `USER_NB_SWITCH` | `switch_i` |
+| `user_running` | 1 | reset of the user SoC released (`1`: running) |
+| `supervisor_running` | 1 | reset of the supervisor SoC released (`1`: running) |
+
+The widths are the generics of the bitstream: the default arguments (4 switches, 8 + 8 LEDs) are those of the NG-MEDIUM targets.
 
 - GDB reads the memory of the RAM of the firmware only (`mem`, the data RAM of the `rvcc_gen` link script): without it, GDB reads the code around pc through the data bus of the hart, where the user ROM is not, so these reads reach the peripherals (a spinlock taken, a FIFO popped; in a co-simulation, a read that never ended left the abstract command busy).
 - Several riscv targets in one chain work with OpenOCD 0.12: the co-simulations `sim_soc3x2_wardrv_fsm_c_user_openocd_chain` (chain given) and `sim_soc3x2_wardrv_fsm_c_user_openocd_generic` (chain discovered) examine, halt and resume the 3 CPUs of a chain of 4 TAPs.
 - A discovered chain keeps the TAP names of the autoprobe (`auto<k>.tap`): OpenOCD 0.12 can neither rename nor remove a TAP, and a `jtag newtap` after the probe adds a TAP after them (checked in a co-simulation of the chain of 1 TAP: `user.cpu0` declared after `jtag init` is a second TAP at `init`, `UNEXPECTED: 0xffffffff`, `IR capture error`, the target is not examined). The targets carry the PicoSoC names, and `picosoc_inject` uses the TAP of IDCODE `0x10003001`.
-- `picosoc_inject` is defined even when the chain has no injection / status TAP: it then fails in OpenOCD.
+- `picosoc_inject` and `picosoc_status` are defined even when the chain has no injection / status TAP: they then fail in OpenOCD. `picosoc_status` is checked on its decoding only (OpenOCD 0.12); the register STATUS itself by the scenario `jtag_status` of `tb_PicoSoC` on `main`.
 - A bitstream without TAP: nothing drives TDO. TDO at one (mode `10`: the default pull-up of the NG-MEDIUM pad; mode `11`: `jtag_bitbang` answers `'1'`) gives `JTAG scan chain interrogation failed: all ones` and the discovery prints `0 TAP(s)` and a line `No TAP : ...` (checked with a co-simulation without TAP, TDO pulled up); `picosoc.cfg` then creates no target. TDO at zero (an adapter or a board that pulls TDO down) is read by the OpenOCD autoprobe as a chain of TAPs without IDCODE, `unknown` with `0x00000000` (seen with the OpenOCD `dummy` adapter, whose TDO is 0): `picosoc.cfg` warns for each one and creates no target.
 
 Install on the host:

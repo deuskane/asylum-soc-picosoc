@@ -134,6 +134,8 @@ CAPI=2:
 #                               JTAG over the UART on the board) ;
 #                               tools/openocd/openocd.sh (checks of the host, then
 #                               OpenOCD with an adapter and a chain file) ;
+#                               picosoc.cfg : picosoc_status (STATUS of the
+#                               injection / status TAP) ;
 #                               emu_ng_medium_soc3_wardrv_fsm_fault_debug (HWLA,
 #                               injection / status TAP, both CPU debuggers) ;
 #                               picosoc.cfg generic : without picosoc_chain, the chain is
