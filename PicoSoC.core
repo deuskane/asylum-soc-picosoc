@@ -152,7 +152,10 @@ CAPI=2:
 #                               one cycle (button resynchronized, or TAP), stays until the
 #                               difference flags of the copy (TMR : both pairs) or a 1 -> 0 of
 #                               the TAP request, power-on reset ; tb : inject_error of one SoC
-#                               cycle, scenarios trap_cpu0, trap_cpu1, trap_reset, trap_tap
+#                               cycle, scenarios trap_cpu0, trap_cpu1, trap_reset, trap_tap ;
+#                               one TCK synchronizer for the whole JTAG chain in PicoSoC_top
+#                               (after the pad multiplexer), the ones of cpu_safety,
+#                               PicoSoC_supervisor and PicoSoC_tap removed
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2

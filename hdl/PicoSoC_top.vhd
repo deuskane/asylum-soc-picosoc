@@ -67,6 +67,10 @@
 --                               per copy, set by the button (resynchronized)
 --                               or the TAP, cleared by the difference flags
 --                               of the copy or a 1 -> 0 of the TAP request
+-- 2026-11-26  2.25     mrosiere One TCK synchronizer for the whole JTAG
+--                               chain (after the pad multiplexer, every
+--                               mode) : cpu_safety, PicoSoC_supervisor and
+--                               PicoSoC_tap get a TCK already on clk
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -75,6 +79,7 @@ use     ieee.numeric_std.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.jtag_pkg.all;
+use     asylum.techmap_pkg.all;
 
 entity PicoSoC_top is
   generic
@@ -198,7 +203,12 @@ architecture rtl of PicoSoC_top is
   -- jtag_chain(i) : TDO after the stage i (stage 0 : TDI of the pads) and the
   -- OR of the TDO enables so far. A CPU without debug unit and an absent
   -- stage are wires
+  -- jtag_ini_pads : JTAG pins of the selected mode (JTAG pads or
+  -- jtag_bitbang) ; jtag_ini : the same with TCK resynchronized on clk, seen
+  -- by every TAP of the chain
   type     jtag_tgts_t                  is array (natural range <>) of jtag_tgt_t;
+  signal   jtag_ini_pads                : jtag_ini_t;
+  signal   jtag_tck                     : std_logic;
   signal   jtag_ini                     : jtag_ini_t;
   signal   jtag_chain                   : jtag_tgts_t(0 to 3);
   signal   jtag_tgt                     : jtag_tgt_t;
@@ -441,7 +451,7 @@ begin  -- architecture rtl
     ,uart_cts_b_o         => uart_cts_b
     ,uart_rts_b_i         => uart_rts_b
     ,debug_uart_tx_i      => debug_uart_tx
-    ,jtag_ini_o           => jtag_ini
+    ,jtag_ini_o           => jtag_ini_pads
     ,jtag_tgt_i           => jtag_tgt
     ,bitbang_tx_i         => bitbang_tx
     ,bitbang_rx_o         => bitbang_rx
@@ -501,12 +511,28 @@ begin  -- architecture rtl
   -- units are in cpu_wrapper (USER_CPU_DEBUG_ENABLE,
   -- SUPERVISOR_CPU_DEBUG_ENABLE) : power-on reset arst_b_supervisor (a reset
   -- of the SoC of the CPU does not reset its debug unit)
-  -- Every TAP resynchronizes TCK on clk with a sync2dffrn reset by
-  -- arst_b_supervisor (cpu_safety, PicoSoC_supervisor, PicoSoC_tap) : no TAP
-  -- is clocked by the TCK pin, all see TCK 2 to 3 clk cycles late. A TAP
-  -- changes TDO on the falling edge of its TCK, the next one samples it on
-  -- the rising edge, half a TCK period later (TCK below about clk / 8)
+  -- TCK : ONE synchronizer for the whole chain, after the pad multiplexer
+  -- (both modes : the TCK pad in mode 10, the TCK register of jtag_bitbang
+  -- in mode 11), sync2dffrn on clk reset by arst_b_supervisor. No TAP is
+  -- clocked by the TCK pin : every TAP (user CPUs in cpu_safety, supervisor
+  -- CPU, injection / status TAP) sees the same TCK, 2 to 3 clk cycles after
+  -- the pad, so they all move on the same clk edge. A bounce on an edge of
+  -- TCK shorter than a clk period gives one edge.
+  -- TMS and TDI are not resynchronized : stable around the edges of TCK, they
+  -- are sampled 2 to 3 clk cycles after the edge of the pad. A TAP changes
+  -- TDO on the falling edge of TCK, the next one samples it on the rising
+  -- edge, half a TCK period later (TCK below about clk / 8)
   -----------------------------------------------------------------------------
+  ins_jtag_tck_sync : sync2dffrn
+    port map
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,d_i                  => jtag_ini_pads.tck
+    ,q_o                  => jtag_tck
+    );
+
+  jtag_ini            <= (tck => jtag_tck, trst_n => jtag_ini_pads.trst_n, tms => jtag_ini_pads.tms, tdi => jtag_ini_pads.tdi);
+
   jtag_chain(0)       <= (tdo => jtag_ini.tdi, tdo_en => '0');
 
   user_jtag_ini       <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(0).tdo);
@@ -592,7 +618,7 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- Debug : JTAG TAP of fault injection and status, last TAP of the chain,
-  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK resynchronized) :
+  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK of jtag_ini) :
   -- * PICOSOC_JTAG_IR_INJECT : writes the error injection (bit i : CPU i,
   --   like inject_error_i, synchronized on clk), reads diff
   -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,

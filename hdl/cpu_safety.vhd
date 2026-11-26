@@ -9,6 +9,10 @@
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: This module wraps the CPU with safety logic (Lock-step or TMR).
+--              Debug units (DEBUG_ENABLE) : jtag_ini_i.tck is already
+--              resynchronized on clk_i by PicoSoC_top (one synchronizer for
+--              the whole JTAG chain) : it goes to every copy like the other
+--              inputs
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -30,6 +34,9 @@
 --                               its "/=" and vote), inputs in another
 --                               (cpu_in_t), lock-step pipe as arrays of
 --                               records, one generate over the copies
+-- 2026-11-26  1.7      mrosiere Synchronizer of TCK removed : jtag_ini_i.tck
+--                               resynchronized once for the whole chain in
+--                               PicoSoC_top
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -40,7 +47,6 @@ use     asylum.logic_pkg.all;
 use     asylum.math_pkg.all;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.jtag_pkg.all;
-use     asylum.techmap_pkg.all;
 
 entity cpu_safety is
   generic
@@ -175,8 +181,6 @@ architecture rtl of cpu_safety is
     return z;
   end function vote;
 
-  signal   jtag_tck                   : std_logic;  -- TCK resynchronized on clk_i (DEBUG_ENABLE)
-
   -- Lock-step pipe : stage 0 = the inputs of cpu_safety and the outputs of
   -- CPU0, stage i = stage 0 delayed by i cycles. The other copies get the
   -- inputs of the last stage, their outputs are compared with the outputs
@@ -200,27 +204,12 @@ begin
                 ,sbi_tgt    => sbi_tgt_i
                 ,it_val     => interrupt_i
                 ,dbg_arst_b => dbg_arst_b_i
-                ,jtag_ini   => (tck    => jtag_tck
-                               ,trst_n => jtag_ini_i.trst_n
-                               ,tms    => jtag_ini_i.tms
-                               ,tdi    => jtag_ini_i.tdi));
+                ,jtag_ini   => jtag_ini_i);
 
-  -- TCK of the debug units resynchronized on clk_i : every copy gets the same
-  -- synchronous TCK (CPU1 exactly LOCK_STEP_DEPTH cycles later), so their
-  -- debug units stay equal. TMS and TDI are stable around the edges of TCK.
-  -- TCK must stay below about clk_i / 8
-  gen_jtag_tck_sync: if DEBUG_ENABLE
-  generate
-    ins_jtag_tck_sync : sync2dffrn
-      port map
-      (clk_i           => clk_i
-      ,arst_b_i        => dbg_arst_b_i
-      ,d_i             => jtag_ini_i.tck
-      ,q_o             => jtag_tck
-      );
-  else generate
-    jtag_tck <= jtag_ini_i.tck;
-  end generate;
+  -- TCK of the debug units : already resynchronized on clk_i by PicoSoC_top,
+  -- so every copy gets the same synchronous TCK (CPU1 exactly LOCK_STEP_DEPTH
+  -- cycles later) and their debug units stay equal. TMS and TDI are stable
+  -- around the edges of TCK. TCK must stay below about clk_i / 8
 
   -----------------------------------------------------------------------------
   -- Delay pipe for Lock-step
