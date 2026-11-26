@@ -84,7 +84,7 @@ def write_single_register(serial_port, slave_id, address, value):
 if __name__ == "__main__":
     try:
         addrmap_hjson = hjson.loads((Path(__file__).parent / "addrmap_user.hjson").read_text(encoding="utf-8"))
-        addrmap       = {item["name"]: item["base"] for item in addrmap_hjson}
+        addrmap       = {item["name"]: int(item["base"],16) for item in addrmap_hjson}
 
         port = serial.Serial(
             port='/dev/ttyUSB0',
