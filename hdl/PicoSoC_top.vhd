@@ -58,6 +58,11 @@
 --                               UART pads (was the two MSBs of switch_i)
 -- 2026-11-24  2.22     mrosiere HWLA_DEPTH, HWLA_PRE_TRIGGER,
 --                               HWLA_TIMESTAMP_WIDTH (were 64, 32, 16)
+-- 2026-11-26  2.23     mrosiere Every TAP of the JTAG chain resynchronizes
+--                               TCK on clk (supervisor CPU debug unit in
+--                               PicoSoC_supervisor, injection / status TAP
+--                               in PicoSoC_tap, as cpu_safety for the user
+--                               CPUs)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -477,6 +482,11 @@ begin  -- architecture rtl
   -- units are in cpu_wrapper (USER_CPU_DEBUG_ENABLE,
   -- SUPERVISOR_CPU_DEBUG_ENABLE) : power-on reset arst_b_supervisor (a reset
   -- of the SoC of the CPU does not reset its debug unit)
+  -- Every TAP resynchronizes TCK on clk with a sync2dffrn reset by
+  -- arst_b_supervisor (cpu_safety, PicoSoC_supervisor, PicoSoC_tap) : no TAP
+  -- is clocked by the TCK pin, all see TCK 2 to 3 clk cycles late. A TAP
+  -- changes TDO on the falling edge of its TCK, the next one samples it on
+  -- the rising edge, half a TCK period later (TCK below about clk / 8)
   -----------------------------------------------------------------------------
   jtag_chain(0)       <= (tdo => jtag_ini.tdi, tdo_en => '0');
 
@@ -563,7 +573,7 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- Debug : JTAG TAP of fault injection and status, last TAP of the chain,
-  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK domain) :
+  -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK resynchronized) :
   -- * PICOSOC_JTAG_IR_INJECT : writes the error injection (bit i : CPU i,
   --   like inject_error_i, synchronized on clk), reads diff
   -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,

@@ -23,6 +23,10 @@
 --              synchronizer (a value that changes during the capture may
 --              give a mix of old and new bits)
 --              The injection is synchronized on clk_i (2 flip-flops per bit)
+--              TCK is resynchronized on clk_i (sync2dffrn, reset arst_b_i)
+--              before the TAP, as in cpu_safety and PicoSoC_supervisor for
+--              the CPU debug units : the TCK domain is clocked by the
+--              resynchronized TCK, never by the TCK pin
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -30,6 +34,9 @@
 -- Date        Version  Author   Description
 -- 2026-11-23  1.0      mrosiere Created (injection / status TAP of
 --                               PicoSoC_top)
+-- 2026-11-26  1.1      mrosiere TCK resynchronized on clk_i, as the CPU
+--                               debug units (the TAP lost its state on the
+--                               board with the TCK pin as clock)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -60,6 +67,8 @@ end entity PicoSoC_tap;
 
 architecture rtl of PicoSoC_tap is
 
+  signal   jtag_tck            : std_logic;  -- TCK resynchronized on clk_i
+  signal   jtag_ini            : jtag_ini_t;
   signal   inject_tck          : std_logic;
   signal   inject_trst_b       : std_logic;
   signal   inject_tlr          : std_logic;
@@ -78,6 +87,23 @@ architecture rtl of PicoSoC_tap is
 
 begin  -- architecture rtl
 
+  -- TCK resynchronized on clk_i, as in cpu_safety and PicoSoC_supervisor :
+  -- every TAP of the JTAG chain sees the same TCK, a bounce on an edge of
+  -- TCK shorter than a clock period gives one edge. TMS and TDI are stable
+  -- around the edges of TCK. TCK must stay below about clk_i / 8
+  ins_jtag_tck_sync : sync2dffrn
+    port map
+    (clk_i                => clk_i
+    ,arst_b_i             => arst_b_i
+    ,d_i                  => jtag_ini_i.tck
+    ,q_o                  => jtag_tck
+    );
+
+  jtag_ini <= (tck    => jtag_tck
+              ,trst_n => jtag_ini_i.trst_n
+              ,tms    => jtag_ini_i.tms
+              ,tdi    => jtag_ini_i.tdi);
+
   ins_jtag_tap : jtag_tap
     generic map
     (IR_WIDTH             => PICOSOC_JTAG_IR_WIDTH
@@ -86,7 +112,7 @@ begin  -- architecture rtl
     )
     port map
     (arst_b_i             => arst_b_i
-    ,jtag_ini_i           => jtag_ini_i
+    ,jtag_ini_i           => jtag_ini
     ,jtag_tgt_o           => jtag_tgt_o
     ,tck_o                => inject_tck
     ,trst_b_o             => inject_trst_b

@@ -143,7 +143,9 @@ CAPI=2:
 #                               (sim_soc1_wardrv_fsm_c_user_openocd_generic,
 #                               sim_soc3x2_wardrv_fsm_c_user_openocd_generic) ;
 #                               NG-MEDIUM : switch comments of pads.py fixed
-#                               (debug_mux_sel_i(1) = S5, (0) = S6, S5 S6 left to right)
+#                               (debug_mux_sel_i(1) = S5, (0) = S6, S5 S6 left to right) ;
+#                               every TAP of the JTAG chain resynchronizes TCK on the SoC
+#                               clock (PicoSoC_tap, PicoSoC_supervisor, as cpu_safety)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2

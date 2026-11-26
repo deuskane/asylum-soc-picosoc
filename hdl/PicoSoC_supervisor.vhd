@@ -23,6 +23,9 @@
 -- 2026-08-01  1.4      mrosiere Use GPIO_irq instead of GPIO
 -- 2026-11-23  1.5      mrosiere CPU_DEBUG_ENABLE : debug unit of the CPU
 --                               (cpu_wrapper), JTAG pins
+-- 2026-11-26  1.6      mrosiere CPU_DEBUG_ENABLE : TCK resynchronized on
+--                               clk_i (sync2dffrn, reset dbg_arst_b_i), as
+--                               in cpu_safety for the user CPUs
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -44,6 +47,7 @@ use     asylum.icn_pkg.all;
 use     asylum.ram_pkg.all;
 use     asylum.ROM_supervisor_pkg.all;
 use     asylum.jtag_pkg.all;
+use     asylum.techmap_pkg.all;
 
 entity PicoSoC_supervisor is
   generic
@@ -131,6 +135,10 @@ architecture rtl of PicoSoC_supervisor is
   signal cpu_it_val                   : std_logic;
 --signal cpu_it_ack                   : std_logic;
 
+  -- JTAG pins of the debug unit, TCK resynchronized on clk (CPU_DEBUG_ENABLE)
+  signal cpu_jtag_tck                 : std_logic;
+  signal cpu_jtag_ini                 : jtag_ini_t;
+
   -- Signals ICN
   signal icn_sbi_inim                 : sbi_inis_t(ICN_NB_MASTER-1 downto 0)(addr (CPU_DMEM_ADDR_WIDTH-1 downto 0),
                                                                              wdata(CPU_DMEM_DATA_WIDTH-1 downto 0));
@@ -155,6 +163,31 @@ begin  -- architecture rtl
   arst_b <= arst_b_i;
   
   -----------------------------------------------------------------------------
+  -- TCK of the debug unit resynchronized on clk, as in cpu_safety for the
+  -- user CPUs and in PicoSoC_tap : every TAP of the JTAG chain sees the same
+  -- TCK, a bounce on an edge of TCK shorter than a clock period gives one
+  -- edge. TMS and TDI are stable around the edges of TCK.
+  -- TCK must stay below about clk / 8
+  -----------------------------------------------------------------------------
+  gen_jtag_tck_sync: if CPU_DEBUG_ENABLE
+  generate
+    ins_jtag_tck_sync : sync2dffrn
+      port map
+      (clk_i           => clk
+      ,arst_b_i        => dbg_arst_b_i
+      ,d_i             => jtag_ini_i.tck
+      ,q_o             => cpu_jtag_tck
+      );
+  else generate
+    cpu_jtag_tck <= jtag_ini_i.tck;
+  end generate;
+
+  cpu_jtag_ini <= (tck    => cpu_jtag_tck
+                  ,trst_n => jtag_ini_i.trst_n
+                  ,tms    => jtag_ini_i.tms
+                  ,tdi    => jtag_ini_i.tdi);
+
+  -----------------------------------------------------------------------------
   -- CPU 0
   -----------------------------------------------------------------------------
   ins_cpu : entity asylum.cpu_wrapper
@@ -175,7 +208,7 @@ begin  -- architecture rtl
     ,interrupt_i          => cpu_it_val   
     ,interrupt_ack_o      => open
     ,dbg_arst_b_i         => dbg_arst_b_i
-    ,jtag_ini_i           => jtag_ini_i
+    ,jtag_ini_i           => cpu_jtag_ini
     ,jtag_tgt_o           => jtag_tgt_o
     ,ndmreset_o           => ndmreset_o
     );
