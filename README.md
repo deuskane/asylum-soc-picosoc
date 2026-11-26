@@ -552,7 +552,7 @@ openocd -f tools/openocd/<adapter>.cfg -f tools/openocd/<chain>.cfg
 
 | Adapter file | Cable | OpenOCD driver | `debug_mux_sel_i` | TCK |
 |--------------|-------|----------------|-------------------|-----|
-| [ft232r.cfg](tools/openocd/ft232r.cfg) | USB-UART cable with an FT232R (TXD, RXD, RTS#, CTS#, 3.3V; for example DSD TECH SH-U09G), `vid_pid 0x0403 0x6001` | `ft232r`, synchronous bitbang (the `ftdi` driver needs an MPSSE chip, the FT232R has none) | `10` | `adapter speed 100` (kHz) |
+| [ft232r.cfg](tools/openocd/ft232r.cfg) | USB-UART cable with an FT232R (TXD, RXD, RTS#, CTS#, 3.3V; for example DSD TECH SH-U09G), `vid_pid 0x0403 0x6001` | `ft232r`, synchronous bitbang (the `ftdi` driver needs an MPSSE chip, the FT232R has none) | `10` | `adapter speed 10` (kHz; checked on the board: 100 kHz finds no TAP) |
 | [ft232h.cfg](tools/openocd/ft232h.cfg) | FTDI MPSSE cable: FT232H, `vid_pid 0x0403 0x6014` (FT2232H: `0x0403 0x6010`, channel A) | `ftdi`, `layout_init 0x0008 0x000b` | `10` | `adapter speed 500` (kHz) |
 | [remote_bitbang.cfg](tools/openocd/remote_bitbang.cfg) | Any USB-UART cable, through `socat` (TCP port 9824 to the serial port) | `remote_bitbang` (also the adapter of the co-simulations) | `11` | A TCK edge per byte: the baud rate of the serial port (`JTAG_BAUD_RATE`, 9600 on the NG-MEDIUM targets); `adapter speed` has no effect |
 

@@ -127,7 +127,8 @@ CAPI=2:
 #                               sim_soc1_wardrv_fsm_c_user_openocd_discover) ;
 #                               NG-MEDIUM : no pull-down on CTS* / TDO (the pads
 #                               have no pull-down, default pull-up) ;
-#                               modbus_server_debug.py : base address as integer
+#                               modbus_server_debug.py : base address as integer ;
+#                               ft232r.cfg : adapter speed 10 kHz (checked on the board)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
