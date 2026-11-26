@@ -71,6 +71,9 @@
 --                               chain (after the pad multiplexer, every
 --                               mode) : cpu_safety, PicoSoC_supervisor and
 --                               PicoSoC_tap get a TCK already on clk
+-- 2026-11-26  2.26     mrosiere PicoSoC_inject without SAFETY (a trap is
+--                               cleared by a rising edge of a difference
+--                               flag of its copy)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -406,16 +409,13 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- FAULT_INJECTION, in PicoSoC_inject
   -- Push buttons (polarity USER_FAULT_POLARITY, resynchronized) or JTAG set
-  -- the trap of a copy, even for one cycle ; the trap stays until the
-  -- difference flags of the copy are set (or a 1 -> 0 of the TAP request).
+  -- the trap of a copy, even for one cycle ; the trap stays until a
+  -- difference flag of the copy rises (or a 1 -> 0 of the TAP request).
   -- Power-on reset : a reset of the user SoC does not clear a trap
   -----------------------------------------------------------------------------
   inject_error_button <= active_high(inject_error_i, USER_FAULT_POLARITY);
 
   ins_inject : PicoSoC_inject
-    generic map
-    (SAFETY               => USER_SAFETY
-    )
     port map
     (clk_i                => clk
     ,arst_b_i             => arst_b_supervisor

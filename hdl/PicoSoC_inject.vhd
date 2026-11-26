@@ -16,16 +16,17 @@
 --              * the trap is set by a request, even of one cycle, and flips
 --                the instruction bit of its copy (cpu_safety) until it is
 --                cleared by :
---                - the detection of the copy : its difference flags
---                  (registered, sticky until the reset of the user SoC) :
---                  lock-step diff(0) for CPU0 and CPU1 ; TMR the two pairs
---                  of the copy (CPU0 : diff(0) and diff(2), CPU1 : diff(0)
---                  and diff(1), CPU2 : diff(1) and diff(2)) ; never without
---                  safety
+--                - the detection of the copy : a rising edge (0 -> 1) of
+--                  any difference flag of the copy (registered, sticky until
+--                  the reset of the user SoC) : CPU0 diff(0) or diff(2),
+--                  CPU1 diff(0) or diff(1), CPU2 diff(1) or diff(2) ; the
+--                  same rule for lock-step (only diff(0)) and TMR, never
+--                  without safety (no flag)
 --                - a falling edge (1 -> 0) of the request of the TAP
---              * clear wins over set in the same cycle : while the flags of
---                a copy are set, a held request does not set its trap ; after
---                the reset of the user SoC (flags cleared) it sets it again
+--              * clear wins over set in the same cycle (the edge cycle
+--                only) : a request held or made after the detection sets the
+--                trap again (in TMR, the second error stays injectable while
+--                the flags of the first one are still set)
 --              * the reset of the user SoC does not clear a trap
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
@@ -33,6 +34,10 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-26  1.0      mrosiere Created
+-- 2026-11-26  1.1      mrosiere Clear on the rising edge of any difference
+--                               flag of the copy, the same for lock-step and
+--                               TMR (was the level ; TMR : both pairs) ;
+--                               SAFETY removed
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -41,9 +46,6 @@ library asylum;
 use     asylum.techmap_pkg.all;
 
 entity PicoSoC_inject is
-  generic
-    (SAFETY           : string := "lock-step" -- "none" / "lock-step" / "tmr"
-    );
   port
     (clk_i            : in  std_logic
     ;arst_b_i         : in  std_logic  -- Power-on reset (not the reset of the user SoC)
@@ -65,7 +67,9 @@ architecture rtl of PicoSoC_inject is
 
   signal   button              : std_logic_vector(3-1 downto 0); -- Resynchronized push buttons
   signal   jtag_r              : std_logic_vector(3-1 downto 0); -- Request of the TAP, previous cycle
-  signal   detected            : std_logic_vector(3-1 downto 0); -- Copy i seen different by the compare
+  signal   diff_r              : std_logic_vector(3-1 downto 0); -- Difference flags, previous cycle
+  signal   diff_rise           : std_logic_vector(3-1 downto 0); -- Difference flags, 0 -> 1
+  signal   detected            : std_logic_vector(3-1 downto 0); -- Copy i newly seen different by the compare
   signal   clear               : std_logic_vector(3-1 downto 0);
   signal   trap_r              : std_logic_vector(3-1 downto 0);
 
@@ -82,20 +86,13 @@ begin  -- architecture rtl
       );
   end generate gen_button_sync;
 
-  -- Copy i detected : every pair of copy i that is compared is flagged
-  gen_tmr: if SAFETY = "tmr"
-  generate
-    detected <= (0 => diff_i(0) and diff_i(2)
-                ,1 => diff_i(0) and diff_i(1)
-                ,2 => diff_i(1) and diff_i(2));
-  elsif SAFETY = "lock-step"
-  generate
-    detected <= (0 => diff_i(0)
-                ,1 => diff_i(0)
-                ,2 => '0');
-  else generate
-    detected <= (others => '0');
-  end generate gen_tmr;
+  -- Copy i detected : a rising edge of any flag of a pair of copy i (the
+  -- flags that do not exist, lock-step diff(1) and diff(2), without safety
+  -- all, stay 0)
+  diff_rise <= diff_i and not diff_r;
+  detected  <= (0 => diff_rise(0) or diff_rise(2)
+               ,1 => diff_rise(0) or diff_rise(1)
+               ,2 => diff_rise(1) or diff_rise(2));
 
   clear <= detected or (jtag_r and not jtag_i);
 
@@ -104,10 +101,12 @@ begin  -- architecture rtl
     if arst_b_i = '0'
     then
       jtag_r <= (others => '0');
+      diff_r <= (others => '0');
       trap_r <= (others => '0');
     elsif rising_edge(clk_i)
     then
       jtag_r <= jtag_i;
+      diff_r <= diff_i;
       trap_r <= (trap_r or button or jtag_i) and not clear;
     end if;
   end process;

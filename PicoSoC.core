@@ -155,7 +155,10 @@ CAPI=2:
 #                               cycle, scenarios trap_cpu0, trap_cpu1, trap_reset, trap_tap ;
 #                               one TCK synchronizer for the whole JTAG chain in PicoSoC_top
 #                               (after the pad multiplexer), the ones of cpu_safety,
-#                               PicoSoC_supervisor and PicoSoC_tap removed
+#                               PicoSoC_supervisor and PicoSoC_tap removed ;
+#                               trap of the error injection cleared on the rising edge of any
+#                               difference flag of the copy, the same for lock-step and TMR
+#                               (PicoSoC_inject without SAFETY)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
