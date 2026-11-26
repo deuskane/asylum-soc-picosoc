@@ -63,6 +63,10 @@
 --                               PicoSoC_supervisor, injection / status TAP
 --                               in PicoSoC_tap, as cpu_safety for the user
 --                               CPUs)
+-- 2026-11-26  2.24     mrosiere Error injection in PicoSoC_inject : a trap
+--                               per copy, set by the button (resynchronized)
+--                               or the TAP, cleared by the difference flags
+--                               of the copy or a 1 -> 0 of the TAP request
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -215,7 +219,8 @@ architecture rtl of PicoSoC_top is
   signal   bitbang_tx                   : std_logic;
   signal   bitbang_jtag_ini             : jtag_ini_t;
 
-  -- Error injection : push buttons (active high) or JTAG (synchronized on clk)
+  -- Error injection : push buttons (active high) or JTAG (synchronized on clk),
+  -- trapped in PicoSoC_inject
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
   signal   inject_error_jtag            : std_logic_vector(3-1 downto 0);
   
@@ -389,12 +394,26 @@ begin  -- architecture rtl
   led1_o     <= led1_user;
 
   -----------------------------------------------------------------------------
-  -- FAULT_INJECTION
-  -- Push buttons (polarity USER_FAULT_POLARITY) or JTAG, ORed active high
+  -- FAULT_INJECTION, in PicoSoC_inject
+  -- Push buttons (polarity USER_FAULT_POLARITY, resynchronized) or JTAG set
+  -- the trap of a copy, even for one cycle ; the trap stays until the
+  -- difference flags of the copy are set (or a 1 -> 0 of the TAP request).
+  -- Power-on reset : a reset of the user SoC does not clear a trap
   -----------------------------------------------------------------------------
   inject_error_button <= active_high(inject_error_i, USER_FAULT_POLARITY);
 
-  inject_error <= inject_error_button or inject_error_jtag;
+  ins_inject : PicoSoC_inject
+    generic map
+    (SAFETY               => USER_SAFETY
+    )
+    port map
+    (clk_i                => clk
+    ,arst_b_i             => arst_b_supervisor
+    ,button_i             => inject_error_button
+    ,jtag_i               => inject_error_jtag
+    ,diff_i               => diff
+    ,inject_error_o       => inject_error
+    );
 
   -----------------------------------------------------------------------------
   -- Pads : UART pads shared by the user UART, the HWLA UART and the JTAG

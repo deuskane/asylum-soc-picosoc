@@ -38,6 +38,7 @@
 -- 2026-11-23  1.18     mrosiere PicoSoC_jtag_over_uart component
 -- 2026-11-23  1.19     mrosiere HWLA_BAUD_RATE (PicoSoC_top, PicoSoC_hwla components)
 -- 2026-11-23  1.20     mrosiere debug_mux_sel_i (PicoSoC_top, PicoSoC_pads components)
+-- 2026-11-26  1.21     mrosiere PicoSoC_inject component
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -330,6 +331,20 @@ component PicoSoC_tap is
     ;inject_error_o   : out std_logic_vector(3-1 downto 0)
     );
 end component PicoSoC_tap;
+
+component PicoSoC_inject is
+  generic
+    (SAFETY           : string := "lock-step" -- "none" / "lock-step" / "tmr"
+    );
+  port
+    (clk_i            : in  std_logic
+    ;arst_b_i         : in  std_logic  -- Power-on reset (not the reset of the user SoC)
+    ;button_i         : in  std_logic_vector(3-1 downto 0)
+    ;jtag_i           : in  std_logic_vector(3-1 downto 0)
+    ;diff_i           : in  std_logic_vector(3-1 downto 0)
+    ;inject_error_o   : out std_logic_vector(3-1 downto 0)
+    );
+end component PicoSoC_inject;
 
 component PicoSoC_top is
   generic

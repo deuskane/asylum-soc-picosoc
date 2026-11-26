@@ -147,7 +147,11 @@ CAPI=2:
 #                               every TAP of the JTAG chain resynchronizes TCK on the SoC
 #                               clock (PicoSoC_tap, PicoSoC_supervisor, as cpu_safety) ;
 #                               tb : scenario jtag_glitch (bounces on TCK,
-#                               sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch)
+#                               sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch) ;
+#                               error injection trapped (PicoSoC_inject) : a request, even of
+#                               one cycle (button resynchronized, or TAP), stays until the
+#                               difference flags of the copy (TMR : both pairs) or a 1 -> 0 of
+#                               the TAP request, power-on reset
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2
@@ -640,6 +644,7 @@ filesets:
       - hdl/PicoSoC_pads.vhd
       - hdl/PicoSoC_hwla.vhd
       - hdl/PicoSoC_tap.vhd
+      - hdl/PicoSoC_inject.vhd
       - hdl/PicoSoC_jtag_over_uart.vhd
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd
