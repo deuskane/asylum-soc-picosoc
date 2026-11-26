@@ -589,7 +589,7 @@ Names given by `picosoc_tap` of `discover.tcl` (the IDCODEs of [UART pads and JT
 
 Steps (an FT232R cable in mode `10`; with the FTDI MPSSE cable use `ft232h.cfg`):
 
-1. Build and program a bitstream with at least one TAP: `make emu_ng_medium_soc1_wardrv_fsm` (the debugger of the user CPU, the only TAP of its chain); the other `emu_ng_medium_*` targets have no TAP.
+1. Build and program a bitstream with at least one TAP: `make emu_ng_medium_soc1_wardrv_fsm` (the debugger of the user CPU, the only TAP of its chain) or `make emu_ng_medium_soc3_wardrv_fsm_fault_debug` (lock-step, HWLA, chain of 3 TAPs: injection / status, supervisor CPU, user CPU); the other `emu_ng_medium_*` targets have no TAP.
 2. Stop the terminal on the cable, then set S5 S6 to `10` (S5 1, S6 0; see [Board](#board)).
 3. Start OpenOCD with the adapter file and `picosoc.cfg`, no argument: it discovers the chain, prints it, creates the riscv targets and starts a GDB server per CPU.
 4. Connect GDB to the GDB port of the CPU (3333 for the first CPU of the chain, from TDO).
@@ -935,7 +935,7 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `lint_ghdl` | `asylum.PicoSoC_top` | GHDL `-Wall` analysis and elaboration, default generics |
 | `lint_ghdl_synth_<config>` | `asylum.PicoSoC_top` | `ghdl --synth` check (no latch) of 8 configurations: `default`, `soc1`, `soc4_ng_medium`, `4leds_reset_high`, `wardrv_soc1`, `wardrv_soc4_ng_medium`, `wardrv_soc4_ng_medium_debug`, `wardrv_soc1x4`; `default` and `4leds_reset_high` with the HWLA and the injection / status TAP (`DEBUG_ENABLE = true`), `wardrv_soc4_ng_medium_debug` with them and both CPU debuggers, the others without |
 | `syn_<config>` | `asylum.PicoSoC_top` | Yosys synthesis (see [Resources](#resources)): `syn_soc1`, `syn_soc4_ng_medium`, `syn_wardrv_soc1`, `syn_wardrv_soc4_ng_medium`, `syn_wardrv_soc4_ng_medium_debug` |
-| `emu_ng_medium_*` | `PicoSoC_top` | NG-MEDIUM board (NXmap, not in the CI): `user.c` and `user_modbus_rtu.c` builds of soc1 to soc4 for each CPU; `emu_ng_medium_soc1_wardrv_fsm` with the debugger of the user CPU |
+| `emu_ng_medium_*` | `PicoSoC_top` | NG-MEDIUM board (NXmap, not in the CI): `user.c` and `user_modbus_rtu.c` builds of soc1 to soc4 for each CPU; `emu_ng_medium_soc1_wardrv_fsm` with the debugger of the user CPU; `emu_ng_medium_soc3_wardrv_fsm_fault_debug` with `DEBUG_ENABLE` (HWLA, injection / status TAP) and both CPU debuggers |
 
 `<cpu>` is `openblaze8` (generators `gen_picoblaze3_*`) or `wardrv_fsm` (`gen_rv32i_*`). Every `sim_*`, `lint_*` and `syn_*` target is a job of the [GitHub CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml), run in the [asylum-env](https://github.com/deuskane/asylum-ci) image. The `sim`, `lint` and `syn` badges count the passed and failed targets of the last run on `main`.
 

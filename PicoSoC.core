@@ -132,6 +132,8 @@ CAPI=2:
 #                               remote_bitbang.cfg, ft232r.cfg : transport select jtag ;
 #                               tools/openocd/remote_bitbang_setup.sh (stty + socat,
 #                               JTAG over the UART on the board) ;
+#                               emu_ng_medium_soc3_wardrv_fsm_fault_debug (HWLA,
+#                               injection / status TAP, both CPU debuggers) ;
 #                               picosoc.cfg generic : without picosoc_chain, the chain is
 #                               discovered (discover.tcl, shared with discover.cfg)
 #                               (sim_soc1_wardrv_fsm_c_user_openocd_generic,
@@ -1871,6 +1873,23 @@ targets:
       - USER_FAULT_INJECTION=true
       # Debug
       - DEBUG_ENABLE=false
+
+  #---------------------------------------
+  emu_ng_medium_soc3_wardrv_fsm_fault_debug:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, captures on debug_uart_tx_o and the UART pads in mode 01), JTAG chain of 3 TAPs (injection / status, supervisor CPU, user CPU)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters        : *cfg_ng_medium_wardrv_fsm
+    parameters_append :
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      # Debug
+      - DEBUG_ENABLE=true
+      - USER_CPU_DEBUG_ENABLE=true
+      - SUPERVISOR_CPU_DEBUG_ENABLE=true
 
   #---------------------------------------
   emu_ng_medium_soc3_wardrv_fsm_fault_modbus_rtu:
