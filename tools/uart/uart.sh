@@ -72,7 +72,7 @@ SUDO=""
 if [ ! -r "${DEV}" ] || [ ! -w "${DEV}" ]
 then
     echo "No read / write access to ${DEV} : screen runs with sudo"
-    echo "(to avoid it : sudo usermod -aG $(stat -c %G "${DEV}") ${USER}, then log out and in)"
+    echo "(to avoid it, once : tools/udev/install.sh, then log out and in)"
     SUDO=sudo
 fi
 

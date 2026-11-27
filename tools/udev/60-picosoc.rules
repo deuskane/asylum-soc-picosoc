@@ -1,0 +1,37 @@
+#-----------------------------------------------------------------------------
+# Title      : udev rules of the cables of the PicoSoC board
+# Project    : PicoSoC
+#-----------------------------------------------------------------------------
+# File       : 60-picosoc.rules
+# Author     : mrosiere
+#-----------------------------------------------------------------------------
+# Description: Access without sudo, for the users of the group dialout, to
+#              the FTDI cables of the board, kept when the cable is plugged
+#              again or re-enumerated (e.g. after OpenOCD ft232r, or by the
+#              USB passthrough of a virtual machine) :
+#              * the USB device (/dev/bus/usb/...) : OpenOCD (ft232r.cfg,
+#                ft232h.cfg) ;
+#              * the serial port (/dev/ttyUSB*) : screen (tools/uart/uart.sh),
+#                tools/hwla/hwla_capture.sh, socat
+#                (tools/openocd/remote_bitbang_setup.sh).
+#              Installed in /etc/udev/rules.d by install.sh of this
+#              directory.
+#-----------------------------------------------------------------------------
+# Copyright (c) 2026
+#-----------------------------------------------------------------------------
+# Revisions  :
+# Date        Version  Author   Description
+# 2026-11-27  1.0      mrosiere Created
+#-----------------------------------------------------------------------------
+
+# FT232R (e.g. DSD TECH SH-U09G) : 0403:6001
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6001", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", GROUP="dialout", MODE="0660"
+
+# FT2232H : 0403:6010
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6010", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6010", GROUP="dialout", MODE="0660"
+
+# FT232H : 0403:6014
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6014", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6014", GROUP="dialout", MODE="0660"

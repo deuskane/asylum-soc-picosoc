@@ -85,7 +85,7 @@ SUDO=""
 if [ ! -r "${DEV}" ] || [ ! -w "${DEV}" ]
 then
     echo "No read / write access to ${DEV} : stty and cat run with sudo"
-    echo "(to avoid it : sudo usermod -aG $(stat -c %G "${DEV}") ${USER}, then log out and in)"
+    echo "(to avoid it, once : tools/udev/install.sh, then log out and in)"
     SUDO=sudo
     sudo -v    # password asked now, not by the reader in the background
 fi

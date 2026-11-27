@@ -138,7 +138,7 @@ then
         if [ -e "${NODE}" ] && { [ ! -r "${NODE}" ] || [ ! -w "${NODE}" ]; }
         then
             echo "No access to the USB device ${NODE} : OpenOCD runs with sudo"
-            echo "(to avoid it : the udev rules of OpenOCD, contrib/60-openocd.rules, in /etc/udev/rules.d, then unplug and plug the cable)"
+            echo "(to avoid it, once : tools/udev/install.sh, then log out and in, unplug and plug the cable)"
             SUDO=sudo
         fi
     else

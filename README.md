@@ -717,7 +717,7 @@ Install on the host:
 - OpenOCD >= 0.11 (the `ft232r` driver and the RISC-V target), for example xPack OpenOCD 0.12 on CentOS 8; the co-simulations use OpenOCD 0.12 of the asylum-env image.
 - A RISC-V GDB: `gdb-multiarch` (asylum-env image) or `riscv-none-elf-gdb`.
 - `socat` for JTAG over the UART (`remote_bitbang_setup.sh`).
-- Access to the serial port without `sudo`: the user in the group `dialout` (`sudo usermod -aG dialout $USER`, then log out and in).
+- Access to the cables without `sudo` (USB device for OpenOCD, serial port for screen, socat and the HWLA captures), once: [tools/udev/install.sh](tools/udev/install.sh) installs [tools/udev/60-picosoc.rules](tools/udev/60-picosoc.rules) in `/etc/udev/rules.d` (FTDI FT232R `0403:6001`, FT2232H `0403:6010`, FT232H `0403:6014`: group `dialout`, mode `0660`, kept when the cable is plugged again or re-enumerated, e.g. after OpenOCD or by the USB passthrough of a virtual machine) and adds the user to the group `dialout`; log out and in once (`tools/udev/install.sh --uninstall` removes the rules).
 
 ## Programmer's Guide
 

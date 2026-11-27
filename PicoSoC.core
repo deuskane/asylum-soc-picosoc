@@ -181,7 +181,8 @@ CAPI=2:
 #                               of asylum-debug-jtag, sourced by picosoc.cfg from its
 #                               own directory ; sim/openocd/hwla_vcd.sh (was hwla_tools.sh) ;
 #                               picosoc_hwla_dump : hexadecimal text without the Tcl
-#                               command binary (xPack OpenOCD) or for *.hex
+#                               command binary (xPack OpenOCD) or for *.hex ;
+#                               tools/udev (rules of the FTDI cables, install.sh)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.1
