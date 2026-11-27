@@ -35,7 +35,8 @@
 --                               t_tb_cfg of the removed scenarios removed
 --                               (nb_cpu, tmr, debug, fault, supervisor,
 --                               spi_byte, bitbang, uart_get_line_quiet,
---                               uart_quiet, uart_echo, hex)
+--                               uart_quiet, uart_echo, hex) ; t_jtag_chain
+--                               and the HWLA fields (no scenario hwla)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -52,27 +53,11 @@ package tb_PicoSoC_bfm_pkg is
 
   constant C_TB_SCOPE  : string := "TB_PICOSOC";
 
-  -- JTAG chain of PicoSoC_top : number of TAPs and position of each TAP
-  -- from TDI (0 : first TAP after TDI), -1 : absent
-  type t_jtag_chain is record
-    nb_tap     : natural;
-    user       : integer;            -- user CPU debugger of cluster 0 (USER_CPU_DEBUG_ENABLE), cluster i at user + i
-    nb_user    : natural;            -- user CPU debuggers (one per cluster)
-    supervisor : integer;            -- supervisor CPU debugger (SUPERVISOR_CPU_DEBUG_ENABLE)
-    hwla       : integer;            -- jtag_axis of the HWLA captures (DEBUG_ENABLE, HWLA_LINK "jtag")
-    inject     : integer;            -- injection / status TAP (DEBUG_ENABLE)
-  end record t_jtag_chain;
-
   -- Constants of the scenarios (computed from the generics in tb_PicoSoC)
   type t_tb_cfg is record
     clk_period : time;               -- period of clk_i
     clk_ratio  : positive;           -- clk_i cycles per cycle of the SoC clock
     timeout    : time;               -- maximum duration of one wait
-    hwla_depth       : positive;     -- HWLA_DEPTH
-    hwla_pre_trigger : natural;      -- HWLA_PRE_TRIGGER
-    hwla_ts_width    : natural;      -- HWLA_TIMESTAMP_WIDTH
-    hwla_jtag        : boolean;      -- HWLA_LINK = "jtag" : captures read through the TAP of jtag_axis (else debug_uart_tx_o)
-    jtag       : t_jtag_chain;       -- JTAG chain
     it_on      : std_logic;          -- active level of it_user_i  (USER_IT_POLARITY)
     fault_on   : std_logic;          -- active level of inject_error_i (USER_FAULT_POLARITY)
     uart       : t_uart_bfm_config;  -- UART VIP configuration (bit time of the DUT)

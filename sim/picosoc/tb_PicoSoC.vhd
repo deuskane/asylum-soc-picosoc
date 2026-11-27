@@ -63,6 +63,9 @@
 --                               of the labs only : no JTAG over the UART
 --                               (remote_bitbang BFM), no SPI byte of the
 --                               "Loop" lines
+-- 2026-11-27  2.14     mrosiere Student branch : no scenario hwla : no JTAG
+--                               BFM, no copy of the user ROM, no HWLA_*
+--                               generics
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -78,19 +81,14 @@ use     bitvis_vip_uart.uart_bfm_pkg.all;
 library bitvis_vip_i2c;
 use     bitvis_vip_i2c.i2c_bfm_pkg.all;
 
-library asylum_uvvm;
-use     asylum_uvvm.jtag_bfm_pkg.all;
-
 library asylum;
 use     asylum.PicoSoC_pkg.all;
-use     asylum.ROM_user_pkg.all;
 use     asylum.spi_pkg.all;
 use     asylum.string_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
 use     work.tb_PicoSoC_tests_pkg.all;
-use     work.tb_PicoSoC_jtag_pkg.all;
 
 entity tb_PicoSoC is
   generic
@@ -103,10 +101,6 @@ entity tb_PicoSoC is
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
     ;DEBUG_ENABLE          : boolean  := True
-    ;HWLA_DEPTH            : positive := 64          -- DEBUG_ENABLE : samples of a capture
-    ;HWLA_PRE_TRIGGER      : natural  := 32          -- DEBUG_ENABLE : samples before the trigger sample
-    ;HWLA_TIMESTAMP_WIDTH  : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample
-    ;HWLA_LINK             : string   := "uart"      -- DEBUG_ENABLE : link of the captures, "uart" / "jtag"
     ;USER_CPU_DEBUG_ENABLE       : boolean := False
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean := False
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
@@ -144,19 +138,11 @@ architecture tb of tb_PicoSoC is
   -- Bit time of the DUT : the baud tick counter divides the internal clock by FSYS_INT/USER_BAUD_RATE
   constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
 
-  -- JTAG chain of the DUT
-  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE,
-                                                                DEBUG_ENABLE and HWLA_LINK = "jtag", DEBUG_ENABLE);
 
   constant C_CFG                   : t_tb_cfg := (
     clk_period => TB_PERIOD,
     clk_ratio  => FSYS/FSYS_INT,
     timeout    => TB_WATCHDOG * TB_PERIOD,
-    hwla_depth       => HWLA_DEPTH,
-    hwla_pre_trigger => HWLA_PRE_TRIGGER,
-    hwla_ts_width    => HWLA_TIMESTAMP_WIDTH,
-    hwla_jtag        => HWLA_LINK = "jtag",
-    jtag       => C_JTAG,
     it_on      => C_IT_ON,
     fault_on   => C_FAULT_ON,
     uart       => (
@@ -194,27 +180,19 @@ architecture tb of tb_PicoSoC is
   signal  spi_io_io                : std_logic_vector(USER_SPI_NB_IO-1 downto 0);
 
   signal  RSTNeg                   : std_logic;
-  -- UART pads (pull-ups) and the cable (FTDI MPSSE) : UART side RX (UART
-  -- BFM) and CTS* ('Z' : released), driven in the UART modes of the pads ;
-  -- JTAG side (JTAG BFM) TCK, TDI, TMS, driven in the JTAG mode (debug_mux_sel_i 10)
+  -- UART pads (pull-ups) and the cable : RX (UART BFM) and CTS*
   signal  uart_rx_i                : std_logic;
   signal  uart_tx_io               : std_logic;
   signal  uart_cts_b_io            : std_logic;
   signal  uart_rts_b_io            : std_logic;
   signal  uart_rx                  : std_logic := '1';
   signal  uart_cts_b               : std_logic := '0';
-  signal  jtag_if                  : t_jtag_if := init_jtag_if_signals;
-  signal  jtag_mode                : boolean;
 
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
 
   signal  pwm_o                    : std_logic;
   signal  debug_uart_tx_o          : std_logic;
-
-  -- Copy of the user ROM (reference of the instruction bus in the scenario hwla)
-  signal  rom_addr                 : std_logic_vector(ROM_user_ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal  rom_data                 : std_logic_vector(ROM_user_DATA_WIDTH-1 downto 0);
 
 begin  -- architecture tb
 
@@ -234,10 +212,6 @@ begin  -- architecture tb
     ,USER_SPI_NB_IO        => USER_SPI_NB_IO
     ,RESET_POLARITY        => RESET_POLARITY
     ,DEBUG_ENABLE          => DEBUG_ENABLE
-    ,HWLA_DEPTH            => HWLA_DEPTH
-    ,HWLA_PRE_TRIGGER      => HWLA_PRE_TRIGGER
-    ,HWLA_TIMESTAMP_WIDTH  => HWLA_TIMESTAMP_WIDTH
-    ,HWLA_LINK             => HWLA_LINK
     ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
     ,SUPERVISOR            => SUPERVISOR
@@ -276,28 +250,13 @@ begin  -- architecture tb
   spi_io_io   <= (others => 'H');
 
   -- UART pads : pull-ups (a pad driven by nobody is 'H'), the cable drives
-  -- RX and CTS* (UART modes) or TCK, TDI and TMS (JTAG mode)
+  -- RX and CTS*
   uart_tx_io    <= 'H';
   uart_cts_b_io <= 'H';
   uart_rts_b_io <= 'H';
 
-  jtag_mode     <= debug_mux_sel_i = C_MUX_JTAG;
-  uart_rx_i     <= jtag_if.tck   when jtag_mode else
-                   uart_rx;
-  uart_tx_io    <= jtag_if.tdi   when jtag_mode else 'Z';
-  uart_cts_b_io <= 'Z'           when jtag_mode else uart_cts_b;
-  uart_rts_b_io <= jtag_if.tms   when jtag_mode else 'Z';
-  jtag_if.tdo   <= uart_cts_b_io when jtag_mode else 'Z';
-
-  -- Capture-IR value of the whole chain ("00001" per TAP) at each IR scan
-  gen_jtag_monitor:
-  if C_JTAG.nb_tap > 0
-  generate
-    jtag_ir_capture_monitor(jtag_if  => jtag_if,
-                            expected => chain_ir_capture(C_JTAG.nb_tap),
-                            scope    => C_SCOPE,
-                            config   => jtag_config(C_JTAG.nb_tap));
-  end generate gen_jtag_monitor;
+  uart_rx_i     <= uart_rx;
+  uart_cts_b_io <= uart_cts_b;
 
   -- Pull-ups of the I2C bus
   i2c_if.scl  <= 'H';
@@ -307,17 +266,6 @@ begin  -- architecture tb
   -- Clock
   -----------------------------------------------------------------------------
   clock_generator(clk_i, clk_ena, TB_PERIOD, "TB Clock");
-
-  -----------------------------------------------------------------------------
-  -- Copy of the user ROM
-  -----------------------------------------------------------------------------
-  ins_rom_user : entity asylum.ROM_user(rom)
-    port map
-    (clk_i            => clk_i
-    ,cke_i            => '1'
-    ,address_i        => rom_addr
-    ,instruction_o    => rom_data
-    );
 
   -----------------------------------------------------------------------------
   -- Memory Model
@@ -439,7 +387,6 @@ begin  -- architecture tb
       inject_error_i <= (others => not C_FAULT_ON);
       uart_rx        <= '1';
       uart_cts_b     <= '0';
-      jtag_if        <= init_jtag_if_signals;
       i2c_if         <= init_i2c_if_signals(VOID);
       if (SPI_MODEL /= "none") and (now < C_MEM_POWER_UP)
       then
@@ -449,7 +396,7 @@ begin  -- architecture tb
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
       run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, debug_mux_sel_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
-               jtag_if, i2c_if, pwm_o, debug_uart_tx_o, rom_addr, rom_data);
+               i2c_if, pwm_o);
     end loop;
 
     report_alert_counters(FINAL);

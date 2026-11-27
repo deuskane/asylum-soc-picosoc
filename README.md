@@ -286,7 +286,7 @@ The configurations of the targets of this branch are numbered in the order of th
 | `soc2` | yes | `"lock-step"` (to write) | `soc3` |
 | `soc3` | yes | `"tmr"` (to write) | `soc4` |
 
-The defaults of `PicoSoC_top` are those of `soc1` (with `DEBUG_ENABLE = false`). The scenario `hwla` needs `led_diff_o` = the difference flags: its targets use `soc2` without the supervisor (`soc2` of `main`).
+The defaults of `PicoSoC_top` are those of `soc1` (with `DEBUG_ENABLE = false`).
 
 ## Memory Map
 
@@ -780,10 +780,10 @@ Clear the old events of a GIC source before unmasking it: the `isr` register als
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `debug_mux_sel_i`, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP; the lines of `user_loop.c` with a receiver of `tb_PicoSoC_sequence_pkg` that returns on a silent line) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP) or through the TAP of `jtag_axis` (JTAG BFM `jtag_bfm_pkg` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) on the JTAG pins of the UART pads, `HWLA_LINK = "jtag"`), with a copy of the user ROM `ROM_user` as the reference of the instruction bus; the I2C bus has pull-ups and the UVVM I2C BFM; the UART pads have pull-ups and a model of the FTDI cable. Generics: the DUT configuration, `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `user_loop`, `user` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd) and [tb_PicoSoC_jtag_pkg](sim/picosoc/tb_PicoSoC_jtag_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>` |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `debug_mux_sel_i`, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP; the lines of `user_loop.c` with a receiver of `tb_PicoSoC_sequence_pkg` that returns on a silent line); the I2C bus has pull-ups and the UVVM I2C BFM; the UART pads have pull-ups and a model of the FTDI cable. Generics: the DUT configuration, `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `user_loop` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>` |
 | [sim/openocd/tb_PicoSoC_openocd.vhd](sim/openocd/tb_PicoSoC_openocd.vhd) | `PicoSoC_top` | OpenOCD + GDB co-simulation (see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)) |
 
-The scenarios of the JTAG chain, of JTAG over the UART, of the pad multiplexer, of the trap of the error injection, of the multi-core and of Modbus, and the mutant campaigns that validated the testbenches, are on `main`.
+The scenarios of the JTAG chain, of JTAG over the UART, of the pad multiplexer, of the HWLA captures (`hwla`), of the trap of the error injection, of the multi-core and of Modbus, and the mutant campaigns that validated the testbenches, are on `main`.
 
 ### Scenarios (`TESTS_LIST`)
 
@@ -795,7 +795,6 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 | `fault_none` | 6 | `user_loop`, supervisor, `SAFETY = "none"`, fault injection | 2 reference lines; a request of one SoC clock cycle on `inject_error_i(0)` just after a line (a short push of the button): the trap keeps the error, the firmware derails: its next lines leave the sequence or it stops printing (no start bit within `TB_WATCHDOG`; observed: it stops); the supervisor does not react (`led_diff_o` stable at 0: no difference flag, no reset of the user SoC) |
 | `fault_lock_step` | 19 | `user_loop`, supervisor, lock-step, fault injection | 2 reference lines, then errors in CPU0, CPU1, CPU0 (requests of one SoC clock cycle): after each one `led_diff_o` counts the errors and the firmware prints the sequence again from the loop 0 (the end of a line, a line cut by the reset may precede it), then the loops 1 to 3 |
 | `fault_tmr` | 20 | `user_loop`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Requests of one SoC clock cycle. Error in CPU0: voted out, the lines go on in sequence, `led_diff_o` = 0; CPU1: second error, reset (`led_diff_o` = 1), the sequence restarts from the loop 0; CPU2: first error after the reset, voted out, the lines go on; CPU0: second error, reset (`led_diff_o` = 2), restart |
-| `hwla` | 11 (`HWLA_LINK = "uart"`), 15 (`"jtag"`) | `user`, no supervisor, lock-step or TMR, fault injection, `DEBUG_ENABLE` | Switches `0x5A` then `0x96`, `debug_uart_tx_o` idle until the error; error in CPU1 just after LED0 changes; the capture, received on `debug_uart_tx_o` or read through the TAP of `jtag_axis`, is checked: the write of the new switches to LED0 before the trigger, the trigger sample `HWLA_PRE_TRIGGER`, timestamps, the instruction bus against the copy of the user ROM (see [Debug: HWLA](#debug-hwla)) |
 | `test_gpio` | 5 (+ 16 in the firmware) | `test_gpio` | LED0 = `0xA5` and LED1 = `0x5A` on the pins, switches `0x3C` (rising edges) copied into LED0, then `0x00` (falling edges); `PASS` |
 | `test_uart` | 3 (+ 11) | `test_uart` | On each prompt `>`, a byte sent on `uart_rx_i`: `0x5A` read by polling, `0xA5` by the interrupt routine; `PASS` |
 | `test_spi` | 1 (+ 16) | `test_spi` (`SPI_MODEL = m25p40`) | `PASS`: the firmware checks the answers of the flash model |
@@ -833,7 +832,6 @@ A target is a firmware build: its generators compile the user and supervisor pro
 | `sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag`, `_discover`, `_generic`, `_sim_soc1_wardrv_fsm_fault_c_user_openocd_bitbang` | `tb_PicoSoC_openocd` | OpenOCD co-simulations in `soc1`, firmware `user.c` (see above) |
 | `_sim_soc2_wardrv_fsm_fault_c_user_loop` | `tb_PicoSoC` | `soc2` (lock-step), `user_loop.c`: `sequence`, `fault_lock_step` |
 | `_sim_soc3_wardrv_fsm_fault_c_user_loop` | `tb_PicoSoC` | `soc3` (TMR, IT and fault inputs active low), `user_loop.c`: `sequence`, `fault_tmr` |
-| `_sim_soc2_wardrv_fsm_fault_c_user_hwla`, `_hwla_jtag` | `tb_PicoSoC` | `soc2` without the supervisor, `DEBUG_ENABLE`, SoC clock 1.152 MHz, `HWLA_DEPTH = 128`, `HWLA_PRE_TRIGGER = 48`, `HWLA_TIMESTAMP_WIDTH = 24`: scenario `hwla` on the UART / JTAG link |
 | `_sim_soc2_wardrv_fsm_fault_c_user_openocd_hwla` | `tb_PicoSoC_openocd` | `soc2`, HWLA captures over JTAG with OpenOCD (see above) |
 | `emu_ng_medium_soc1_wardrv_fsm_fault` | `PicoSoC_top` | NG-MEDIUM board, `soc1`, no debug: the reference build of the labs, default `TARGET` of [mk/defs.mk](mk/defs.mk) |
 | `emu_ng_medium_soc1_wardrv_fsm_fault_debug` | `PicoSoC_top` | The same with `DEBUG_ENABLE` (HWLA, `HWLA_LINK = "jtag"`, injection / status TAP) and the debugger of the user CPU: OpenOCD + GDB on the board |
@@ -892,7 +890,7 @@ Outside the CI, GHDL writes a waveform `dut.fst`.
 | `asylum:processor:WardRV` | [asylum-processor-WardRV](https://github.com/deuskane/asylum-processor-WardRV) | `sbi_WardRV_fsm`, `WardRV_debug` (debug units in `cpu_wrapper`, >= 1.2.0: TAP of asylum-debug-jtag); the GDB helpers `gdb_lib.py` of the co-simulation (>= 1.5.0) |
 | `asylum:utils:generators` | [asylum-utils-generators](https://github.com/deuskane/asylum-utils-generators) | `rvcc_gen` (firmware to ROM; `pbcc_gen` for OpenBlaze8 on `main`), regtool of the peripherals |
 | `bitvis:verification:uvvm` | [UVVM](https://github.com/UVVM/UVVM) | Verification library, UART and I2C VIPs |
-| `asylum:verification:uvvm` | [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) | JTAG BFM `jtag_bfm_pkg`, its chain fields (`head_ir`, `tail_ir`, `head_dr`, `tail_dr`) and its Capture-IR monitor; (>= 1.3.0) |
+| `asylum:verification:uvvm` | [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) | The library `asylum_uvvm` of the co-simulation kit (>= 1.3.0) |
 | `asylum:verification:openocd` | [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) | OpenOCD co-simulation kit (>= 1.0.0): `rbb_server.c`, `rbb_jtag`, `rbb_axis`, hooks `rbb/cosim.sh` of `tb_PicoSoC_openocd` |
 
 All the IPs: [asylum-project](https://github.com/deuskane/asylum-project).

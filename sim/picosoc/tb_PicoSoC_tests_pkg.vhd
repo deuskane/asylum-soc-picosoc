@@ -55,6 +55,8 @@
 --                               of the labs only (sequence, fault_*, hwla,
 --                               test_<ip>), firmwares user_loop (sequence,
 --                               fault_*), user (hwla) and test_<ip>
+-- 2026-11-27  1.20     mrosiere Student branch : no scenario hwla (firmware
+--                               user)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -65,9 +67,6 @@ context uvvm_util.uvvm_util_context;
 
 library bitvis_vip_i2c;
 use     bitvis_vip_i2c.i2c_bfm_pkg.all;
-
-library asylum_uvvm;
-use     asylum_uvvm.jtag_bfm_pkg.all;
 
 library asylum;
 use     asylum.string_pkg.all;
@@ -82,10 +81,10 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "sequence,fault_none,fault_lock_step,fault_tmr,hwla," & C_INTEGRATION;
+  constant C_TESTS : string := "sequence,fault_none,fault_lock_step,fault_tmr," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
-  constant C_FIRMWARES : string := "user_loop,user," & C_INTEGRATION;
+  constant C_FIRMWARES : string := "user_loop," & C_INTEGRATION;
 
   -- True when the scenario name applies to the firmware and the configuration
   function test_applies
@@ -111,12 +110,8 @@ package tb_PicoSoC_tests_pkg is
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
-    ;signal   jtag_if  : inout t_jtag_if
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
-    ;signal   debug_tx : in    std_logic
-    ;signal   rom_addr : out   std_logic_vector
-    ;signal   rom_data : in    std_logic_vector
     );
 
 end package tb_PicoSoC_tests_pkg;
@@ -131,15 +126,13 @@ package body tb_PicoSoC_tests_pkg is
     ;fault      : boolean
     ;debug      : boolean
     ) return boolean is
-    -- esw/demo/user_loop.c (UART lines), esw/demo/user.c (LED0 = switches)
+    -- esw/demo/user_loop.c (UART lines, LED0 = switches)
     constant C_LOOP : boolean := string_eq(firmware, "user_loop");
-    constant C_USER : boolean := string_eq(firmware, "user");
   begin
     if    string_eq(name, "sequence"       ) then return C_LOOP;
     elsif string_eq(name, "fault_none"     ) then return C_LOOP and supervisor and fault and string_eq(safety, "none");
     elsif string_eq(name, "fault_lock_step") then return C_LOOP and supervisor and fault and string_eq(safety, "lock-step");
     elsif string_eq(name, "fault_tmr"      ) then return C_LOOP and supervisor and fault and string_eq(safety, "tmr");
-    elsif string_eq(name, "hwla"           ) then return C_USER and not supervisor and fault and debug;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
     end if;
@@ -158,12 +151,8 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   led_diff : in    std_logic_vector
     ;signal   uart_rx  : inout std_logic
     ;signal   uart_tx  : in    std_logic
-    ;signal   jtag_if  : inout t_jtag_if
     ;signal   i2c_if   : inout t_i2c_if
     ;signal   pwm      : in    std_logic
-    ;signal   debug_tx : in    std_logic
-    ;signal   rom_addr : out   std_logic_vector
-    ;signal   rom_data : in    std_logic_vector
     ) is
   begin
     if    string_eq(name, "sequence")
@@ -178,9 +167,6 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "fault_tmr")
     then
       work.tb_PicoSoC_fault_tmr_pkg.run(cfg, clk, inject, led_diff, uart_tx);
-    elsif string_eq(name, "hwla")
-    then
-      work.tb_PicoSoC_hwla_pkg.run(cfg, false, clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);
     elsif string_eq(name, "test_gpio")
     then
       work.tb_PicoSoC_test_gpio_pkg.run(cfg, clk, switch, led0, led1, uart_tx);

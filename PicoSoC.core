@@ -243,7 +243,8 @@ CAPI=2:
 #                               esw/demo/user_loop.c (Loop <n> <xorwow>
 #                               on the UART), scenarios sequence and
 #                               fault_* on its lines ; user.c kept for the
-#                               OpenOCD co-simulations and the HWLA targets
+#                               OpenOCD co-simulations ; the HWLA targets
+#                               without supervisor (_hwla, _hwla_jtag) removed
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.5
@@ -450,12 +451,10 @@ filesets:
   #---------------------------------------
     files:
       - sim/picosoc/tb_PicoSoC_bfm_pkg.vhd
-      - sim/picosoc/tb_PicoSoC_jtag_pkg.vhd
       - sim/picosoc/tb_PicoSoC_sequence_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_none_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
-      - sim/picosoc/tb_PicoSoC_hwla_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_gpio_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_test_timer_pkg.vhd
@@ -471,7 +470,7 @@ filesets:
       - ">=asylum:utils:pkg:1.10.0" # string_pkg list_* (TESTS_LIST)
       - fmf:memory:flash_nor
       - bitvis:verification:uvvm
-      - ">=asylum:verification:uvvm:1.3.0" # jtag_bfm_pkg (JTAG BFM, chain fields)
+      - ">=asylum:verification:uvvm:1.3.0" # library asylum_uvvm (rbb_jtag / rbb_axis of tb_PicoSoC_openocd)
 
   #---------------------------------------
   # OpenOCD co-simulations (tb_PicoSoC_openocd) : OpenOCD configurations
@@ -524,8 +523,8 @@ targets:
   #    injected by inject_error_i(0) derails the firmware and the supervisor
   #    sees nothing (scenario fault_none). Firmware of the lab targets :
   #    esw/demo/user_loop.c (sims and boards) ; the OpenOCD co-simulations
-  #    and the HWLA targets keep esw/demo/user.c (their testbenches follow
-  #    LED0 = switches) ;
+  #    keep esw/demo/user.c (their testbench follows LED0 = switches without
+  #    UART) ;
   #  * soc2 : soc1 with the lock-step of cpu_safety (to write) ;
   #  * soc3 : soc1 with the TMR of cpu_safety (to write).
   # The soc2 / soc3 targets fail on the assertion of cpu_safety until the
@@ -900,17 +899,12 @@ targets:
   # HWLA (DEBUG_ENABLE) : it captures the bus of the user CPU around a
   # difference of the redundant CPUs, so its checks need soc2 (lock-step,
   # to write) : without difference (soc1) the HWLA stays armed
-  # * _openocd_hwla : soc2, HWLA_LINK jtag, OpenOCD script
+  # _openocd_hwla : soc2, HWLA_LINK jtag, OpenOCD script
   #   sim/openocd/hwla_check.cfg on tools/openocd/picosoc.cfg (chain
   #   discovered, picosoc_hwla_status, picosoc_inject : one error, the
   #   supervisor resets the user SoC once, picosoc_hwla_dump of the capture
   #   to hwla.bin, decoded by hwla/hwla2vcd.py with
   #   hwla/hwla_wardrv_fsm.args : hooks of sim/openocd/hwla_vcd.sh)
-  # * _hwla, _hwla_jtag : scenario hwla (capture checked against the user
-  #   ROM, on debug_uart_tx_o or read through the TAP of jtag_axis). It
-  #   needs led_diff_o = the difference flags and a flag that stays set :
-  #   soc2 WITHOUT the supervisor. SoC clock 1.152 MHz (10 cycles per bit
-  #   at 115200 baud)
   #---------------------------------------
   _sim_soc2_wardrv_fsm_fault_c_user_openocd_hwla:
   #---------------------------------------
@@ -943,42 +937,6 @@ targets:
       pre_build         : [cosim_build]
       pre_run           : [cosim_start_hwla]
       post_run          : [cosim_check, hwla_vcd]
-
-  #---------------------------------------
-  _sim_soc2_wardrv_fsm_fault_c_user_hwla: &sim_soc2_wardrv_fsm_fault_c_user_hwla
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud) (fails until the lock-step of cpu_safety is written)
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
-    parameters        :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=2304000
-      - FSYS_INT=1152000
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_DEPTH=128
-      - HWLA_PRE_TRIGGER=48
-      - HWLA_TIMESTAMP_WIDTH=24
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla
-
-  #---------------------------------------
-  _sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
-  #---------------------------------------
-    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as _sim_soc2_wardrv_fsm_fault_c_user_hwla (fails until the lock-step of cpu_safety is written)
-    parameters_append :
-      - HWLA_LINK=jtag
 
   #---------------------------------------
   # NG-MEDIUM board, soc1 : the reference build of the labs (DEBUG_ENABLE
@@ -1327,12 +1285,12 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' of tb_PicoSoC (sequence, fault_none, fault_lock_step, fault_tmr, hwla, test_<ip>)
+    description : Testbench scenarios, separated by ',' of tb_PicoSoC (sequence, fault_none, fault_lock_step, fault_tmr, test_<ip>)
     datatype    : str
     paramtype   : generic
 
   FIRMWARE :
-    description : Program of the user ROM for tb_PicoSoC (user_loop / user / test_<ip>)
+    description : Program of the user ROM for tb_PicoSoC (user_loop / test_<ip>)
     datatype    : str
     default     : user_loop
     paramtype   : generic
