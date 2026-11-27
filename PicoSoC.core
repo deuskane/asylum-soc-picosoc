@@ -160,7 +160,9 @@ CAPI=2:
 #                               difference flag of the copy, the same for lock-step and TMR
 #                               (PicoSoC_inject without SAFETY) ; tb fault_tmr : requests of one
 #                               SoC cycle, CPU2 again leaves its trap pending (error after the
-#                               next reset, then CPU0 resets)
+#                               next reset, then CPU0 resets) ;
+#                               tools/uart/uart.sh (screen in xterm, checks),
+#                               tools/hwla/hwla_capture.sh (captures of the HWLA on the UART)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.7.2

@@ -117,8 +117,8 @@ The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK
 
 | `debug_mux_sel_i` | S5 | S6 | Function | Pads | Cable and host tool |
 |-------------------|----|----|----------|------|---------------------|
-| `00` | 0 | 0 | User UART (`sbi_UART`, `USER_BAUD_RATE`) | RX, TX, CTS*, RTS* | Any 3.3V USB-UART cable: a terminal at 9600 baud, or the Modbus scripts with the Modbus firmware |
-| `01` | 0 | 1 | UART of the HWLA (`HWLA_BAUD_RATE`), with `DEBUG_ENABLE` only | TX | Any USB-UART cable: `hwla2vcd.py` of asylum-debug-hwla (see [Debug: HWLA](#debug-hwla)) |
+| `00` | 0 | 0 | User UART (`sbi_UART`, `USER_BAUD_RATE`) | RX, TX, CTS*, RTS* | Any 3.3V USB-UART cable: a terminal at 9600 baud ([tools/uart/uart.sh](tools/uart/uart.sh): screen in an xterm), or the Modbus scripts with the Modbus firmware |
+| `01` | 0 | 1 | UART of the HWLA (`HWLA_BAUD_RATE`), with `DEBUG_ENABLE` only | TX | Any USB-UART cable: [tools/hwla/hwla_capture.sh](tools/hwla/hwla_capture.sh) saves the captures, then `hwla2vcd.py` of asylum-debug-hwla (see [Debug: HWLA](#debug-hwla)) |
 | `10` | 1 | 0 | JTAG pins of the JTAG chain | TCK, TDI, TDO, TMS | FT232R cable (`ft232r.cfg`) or FTDI MPSSE cable (`ft232h.cfg`): OpenOCD (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)) |
 | `11` | 1 | 1 | JTAG over the UART (`JTAG_BAUD_RATE`) | RX, TX | Any USB-UART cable: `socat` and OpenOCD (`remote_bitbang.cfg`) |
 
@@ -452,7 +452,7 @@ With `DEBUG_ENABLE = true`, `PicoSoC_top` instantiates `PicoSoC_hwla` ([hdl/Pico
 - Clock and reset: the SoC clock for both domains of the HWLA, and the reset of the supervisor SoC: a capture goes on while the supervisor resets the user SoC.
 - Output: the bytes of the capture (`TDATA_WIDTH = 8`) go to `uart_core` of [asylum-communication-uart](https://github.com/deuskane/asylum-communication-uart), transmitter only (`RX_ENABLE = false`), without CSR: `HWLA_BAUD_RATE` baud, 115200 by default (a bit every `FSYS_INT/HWLA_BAUD_RATE` cycles, 108 cycles at 12.5 MHz: 115741 baud, + 0.5 %), 8 data bits, no parity, 1 stop bit, CTS ignored. With the default generics, a sample is 10 bytes (OpenBlaze8: 57 probes and the 16-bit timestamp) or 11 bytes (WardRV_fsm), from the LSB; a capture is 640 or 704 bytes, 56 or 61 ms at 115200 baud.
 
-To read a capture on the host, save the bytes of `debug_uart_tx_o` and rebuild a VCD file with [tools/hwla2vcd.py](https://github.com/deuskane/asylum-debug-hwla/blob/main/tools/hwla2vcd.py) of asylum-debug-hwla (`-n` 71 for WardRV_fsm, 57 for OpenBlaze8; `--period` is the period of the SoC clock in ns, 80 at `FSYS_INT = 12.5 MHz`):
+To read a capture on the host, save the bytes of `debug_uart_tx_o` ([tools/hwla/hwla_capture.sh](tools/hwla/hwla_capture.sh) `[-d device] [-b baud] [-o file] [-s bytes] [-n captures]`: the serial port set raw at `HWLA_BAUD_RATE`, the bytes appended to the file, the number of bytes and of complete captures shown as they arrive; 704 bytes per capture with WardRV_fsm and the default `HWLA_*` generics) and rebuild a VCD file with [tools/hwla2vcd.py](https://github.com/deuskane/asylum-debug-hwla/blob/main/tools/hwla2vcd.py) of asylum-debug-hwla (`-n` 71 for WardRV_fsm, 57 for OpenBlaze8; `--period` is the period of the SoC clock in ns, 80 at `FSYS_INT = 12.5 MHz`):
 
 ```bash
 python3 tools/hwla2vcd.py --port /dev/ttyUSB1 --baudrate 9600 --captures 1 \
