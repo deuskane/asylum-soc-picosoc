@@ -185,9 +185,11 @@ CAPI=2:
 #                               tools/udev (rules of the FTDI cables, install.sh)
 # 2026-11-27  4.8.2    mrosiere README : Resources measured again ; doc/picosoc.drawio :
 #                               TAP of the HWLA in the JTAG chain (page jtag)
+# 2026-11-27  4.8.3    mrosiere cpu_safety : SEU_BIT of WardRV on the rd field
+#                               (bits 7 / 8 / 9, were 0 / 1 / 2)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.8.2
+name        : asylum:soc:PicoSoC:4.8.3
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
