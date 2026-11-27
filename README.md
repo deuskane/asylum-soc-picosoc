@@ -412,7 +412,7 @@ In [hdl/cpu_safety.vhd](hdl/cpu_safety.vhd), the inputs and the outputs of a cop
 
 TMR: 3 CPUs get the same inputs; `ics`, `iaddr`, the bus request, the interrupt acknowledge, TDO and `ndmreset` are majority-voted bit by bit. `diff_o` bits 0, 1, 2 latch the differences CPU0 / CPU1, CPU1 / CPU2 and CPU2 / CPU0.
 
-Fault injection: `inject_error(i)` XORs one instruction bit of CPU `i` (bit 17 / 16 / 15 for OpenBlaze8, bit 0 / 1 / 2 for WardRV) of every cluster. The difference flags of all clusters are ORed into `PicoSoC_user.diff_o`.
+Fault injection: `inject_error(i)` XORs one instruction bit of CPU `i` (bit 17 / 16 / 15 for OpenBlaze8, bit 7 / 8 / 9 for WardRV) of every cluster. The bits are chosen so that the program goes wrong even when nothing detects the error: for WardRV they are the low bits of the `rd` field, so the instruction writes the wrong register (an `rd` of `x0` becomes a real register), or a store or a branch gets another immediate (the low bits of the opcode, used before 4.8.3, give an unknown opcode that WardRV_fsm runs as a no-operation: the program often went on). The difference flags of all clusters are ORed into `PicoSoC_user.diff_o`.
 
 `inject_error` comes from `PicoSoC_inject` (in `PicoSoC_top`), one trap per copy, so that a request is never lost (a request of one cycle may fall on a cycle where the CPU does not read its instruction):
 

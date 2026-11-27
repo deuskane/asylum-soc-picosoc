@@ -37,6 +37,8 @@
 -- 2026-11-26  1.7      mrosiere Synchronizer of TCK removed : jtag_ini_i.tck
 --                               resynchronized once for the whole chain in
 --                               PicoSoC_top
+-- 2026-11-27  1.8      mrosiere SEU_BIT of WardRV : bits 7 / 8 / 9 (rd field)
+--                               in place of 0 / 1 / 2 (opcode low bits)
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -109,10 +111,17 @@ architecture rtl of cpu_safety is
                                                                 ,PICOSOC_SUPERVISOR_GIC_CPU1_VS_CPU2
                                                                 ,PICOSOC_SUPERVISOR_GIC_CPU2_VS_CPU0);
 
-  -- SEU bit positions of each copy (model-dependent : target the opcode)
-  constant SEU_BIT                    : naturals_t(0 to 3-1) := (mux2(CPU_MODEL = "OpenBlaze8", 17, 0)
-                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 16, 1)
-                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 15, 2));
+  -- SEU bit positions of each copy (model-dependent), chosen so that a
+  -- flipped bit makes the program go wrong even when nothing detects it :
+  -- * OpenBlaze8 : bits 17 / 16 / 15 of the opcode
+  -- * WardRV     : bits 7 / 8 / 9, rd(2:0) : the instruction writes another
+  --   register (an rd of x0 becomes a real register), or a store / branch
+  --   gets another immediate (imm(4:0) of S, imm(11) / imm(2:1) of B) ;
+  --   the low bits of the opcode (0 / 1 / 2 before) give an unknown opcode,
+  --   that WardRV_fsm runs as a no-operation : the program often goes on
+  constant SEU_BIT                    : naturals_t(0 to 3-1) := (mux2(CPU_MODEL = "OpenBlaze8", 17, 7)
+                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 16, 8)
+                                                                ,mux2(CPU_MODEL = "OpenBlaze8", 15, 9));
 
   -- Stage of the lock-step pipe of the inputs of each copy : CPU0 gets the
   -- inputs, the other copies LOCK_STEP_DEPTH cycles later (TMR : depth 0)
