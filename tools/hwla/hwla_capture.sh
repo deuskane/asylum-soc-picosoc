@@ -25,8 +25,9 @@
 #              TP2 pin 3), or the cable RXD on debug_uart_tx_o (TP2 pin 7) in
 #              any mode ; a capture is sent when the HWLA triggers (difference
 #              of the lock-step / TMR CPUs, e.g. push button S8).
-#              Then : hwla2vcd.py of asylum-debug-hwla with the argument file
-#              of the CPU, tools/hwla/hwla_<cpu>.args (README, HWLA section).
+#              Then : hwla/hwla2vcd.py and hwla/hwla_<cpu>.args in the build
+#              directory of the target of the bitstream (README, HWLA
+#              section).
 #              Checks as tools/uart/uart.sh (serial port, port free, sudo).
 #-----------------------------------------------------------------------------
 # Copyright (c) 2026
@@ -34,7 +35,8 @@
 # Revisions  :
 # Date        Version  Author   Description
 # 2026-11-27  1.0      mrosiere Created
-# 2026-11-27  1.1      mrosiere Hint : hwla2vcd.py with tools/hwla/hwla_<cpu>.args
+# 2026-11-27  1.1      mrosiere Hint : hwla/hwla2vcd.py and hwla/hwla_<cpu>.args
+#                               of the build directory of the target
 #-----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -130,6 +132,7 @@ do
 done
 echo
 echo "${OUT} : $(( $(stat -c %s "${OUT}") - START )) bytes received"
-echo "VCD : python3 hwla2vcd.py ${OUT} --args-file tools/hwla/hwla_wardrv_fsm.args -o capture.vcd"
-echo "      (hwla2vcd.py of asylum-debug-hwla >= 3.1.0 ; OpenBlaze8 : tools/hwla/hwla_openblaze8.args ;"
+echo "VCD : H=build/asylum_soc_PicoSoC_<version>/<target>-nxmap/hwla   (build directory of the bitstream)"
+echo "      python3 \${H}/hwla2vcd.py ${OUT} --args-file \${H}/hwla_wardrv_fsm.args -o capture.vcd"
+echo "      (several captures : --merge, all in one VCD file ; OpenBlaze8 : hwla_openblaze8.args ;"
 echo "       another HWLA configuration : its -d, -p, -t, --period lines ; README, HWLA section)"

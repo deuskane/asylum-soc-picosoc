@@ -7,17 +7,17 @@
 # Author     : mrosiere
 #-----------------------------------------------------------------------------
 # Description: Hooks of sim_*_openocd_hwla (cwd = work root) :
-#                copy : pre_build, the tools of two dependencies, taken from
-#                       their cores (no copy of them in this repository) :
-#                       tools/openocd/jtag_axis.tcl of asylum:debug:jtag to
-#                       openocd/ (sourced by picosoc.cfg), tools/hwla2vcd.py
-#                       of asylum:debug:HWLA to the work root. Their
-#                       directories are found from the path of one of their
-#                       HDL files in the EDAM file of FuseSoC (*.eda.yml).
-#                vcd <args> : post_run, hwla2vcd.py (asylum:debug:HWLA
-#                       >= 3.1.0) rebuilds hwla.vcd from hwla.bin (written by
-#                       picosoc_hwla_dump in hwla_check.cfg) with the
-#                       argument file <args> of tools/hwla (configuration of
+#                copy : pre_build, tools/openocd/jtag_axis.tcl of
+#                       asylum:debug:jtag to openocd/ (sourced by
+#                       picosoc.cfg), taken from its core (no copy of it in
+#                       this repository) : its directory is found from the
+#                       path of hdl/jtag_axis.vhd in the EDAM file of FuseSoC
+#                       (*.eda.yml).
+#                vcd <args> : post_run, hwla/hwla2vcd.py (copied to hwla/ by
+#                       asylum:debug:HWLA >= 3.1.0) rebuilds hwla.vcd from
+#                       hwla.bin (written by picosoc_hwla_dump in
+#                       hwla_check.cfg) with the argument file <args>
+#                       (tools/hwla/*.args copied to hwla/ : configuration of
 #                       the HWLA, named signals of the probes) : one complete
 #                       capture, its trigger wire and the named signals.
 #-----------------------------------------------------------------------------
@@ -42,14 +42,13 @@ case $1 in
     copy)
         mkdir -p openocd
         cp "$(core_root jtag_axis.vhd)/tools/openocd/jtag_axis.tcl" openocd/
-        cp "$(core_root hwla.vhd)/tools/hwla2vcd.py" .
-        echo "hwla_tools.sh : openocd/jtag_axis.tcl, hwla2vcd.py copied" ;;
+        echo "hwla_tools.sh : openocd/jtag_axis.tcl copied" ;;
     vcd)
-        python3 hwla2vcd.py hwla.bin --args-file "$2" -o hwla.vcd
+        python3 hwla/hwla2vcd.py hwla.bin --args-file "$2" -o hwla.vcd
         for name in trigger dcs daddr drdata ics iaddr idata; do
             grep -q "^\$var wire [0-9]* [^ ]* $name " hwla.vcd || { echo "hwla_tools.sh : no signal $name in hwla.vcd"; exit 1; }
         done
-        echo "hwla_tools.sh : hwla.bin decoded by hwla2vcd.py : hwla.vcd" ;;
+        echo "hwla_tools.sh : hwla.bin decoded by hwla/hwla2vcd.py : hwla.vcd" ;;
     *)
         echo "Usage : $0 copy | vcd <args file>"
         exit 1 ;;

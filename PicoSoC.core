@@ -660,6 +660,10 @@ filesets:
       - hdl/PicoSoC_top.vhd
       - hdl/PicoSoC_user.vhd
       - hdl/PicoSoC_supervisor.vhd
+      # Arguments of hwla2vcd.py (copied to hwla/ of the work root by
+      # asylum:debug:HWLA), next to it in the build of a target
+      - tools/hwla/hwla_wardrv_fsm.args : {file_type : user, copyto : hwla/hwla_wardrv_fsm.args}
+      - tools/hwla/hwla_openblaze8.args : {file_type : user, copyto : hwla/hwla_openblaze8.args}
     file_type    : vhdlSource
     logical_name : asylum
     depend       :
@@ -676,7 +680,7 @@ filesets:
       - ">=asylum:system:mailbox:1.1.0"
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
-      - ">=asylum:debug:HWLA:3.0.0"
+      - ">=asylum:debug:HWLA:3.1.0" # hwla2vcd.py --signal, copied to hwla/
       - ">=asylum:debug:jtag:1.3.0" # jtag_bitbang, jtag_axis (HWLA_LINK jtag)
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
@@ -759,21 +763,10 @@ filesets:
       - sim/openocd/generic_check.cfg    : {file_type : user, copyto : openocd/generic_check.cfg}
       - sim/openocd/hwla_check.cfg       : {file_type : user, copyto : openocd/hwla_check.cfg}
       - sim/openocd/hwla_tools.sh        : {file_type : user, copyto : openocd/hwla_tools.sh}
-      - tools/hwla/hwla_wardrv_fsm.args  : {file_type : user, copyto : openocd/hwla_wardrv_fsm.args}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
       - ">=asylum:processor:WardRV:1.5.0"     # gdb_lib.py
-
-  #---------------------------------------
-  # OpenOCD co-simulation of the HWLA captures over JTAG : hwla2vcd.py
-  # with named signals (--signal, tools/hwla/*.args), copied by the hook
-  # hwla_copy from the core of the HWLA
-  #---------------------------------------
-  files_sim_openocd_hwla:
-  #---------------------------------------
-    depend :
-      - ">=asylum:debug:HWLA:3.1.0"           # tools/hwla2vcd.py --signal
 
   #---------------------------------------
   files_ng_medium:
@@ -2560,8 +2553,9 @@ targets:
   # chain discovered (the TAP of jtag_axis named picosoc hwla),
   # picosoc_hwla_status before the error / after it / after the dump, an
   # error in CPU1 (picosoc_inject, the supervisor resets the user SoC once),
-  # picosoc_hwla_dump of one capture to hwla.bin, decoded by hwla2vcd.py
-  # with tools/hwla/hwla_wardrv_fsm.args (hooks of sim/openocd/hwla_tools.sh)
+  # picosoc_hwla_dump of one capture to hwla.bin, decoded by
+  # hwla/hwla2vcd.py with hwla/hwla_wardrv_fsm.args (hooks of
+  # sim/openocd/hwla_tools.sh)
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla:
   #---------------------------------------
@@ -2573,7 +2567,6 @@ targets:
     filesets_append   :
       - files_sim
       - files_sim_openocd
-      - files_sim_openocd_hwla
       - pbcc_dep
     parameters        :
       - CPU_MODEL=WardRV_fsm
@@ -3360,14 +3353,14 @@ scripts:
     cmd : [bash, rbb/cosim.sh, check]
 
   #---------------------------------------
-  # Hooks of sim_*_openocd_hwla (cwd = work_root) : jtag_axis.tcl and
-  # hwla2vcd.py from their cores, then the capture decoded
+  # Hooks of sim_*_openocd_hwla (cwd = work_root) : jtag_axis.tcl from its
+  # core, then the capture decoded
   #---------------------------------------
   hwla_copy :
     cmd : [bash, openocd/hwla_tools.sh, copy]
 
   hwla_vcd :
-    cmd : [bash, openocd/hwla_tools.sh, vcd, openocd/hwla_wardrv_fsm.args]
+    cmd : [bash, openocd/hwla_tools.sh, vcd, hwla/hwla_wardrv_fsm.args]
 
 #=========================================
 parameters :
