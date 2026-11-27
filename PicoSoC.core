@@ -239,6 +239,11 @@ CAPI=2:
 #                               sees nothing) ; lint_*, syn_*, multi-CPU,
 #                               Modbus RTU, identity and the other targets
 #                               of main removed
+#                               Firmware of the lab targets (sims and boards) :
+#                               esw/demo/user_loop.c (Loop <n> <xorwow>
+#                               on the UART), scenarios sequence and
+#                               fault_* on its lines ; user.c kept for the
+#                               OpenOCD co-simulations and the HWLA targets
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.5
@@ -258,10 +263,19 @@ generate:
       cflags       : -Iesw/include --verbose
       logical_name : asylum
 
-  gen_rv32i_user_c_uart_9600 :
+  gen_rv32i_user_loop :
     generator : rvcc_gen
     parameters :
-      file         : esw/demo/user.c
+      file         : esw/demo/user_loop.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_rv32i_user_loop_9600 :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/demo/user_loop.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
@@ -437,8 +451,6 @@ filesets:
     files:
       - sim/picosoc/tb_PicoSoC_bfm_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_pkg.vhd
-      - sim/picosoc/tb_PicoSoC_switch_pkg.vhd
-      - sim/picosoc/tb_PicoSoC_it_user_pkg.vhd
       - sim/picosoc/tb_PicoSoC_sequence_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_none_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
@@ -510,12 +522,15 @@ targets:
   #  * soc1 : WardRV_fsm, supervisor, SAFETY none, fault injection (the
   #    reference SoC). One CPU, nothing to compare it with : an error
   #    injected by inject_error_i(0) derails the firmware and the supervisor
-  #    sees nothing (scenario fault_none) ;
+  #    sees nothing (scenario fault_none). Firmware of the lab targets :
+  #    esw/demo/user_loop.c (sims and boards) ; the OpenOCD co-simulations
+  #    and the HWLA targets keep esw/demo/user.c (their testbenches follow
+  #    LED0 = switches) ;
   #  * soc2 : soc1 with the lock-step of cpu_safety (to write) ;
   #  * soc3 : soc1 with the TMR of cpu_safety (to write).
   # The soc2 / soc3 targets fail on the assertion of cpu_safety until the
   # students write it : leading '_', no CI job, not in nonreg, run by hand
-  # (make _sim_soc2_wardrv_fsm_fault_c_user).
+  # (make _sim_soc2_wardrv_fsm_fault_c_user_loop).
   #
   # Configurations : the parameters of a configuration (DUT and board) are
   # anchored on its first target (parameters : &cfg_<config>), the other
@@ -553,14 +568,14 @@ targets:
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
-  # soc1 : the scenarios of esw/demo/user.c, one target each
-  # (sim_soc1_wardrv_fsm_fault_c_user_<test>)
+  # soc1 : the scenarios of esw/demo/user_loop.c (UART lines, xorwow
+  # sequence), one target each (sim_soc1_wardrv_fsm_fault_c_user_loop_<test>)
   #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user: &sim_soc1_wardrv_fsm_fault_c_user
+  sim_soc1_wardrv_fsm_fault_c_user_loop: &sim_soc1_wardrv_fsm_fault_c_user_loop
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, build check (one scenario per target sim_soc1_wardrv_fsm_fault_c_user_<test>)
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    description       : Simulation of the test esw/demo/user_loop.c           - With    Supervisor, Safety None     , With    Fault Injection, build check (one scenario per target sim_soc1_wardrv_fsm_fault_c_user_loop_<test>)
+    generate          : [gen_rv32i_user_loop,gen_rv32i_supervisor_c]
     parameters        : &cfg_soc1_wardrv_fsm_fault
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -576,40 +591,29 @@ targets:
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
+      - FIRMWARE=user_loop
       - TESTS_LIST
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_switch:
+  sim_soc1_wardrv_fsm_fault_c_user_loop_sequence:
   #---------------------------------------
-    << : *sim_soc1_wardrv_fsm_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario switch
+    << : *sim_soc1_wardrv_fsm_fault_c_user_loop
+    description       : Simulation of the test esw/demo/user_loop.c           - With    Supervisor, Safety None     , With    Fault Injection, scenario sequence (the first lines are the xorwow sequence)
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch
+      - FIRMWARE=user_loop
+      - TESTS_LIST=sequence
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_it_user:
+  sim_soc1_wardrv_fsm_fault_c_user_loop_fault_none:
   #---------------------------------------
-    << : *sim_soc1_wardrv_fsm_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario it_user
+    << : *sim_soc1_wardrv_fsm_fault_c_user_loop
+    description       : Simulation of the test esw/demo/user_loop.c           - With    Supervisor, Safety None     , With    Fault Injection, scenario fault_none (an error in the only CPU, the firmware derails, the supervisor sees nothing)
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=it_user
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_fault_none:
-  #---------------------------------------
-    << : *sim_soc1_wardrv_fsm_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario fault_none (an error in the only CPU, the firmware derails, the supervisor sees nothing)
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
+      - FIRMWARE=user_loop
       - TESTS_LIST=fault_none
 
   #---------------------------------------
@@ -863,25 +867,25 @@ targets:
   #---------------------------------------
   # soc2 (lock-step) and soc3 (TMR) : fail until cpu_safety is written
   #---------------------------------------
-  _sim_soc2_wardrv_fsm_fault_c_user:
+  _sim_soc2_wardrv_fsm_fault_c_user_loop:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    description       : Simulation of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop,gen_rv32i_supervisor_c]
     parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - USER_SAFETY=lock-step
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_lock_step
+      - FIRMWARE=user_loop
+      - TESTS_LIST=sequence,fault_lock_step
 
   #---------------------------------------
-  _sim_soc3_wardrv_fsm_fault_c_user:
+  _sim_soc3_wardrv_fsm_fault_c_user_loop:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board) (fails until the TMR of cpu_safety is written)
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_tmr]
+    description       : Simulation of the test esw/demo/user_loop.c           - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board) (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop,gen_rv32i_supervisor_c_tmr]
     parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - USER_SAFETY=tmr
@@ -889,8 +893,8 @@ targets:
       - USER_FAULT_POLARITY=low
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_tmr
+      - FIRMWARE=user_loop
+      - TESTS_LIST=sequence,fault_tmr
 
   #---------------------------------------
   # HWLA (DEBUG_ENABLE) : it captures the bus of the user CPU around a
@@ -985,13 +989,13 @@ targets:
   #---------------------------------------
   emu_ng_medium_soc1_wardrv_fsm_fault: &emu_ng_medium_soc1_wardrv_fsm_fault
   #---------------------------------------
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection (reference build, no debug)
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety None     , With    Fault Injection (reference build, no debug)
     default_tool      : nxmap
     filesets          :
       - files_hdl
       - files_ng_medium
       - pbcc_dep
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters        : &cfg_ng_medium_wardrv_fsm
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -1034,8 +1038,8 @@ targets:
   emu_ng_medium_soc1_wardrv_fsm_fault_debug:
   #---------------------------------------
     << : *emu_ng_medium_soc1_wardrv_fsm_fault
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, HWLA (captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg, no trigger without difference), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU), OpenOCD on the UART pads (debug_mux_sel_i 10 or 11)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety None     , With    Fault Injection, HWLA (captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg, no trigger without difference), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU), OpenOCD on the UART pads (debug_mux_sel_i 10 or 11)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
@@ -1050,8 +1054,8 @@ targets:
   _emu_ng_medium_soc2_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_soc1_wardrv_fsm_fault
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
@@ -1064,8 +1068,8 @@ targets:
   _emu_ng_medium_soc2_wardrv_fsm_fault_debug:
   #---------------------------------------
     << : *emu_ng_medium_soc1_wardrv_fsm_fault
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the lock-step of cpu_safety is written)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
@@ -1080,8 +1084,8 @@ targets:
   _emu_ng_medium_soc3_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_soc1_wardrv_fsm_fault
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection (fails until the TMR of cpu_safety is written)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety TMR      , With    Fault Injection (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_tmr]
     parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
@@ -1094,8 +1098,8 @@ targets:
   _emu_ng_medium_soc3_wardrv_fsm_fault_debug:
   #---------------------------------------
     << : *emu_ng_medium_soc1_wardrv_fsm_fault
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, HWLA (trigger on a TMR difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the TMR of cpu_safety is written)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety TMR      , With    Fault Injection, HWLA (trigger on a TMR difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_tmr]
     parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
@@ -1323,14 +1327,14 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' of tb_PicoSoC (switch, it_user, fault_none, fault_lock_step, fault_tmr, hwla, test_<ip>)
+    description : Testbench scenarios, separated by ',' of tb_PicoSoC (sequence, fault_none, fault_lock_step, fault_tmr, hwla, test_<ip>)
     datatype    : str
     paramtype   : generic
 
   FIRMWARE :
-    description : Program of the user ROM for tb_PicoSoC (user / test_<ip>)
+    description : Program of the user ROM for tb_PicoSoC (user_loop / user / test_<ip>)
     datatype    : str
-    default     : user
+    default     : user_loop
     paramtype   : generic
 
   DEBUG_MUX_SEL :

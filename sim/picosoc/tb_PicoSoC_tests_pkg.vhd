@@ -52,9 +52,9 @@
 -- 2026-11-27  1.18     mrosiere Student branch : fault_none (SAFETY none, the
 --                               firmware derails, the supervisor sees nothing)
 -- 2026-11-27  1.19     mrosiere Student branch : the scenarios of the targets
---                               of the labs only (switch, it_user, sequence,
---                               fault_*, hwla, test_<ip>), firmwares user,
---                               user_loop and test_<ip>
+--                               of the labs only (sequence, fault_*, hwla,
+--                               test_<ip>), firmwares user_loop (sequence,
+--                               fault_*), user (hwla) and test_<ip>
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -82,10 +82,10 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,sequence,fault_none,fault_lock_step,fault_tmr,hwla," & C_INTEGRATION;
+  constant C_TESTS : string := "sequence,fault_none,fault_lock_step,fault_tmr,hwla," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
-  constant C_FIRMWARES : string := "user,user_loop," & C_INTEGRATION;
+  constant C_FIRMWARES : string := "user_loop,user," & C_INTEGRATION;
 
   -- True when the scenario name applies to the firmware and the configuration
   function test_applies
@@ -131,15 +131,14 @@ package body tb_PicoSoC_tests_pkg is
     ;fault      : boolean
     ;debug      : boolean
     ) return boolean is
-    -- esw/demo/user.c
+    -- esw/demo/user_loop.c (UART lines), esw/demo/user.c (LED0 = switches)
+    constant C_LOOP : boolean := string_eq(firmware, "user_loop");
     constant C_USER : boolean := string_eq(firmware, "user");
   begin
-    if    string_eq(name, "switch"         ) then return C_USER;
-    elsif string_eq(name, "it_user"        ) then return C_USER;
-    elsif string_eq(name, "sequence"       ) then return string_eq(firmware, "user_loop");
-    elsif string_eq(name, "fault_none"     ) then return C_USER and supervisor and fault and string_eq(safety, "none");
-    elsif string_eq(name, "fault_lock_step") then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
-    elsif string_eq(name, "fault_tmr"      ) then return C_USER and supervisor and fault and string_eq(safety, "tmr");
+    if    string_eq(name, "sequence"       ) then return C_LOOP;
+    elsif string_eq(name, "fault_none"     ) then return C_LOOP and supervisor and fault and string_eq(safety, "none");
+    elsif string_eq(name, "fault_lock_step") then return C_LOOP and supervisor and fault and string_eq(safety, "lock-step");
+    elsif string_eq(name, "fault_tmr"      ) then return C_LOOP and supervisor and fault and string_eq(safety, "tmr");
     elsif string_eq(name, "hwla"           ) then return C_USER and not supervisor and fault and debug;
     elsif list_contains(C_INTEGRATION, name ) then return string_eq(firmware, name); -- test_<ip> : its firmware only
     else                                          return false;
@@ -167,24 +166,18 @@ package body tb_PicoSoC_tests_pkg is
     ;signal   rom_data : in    std_logic_vector
     ) is
   begin
-    if    string_eq(name, "switch")
-    then
-      work.tb_PicoSoC_switch_pkg.run(cfg, clk, switch, led0, led_diff);
-    elsif string_eq(name, "it_user")
-    then
-      work.tb_PicoSoC_it_user_pkg.run(cfg, clk, switch, it_user, led0, led1, led_diff);
-    elsif string_eq(name, "sequence")
+    if    string_eq(name, "sequence")
     then
       work.tb_PicoSoC_sequence_pkg.run(cfg, clk, switch, led0, led_diff, uart_tx);
     elsif string_eq(name, "fault_none")
     then
-      work.tb_PicoSoC_fault_none_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+      work.tb_PicoSoC_fault_none_pkg.run(cfg, clk, inject, led_diff, uart_tx);
     elsif string_eq(name, "fault_lock_step")
     then
-      work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+      work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, inject, led_diff, uart_tx);
     elsif string_eq(name, "fault_tmr")
     then
-      work.tb_PicoSoC_fault_tmr_pkg.run(cfg, clk, switch, inject, led0, led_diff);
+      work.tb_PicoSoC_fault_tmr_pkg.run(cfg, clk, inject, led_diff, uart_tx);
     elsif string_eq(name, "hwla")
     then
       work.tb_PicoSoC_hwla_pkg.run(cfg, false, clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);

@@ -208,7 +208,7 @@ begin
   --  asylum.safety_pkg.all, with its core in the depend list of files_hdl
   --  in PicoSoC.core).
   --  Diagram : doc/picosoc-cpu_safety-lock_step.png
-  --  Test : make _sim_soc2_wardrv_fsm_fault_c_user (scenario fault_lock_step)
+  --  Test : make _sim_soc2_wardrv_fsm_fault_c_user_loop (scenario fault_lock_step)
   -----------------------------------------------------------------------------
   gen_lock_step: if SAFETY = "lock-step"
   generate
@@ -234,7 +234,7 @@ begin
   --    inject_cpu_i of each copy to the inject_i of its cpu_wrapper.
   --  Available : as in lock-step, the TMR of your safety_pkg.
   --  Diagram : doc/picosoc-cpu_safety-TMR.png
-  --  Test : make _sim_soc3_wardrv_fsm_fault_c_user (scenario fault_tmr)
+  --  Test : make _sim_soc3_wardrv_fsm_fault_c_user_loop (scenario fault_tmr)
   -----------------------------------------------------------------------------
   gen_tmr: if SAFETY = "tmr"
   generate
