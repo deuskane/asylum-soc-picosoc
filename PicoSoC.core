@@ -769,6 +769,7 @@ filesets:
       - tools/openocd/picosoc.cfg        : {file_type : user, copyto : openocd/picosoc.cfg}
       - tools/openocd/discover.cfg       : {file_type : user, copyto : openocd/discover.cfg}
       - tools/openocd/discover.tcl       : {file_type : user, copyto : openocd/discover.tcl}
+      - tools/openocd/jtag_axis.tcl      : {file_type : user, copyto : openocd/jtag_axis.tcl}
       - sim/openocd/gdb.cfg              : {file_type : user, copyto : openocd/gdb.cfg}
       - sim/openocd/generic.cfg          : {file_type : user, copyto : openocd/generic.cfg}
       - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
@@ -776,7 +777,7 @@ filesets:
       - sim/openocd/discover_check.cfg   : {file_type : user, copyto : openocd/discover_check.cfg}
       - sim/openocd/generic_check.cfg    : {file_type : user, copyto : openocd/generic_check.cfg}
       - sim/openocd/hwla_check.cfg       : {file_type : user, copyto : openocd/hwla_check.cfg}
-      - sim/openocd/hwla_tools.sh        : {file_type : user, copyto : openocd/hwla_tools.sh}
+      - sim/openocd/hwla_vcd.sh          : {file_type : user, copyto : openocd/hwla_vcd.sh}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
@@ -2569,7 +2570,7 @@ targets:
   # error in CPU1 (picosoc_inject, the supervisor resets the user SoC once),
   # picosoc_hwla_dump of one capture to hwla.bin, decoded by
   # hwla/hwla2vcd.py with hwla/hwla_wardrv_fsm.args (hooks of
-  # sim/openocd/hwla_tools.sh)
+  # sim/openocd/hwla_vcd.sh)
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla:
   #---------------------------------------
@@ -2602,7 +2603,7 @@ targets:
       - DEBUG_MUX_SEL=10
     tools             : *tools_openocd
     hooks :
-      pre_build         : [cosim_build, hwla_copy]
+      pre_build         : [cosim_build]
       pre_run           : [cosim_start_hwla]
       post_run          : [cosim_check, hwla_vcd]
 
@@ -3367,14 +3368,10 @@ scripts:
     cmd : [bash, rbb/cosim.sh, check]
 
   #---------------------------------------
-  # Hooks of sim_*_openocd_hwla (cwd = work_root) : jtag_axis.tcl from its
-  # core, then the capture decoded
+  # Hook of sim_*_openocd_hwla (cwd = work_root) : the capture decoded
   #---------------------------------------
-  hwla_copy :
-    cmd : [bash, openocd/hwla_tools.sh, copy]
-
   hwla_vcd :
-    cmd : [bash, openocd/hwla_tools.sh, vcd, hwla/hwla_wardrv_fsm.args]
+    cmd : [bash, openocd/hwla_vcd.sh, vcd, hwla/hwla_wardrv_fsm.args]
 
 #=========================================
 parameters :
