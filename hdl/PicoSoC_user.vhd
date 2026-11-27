@@ -47,6 +47,8 @@
 -- 2026-11-27  3.18     mrosiere inject_cpu_i : injection inside the CPU of
 --                               each copy (cpu_safety), every cluster
 -- 2026-11-28  3.19     mrosiere inject_cpu_i of 12 bits : 4 requests per copy
+-- 2026-11-27  3.20     mrosiere Student branch : SAFETY "none" and CPU_MODEL
+--                               "WardRV_fsm" by default
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -98,13 +100,13 @@ entity PicoSoC_user is
     ;NB_SWITCH              : positive := 8
     ;NB_LED0                : positive := 8
     ;NB_LED1                : positive := 8
-    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;SAFETY                 : string   := "none"      -- "none" / "lock-step" / "tmr" (to write)
     ;LOCK_STEP_DEPTH        : natural  := 2
     ;FAULT_INJECTION        : boolean  := False
     ;ICN_TARGET_SEL         : string   := "or"
     ;ICN_MASTER_SEL         : string   := "fix"
     ;NB_CPU                 : natural  := 1
-    ;CPU_MODEL              : string   := "OpenBlaze8"
+    ;CPU_MODEL              : string   := "WardRV_fsm"
     ;RAM1_DEPTH             : natural  := 128
     ;RAM2_DEPTH             : natural  := 64
     ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4

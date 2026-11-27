@@ -89,6 +89,10 @@
 -- 2026-11-28  2.30     mrosiere 4 bits of injection inside each CPU copy
 --                               ([7:4], [11:8], [15:12], inject_cpu of 12
 --                               bits), all of them triggers of the HWLA
+-- 2026-11-27  2.31     mrosiere Student branch : defaults of the soc1 of the
+--                               labs : CPU_MODEL "WardRV_fsm", USER_SAFETY
+--                               "none", DEBUG_ENABLE False (supervisor and
+--                               fault injection, as before)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -105,7 +109,7 @@ entity PicoSoC_top is
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;DEBUG_ENABLE                : boolean  := False       -- HWLA, JTAG TAP of fault injection and status
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
     ;HWLA_DEPTH                  : positive := 64          -- DEBUG_ENABLE : samples of a capture of the HWLA (power of 2)
     ;HWLA_PRE_TRIGGER            : natural  := 32          -- DEBUG_ENABLE : samples of the HWLA before the trigger sample (0 to HWLA_DEPTH-1)
@@ -113,7 +117,7 @@ entity PicoSoC_top is
     ;HWLA_LINK                   : string   := "uart"      -- DEBUG_ENABLE : link of the HWLA captures, "uart" (debug_uart_tx_o) / "jtag" (TAP of jtag_axis in the JTAG chain)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
-    ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
+    ;CPU_MODEL                   : string   := "WardRV_fsm" -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
@@ -132,9 +136,9 @@ entity PicoSoC_top is
     ;USER_SPI_DEPTH_TX           : natural  := 0
     ;USER_SPI_DEPTH_RX           : natural  := 0
     ;USER_SPI_NB_IO              : natural  := 8
-    ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_SAFETY                 : string   := "none"      -- "none" / "lock-step" / "tmr" (to write)
     ;USER_LOCK_STEP_DEPTH        : natural  := 2
-    ;USER_FAULT_INJECTION        : boolean  := True  
+    ;USER_FAULT_INJECTION        : boolean  := True
     ;USER_FAULT_POLARITY         : string   := "low"       -- "high" / "low"
     ;USER_IT_POLARITY            : string   := "low"       -- "high" / "low"
     ;USER_MAILBOX_FIFO0_DEPTH_TX : natural  := 4

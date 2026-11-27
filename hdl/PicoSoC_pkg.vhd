@@ -374,7 +374,7 @@ component PicoSoC_top is
     (FSYS                        : positive := 50_000_000
     ;FSYS_INT                    : positive := 50_000_000
     ;RESET_POLARITY              : string   := "low"       -- "high" / "low"
-    ;DEBUG_ENABLE                : boolean  := True        -- HWLA, JTAG TAP of fault injection and status
+    ;DEBUG_ENABLE                : boolean  := False       -- HWLA, JTAG TAP of fault injection and status
     ;HWLA_BAUD_RATE              : integer  := 115200      -- DEBUG_ENABLE : baud rate of the UART of the HWLA captures (debug_uart_tx_o)
     ;HWLA_DEPTH                  : positive := 64          -- DEBUG_ENABLE : samples of a capture of the HWLA (power of 2)
     ;HWLA_PRE_TRIGGER            : natural  := 32          -- DEBUG_ENABLE : samples of the HWLA before the trigger sample (0 to HWLA_DEPTH-1)
@@ -382,7 +382,7 @@ component PicoSoC_top is
     ;HWLA_LINK                   : string   := "uart"      -- DEBUG_ENABLE : link of the HWLA captures, "uart" (debug_uart_tx_o) / "jtag" (TAP of jtag_axis in the JTAG chain)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
-    ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
+    ;CPU_MODEL                   : string   := "WardRV_fsm" -- "OpenBlaze8" / "WardRV_fsm"
 
     -- USER SoC
     ;USER_NB_CPU                 : natural  := 1
@@ -401,9 +401,9 @@ component PicoSoC_top is
     ;USER_SPI_DEPTH_TX           : natural  := 0
     ;USER_SPI_DEPTH_RX           : natural  := 0
     ;USER_SPI_NB_IO              : natural  := 8
-    ;USER_SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;USER_SAFETY                 : string   := "none"      -- "none" / "lock-step" / "tmr" (to write)
     ;USER_LOCK_STEP_DEPTH        : natural  := 2
-    ;USER_FAULT_INJECTION        : boolean  := True  
+    ;USER_FAULT_INJECTION        : boolean  := True
     ;USER_FAULT_POLARITY         : string   := "low"       -- "high" / "low"
     ;USER_IT_POLARITY            : string   := "low"       -- "high" / "low"
     ;USER_MAILBOX_FIFO0_DEPTH_TX : natural  := 4
@@ -472,13 +472,13 @@ component PicoSoC_user is
     ;NB_SWITCH              : positive := 8
     ;NB_LED0                : positive := 8
     ;NB_LED1                : positive := 8
-    ;SAFETY                 : string   := "lock-step" -- "none" / "lock-step" / "tmr"
+    ;SAFETY                 : string   := "none"      -- "none" / "lock-step" / "tmr" (to write)
     ;LOCK_STEP_DEPTH        : natural  := 2
     ;FAULT_INJECTION        : boolean  := False
     ;ICN_TARGET_SEL         : string   := "or"
     ;ICN_MASTER_SEL         : string   := "fix"
     ;NB_CPU                 : natural  := 1
-    ;CPU_MODEL              : string   := "OpenBlaze8"
+    ;CPU_MODEL              : string   := "WardRV_fsm"
     ;RAM1_DEPTH             : natural  := 128
     ;RAM2_DEPTH             : natural  := 64
     ;MAILBOX_FIFO0_DEPTH_TX : natural  := 4
@@ -542,7 +542,7 @@ end component PicoSoC_user;
 
 component cpu_safety is
   generic
-    (SAFETY                : string   := "lock-step"
+    (SAFETY                : string   := "none"      -- "none" / "lock-step" / "tmr" (to write)
     ;LOCK_STEP_DEPTH       : natural  := 2
     ;FAULT_INJECTION       : boolean  := False
     ;CPU_MODEL             : string   := "OpenBlaze8"
