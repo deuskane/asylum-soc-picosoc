@@ -247,7 +247,8 @@ CAPI=2:
 #                               without supervisor (_hwla, _hwla_jtag) removed ;
 #                               HWLA triggered by the error injection : usable
 #                               in soc1 (emu_ng_medium_soc1_wardrv_fsm_fault_debug,
-#                               field diff at 000)
+#                               field diff at 000) ; WardRV pinned to 1.5.0
+#                               (=asylum:processor:WardRV:1.5.0)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.5
@@ -447,7 +448,7 @@ filesets:
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
       - ">=asylum:processor:OpenBlaze8:1.0.0"
-      - ">=asylum:processor:WardRV:1.2.0"
+      - "=asylum:processor:WardRV:1.5.0"
       
   #---------------------------------------
   files_sim:
@@ -500,7 +501,7 @@ filesets:
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
-      - ">=asylum:processor:WardRV:1.5.0"     # gdb_lib.py
+      - "=asylum:processor:WardRV:1.5.0"      # gdb_lib.py
 
   #---------------------------------------
   files_ng_medium:

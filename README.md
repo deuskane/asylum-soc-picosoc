@@ -96,7 +96,7 @@ The cores of the Asylum IPs are published in the FuseSoC library [asylum-cores](
 
 ### Simulation
 
-The branch keeps the version of `main` it comes from (VLNV `asylum:soc:PicoSoC:4.8.5`): in a clone of this branch, the core of the clone (`--cores-root .`, the Makefile) replaces the one of the library; give the version, else FuseSoC takes the latest PicoSoC of asylum-cores (`main`):
+The branch keeps the version of `main` it comes from (VLNV `asylum:soc:PicoSoC:4.8.5`): in a clone of this branch, the core of the clone (`--cores-root .`, the Makefile) replaces the one of the library; give the version, else FuseSoC takes the latest PicoSoC of asylum-cores (`main`). WardRV is pinned to 1.5.0 (`=asylum:processor:WardRV:1.5.0` in `PicoSoC.core`: the labs keep the same CPU; `main` takes any later version):
 
 ```bash
 pip install fusesoc
