@@ -757,10 +757,23 @@ filesets:
       - sim/openocd/chain.cfg            : {file_type : user, copyto : openocd/chain.cfg}
       - sim/openocd/discover_check.cfg   : {file_type : user, copyto : openocd/discover_check.cfg}
       - sim/openocd/generic_check.cfg    : {file_type : user, copyto : openocd/generic_check.cfg}
+      - sim/openocd/hwla_check.cfg       : {file_type : user, copyto : openocd/hwla_check.cfg}
+      - sim/openocd/hwla_tools.sh        : {file_type : user, copyto : openocd/hwla_tools.sh}
+      - tools/hwla/hwla_wardrv_fsm.args  : {file_type : user, copyto : openocd/hwla_wardrv_fsm.args}
     file_type : vhdlSource-2008
     depend :
       - ">=asylum:verification:openocd:1.0.0" # rbb_jtag, rbb_axis, rbb_server.c, cosim.sh
       - ">=asylum:processor:WardRV:1.5.0"     # gdb_lib.py
+
+  #---------------------------------------
+  # OpenOCD co-simulation of the HWLA captures over JTAG : hwla2vcd.py
+  # with named signals (--signal, tools/hwla/*.args), copied by the hook
+  # hwla_copy from the core of the HWLA
+  #---------------------------------------
+  files_sim_openocd_hwla:
+  #---------------------------------------
+    depend :
+      - ">=asylum:debug:HWLA:3.1.0"           # tools/hwla2vcd.py --signal
 
   #---------------------------------------
   files_ng_medium:
@@ -2541,6 +2554,52 @@ targets:
       post_run          : [cosim_check]
 
   #---------------------------------------
+  # OpenOCD co-simulation of the HWLA captures over JTAG
+  # (tb_PicoSoC_openocd, HWLA_LINK jtag, OpenOCD script
+  # sim/openocd/hwla_check.cfg on tools/openocd/picosoc.cfg, no GDB) : the
+  # chain discovered (the TAP of jtag_axis named picosoc hwla),
+  # picosoc_hwla_status before the error / after it / after the dump, an
+  # error in CPU1 (picosoc_inject, the supervisor resets the user SoC once),
+  # picosoc_hwla_dump of one capture to hwla.bin, decoded by hwla2vcd.py
+  # with tools/hwla/hwla_wardrv_fsm.args (hooks of sim/openocd/hwla_tools.sh)
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla:
+  #---------------------------------------
+    << : *default
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of 3 TAPs (user CPU, HWLA jtag_axis, injection), HWLA_LINK jtag, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), script sim/openocd/hwla_check.cfg (chain discovered, picosoc_hwla_status, picosoc_inject, picosoc_hwla_dump), capture decoded by hwla2vcd.py
+    default_tool      : ghdl
+    toplevel          : tb_PicoSoC_openocd
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    filesets_append   :
+      - files_sim
+      - files_sim_openocd
+      - files_sim_openocd_hwla
+      - pbcc_dep
+    parameters        :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=25000000
+      - FSYS_INT=12500000
+
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
+      - USER_CPU_DEBUG_ENABLE=true
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - DEBUG_MUX_SEL=10
+    tools             : *tools_openocd
+    hooks :
+      pre_build         : [cosim_build, hwla_copy]
+      pre_run           : [cosim_start_hwla]
+      post_run          : [cosim_check, hwla_vcd]
+
+  #---------------------------------------
   sim_soc3_wardrv_fsm_c_user:
   #---------------------------------------
     << : *sim
@@ -3294,8 +3353,21 @@ scripts:
   cosim_start_generic_check :
     cmd : [bash, rbb/cosim.sh, start, openocd/generic_check.cfg]
 
+  cosim_start_hwla :
+    cmd : [bash, rbb/cosim.sh, start, openocd/hwla_check.cfg]
+
   cosim_check :
     cmd : [bash, rbb/cosim.sh, check]
+
+  #---------------------------------------
+  # Hooks of sim_*_openocd_hwla (cwd = work_root) : jtag_axis.tcl and
+  # hwla2vcd.py from their cores, then the capture decoded
+  #---------------------------------------
+  hwla_copy :
+    cmd : [bash, openocd/hwla_tools.sh, copy]
+
+  hwla_vcd :
+    cmd : [bash, openocd/hwla_tools.sh, vcd, openocd/hwla_wardrv_fsm.args]
 
 #=========================================
 parameters :
