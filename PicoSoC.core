@@ -163,9 +163,23 @@ CAPI=2:
 #                               next reset, then CPU0 resets) ;
 #                               tools/uart/uart.sh (screen in xterm, checks),
 #                               tools/hwla/hwla_capture.sh (captures of the HWLA on the UART)
+# 2026-11-27  4.8.0    mrosiere HWLA_LINK : HWLA captures on the UART or through the TAP of
+#                               jtag_axis (asylum:debug:jtag >= 1.3.0, IDCODE 0x10004001, in
+#                               the JTAG chain before the injection / status TAP) ; flags of
+#                               the HWLA (arm, armed, triggered, sending) in STATUS of the
+#                               injection / status TAP ; tb : hwla on both links, jtag_status
+#                               with the HWLA flags, sim_soc2_<cpu>_fault_c_user_hwla_jtag,
+#                               sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_<test> ;
+#                               tools/openocd : picosoc_hwla_status, picosoc_hwla_dump (on
+#                               jtag_axis.tcl of asylum-debug-jtag), picosoc_status with the
+#                               HWLA flags ; tools/hwla/*.args copied to hwla/ next to
+#                               hwla2vcd.py (asylum:debug:HWLA >= 3.1.0, named signals) ;
+#                               co-simulation
+#                               sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla ;
+#                               emu_ng_medium_soc3_wardrv_fsm_fault_debug_hwla_jtag
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.7.2
+name        : asylum:soc:PicoSoC:4.8.0
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
