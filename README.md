@@ -85,11 +85,11 @@ The top level `PicoSoC_top` adds the board side: reset resynchronization, clock 
 
 Supervisor SoC (top) and user SoC (bottom) with their address maps. The dashed box is the CPU cluster, replicated `USER_NB_CPU` times; ICN2 and the peripherals are shared. The `led0_o` GPIO of the supervisor is the reset of the user SoC, the three difference flags of the user CPUs are the supervisor GIC inputs. Source: [doc/picosoc.drawio](doc/picosoc.drawio), pages `overview`, `cpu_safety-lock_step` and `cpu_safety-TMR` (see [CPU safety](#cpu-safety)).
 
-`PicoSoC_top` (not drawn on this page) takes its clock and resets from `PicoSoC_clkrst` (resynchronization of `arst_i`, division of `clk_i` by `FSYS/FSYS_INT`), inverts `it_user_i` / `inject_error_i` when they are active low (`active_high` of `PicoSoC_pkg`), puts IO buffers on the SPI and I2C signals (`PicoSoC_pads`) and, with `DEBUG_ENABLE`, instantiates the HWLA and its UART (`PicoSoC_hwla`, see [Debug: HWLA](#debug-hwla)).
+`PicoSoC_top` (not drawn on this page) takes its clock and resets from `PicoSoC_clkrst` (resynchronization of `arst_i`, division of `clk_i` by `FSYS/FSYS_INT`), inverts `it_user_i` / `inject_error_i` when they are active low (`active_high` of `PicoSoC_pkg`), puts IO buffers on the SPI and I2C signals (`PicoSoC_pads`) and, with `DEBUG_ENABLE`, instantiates the HWLA and its link (`PicoSoC_hwla`: its UART, or the TAP of `jtag_axis` in the JTAG chain with `HWLA_LINK = "jtag"`, see [Debug: HWLA](#debug-hwla)).
 
 ![UART pads and JTAG chain of PicoSoC_top](doc/picosoc-jtag.png)
 
-Page `jtag` of the same file: the UART pads and their multiplexer (`PicoSoC_pads`), and the JTAG chain of `PicoSoC_top` (see [UART pads and JTAG](#uart-pads-and-jtag)).
+Page `jtag` of the same file: the UART pads and their multiplexer (`PicoSoC_pads`), and the JTAG chain of `PicoSoC_top`: user CPUs, supervisor CPU, HWLA (`HWLA_LINK = "jtag"`), injection / status TAP (see [UART pads and JTAG](#uart-pads-and-jtag)).
 
 ## Getting Started
 

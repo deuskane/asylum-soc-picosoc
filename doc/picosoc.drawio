@@ -1700,13 +1700,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-35" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="640" y="200" width="220" height="70" as="geometry"/>
+          <mxGeometry x="640" y="200" width="220" height="75" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-36" value="PicoSoC_hwla" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="640" y="200" width="110" height="20" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-37" value="hwla, uart_core TX only (HWLA_BAUD_RATE)&lt;br&gt;(DEBUG_ENABLE, else 1)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
-          <mxGeometry x="650" y="225" width="200" height="40" as="geometry"/>
+        <mxCell id="picosoc-jtag-37" value="hwla, HWLA_LINK &quot;uart&quot; : uart_core&lt;br&gt;TX only (HWLA_BAUD_RATE)&lt;br&gt;(DEBUG_ENABLE, else 1)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
+          <mxGeometry x="650" y="222" width="200" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-38" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
@@ -1841,27 +1841,27 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-67" value="DEBUG_ENABLE" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=center;" vertex="1" parent="1">
-          <mxGeometry x="660" y="525" width="200" height="20" as="geometry"/>
+          <mxGeometry x="920" y="525" width="200" height="20" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-68" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="660" y="550" width="200" height="90" as="geometry"/>
+          <mxGeometry x="920" y="550" width="200" height="90" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-69" value="PicoSoC_tap" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="660" y="550" width="100" height="20" as="geometry"/>
+          <mxGeometry x="920" y="550" width="100" height="20" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-70" value="&lt;b&gt;injection / status&lt;/b&gt;&lt;br&gt;IDCODE 0x10003001" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
-          <mxGeometry x="670" y="575" width="180" height="60" as="geometry"/>
+          <mxGeometry x="930" y="575" width="180" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-71" value="TDO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="860" y="595" as="sourcePoint"/>
-            <mxPoint x="920" y="595" as="targetPoint"/>
+            <mxPoint x="1120" y="595" as="sourcePoint"/>
+            <mxPoint x="1180" y="595" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-72" value="TDO, OR of the tdo_en : CTS* pad (10) or jtag_bitbang (11)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
-          <mxGeometry x="925" y="580" width="160" height="30" as="geometry"/>
+          <mxGeometry x="1185" y="580" width="160" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-73" value="OpenBlaze8, no debug unit or absent TAP : a wire (TDO = TDI, tdo_en of the stages before) ; TCK and TMS shared by the TAPs ; no TRST*" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-73" value="OpenBlaze8, no debug unit, HWLA_LINK &quot;uart&quot; or absent TAP : a wire (TDO = TDI, tdo_en of the stages before) ; TCK and TMS shared by the TAPs ; no TRST*" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
           <mxGeometry x="140" y="770" width="460" height="30" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-74" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;startArrow=classic;startFill=1;" edge="1" parent="1">
@@ -1889,61 +1889,91 @@
           <mxGeometry x="400" y="700" width="200" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-79" value="INJECT 00010&lt;br&gt;tdr_inout 3 b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="660" y="700" width="95" height="50" as="geometry"/>
+          <mxGeometry x="920" y="700" width="95" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-80" value="STATUS 00011&lt;br&gt;tdr_in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="765" y="700" width="95" height="50" as="geometry"/>
+          <mxGeometry x="1025" y="700" width="95" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-81" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;startArrow=classic;startFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="707" y="640" as="sourcePoint"/>
-            <mxPoint x="707" y="700" as="targetPoint"/>
+            <mxPoint x="967" y="640" as="sourcePoint"/>
+            <mxPoint x="967" y="700" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-82" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;startArrow=classic;startFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="812" y="640" as="sourcePoint"/>
-            <mxPoint x="812" y="700" as="targetPoint"/>
+            <mxPoint x="1072" y="640" as="sourcePoint"/>
+            <mxPoint x="1072" y="700" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-83" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="707" y="750" as="sourcePoint"/>
-            <mxPoint x="707" y="800" as="targetPoint"/>
+            <mxPoint x="967" y="750" as="sourcePoint"/>
+            <mxPoint x="967" y="800" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-84" value="sync2dffrn&lt;br&gt;x 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="660" y="800" width="95" height="40" as="geometry"/>
+          <mxGeometry x="920" y="800" width="95" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-85" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="755" y="820" as="sourcePoint"/>
-            <mxPoint x="800" y="820" as="targetPoint"/>
+            <mxPoint x="1015" y="820" as="sourcePoint"/>
+            <mxPoint x="1060" y="820" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-86" value="OR" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="800" y="800" width="60" height="40" as="geometry"/>
+          <mxGeometry x="1060" y="800" width="60" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-87" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="920" y="810" as="sourcePoint"/>
-            <mxPoint x="860" y="810" as="targetPoint"/>
+            <mxPoint x="1180" y="810" as="sourcePoint"/>
+            <mxPoint x="1120" y="810" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-88" value="inject_error_i (active high)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
-          <mxGeometry x="925" y="795" width="190" height="30" as="geometry"/>
+          <mxGeometry x="1185" y="795" width="190" height="30" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-89" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="830" y="840" as="sourcePoint"/>
-            <mxPoint x="830" y="880" as="targetPoint"/>
+            <mxPoint x="1090" y="840" as="sourcePoint"/>
+            <mxPoint x="1090" y="880" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="picosoc-jtag-90" value="inject_error of cpu_safety" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=center;" vertex="1" parent="1">
-          <mxGeometry x="760" y="880" width="220" height="20" as="geometry"/>
+          <mxGeometry x="1020" y="880" width="220" height="20" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-91" value="reads diff (INJECT) ;&lt;br&gt;LEDs, switches, resets (STATUS)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
-          <mxGeometry x="870" y="705" width="240" height="50" as="geometry"/>
+        <mxCell id="picosoc-jtag-91" value="reads diff (INJECT) ;&lt;br&gt;LEDs, switches, resets,&lt;br&gt;HWLA flags (STATUS)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="705" width="240" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-link-note" value="HWLA_LINK &quot;jtag&quot; : 1, the captures go to jtag_axis, a TAP of the JTAG chain" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
+          <mxGeometry x="945" y="248" width="250" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-cond" value="DEBUG_ENABLE and HWLA_LINK &quot;jtag&quot;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=center;" vertex="1" parent="1">
+          <mxGeometry x="660" y="525" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="660" y="550" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-tab" value="PicoSoC_hwla" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="660" y="550" width="110" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-tap" value="&lt;b&gt;jtag_axis&lt;/b&gt;&lt;br&gt;IDCODE 0x10004001" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;align=center;" vertex="1" parent="1">
+          <mxGeometry x="670" y="575" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-tdo" value="TDO / TDI" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="595" as="sourcePoint"/>
+            <mxPoint x="920" y="595" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-fifo" value="hwla : captures to the TX FIFO&lt;br&gt;(8-bit words, 4 deep ; the hwla waits while it is full)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="660" y="700" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="picosoc-jtag-hwla-fifo-link" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="700" as="sourcePoint"/>
+            <mxPoint x="760" y="640" as="targetPoint"/>
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
