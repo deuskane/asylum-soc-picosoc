@@ -188,7 +188,12 @@ CAPI=2:
 # 2026-11-27  4.8.3    mrosiere cpu_safety : SEU_BIT of WardRV on the rd field
 #                               (bits 7 / 8 / 9, were 0 / 1 / 2) ;
 #                               tools/openocd/picosoc_cmds.tcl (short commands of the
-#                               telnet session : status, stop / run, read_mem ...)
+#                               telnet session : status, stop / run, read_mem ...) ;
+#                               esw/demo/user_loop.c (LED0 = switches, one UART line
+#                               per loop : Loop <n> <xorwow>) ; tb : scenario
+#                               sequence (lines checked against xorwow) ;
+#                               sim_soc1_wardrv_fsm_c_user_loop,
+#                               emu_ng_medium_soc1_wardrv_fsm_user_loop
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.3
@@ -449,6 +454,24 @@ generate:
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose
+      logical_name : asylum
+
+  gen_rv32i_user_loop :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/demo/user_loop.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
+      logical_name : asylum
+
+  gen_rv32i_user_loop_9600 :
+    generator : rvcc_gen
+    parameters :
+      file         : esw/demo/user_loop.c
+      type         : c
+      entity       : ROM_user
+      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
       logical_name : asylum
 
   gen_rv32i_user_c_uart_921600 :
@@ -723,6 +746,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_switch_pkg.vhd
       - sim/picosoc/tb_PicoSoC_it_user_pkg.vhd
       - sim/picosoc/tb_PicoSoC_uart_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_sequence_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
@@ -1854,6 +1878,21 @@ targets:
       - USER_CPU_DEBUG_ENABLE=true
 
   #---------------------------------------
+  emu_ng_medium_soc1_wardrv_fsm_user_loop:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety None     , Without Fault Injection
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_dummy]
+    parameters        : *cfg_ng_medium_wardrv_fsm
+    parameters_append :
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=false
+      # Debug
+      - DEBUG_ENABLE=false
+
+  #---------------------------------------
   emu_ng_medium_soc1_wardrv_fsm_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
@@ -2065,6 +2104,19 @@ targets:
       - SPI_MODEL=none
       - FIRMWARE=identity
       - TESTS_LIST=switch
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_c_user_loop:
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user_loop.c           - Without Supervisor, Safety None     , Without Fault Injection, xorwow lines on the UART
+    generate          : [gen_rv32i_user_loop,gen_rv32i_supervisor_c_dummy]
+    parameters        : *cfg_soc1_wardrv_fsm
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_loop
+      - TESTS_LIST=sequence,switch
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_uart:
@@ -3571,12 +3623,12 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 
   FIRMWARE :
-    description : Program of the user ROM for tb_PicoSoC (identity / user / user_uart / user_uart_spi / user_uart_spi_mem / hello)
+    description : Program of the user ROM for tb_PicoSoC (identity / user / user_uart / user_uart_spi / user_uart_spi_mem / user_loop / hello)
     datatype    : str
     default     : user
     paramtype   : generic

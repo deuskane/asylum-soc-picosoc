@@ -17,8 +17,8 @@
 --                           pulse ; "" : build and elaboration only
 --              FIRMWARE   : program of the user ROM (identity, user,
 --                           user_uart, user_uart_spi, user_uart_spi_mem,
---                           hello, test_<ip>) : selects the scenarios
---                           that apply
+--                           user_loop, hello, test_<ip>) : selects the
+--                           scenarios that apply
 --              UART console : with an integration firmware, every line
 --                           is logged and "FAIL <step>" is an error at once
 -------------------------------------------------------------------------------
