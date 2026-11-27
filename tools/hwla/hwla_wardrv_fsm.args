@@ -1,0 +1,56 @@
+#-----------------------------------------------------------------------------
+# Title      : Arguments of hwla2vcd.py for the HWLA of PicoSoC, WardRV_fsm
+# Project    : PicoSoC
+#-----------------------------------------------------------------------------
+# File       : hwla_wardrv_fsm.args
+# Author     : mrosiere
+#-----------------------------------------------------------------------------
+# Description: --args-file of tools/hwla2vcd.py of asylum-debug-hwla (>= 3.1.0 :
+#              --signal, # comments), one argument per line :
+#                python3 hwla2vcd.py capture.bin --args-file tools/hwla/hwla_wardrv_fsm.args -o capture.vcd
+#              HWLA of PicoSoC_top (DEBUG_ENABLE) with CPU_MODEL WardRV_fsm, the
+#              default HWLA_* generics and the SoC clock of the NG-MEDIUM
+#              targets (FSYS_INT 12.5 MHz) ; another configuration : change
+#              -d, -p, -t, --period. One named signal per field of the
+#              probes (README, Debug: HWLA), the bus of the user CPU
+#-----------------------------------------------------------------------------
+# Copyright (c) 2026
+#-----------------------------------------------------------------------------
+# Revisions  :
+# Date        Version  Author   Description
+# 2026-11-27  1.0      mrosiere Created
+#-----------------------------------------------------------------------------
+
+# Probes : 4 strobes, address, write and read data of the data bus, fetch
+# strobe, address and instruction of the instruction bus
+-n
+71
+# HWLA_DEPTH : samples of a capture
+-d
+64
+# HWLA_PRE_TRIGGER : samples before the trigger sample
+-p
+32
+# HWLA_TIMESTAMP_WIDTH : timestamp of a sample (SoC clock cycles)
+-t
+16
+# Bytes of the capture : 8-bit beats (UART or jtag_axis)
+-w
+8
+# Period of the SoC clock (ns) : FSYS_INT 12.5 MHz
+--period
+80
+
+# Data bus
+--signal=dcs=0
+--signal=dre=1
+--signal=dwe=2
+--signal=dready=3
+--signal=daddr=11:4
+--signal=dwdata=19:12
+--signal=drdata=27:20
+# Instruction bus : fetch strobe (the ROM gives the instruction the next
+# cycle), address and instruction (output of the ROM)
+--signal=ics=28
+--signal=iaddr=38:29
+--signal=idata=70:39

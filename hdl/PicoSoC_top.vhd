@@ -74,6 +74,11 @@
 -- 2026-11-26  2.26     mrosiere PicoSoC_inject without SAFETY (a trap is
 --                               cleared by a rising edge of a difference
 --                               flag of its copy)
+-- 2026-11-27  2.27     mrosiere HWLA_LINK : HWLA captures on the UART or on
+--                               the TAP of jtag_axis, a stage of the JTAG
+--                               chain before the injection / status TAP ;
+--                               flags of the HWLA in STATUS of the
+--                               injection / status TAP
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -94,6 +99,7 @@ entity PicoSoC_top is
     ;HWLA_DEPTH                  : positive := 64          -- DEBUG_ENABLE : samples of a capture of the HWLA (power of 2)
     ;HWLA_PRE_TRIGGER            : natural  := 32          -- DEBUG_ENABLE : samples of the HWLA before the trigger sample (0 to HWLA_DEPTH-1)
     ;HWLA_TIMESTAMP_WIDTH        : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample of the HWLA
+    ;HWLA_LINK                   : string   := "uart"      -- DEBUG_ENABLE : link of the HWLA captures, "uart" (debug_uart_tx_o) / "jtag" (TAP of jtag_axis in the JTAG chain)
     ;JTAG_BAUD_RATE              : integer  := 115200      -- JTAG over the UART pads (debug_mux_sel_i 11) : baud rate of the UART of jtag_bitbang
  
     ;CPU_MODEL                   : string   := "OpenBlaze8" -- "OpenBlaze8" / "WardRV_fsm"
@@ -169,7 +175,7 @@ entity PicoSoC_top is
     ;inject_error_i   : in  std_logic_vector(             3-1 downto 0)
 
     -- Debug Interface
-    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART HWLA_BAUD_RATE 8N1 (DEBUG_ENABLE), else 1
+    ;debug_uart_tx_o  : out std_logic -- Captures of the HWLA, UART HWLA_BAUD_RATE 8N1 (DEBUG_ENABLE, HWLA_LINK "uart"), else 1
      
     );
 end PicoSoC_top;
@@ -200,9 +206,13 @@ architecture rtl of PicoSoC_top is
   signal   uart_rts_b                   : std_logic;
 
   signal   debug_uart_tx                : std_logic;
+  -- Flags of the HWLA (DEBUG_ENABLE), from the LSB : arm, armed, triggered,
+  -- sending ; read in STATUS of the injection / status TAP
+  signal   hwla_status                  : std_logic_vector(4-1 downto 0);
 
   -- JTAG chain : TDI -> user SoC (TAP of the CPU of each cluster) ->
-  -- supervisor SoC (TAP of its CPU) -> injection / status TAP -> TDO.
+  -- supervisor SoC (TAP of its CPU) -> HWLA (TAP of jtag_axis) ->
+  -- injection / status TAP -> TDO.
   -- jtag_chain(i) : TDO after the stage i (stage 0 : TDI of the pads) and the
   -- OR of the TDO enables so far. A CPU without debug unit and an absent
   -- stage are wires
@@ -213,7 +223,7 @@ architecture rtl of PicoSoC_top is
   signal   jtag_ini_pads                : jtag_ini_t;
   signal   jtag_tck                     : std_logic;
   signal   jtag_ini                     : jtag_ini_t;
-  signal   jtag_chain                   : jtag_tgts_t(0 to 3);
+  signal   jtag_chain                   : jtag_tgts_t(0 to 4);
   signal   jtag_tgt                     : jtag_tgt_t;
   signal   user_jtag_ini                : jtag_ini_t;
   signal   user_jtag_tgt                : jtag_tgt_t;
@@ -505,7 +515,8 @@ begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
   -- JTAG chain
-  -- TDI -> user SoC -> supervisor SoC -> injection / status TAP -> TDO. The
+  -- TDI -> user SoC -> supervisor SoC -> HWLA -> injection / status TAP ->
+  -- TDO. The
   -- TAPs share TCK and TMS (they are in the same state) : TDO from the last
   -- stage, its enable is the OR of the enables of the stages. The CPU debug
   -- units are in cpu_wrapper (USER_CPU_DEBUG_ENABLE,
@@ -541,7 +552,7 @@ begin  -- architecture rtl
   supervisor_jtag_ini <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(1).tdo);
   jtag_chain(2)       <= (tdo => supervisor_jtag_tgt.tdo, tdo_en => supervisor_jtag_tgt.tdo_en or jtag_chain(1).tdo_en);
 
-  jtag_tgt            <= jtag_chain(3);
+  jtag_tgt            <= jtag_chain(4);
 
   assert (not (USER_CPU_DEBUG_ENABLE or SUPERVISOR_CPU_DEBUG_ENABLE) or CPU_MODEL = "WardRV_fsm")
     report "PicoSoC_top : USER_CPU_DEBUG_ENABLE and SUPERVISOR_CPU_DEBUG_ENABLE need CPU_MODEL WardRV_fsm (" & CPU_MODEL & ")"
@@ -551,12 +562,19 @@ begin  -- architecture rtl
     report "PicoSoC_top : SUPERVISOR_CPU_DEBUG_ENABLE needs SUPERVISOR"
     severity failure;
 
+  assert (HWLA_LINK = "uart" or HWLA_LINK = "jtag")
+    report "PicoSoC_top : HWLA_LINK """ & HWLA_LINK & """ is not ""uart"" or ""jtag"""
+    severity failure;
+
   -----------------------------------------------------------------------------
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
   -- in PicoSoC_hwla
   -- * Trigger : a difference between the redundant CPUs (OR of diff)
-  -- * Captures sent byte per byte on debug_uart_tx_o : UART HWLA_BAUD_RATE,
-  --   8 bits, no parity, 1 stop bit (tools/hwla2vcd.py of asylum-debug-hwla)
+  -- * Captures sent byte per byte (tools/hwla2vcd.py of asylum-debug-hwla) :
+  --   HWLA_LINK "uart" : on debug_uart_tx_o, UART HWLA_BAUD_RATE, 8 bits, no
+  --   parity, 1 stop bit ; "jtag" : read by the debugger through the TAP of
+  --   jtag_axis (IDCODE PICOSOC_JTAG_IDCODE_HWLA), stage 3 of the JTAG chain
+  --   (a wire with "uart" or without DEBUG_ENABLE)
   -- * One clock (clk) and the reset of the supervisor : a capture survives
   --   the reset of the user SoC by the supervisor
   -----------------------------------------------------------------------------
@@ -579,6 +597,8 @@ begin  -- architecture rtl
                                                     1                               -- cpu_dcs
                                                     -1 downto 0);
     signal   hwla_trigger        : std_logic;
+    signal   hwla_jtag_ini       : jtag_ini_t;
+    signal   hwla_jtag_tgt       : jtag_tgt_t;
   begin
     hwla_probe   <= debug_user.cpu_idata
                   & debug_user.cpu_iaddr
@@ -594,6 +614,9 @@ begin  -- architecture rtl
     hwla_trigger <= '1' when diff /= "000" else
                     '0';
 
+    hwla_jtag_ini <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(2).tdo);
+    jtag_chain(3) <= (tdo => hwla_jtag_tgt.tdo, tdo_en => hwla_jtag_tgt.tdo_en or jtag_chain(2).tdo_en);
+
     ins_hwla : PicoSoC_hwla
       generic map
       (FSYS_INT             => FSYS_INT
@@ -601,19 +624,25 @@ begin  -- architecture rtl
       ,HWLA_DEPTH           => HWLA_DEPTH
       ,HWLA_PRE_TRIGGER     => HWLA_PRE_TRIGGER
       ,HWLA_TIMESTAMP_WIDTH => HWLA_TIMESTAMP_WIDTH
+      ,HWLA_LINK            => HWLA_LINK
       )
       port map
       (clk_i                => clk
       ,arst_b_i             => arst_b_supervisor
       ,probe_i              => hwla_probe
       ,trigger_i            => hwla_trigger
+      ,status_o             => hwla_status
       ,uart_tx_o            => debug_uart_tx
+      ,jtag_ini_i           => hwla_jtag_ini
+      ,jtag_tgt_o           => hwla_jtag_tgt
       );
   end generate gen_debug;
 
   gen_debug_b: if DEBUG_ENABLE = False
   generate
     debug_uart_tx   <= '1';  -- UART idle level
+    hwla_status     <= (others => '0');
+    jtag_chain(3)   <= jtag_chain(2);
   end generate gen_debug_b;
 
   -----------------------------------------------------------------------------
@@ -623,19 +652,20 @@ begin  -- architecture rtl
   --   like inject_error_i, synchronized on clk), reads diff
   -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,
   --   led_diff_o, switch_i, then the resets : user SoC, supervisor SoC
-  --   (1 : running)
+  --   (1 : running), then the flags of the HWLA : arm, armed, triggered,
+  --   sending
   -----------------------------------------------------------------------------
   gen_debug_jtag: if DEBUG_ENABLE = True
   generate
     signal   inject_ini          : jtag_ini_t;
     signal   inject_tgt          : jtag_tgt_t;
     -- A signal : GHDL 6.0.0 crashes on an expression actual of status_i
-    signal   status              : std_logic_vector(2+USER_NB_SWITCH+3+USER_NB_LED1+USER_NB_LED0-1 downto 0);
+    signal   status              : std_logic_vector(4+2+USER_NB_SWITCH+3+USER_NB_LED1+USER_NB_LED0-1 downto 0);
   begin
-    inject_ini    <= (tck => jtag_ini.tck, tdi => jtag_chain(2).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
-    jtag_chain(3) <= (tdo => inject_tgt.tdo, tdo_en => inject_tgt.tdo_en or jtag_chain(2).tdo_en);
+    inject_ini    <= (tck => jtag_ini.tck, tdi => jtag_chain(3).tdo, tms => jtag_ini.tms, trst_n => jtag_ini.trst_n);
+    jtag_chain(4) <= (tdo => inject_tgt.tdo, tdo_en => inject_tgt.tdo_en or jtag_chain(3).tdo_en);
 
-    status <= arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
+    status <= hwla_status & arst_b_supervisor_soc & arst_b_user_sync & switch_i & led_supervisor & led1_user & led0_user;
 
     ins_tap : PicoSoC_tap
       port map
@@ -651,7 +681,7 @@ begin  -- architecture rtl
 
   gen_debug_jtag_b: if DEBUG_ENABLE = False
   generate
-    jtag_chain(3)     <= jtag_chain(2);
+    jtag_chain(4)     <= jtag_chain(3);
     inject_error_jtag <= (others => '0');
   end generate gen_debug_jtag_b;
 

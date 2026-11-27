@@ -31,6 +31,8 @@
 -- 2026-11-26  1.7      mrosiere inject_error : one SoC clock cycle (the
 --                               trap of PicoSoC_inject keeps the error), was
 --                               100 cycles
+-- 2026-11-27  1.8      mrosiere t_tb_cfg : hwla_jtag (HWLA_LINK), t_jtag_chain :
+--                               hwla (TAP of jtag_axis)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -60,6 +62,7 @@ package tb_PicoSoC_bfm_pkg is
     user       : integer;            -- user CPU debugger of cluster 0 (USER_CPU_DEBUG_ENABLE), cluster i at user + i
     nb_user    : natural;            -- user CPU debuggers (one per cluster)
     supervisor : integer;            -- supervisor CPU debugger (SUPERVISOR_CPU_DEBUG_ENABLE)
+    hwla       : integer;            -- jtag_axis of the HWLA captures (DEBUG_ENABLE, HWLA_LINK "jtag")
     inject     : integer;            -- injection / status TAP (DEBUG_ENABLE)
   end record t_jtag_chain;
 
@@ -74,6 +77,7 @@ package tb_PicoSoC_bfm_pkg is
     hwla_depth       : positive;     -- HWLA_DEPTH
     hwla_pre_trigger : natural;      -- HWLA_PRE_TRIGGER
     hwla_ts_width    : natural;      -- HWLA_TIMESTAMP_WIDTH
+    hwla_jtag        : boolean;      -- HWLA_LINK = "jtag" : captures read through the TAP of jtag_axis (else debug_uart_tx_o)
     fault      : boolean;            -- USER_FAULT_INJECTION with redundant CPUs : an injected error raises diff
     supervisor : boolean;            -- SUPERVISOR
     jtag       : t_jtag_chain;       -- JTAG chain

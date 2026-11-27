@@ -24,6 +24,8 @@
 #                0x10002001               : supervisor CPU (supervisor cpu)
 #                0x10003001               : injection / status TAP
 #                                           (picosoc inject)
+#                0x10004001               : jtag_axis of the HWLA captures,
+#                                           HWLA_LINK "jtag" (picosoc hwla)
 #              Any other IDCODE is named "unknown tap<k>" ; a TAP without
 #              IDCODE (BYPASS after Test-Logic-Reset) reads 0x00000000.
 #-----------------------------------------------------------------------------
@@ -33,6 +35,8 @@
 # Date        Version  Author   Description
 # 2026-11-26  1.0      mrosiere Created from discover.cfg (shared with
 #                               picosoc.cfg)
+# 2026-11-27  1.1      mrosiere 0x10004001 : picosoc hwla (jtag_axis of the
+#                               HWLA captures)
 #-----------------------------------------------------------------------------
 
 # Chip and TAP of a PicoSoC IDCODE (the names of picosoc_chain), empty if the
@@ -40,6 +44,9 @@
 proc picosoc_tap {idcode} {
     if {$idcode == 0x10003001} {
         return "picosoc inject"
+    }
+    if {$idcode == 0x10004001} {
+        return "picosoc hwla"
     }
     if {$idcode == 0x10002001} {
         return "supervisor cpu"

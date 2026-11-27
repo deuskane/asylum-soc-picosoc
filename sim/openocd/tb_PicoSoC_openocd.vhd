@@ -35,7 +35,17 @@
 --              OpenOCD) : PICOSOC_CHAIN, the JTAG chain of the generics
 --              (chip, TAP, IDCODE of each TAP from TDO, as discover.cfg
 --              prints it), checked by discover_check.cfg,
---              generic_check.cfg and picosoc.py
+--              generic_check.cfg, hwla_check.cfg and picosoc.py ;
+--              PICOSOC_HWLA_BYTES, the bytes of a capture of the HWLA
+--              (hwla_check.cfg), from the generics of the HWLA (those of
+--              tools/hwla/hwla_wardrv_fsm.args, used by the hook hwla_vcd)
+--              HWLA_LINK "jtag" (with DEBUG_ENABLE) : the TAP of the HWLA
+--              captures in the chain (sim/openocd/hwla_check.cfg) ; with a
+--              supervisor and the fault injection, the error injected by
+--              OpenOCD resets the user SoC (led_diff_o, the count of the
+--              supervisor, not 0 : the trap is set again while INJECT holds
+--              the request, so the count depends on the time OpenOCD takes
+--              to write INJECT back to 0)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -48,6 +58,8 @@
 -- 2026-11-26  1.3      mrosiere PICOSOC_CHAIN in cosim.cfg (discover_check.cfg)
 -- 2026-11-26  1.4      mrosiere Comments : generic_check.cfg, picosoc.py read
 --                               PICOSOC_CHAIN
+-- 2026-11-27  1.5      mrosiere HWLA_LINK : TAP of the HWLA captures in
+--                               PICOSOC_CHAIN, PICOSOC_HWLA_BYTES
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -65,6 +77,7 @@ library asylum_uvvm;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.ROM_user_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
@@ -79,6 +92,7 @@ entity tb_PicoSoC_openocd is
     ;USER_SAFETY           : string   := "lock-step" -- "none" / "lock-step" / "tmr"
     ;USER_FAULT_INJECTION  : boolean  := True
     ;DEBUG_ENABLE          : boolean  := True
+    ;HWLA_LINK             : string   := "uart"      -- DEBUG_ENABLE : link of the HWLA captures, "uart" / "jtag"
     ;USER_CPU_DEBUG_ENABLE       : boolean := True
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean := False
     ;CPU_MODEL             : string   := "WardRV_fsm"
@@ -125,6 +139,15 @@ architecture tb of tb_PicoSoC_openocd is
   end function;
 
   constant C_DIFF_AFTER     : std_logic_vector(3-1 downto 0) := diff_after;
+
+  -- HWLA of the DUT : default generics of PicoSoC_top ; probes of
+  -- PicoSoC_top (data bus : 4 strobes, address, write and read data ; fetch
+  -- strobe, instruction address and instruction), changes only, 8-bit beats
+  constant C_HWLA_DEPTH     : positive  := 64;
+  constant C_HWLA_PRE       : natural   := 32;
+  constant C_HWLA_TS_WIDTH  : natural   := 16;
+  constant C_HWLA_NB_PROBE  : positive  := 4 + 3*8 + 1 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH;
+  constant C_HWLA_BYTES     : positive  := C_HWLA_DEPTH * ((C_HWLA_NB_PROBE + C_HWLA_TS_WIDTH + 7) / 8);
 
   -- Switches copied to LED0 by the firmware, before and after OpenOCD
   constant C_SW1            : std_logic_vector(8-1 downto 0) := x"5A";
@@ -177,6 +200,10 @@ begin  -- architecture tb
     ,JTAG_BAUD_RATE        => JTAG_BAUD_RATE
     ,RESET_POLARITY        => "high"
     ,DEBUG_ENABLE          => DEBUG_ENABLE
+    ,HWLA_DEPTH            => C_HWLA_DEPTH
+    ,HWLA_PRE_TRIGGER      => C_HWLA_PRE
+    ,HWLA_TIMESTAMP_WIDTH  => C_HWLA_TS_WIDTH
+    ,HWLA_LINK             => HWLA_LINK
     ,USER_NB_CPU           => USER_NB_CPU
     ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
@@ -322,12 +349,17 @@ begin  -- architecture tb
     variable v_line : line;
   begin
     -- JTAG chain from TDO for the OpenOCD scripts : injection / status TAP,
-    -- supervisor CPU, user CPU of each cluster (the last one first)
+    -- HWLA captures, supervisor CPU, user CPU of each cluster (the last one
+    -- first)
     file_open(f_cfg, "cosim.cfg", write_mode);
     write(v_line, string'("PICOSOC_CHAIN="""));
     if DEBUG_ENABLE
     then
       write(v_line, " picosoc inject 0x" & to_hstring(PICOSOC_JTAG_IDCODE_INJECT));
+    end if;
+    if DEBUG_ENABLE and HWLA_LINK = "jtag"
+    then
+      write(v_line, " picosoc hwla 0x" & to_hstring(PICOSOC_JTAG_IDCODE_HWLA));
     end if;
     if SUPERVISOR and SUPERVISOR_CPU_DEBUG_ENABLE
     then
@@ -342,6 +374,8 @@ begin  -- architecture tb
     end if;
     write(v_line, string'(""""));
     log(ID_LOG_HDR, "Co-simulation : " & v_line.all, C_SCOPE);
+    writeline(f_cfg, v_line);
+    write(v_line, "PICOSOC_HWLA_BYTES=" & integer'image(C_HWLA_BYTES));
     writeline(f_cfg, v_line);
     file_close(f_cfg);
 
@@ -370,7 +404,14 @@ begin  -- architecture tb
     log(ID_LOG_HDR, "OpenOCD quit at " & integer'image(now / 1 us) & " us", C_SCOPE);
 
     -- Seen by the testbench after the debug session
-    check_value(led_diff_o, C_DIFF_AFTER, ERROR, "led_diff : CPU0 vs CPU1 only with an error injected in CPU1 by OpenOCD (INJECT)", C_SCOPE);
+    if SUPERVISOR and USER_FAULT_INJECTION
+    then
+      -- led_diff_o counts the resets of the user SoC : the trap of CPU1 is
+      -- set again while INJECT holds the request (until OpenOCD writes 0)
+      check_value(led_diff_o /= "000", ERROR, "led_diff : the supervisor reset the user SoC after the error injected in CPU1 by OpenOCD (INJECT)", C_SCOPE);
+    else
+      check_value(led_diff_o, C_DIFF_AFTER, ERROR, "led_diff : CPU0 vs CPU1 only with an error injected in CPU1 by OpenOCD (INJECT)", C_SCOPE);
+    end if;
     set_slv    (C_SW2, clk_i, switch_i);
     await_value(led0_o, C_SW2, 0 ns, C_TIMEOUT, ERROR, "LED0 = switches 0x" & to_hstring(C_SW2) & " : the firmware runs after the debug session", C_SCOPE);
 

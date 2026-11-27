@@ -59,6 +59,8 @@
 --                               BFM rbb_bfm_pkg : commands rbb_if.tx on
 --                               uart_rx_i, answers by rbb_uart_monitor
 --                               (was p_bitbang)
+-- 2026-11-27  2.12     mrosiere HWLA_LINK : HWLA captures on debug_uart_tx_o
+--                               or through the TAP of jtag_axis (JTAG chain)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -104,6 +106,7 @@ entity tb_PicoSoC is
     ;HWLA_DEPTH            : positive := 64          -- DEBUG_ENABLE : samples of a capture
     ;HWLA_PRE_TRIGGER      : natural  := 32          -- DEBUG_ENABLE : samples before the trigger sample
     ;HWLA_TIMESTAMP_WIDTH  : natural  := 16          -- DEBUG_ENABLE : width of the timestamp of a sample
+    ;HWLA_LINK             : string   := "uart"      -- DEBUG_ENABLE : link of the captures, "uart" / "jtag"
     ;USER_CPU_DEBUG_ENABLE       : boolean := False
     ;SUPERVISOR_CPU_DEBUG_ENABLE : boolean := False
     ;CPU_MODEL             : string   := ""          -- "OpenBlaze8" / "WardRV_fsm"
@@ -143,7 +146,8 @@ architecture tb of tb_PicoSoC is
   constant C_JTAG_BIT_TIME         : time     := (FSYS_INT/JTAG_BAUD_RATE) * (1 sec / FSYS_INT);
 
   -- JTAG chain of the DUT
-  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE, DEBUG_ENABLE);
+  constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE,
+                                                                DEBUG_ENABLE and HWLA_LINK = "jtag", DEBUG_ENABLE);
 
   constant C_CFG                   : t_tb_cfg := (
     clk_period => TB_PERIOD,
@@ -155,6 +159,7 @@ architecture tb of tb_PicoSoC is
     hwla_depth       => HWLA_DEPTH,
     hwla_pre_trigger => HWLA_PRE_TRIGGER,
     hwla_ts_width    => HWLA_TIMESTAMP_WIDTH,
+    hwla_jtag        => HWLA_LINK = "jtag",
     fault      => USER_FAULT_INJECTION and USER_SAFETY /= "none",
     supervisor => SUPERVISOR,
     jtag       => C_JTAG,
@@ -262,6 +267,7 @@ begin  -- architecture tb
     ,HWLA_DEPTH            => HWLA_DEPTH
     ,HWLA_PRE_TRIGGER      => HWLA_PRE_TRIGGER
     ,HWLA_TIMESTAMP_WIDTH  => HWLA_TIMESTAMP_WIDTH
+    ,HWLA_LINK             => HWLA_LINK
     ,USER_CPU_DEBUG_ENABLE       => USER_CPU_DEBUG_ENABLE
     ,SUPERVISOR_CPU_DEBUG_ENABLE => SUPERVISOR_CPU_DEBUG_ENABLE
     ,SUPERVISOR            => SUPERVISOR

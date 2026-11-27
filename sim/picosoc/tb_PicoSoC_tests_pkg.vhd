@@ -41,6 +41,8 @@
 --                               pads)
 -- 2026-11-26  1.13     mrosiere trap_cpu0, trap_cpu1, trap_reset, trap_tap
 --                               (trap of the error injection)
+-- 2026-11-27  1.14     mrosiere hwla : mux_sel and jtag_if (captures read
+--                               through the TAP of jtag_axis, HWLA_LINK "jtag")
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -218,7 +220,7 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_fault_diff_pkg.run(cfg, clk, switch, inject, led0, led_diff);
     elsif string_eq(name, "hwla")
     then
-      work.tb_PicoSoC_hwla_pkg.run(cfg, clk, switch, inject, led0, led_diff, debug_tx, rom_addr, rom_data);
+      work.tb_PicoSoC_hwla_pkg.run(cfg, clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);
     elsif string_eq(name, "pad_mux")
     then
       work.tb_PicoSoC_pad_mux_pkg.run(cfg, clk, switch, mux_sel, inject, led0, uart_rx, uart_tx, cts_b, cts_pad, rts_pad, jtag_if, debug_tx);
