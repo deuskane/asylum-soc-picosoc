@@ -75,7 +75,7 @@ package body tb_PicoSoC_trap_tap_pkg is
     constant C_SW2     : std_logic_vector(8-1 downto 0) := x"A6";
     -- The stopped firmware does not copy the switches during C_SETTLE cycles
     constant C_SETTLE  : positive := 2000*cfg.clk_ratio;
-    variable v_read    : std_logic_vector(3-1 downto 0);
+    variable v_read    : std_logic_vector(16-1 downto 0);  -- INJECT : diff in [2:0]
 
     -- ndmreset pulse of the user CPU debugger : reset of the user SoC
     procedure user_reset
@@ -115,9 +115,9 @@ package body tb_PicoSoC_trap_tap_pkg is
 
     -- INJECT 1 then 0 : the 1 -> 0 clears the trap
     jtag_write_ir(ir_value => PICOSOC_JTAG_IR_INJECT, msg => "INJECT", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-    jtag_scan_dr (data_value => "001", data_out => v_read, msg => "INJECT CPU0", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-    jtag_scan_dr (data_value => "000", data_out => v_read, msg => "INJECT 0 : clear the trap", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-    check_value  (v_read, "000", ERROR, "diff read through JTAG : no compare, no flag", C_TB_SCOPE);
+    jtag_scan_dr (data_value => "0000000000000001", data_out => v_read, msg => "INJECT CPU0", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+    jtag_scan_dr (data_value => "0000000000000000", data_out => v_read, msg => "INJECT 0 : clear the trap", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+    check_value  (v_read, "0000000000000000", ERROR, "diff read through JTAG : no compare, no flag", C_TB_SCOPE);
     user_reset   ("ndmreset after the clear", jtag_if);
     wait_value   (led0, C_SW2, cfg, "trap cleared by the TAP : the firmware runs again (LED0 = switches)");
     check_value  (led_diff, "000", ERROR, "led_diff : no difference flag without safety", C_TB_SCOPE);

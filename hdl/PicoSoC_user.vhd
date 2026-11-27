@@ -44,6 +44,8 @@
 -- 2026-11-23  3.16     mrosiere CPU_DEBUG_ENABLE : debug unit of the CPU of
 --                               every cluster, JTAG chain of the clusters
 -- 2026-11-23  3.17     mrosiere Debug record : cpu_ics
+-- 2026-11-27  3.18     mrosiere inject_cpu_i : injection inside the CPU of
+--                               each copy (cpu_safety), every cluster
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -147,6 +149,7 @@ entity PicoSoC_user is
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
+    ;inject_cpu_i          : in  std_logic_vector(        9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i, one cycle per injection
     ;diff_o                : out std_logic_vector(        3-1 downto 0) -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
@@ -406,6 +409,7 @@ begin  -- architecture rtl
       ,interrupt_i          => cpu_it_val
       ,interrupt_ack_o      => cpu_it_ack
       ,inject_error_i       => inject_error_i
+      ,inject_cpu_i         => inject_cpu_i
       ,diff_o               => cpu_diff(i)
       ,dbg_arst_b_i         => dbg_arst_b_i
       ,jtag_ini_i           => cpu_jtag_ini

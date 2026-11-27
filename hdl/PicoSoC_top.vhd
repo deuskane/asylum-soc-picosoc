@@ -83,6 +83,9 @@
 --                               error injection (traps of PicoSoC_inject),
 --                               was the OR of the difference flags ; the
 --                               difference flags in the probes (MSB)
+-- 2026-11-27  2.29     mrosiere INJECT of the TAP : 3 bits of injection inside
+--                               each CPU copy (inject_cpu to PicoSoC_user, a
+--                               pulse per 0 -> 1), also a trigger of the HWLA
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -251,6 +254,7 @@ architecture rtl of PicoSoC_top is
   -- trapped in PicoSoC_inject
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
   signal   inject_error_jtag            : std_logic_vector(3-1 downto 0);
+  signal   inject_cpu                   : std_logic_vector(9-1 downto 0);  -- Inside the CPUs (3*i+k : copy i, bit k) : a pulse per injection (TAP)
   
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
@@ -350,6 +354,7 @@ begin  -- architecture rtl
     ,it_i                 => it_user
     ,diff_o               => diff
     ,inject_error_i       => inject_error
+    ,inject_cpu_i         => inject_cpu
     ,debug_o              => debug_user
     ,spi_sclk_o           => spi_sclk_o 
     ,spi_sclk_oe_o        => spi_sclk_oe_o
@@ -575,8 +580,8 @@ begin  -- architecture rtl
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
   -- in PicoSoC_hwla
   -- * Trigger : the error injection that reaches the CPUs (the traps of
-  --   PicoSoC_inject of the copies present, buttons or TAP INJECT, with
-  --   USER_FAULT_INJECTION), on
+  --   PicoSoC_inject of the copies present, buttons or TAP INJECT, and the
+  --   pulses of the injection inside the CPUs, with USER_FAULT_INJECTION), on
   --   the rising edge of the OR of the copies : one capture per injection,
   --   in every safety configuration (SAFETY none too), even while a trap
   --   stays set
@@ -633,7 +638,7 @@ begin  -- architecture rtl
 
     gen_hwla_inject: for i in 0 to 3-1
     generate
-      hwla_inject_copy(i) <= inject_error(i) when i < HWLA_NB_COPIES else
+      hwla_inject_copy(i) <= (inject_error(i) or inject_cpu(3*i) or inject_cpu(3*i+1) or inject_cpu(3*i+2)) when i < HWLA_NB_COPIES else
                              '0';
     end generate gen_hwla_inject;
 
@@ -687,8 +692,13 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug : JTAG TAP of fault injection and status, last TAP of the chain,
   -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK of jtag_ini) :
-  -- * PICOSOC_JTAG_IR_INJECT : writes the error injection (bit i : CPU i,
-  --   like inject_error_i, synchronized on clk), reads diff
+  -- * PICOSOC_JTAG_IR_INJECT (16 bits) : writes the error injection,
+  --   [2:0] outside the CPUs (bit i : copy i, like inject_error_i,
+  --   synchronized on clk, trapped in PicoSoC_inject), [6:4], [10:8],
+  --   [14:12] inside the CPU copy 0, 1, 2 (3 requests per copy, a pulse of
+  --   one clk cycle per 0 -> 1 on inject_cpu, to inject_i of cpu_wrapper :
+  --   unused by the reference CPUs, free for a hardened CPU), [3], [7],
+  --   [11], [15] reserved ; reads diff in [2:0]
   -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,
   --   led_diff_o, switch_i, then the resets : user SoC, supervisor SoC
   --   (1 : running), then the flags of the HWLA : arm, armed, triggered,
@@ -715,6 +725,7 @@ begin  -- architecture rtl
       ,diff_i               => diff
       ,status_i             => status
       ,inject_error_o       => inject_error_jtag
+      ,inject_cpu_o         => inject_cpu
       );
   end generate gen_debug_jtag;
 
@@ -722,6 +733,7 @@ begin  -- architecture rtl
   generate
     jtag_chain(4)     <= jtag_chain(3);
     inject_error_jtag <= (others => '0');
+    inject_cpu        <= (others => '0');
   end generate gen_debug_jtag_b;
 
   debug_uart_tx_o   <= debug_uart_tx;

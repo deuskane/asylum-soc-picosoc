@@ -191,8 +191,8 @@ package body tb_PicoSoC_hwla_pkg is
     variable v_t_led        : time;
     variable v_t_inj        : time;      -- the request (button) or the start of the DR scan of INJECT (TAP)
     variable v_t_inj_end    : time;      -- the end of the DR scan of INJECT (TAP)
-    variable v_inject       : std_logic_vector(3-1 downto 0);
-    variable v_read3        : std_logic_vector(3-1 downto 0);
+    variable v_inject       : std_logic_vector(16-1 downto 0); -- INJECT : [2:0] outside the CPUs
+    variable v_read16       : std_logic_vector(16-1 downto 0); -- INJECT : diff in [2:0]
     variable v_jtag_inject  : t_jtag_bfm_config;
     variable v_diff         : std_logic_vector(3-1 downto 0);
     variable v_first_diff   : integer;
@@ -294,9 +294,9 @@ package body tb_PicoSoC_hwla_pkg is
       -- The trap is set at the Update-DR of the scan (then synchronized) ;
       -- INJECT keeps the request until a Test-Logic-Reset
       v_t_inj     := now;
-      jtag_scan_dr(data_value => v_inject, data_out => v_read3, msg => "INJECT : an error in CPU" & integer'image(v_cpu), jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag_inject);
+      jtag_scan_dr(data_value => v_inject, data_out => v_read16, msg => "INJECT : an error in CPU" & integer'image(v_cpu), jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag_inject);
       v_t_inj_end := now;
-      check_value (v_read3, "000", ERROR, "diff read through JTAG before the injection", C_TB_SCOPE);
+      check_value (v_read16, x"0000", ERROR, "diff read through JTAG before the injection", C_TB_SCOPE);
       v_cycles     := (v_t_inj     - v_t_led) / (cfg.clk_ratio * cfg.clk_period);
       v_cycles_max := (v_t_inj_end - v_t_led) / (cfg.clk_ratio * cfg.clk_period) + C_INJECT_DELAY + 2;
       log(ID_SEQUENCER_SUB, "INJECT : DR scan from " & integer'image(v_cycles) & " to " & integer'image(v_cycles_max - C_INJECT_DELAY - 2) & " cycles after the change of LED0", C_TB_SCOPE);

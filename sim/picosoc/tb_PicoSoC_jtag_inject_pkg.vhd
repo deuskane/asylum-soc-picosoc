@@ -80,7 +80,7 @@ package body tb_PicoSoC_jtag_inject_pkg is
     -- No more change during C_SETTLE cycles
     constant C_SETTLE  : positive := 2000*cfg.clk_ratio;
     variable v_diff    : std_logic_vector(3-1 downto 0);
-    variable v_read    : std_logic_vector(3-1 downto 0);
+    variable v_read    : std_logic_vector(16-1 downto 0);  -- INJECT : diff in [2:0]
   begin
     log(ID_SEQUENCER, "jtag_inject : error injected in CPU1 through JTAG", C_TB_SCOPE);
 
@@ -93,19 +93,19 @@ package body tb_PicoSoC_jtag_inject_pkg is
 
     chain_reset(cfg, jtag_if);
     jtag_write_ir(ir_value => PICOSOC_JTAG_IR_INJECT, msg => "INJECT", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-    jtag_scan_dr (data_value => "010", data_out => v_read, msg => "inject an error in CPU1", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-    check_value(v_read, "000", ERROR, "diff read through JTAG before the injection", C_TB_SCOPE);
+    jtag_scan_dr (data_value => "0000000000000010", data_out => v_read, msg => "inject an error in CPU1", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+    check_value(v_read, "0000000000000000", ERROR, "diff read through JTAG before the injection", C_TB_SCOPE);
 
     if not cfg.supervisor
     then
       wait_value  (led_diff, v_diff, cfg, "led_diff : difference flags of CPU1 (injection through JTAG)");
-      jtag_scan_dr (data_value => "000", data_out => v_read, msg => "stop the injection", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-      check_value (v_read, v_diff, ERROR, "diff read through JTAG : difference flags of CPU1", C_TB_SCOPE);
+      jtag_scan_dr (data_value => "0000000000000000", data_out => v_read, msg => "stop the injection", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+      check_value (v_read, "0000000000000" & v_diff, ERROR, "diff read through JTAG : difference flags of CPU1", C_TB_SCOPE);
       wait_cycles (C_SETTLE, clk);
       check_stable(led_diff, C_SETTLE*cfg.clk_period, ERROR, "led_diff : the flags are sticky", C_TB_SCOPE);
       check_value (led_diff, v_diff, ERROR, "led_diff : difference flags of CPU1", C_TB_SCOPE);
-      jtag_scan_dr (data_value => "000", data_out => v_read, msg => "read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-      check_value (v_read, v_diff, ERROR, "diff read through JTAG after the injection : sticky flags", C_TB_SCOPE);
+      jtag_scan_dr (data_value => "0000000000000000", data_out => v_read, msg => "read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+      check_value (v_read, "0000000000000" & v_diff, ERROR, "diff read through JTAG after the injection : sticky flags", C_TB_SCOPE);
     else
       wait_value(led0, x"00", cfg, "the supervisor resets the user SoC (LED0 = 0)");
       if led_diff = "000"
@@ -117,18 +117,18 @@ package body tb_PicoSoC_jtag_inject_pkg is
       -- diff, cleared by each reset of the user SoC, read while the
       -- injection lasts
       for i in 1 to 20 loop
-        jtag_scan_dr (data_value => "010", data_out => v_read, msg => "keep the injection, read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-        exit when v_read /= "000";
+        jtag_scan_dr (data_value => "0000000000000010", data_out => v_read, msg => "keep the injection, read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+        exit when v_read /= "0000000000000000";
       end loop;
-      check_value(v_read, "001", ERROR, "diff read through JTAG during the injection : CPU0 vs CPU1", C_TB_SCOPE);
+      check_value(v_read, "0000000000000001", ERROR, "diff read through JTAG during the injection : CPU0 vs CPU1", C_TB_SCOPE);
 
-      jtag_scan_dr (data_value => "000", data_out => v_read, msg => "stop the injection", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+      jtag_scan_dr (data_value => "0000000000000000", data_out => v_read, msg => "stop the injection", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
       wait_value  (led0, C_SW, cfg, "the firmware runs again (LED0 = switches)");
       wait_cycles (C_SETTLE, clk);
       check_stable(led_diff, C_SETTLE*cfg.clk_period, ERROR, "led_diff : no more error after the injection", C_TB_SCOPE);
       check_stable(led0    , C_SETTLE*cfg.clk_period, ERROR, "LED0 : no more reset after the injection", C_TB_SCOPE);
-      jtag_scan_dr (data_value => "000", data_out => v_read, msg => "read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
-      check_value (v_read, "000", ERROR, "diff read through JTAG after the injection", C_TB_SCOPE);
+      jtag_scan_dr (data_value => "0000000000000000", data_out => v_read, msg => "read diff", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+      check_value (v_read, "0000000000000000", ERROR, "diff read through JTAG after the injection", C_TB_SCOPE);
     end if;
   end procedure;
 

@@ -13,6 +13,12 @@
 --              resynchronized on clk_i by PicoSoC_top (one synchronizer for
 --              the whole JTAG chain) : it goes to every copy like the other
 --              inputs
+--              Error injection : inject_error_i(i) flips the instruction bit
+--              SEU_BIT(i) of the copy i (outside the CPU) ; inject_cpu_i
+--              (3*i+2 downto 3*i) goes to inject_i of the cpu_wrapper of
+--              the copy i (inside the CPU : 3 requests, one clock cycle per
+--              injection, unused by the reference CPUs, free for a hardened
+--              CPU), with FAULT_INJECTION
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -39,6 +45,8 @@
 --                               PicoSoC_top
 -- 2026-11-27  1.8      mrosiere SEU_BIT of WardRV : bits 7 / 8 / 9 (rd field)
 --                               in place of 0 / 1 / 2 (opcode low bits)
+-- 2026-11-27  1.9      mrosiere inject_cpu_i : injection inside the CPU of
+--                               each copy (inject_i of cpu_wrapper)
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -84,6 +92,7 @@ entity cpu_safety is
 
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
+    ;inject_cpu_i          : in  std_logic_vector(9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i (one cycle per injection)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
 
     -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug unit,
@@ -262,6 +271,7 @@ begin
   generate
     signal   cpu_in    : cpu_in_t;  -- Inputs of the copy
     signal   idata     : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
+    signal   inject    : std_logic_vector(3-1 downto 0);  -- Injection inside the CPU of the copy
     signal   out_cpu   : cpu_out_t;
   begin
     -- A signal assignment, not a direct read of the pipe registers : the
@@ -278,6 +288,11 @@ begin
         idata(SEU_BIT(i))  <= cpu_in.idata(SEU_BIT(i)) xor inject_error_i(i);
       end if;
     end process;
+
+    -- Fault Injection inside the CPU (a hardened CPU uses it, not the
+    -- reference ones)
+    inject <= inject_cpu_i(3*i+2 downto 3*i) when FAULT_INJECTION else
+              "000";
 
     ins_cpu : entity asylum.cpu_wrapper
       generic map
@@ -297,6 +312,7 @@ begin
       ,sbi_tgt_i       => cpu_in.sbi_tgt
       ,interrupt_i     => cpu_in.it_val
       ,interrupt_ack_o => out_cpu.it_ack
+      ,inject_i        => inject
       ,dbg_arst_b_i    => cpu_in.dbg_arst_b
       ,jtag_ini_i      => cpu_in.jtag_ini
       ,jtag_tgt_o      => out_cpu.jtag_tgt

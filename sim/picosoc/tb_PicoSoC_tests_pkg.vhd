@@ -47,6 +47,8 @@
 --                               lines, LED0 = switches)
 -- 2026-11-27  1.16     mrosiere hwla, hwla_tap : HWLA triggered by the
 --                               error injection (button, TAP), every safety
+-- 2026-11-27  1.17     mrosiere jtag_inject_cpu (INJECT [6:4], [10:8], [14:12] :
+--                               injection inside the CPUs)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -75,7 +77,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_lock_step,fault_tmr,fault_diff,hwla,hwla_tap,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_lock_step,fault_tmr,fault_diff,hwla,hwla_tap,hello,pad_mux,jtag_chain,jtag_inject,jtag_inject_cpu,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,user_loop,hello," & C_INTEGRATION;
@@ -153,6 +155,7 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "pad_mux"        ) then return C_UART;
     elsif string_eq(name, "jtag_chain"     ) then return C_USER and jtag.nb_tap > 0;
     elsif string_eq(name, "jtag_inject"    ) then return C_USER and debug and fault and (not supervisor or string_eq(safety, "lock-step"));
+    elsif string_eq(name, "jtag_inject_cpu") then return C_USER and debug;
     elsif string_eq(name, "jtag_status"    ) then return C_USER and debug;
     elsif string_eq(name, "jtag_cpu_user"      ) then return C_USER and jtag.user       >= 0;
     elsif string_eq(name, "jtag_cpu_supervisor") then return C_USER and jtag.supervisor >= 0;
@@ -242,6 +245,9 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "jtag_inject")
     then
       work.tb_PicoSoC_jtag_inject_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, jtag_if);
+    elsif string_eq(name, "jtag_inject_cpu")
+    then
+      work.tb_PicoSoC_jtag_inject_cpu_pkg.run(cfg, clk, switch, mux_sel, led0, led_diff, jtag_if);
     elsif string_eq(name, "jtag_status")
     then
       work.tb_PicoSoC_jtag_status_pkg.run(cfg, clk, switch, mux_sel, it_user, inject, led0, led1, led_diff, jtag_if);

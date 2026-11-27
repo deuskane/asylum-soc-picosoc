@@ -360,8 +360,12 @@ component PicoSoC_tap is
     ;diff_i           : in  std_logic_vector(3-1 downto 0)
     ;status_i         : in  std_logic_vector
 
-    -- Error injection written through JTAG (synchronized on clk_i, active high)
+    -- Error injection written through JTAG (synchronized on clk_i, active
+    -- high) : outside the CPUs (bit i : copy i, a level), inside the CPUs
+    -- (bits 3*i+2 downto 3*i : copy i, a pulse of one cycle for each 0 -> 1
+    -- of a bit)
     ;inject_error_o   : out std_logic_vector(3-1 downto 0)
+    ;inject_cpu_o     : out std_logic_vector(9-1 downto 0)
     );
 end component PicoSoC_tap;
 
@@ -520,6 +524,7 @@ component PicoSoC_user is
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
+    ;inject_cpu_i          : in  std_logic_vector(        9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i, one cycle per injection
     ;diff_o                : out std_logic_vector(        3-1 downto 0) -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0
@@ -569,6 +574,7 @@ component cpu_safety is
 
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
+    ;inject_cpu_i          : in  std_logic_vector(9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i (one cycle per injection)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
 
     -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug unit,
@@ -604,6 +610,11 @@ component cpu_wrapper is
     -- To/From IT Ctrl
     interrupt_i      : in    std_logic;
     interrupt_ack_o  : out   std_logic;
+
+    -- Error injection inside the CPU : 3 requests, one clock cycle per
+    -- injection. Unused here : free for a hardened CPU, connect it to your
+    -- injection
+    inject_i         : in    std_logic_vector(3-1 downto 0) := "000";
 
     -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug
     -- unit (not the CPU reset), ndmreset (request to reset the CPU and its SoC)

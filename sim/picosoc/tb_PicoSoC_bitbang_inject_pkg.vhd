@@ -76,7 +76,7 @@ package body tb_PicoSoC_bitbang_inject_pkg is
     constant C_TAP     : natural  := cfg.jtag.inject;
     -- No more change during C_SETTLE cycles
     constant C_SETTLE  : positive := 2000*cfg.clk_ratio;
-    variable v_read    : std_logic_vector(3-1 downto 0);
+    variable v_read    : std_logic_vector(16-1 downto 0);  -- INJECT : diff in [2:0]
   begin
     log(ID_SEQUENCER, "bitbang_inject : error injected in CPU1 through JTAG over the UART", C_TB_SCOPE);
 
@@ -87,24 +87,24 @@ package body tb_PicoSoC_bitbang_inject_pkg is
 
     bitbang_reset   (cfg, clk, rbb_if);
     bitbang_write_ir(PICOSOC_JTAG_IR_INJECT, "INJECT", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
-    bitbang_scan_dr ("010", v_read, "inject an error in CPU1", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
-    check_value     (v_read, "000", ERROR, "diff read through JTAG over the UART before the injection", C_TB_SCOPE);
+    bitbang_scan_dr ("0000000000000010", v_read, "inject an error in CPU1", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+    check_value     (v_read, "0000000000000000", ERROR, "diff read through JTAG over the UART before the injection", C_TB_SCOPE);
 
     wait_value(led0, x"00", cfg, "the supervisor resets the user SoC (LED0 = 0)");
 
     -- diff, cleared by each reset of the user SoC, read while the injection
     -- lasts
     for i in 1 to 20 loop
-      bitbang_scan_dr("010", v_read, "keep the injection, read diff", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
-      exit when v_read /= "000";
+      bitbang_scan_dr("0000000000000010", v_read, "keep the injection, read diff", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+      exit when v_read /= "0000000000000000";
     end loop;
-    check_value(v_read, "001", ERROR, "diff read through JTAG over the UART during the injection : CPU0 vs CPU1", C_TB_SCOPE);
+    check_value(v_read, "0000000000000001", ERROR, "diff read through JTAG over the UART during the injection : CPU0 vs CPU1", C_TB_SCOPE);
 
-    bitbang_scan_dr("000", v_read, "stop the injection", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+    bitbang_scan_dr("0000000000000000", v_read, "stop the injection", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
     wait_value     (led0, C_SW, cfg, "the firmware runs again (LED0 = switches)");
     wait_cycles    (C_SETTLE, clk);
-    bitbang_scan_dr("000", v_read, "read diff", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
-    check_value    (v_read, "000", ERROR, "diff read through JTAG over the UART after the injection", C_TB_SCOPE);
+    bitbang_scan_dr("0000000000000000", v_read, "read diff", cfg, clk, rbb_if, bitbang, jtag_config(cfg, C_TAP));
+    check_value    (v_read, "0000000000000000", ERROR, "diff read through JTAG over the UART after the injection", C_TB_SCOPE);
   end procedure;
 
 end package body tb_PicoSoC_bitbang_inject_pkg;

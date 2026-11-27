@@ -10,7 +10,14 @@
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
--- Description: 
+-- Description: The CPU of PicoSoC : sbi_OpenBlaze8 or sbi_WardRV_fsm
+--              (CPU_MODEL), with DEBUG_ENABLE the debug unit of WardRV_fsm.
+--              inject_i : error injection inside the CPU, 3 requests (e.g.
+--              bit k : the copy k of a TMR register), a pulse of one clock
+--              cycle per injection (INJECT of the injection / status TAP :
+--              [6:4], [10:8], [14:12] for the CPU copy 0, 1, 2, see
+--              cpu_safety). Unused by the reference CPUs : free for a
+--              hardened CPU, connect it to your injection.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
@@ -20,6 +27,8 @@
 -- 2026-11-22  1.1      mrosiere DEBUG_ENABLE : debug unit WardRV_debug of
 --                               WardRV_fsm, JTAG pins ; OpenBlaze8 or no debug
 --                               unit : TDO = TDI (no bit in the JTAG chain)
+-- 2026-11-27  1.2      mrosiere inject_i (unused : injection inside a
+--                               hardened CPU)
 -------------------------------------------------------------------------------
 
 library IEEE;
@@ -56,6 +65,11 @@ entity cpu_wrapper is
     -- To/From IT Ctrl
     interrupt_i      : in    std_logic;
     interrupt_ack_o  : out   std_logic;
+
+    -- Error injection inside the CPU : 3 requests, one clock cycle per
+    -- injection. Unused here : free for a hardened CPU, connect it to your
+    -- injection
+    inject_i         : in    std_logic_vector(3-1 downto 0) := "000";
 
     -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug
     -- unit (not the CPU reset), ndmreset (request to reset the CPU and its SoC)

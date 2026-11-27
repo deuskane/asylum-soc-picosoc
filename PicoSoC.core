@@ -746,6 +746,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_pad_mux_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_chain_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_inject_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_jtag_inject_cpu_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_status_pkg.vhd
       - sim/picosoc/tb_PicoSoC_jtag_cpu_pkg.vhd
       - sim/picosoc/tb_PicoSoC_bitbang_pkg.vhd
@@ -766,6 +767,8 @@ filesets:
       - sim/picosoc/tb_PicoSoC_test_pwm_pkg.vhd
       - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
       - sim/picosoc/tb_PicoSoC.vhd
+      - sim/tap/tb_PicoSoC_tap_pkg.vhd
+      - sim/tap/tb_PicoSoC_tap.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_basic_pkg.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_fault_lock_step_pkg.vhd
@@ -2126,6 +2129,37 @@ targets:
       - TESTS_LIST=switch
 
   #---------------------------------------
+  # Testbench of the injection / status TAP alone (PicoSoC_tap) : INJECT,
+  # [2:0] outside the CPUs (a level), [6:4], [10:8], [14:12] inside the CPU
+  # copy 0, 1, 2 (a pulse per 0 -> 1). The ROMs of the generators are only compiled (PicoSoC_pkg
+  # uses ROM_user_pkg)
+  #---------------------------------------
+  sim_tap: &sim_tap
+  #---------------------------------------
+    << : *sim
+    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, build check (one scenario per target sim_tap_<test>)
+    toplevel          : tb_PicoSoC_tap
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters        :
+      - TESTS_LIST
+
+  #---------------------------------------
+  sim_tap_inject:
+  #---------------------------------------
+    << : *sim_tap
+    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject (INJECT [2:0], the injection outside the CPUs, a level)
+    parameters        :
+      - TESTS_LIST=inject
+
+  #---------------------------------------
+  sim_tap_inject_cpu:
+  #---------------------------------------
+    << : *sim_tap
+    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject_cpu (INJECT [6:4] [10:8] [14:12], one pulse of one clock cycle per 0 -> 1 on the bit of the copy)
+    parameters        :
+      - TESTS_LIST=inject_cpu
+
+  #---------------------------------------
   sim_soc1_wardrv_fsm_c_user_loop:
   #---------------------------------------
     << : *sim
@@ -2886,6 +2920,14 @@ targets:
     description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject
     parameters_append :
       - TESTS_LIST=jtag_inject
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject_cpu (INJECT [6:4] [10:8] [14:12] in the whole SoC, read back, HWLA triggered, no side effect on the reference CPUs)
+    parameters_append :
+      - TESTS_LIST=jtag_inject_cpu
 
   #---------------------------------------
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status:
@@ -3718,7 +3760,7 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hwla_tap, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hwla_tap, hello, pad_mux, jtag_chain, jtag_inject, jtag_inject_cpu, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 
