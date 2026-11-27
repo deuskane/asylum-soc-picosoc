@@ -451,17 +451,17 @@ python3 $H/hwla2vcd.py --port /dev/ttyUSB1 --baudrate 9600 --captures 1 \
 gtkwave capture.vcd
 ```
 
-With `HWLA_LINK = "jtag"` (the `_debug` targets, a trigger needs `soc2` or `soc3`: `make _emu_ng_medium_soc2_wardrv_fsm_fault_debug` once the lock-step is written), OpenOCD with `picosoc.cfg` (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board): mode `10` with an FTDI cable or mode `11` through any USB-UART cable), then in its telnet console (port 4444) or with `monitor` in GDB:
+With `HWLA_LINK = "jtag"` (the `_debug` targets: `make emu_ng_medium_soc1_wardrv_fsm_fault_debug`; the HWLA triggers on the error injection in every configuration: in `soc1` the field `diff` of the capture stays `000` (no compare), in `soc2` / `soc3` it shows the difference flags once the safety is written), OpenOCD with `picosoc.cfg` (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board): mode `10` with an FTDI cable or mode `11` through any USB-UART cable), then in its telnet console (port 4444) or with `monitor` in GDB:
 
 ```bash
 tools/openocd/openocd.sh ft232r                    # S5 S6 = 10 ; the chain discovered, picosoc.hwla named
 telnet localhost 4444
 > picosoc_hwla_status                              # flags of the HWLA, CONFIG of its TAP : nothing to read
-> picosoc_inject 0x2                               # an error in CPU1 (or the push button) : the HWLA triggers
+> picosoc_inject 0x1                               # an error in CPU0 (or the push button) : the HWLA triggers
 > picosoc_inject 0x0
 > picosoc_hwla_status                              # triggered, sending : a capture is waiting
 > picosoc_hwla_dump capture.bin                    # one capture of 12288 bytes (WardRV_fsm, NG-MEDIUM) in capture.bin
-H=build/asylum_soc_PicoSoC_4.8.5/_emu_ng_medium_soc2_wardrv_fsm_fault_debug-nxmap/hwla
+H=build/asylum_soc_PicoSoC_4.8.5/emu_ng_medium_soc1_wardrv_fsm_fault_debug-nxmap/hwla
 python3 $H/hwla2vcd.py capture.bin --args-file $H/hwla_wardrv_fsm.args -o capture.vcd
 ```
 

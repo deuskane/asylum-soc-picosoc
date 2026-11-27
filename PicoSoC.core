@@ -244,7 +244,10 @@ CAPI=2:
 #                               on the UART), scenarios sequence and
 #                               fault_* on its lines ; user.c kept for the
 #                               OpenOCD co-simulations ; the HWLA targets
-#                               without supervisor (_hwla, _hwla_jtag) removed
+#                               without supervisor (_hwla, _hwla_jtag) removed ;
+#                               HWLA triggered by the error injection : usable
+#                               in soc1 (emu_ng_medium_soc1_wardrv_fsm_fault_debug,
+#                               field diff at 000)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.5
@@ -896,9 +899,10 @@ targets:
       - TESTS_LIST=sequence,fault_tmr
 
   #---------------------------------------
-  # HWLA (DEBUG_ENABLE) : it captures the bus of the user CPU around a
-  # difference of the redundant CPUs, so its checks need soc2 (lock-step,
-  # to write) : without difference (soc1) the HWLA stays armed
+  # HWLA (DEBUG_ENABLE) : it captures the bus of the user CPU and the
+  # difference flags around an error injection (every configuration, soc1
+  # too) ; the checks of _openocd_hwla need the difference flag and the
+  # reset by the supervisor of soc2 (lock-step, to write)
   # _openocd_hwla : soc2, HWLA_LINK jtag, OpenOCD script
   #   sim/openocd/hwla_check.cfg on tools/openocd/picosoc.cfg (chain
   #   discovered, picosoc_hwla_status, picosoc_inject : one error, the
