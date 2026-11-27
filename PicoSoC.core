@@ -483,15 +483,6 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
-  gen_rv32i_user_c_uart_9600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
-      logical_name : asylum
-
   gen_rv32i_user_c_uart_9600_spi :
     generator : rvcc_gen
     parameters :
@@ -925,6 +916,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -973,6 +966,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -999,6 +994,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1059,6 +1056,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1096,6 +1095,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1122,6 +1123,8 @@ targets:
       - USER_NB_SWITCH=4
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1172,6 +1175,8 @@ targets:
       # SoC User Configuration
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1229,6 +1234,8 @@ targets:
       # SoC User Configuration
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1532,55 +1539,64 @@ targets:
       - TESTS_LIST=switch,it_user,fault_diff
 
   #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_hwla:
+  sim_soc2_openblaze8_fault_c_user_hwla: &sim_soc2_openblaze8_fault_c_user_hwla
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
-    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
+    parameters        : &cfg_soc2_openblaze8_fault_hwla
       - CPU_MODEL=OpenBlaze8
       - FSYS=2304000
       - FSYS_INT=1152000
-
       # Platform Configuration
       - SUPERVISOR=false
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
-
       # Debug
       - DEBUG_ENABLE=true
-
-      # Test Bench Configuration
+      - HWLA_DEPTH=512
+      - HWLA_PRE_TRIGGER=384
+      - HWLA_TIMESTAMP_WIDTH=16
+    parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user
       - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user_hwla_tap:
+  #---------------------------------------
+    << : *sim_soc2_openblaze8_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla_tap
 
   #---------------------------------------
   sim_soc2_openblaze8_fault_c_user_hwla_jtag:
   #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as sim_soc2_openblaze8_fault_c_user_hwla
-    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=2304000
-      - FSYS_INT=1152000
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_LINK=jtag
-
-      # Test Bench Configuration
+    << : *sim_soc2_openblaze8_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user
+      - HWLA_LINK=jtag
       - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user_hwla_jtag_tap:
+  #---------------------------------------
+    << : *sim_soc2_openblaze8_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - HWLA_LINK=jtag
+      - TESTS_LIST=hwla_tap
 
   #---------------------------------------
   sim_soc2_openblaze8_fault_c_user_uart_jtag:
@@ -1838,6 +1854,8 @@ targets:
       # SoC User Configuration
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1911,6 +1929,8 @@ targets:
       # SoC User Configuration
       - USER_BAUD_RATE=9600
       - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
       - JTAG_BAUD_RATE=9600
       - USER_UART_DEPTH_TX=4
       - USER_UART_DEPTH_RX=4
@@ -1930,8 +1950,8 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, Without Fault Injection
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_dummy]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety Lock Step, Without Fault Injection
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_dummy]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -1960,8 +1980,8 @@ targets:
   emu_ng_medium_soc2_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, With    Fault Injection
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety Lock Step, With    Fault Injection
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -1990,8 +2010,8 @@ targets:
   emu_ng_medium_soc3_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -2005,8 +2025,8 @@ targets:
   emu_ng_medium_soc3_wardrv_fsm_fault_debug:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, captures on debug_uart_tx_o and the UART pads in mode 01), JTAG chain of 3 TAPs (injection / status, supervisor CPU, user CPU)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the error injection, captures on debug_uart_tx_o and the UART pads in mode 01), JTAG chain of 3 TAPs (injection / status, supervisor CPU, user CPU)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -2022,8 +2042,8 @@ targets:
   emu_ng_medium_soc3_wardrv_fsm_fault_debug_hwla_jtag:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg), JTAG chain of 4 TAPs (injection / status, HWLA jtag_axis, supervisor CPU, user CPU)
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the error injection, captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg), JTAG chain of 4 TAPs (injection / status, HWLA jtag_axis, supervisor CPU, user CPU)
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -2055,8 +2075,8 @@ targets:
   emu_ng_medium_soc4_wardrv_fsm_fault:
   #---------------------------------------
     << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety TMR      , With    Fault Injection
+    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_tmr]
     parameters        : *cfg_ng_medium_wardrv_fsm
     parameters_append :
       # Platform Configuration
@@ -2378,61 +2398,136 @@ targets:
       - TESTS_LIST=basic,sequence
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_hwla:
+  sim_soc2_wardrv_fsm_fault_c_user_hwla: &sim_soc2_wardrv_fsm_fault_c_user_hwla
   #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud)
-    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters   :
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters        : &cfg_soc2_wardrv_fsm_fault_hwla
       - CPU_MODEL=WardRV_fsm
       - FSYS=2304000
       - FSYS_INT=1152000
-
       # Platform Configuration
       - SUPERVISOR=false
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
-
       # Debug
       - DEBUG_ENABLE=true
-      - HWLA_DEPTH=128
-      - HWLA_PRE_TRIGGER=48
+      - HWLA_DEPTH=512
+      - HWLA_PRE_TRIGGER=384
       - HWLA_TIMESTAMP_WIDTH=24
-
-      # Test Bench Configuration
+    parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user
       - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_hwla_tap:
+  #---------------------------------------
+    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla_tap
 
   #---------------------------------------
   sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
   #---------------------------------------
+    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - HWLA_LINK=jtag
+      - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag_tap:
+  #---------------------------------------
+    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - HWLA_LINK=jtag
+      - TESTS_LIST=hwla_tap
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_fault_c_user_hwla: &sim_soc1_wardrv_fsm_fault_c_user_hwla
+  #---------------------------------------
     << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as sim_soc2_wardrv_fsm_fault_c_user_hwla
-    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters   :
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters        : &cfg_soc1_wardrv_fsm_fault_hwla
       - CPU_MODEL=WardRV_fsm
       - FSYS=2304000
       - FSYS_INT=1152000
-
       # Platform Configuration
       - SUPERVISOR=false
-      - USER_SAFETY=lock-step
+      - USER_SAFETY=none
       - USER_FAULT_INJECTION=true
-
       # Debug
       - DEBUG_ENABLE=true
-      - HWLA_LINK=jtag
-      - HWLA_DEPTH=128
-      - HWLA_PRE_TRIGGER=48
+      - HWLA_DEPTH=512
+      - HWLA_PRE_TRIGGER=384
       - HWLA_TIMESTAMP_WIDTH=24
-
-      # Test Bench Configuration
+    parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
       - FIRMWARE=user
       - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_fault_c_user_hwla_tap:
+  #---------------------------------------
+    << : *sim_soc1_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla_tap
+
+  #---------------------------------------
+  sim_soc5_wardrv_fsm_fault_c_user_hwla: &sim_soc5_wardrv_fsm_fault_c_user_hwla
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety TMR      , With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters        : &cfg_soc5_wardrv_fsm_fault_hwla
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=2304000
+      - FSYS_INT=1152000
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=tmr
+      - USER_FAULT_INJECTION=true
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_DEPTH=512
+      - HWLA_PRE_TRIGGER=384
+      - HWLA_TIMESTAMP_WIDTH=24
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc5_wardrv_fsm_fault_c_user_hwla_tap:
+  #---------------------------------------
+    << : *sim_soc5_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety TMR      , With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla_tap
 
   #---------------------------------------
   # OpenOCD + GDB co-simulation (tb_PicoSoC_openocd, GDB scenario
@@ -3436,7 +3531,7 @@ scripts:
   # Hook of sim_*_openocd_hwla (cwd = work_root) : the capture decoded
   #---------------------------------------
   hwla_vcd :
-    cmd : [bash, openocd/hwla_vcd.sh, vcd, hwla/hwla_wardrv_fsm.args]
+    cmd : [bash, openocd/hwla_vcd.sh, vcd, hwla/hwla_wardrv_fsm.args, "-d", "64", "-p", "32"]
 
 #=========================================
 parameters :
@@ -3623,7 +3718,7 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hwla_tap, hello, pad_mux, jtag_chain, jtag_inject, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
     datatype    : str
     paramtype   : generic
 

@@ -79,6 +79,10 @@
 --                               chain before the injection / status TAP ;
 --                               flags of the HWLA in STATUS of the
 --                               injection / status TAP
+-- 2026-11-27  2.28     mrosiere HWLA : trigger on the rising edge of the
+--                               error injection (traps of PicoSoC_inject),
+--                               was the OR of the difference flags ; the
+--                               difference flags in the probes (MSB)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -86,6 +90,7 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library asylum;
 use     asylum.PicoSoC_pkg.all;
+use     asylum.logic_pkg.all;
 use     asylum.jtag_pkg.all;
 use     asylum.techmap_pkg.all;
 
@@ -569,7 +574,13 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Debug : HWLA (logic analyzer) on the bus of the user CPU (cluster 0),
   -- in PicoSoC_hwla
-  -- * Trigger : a difference between the redundant CPUs (OR of diff)
+  -- * Trigger : the error injection that reaches the CPUs (the traps of
+  --   PicoSoC_inject of the copies present, buttons or TAP INJECT, with
+  --   USER_FAULT_INJECTION), on
+  --   the rising edge of the OR of the copies : one capture per injection,
+  --   in every safety configuration (SAFETY none too), even while a trap
+  --   stays set
+  -- * Probes : the buses of the user CPU and the difference flags (diff)
   -- * Captures sent byte per byte (tools/hwla2vcd.py of asylum-debug-hwla) :
   --   HWLA_LINK "uart" : on debug_uart_tx_o, UART HWLA_BAUD_RATE, 8 bits, no
   --   parity, 1 stop bit ; "jtag" : read by the debugger through the TAP of
@@ -582,10 +593,12 @@ begin  -- architecture rtl
   generate
     -- Probes, from the LSB : data bus (cs, re, we, ready, address, write
     -- data, read data), then instruction bus (fetch strobe ics, address,
-    -- instruction).
+    -- instruction), then the difference flags (diff : CPU0 vs CPU1, CPU1 vs
+    -- CPU2, CPU2 vs CPU0).
     -- A signal : GHDL 6.0.0 (gcc) crashes on an expression actual of probe_i.
     -- One term per field ('length does not exist on the std_logic fields)
-    signal   hwla_probe          : std_logic_vector(debug_user.cpu_idata 'length +
+    signal   hwla_probe          : std_logic_vector(diff'length +
+                                                    debug_user.cpu_idata 'length +
                                                     debug_user.cpu_iaddr 'length +
                                                     1 +                             -- cpu_ics
                                                     debug_user.cpu_drdata'length +
@@ -596,11 +609,18 @@ begin  -- architecture rtl
                                                     1 +                             -- cpu_dre
                                                     1                               -- cpu_dcs
                                                     -1 downto 0);
+    -- Copies of the user CPU (USER_SAFETY) : a trap of an absent copy
+    -- reaches no CPU
+    constant HWLA_NB_COPIES      : positive := mux2(USER_SAFETY = "tmr", 3, mux2(USER_SAFETY = "lock-step", 2, 1));
+    signal   hwla_inject_copy    : std_logic_vector(3-1 downto 0);  -- Error injected in each copy present
+    signal   hwla_inject         : std_logic;  -- An error injected in a copy (trap set)
+    signal   hwla_inject_r       : std_logic;
     signal   hwla_trigger        : std_logic;
     signal   hwla_jtag_ini       : jtag_ini_t;
     signal   hwla_jtag_tgt       : jtag_tgt_t;
   begin
-    hwla_probe   <= debug_user.cpu_idata
+    hwla_probe   <= diff
+                  & debug_user.cpu_idata
                   & debug_user.cpu_iaddr
                   & debug_user.cpu_ics
                   & debug_user.cpu_drdata
@@ -611,8 +631,27 @@ begin  -- architecture rtl
                   & debug_user.cpu_dre
                   & debug_user.cpu_dcs;
 
-    hwla_trigger <= '1' when diff /= "000" else
+    gen_hwla_inject: for i in 0 to 3-1
+    generate
+      hwla_inject_copy(i) <= inject_error(i) when i < HWLA_NB_COPIES else
+                             '0';
+    end generate gen_hwla_inject;
+
+    hwla_inject  <= '1' when USER_FAULT_INJECTION and hwla_inject_copy /= "000" else
                     '0';
+
+    process (clk, arst_b_supervisor) is
+    begin
+      if arst_b_supervisor = '0'
+      then
+        hwla_inject_r <= '0';
+      elsif rising_edge(clk)
+      then
+        hwla_inject_r <= hwla_inject;
+      end if;
+    end process;
+
+    hwla_trigger <= hwla_inject and not hwla_inject_r;
 
     hwla_jtag_ini <= (tck => jtag_ini.tck, trst_n => jtag_ini.trst_n, tms => jtag_ini.tms, tdi => jtag_chain(2).tdo);
     jtag_chain(3) <= (tdo => hwla_jtag_tgt.tdo, tdo_en => hwla_jtag_tgt.tdo_en or jtag_chain(2).tdo_en);

@@ -45,6 +45,8 @@
 --                               through the TAP of jtag_axis, HWLA_LINK "jtag")
 -- 2026-11-27  1.15     mrosiere sequence (firmware user_loop : the xorwow
 --                               lines, LED0 = switches)
+-- 2026-11-27  1.16     mrosiere hwla, hwla_tap : HWLA triggered by the
+--                               error injection (button, TAP), every safety
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -73,7 +75,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_lock_step,fault_tmr,fault_diff,hwla,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_lock_step,fault_tmr,fault_diff,hwla,hwla_tap,hello,pad_mux,jtag_chain,jtag_inject,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,user_loop,hello," & C_INTEGRATION;
@@ -145,7 +147,8 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "fault_lock_step") then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
     elsif string_eq(name, "fault_tmr"      ) then return C_USER and supervisor and fault and string_eq(safety, "tmr");
     elsif string_eq(name, "fault_diff"     ) then return C_USER and not supervisor and fault and not string_eq(safety, "none");
-    elsif string_eq(name, "hwla"           ) then return C_USER and not supervisor and fault and not string_eq(safety, "none") and debug;
+    elsif string_eq(name, "hwla"           ) then return C_USER and not supervisor and fault and debug;
+    elsif string_eq(name, "hwla_tap"       ) then return C_USER and not supervisor and fault and debug;
     elsif string_eq(name, "hello"          ) then return string_eq(firmware, "hello");
     elsif string_eq(name, "pad_mux"        ) then return C_UART;
     elsif string_eq(name, "jtag_chain"     ) then return C_USER and jtag.nb_tap > 0;
@@ -226,7 +229,10 @@ package body tb_PicoSoC_tests_pkg is
       work.tb_PicoSoC_fault_diff_pkg.run(cfg, clk, switch, inject, led0, led_diff);
     elsif string_eq(name, "hwla")
     then
-      work.tb_PicoSoC_hwla_pkg.run(cfg, clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);
+      work.tb_PicoSoC_hwla_pkg.run(cfg, false, clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);
+    elsif string_eq(name, "hwla_tap")
+    then
+      work.tb_PicoSoC_hwla_pkg.run(cfg, true , clk, switch, mux_sel, inject, led0, led_diff, debug_tx, jtag_if, rom_addr, rom_data);
     elsif string_eq(name, "pad_mux")
     then
       work.tb_PicoSoC_pad_mux_pkg.run(cfg, clk, switch, mux_sel, inject, led0, uart_rx, uart_tx, cts_b, cts_pad, rts_pad, jtag_if, debug_tx);

@@ -46,6 +46,7 @@
 --                               no longer held until the difference flag
 -- 2026-11-27  1.6      mrosiere Flags of the HWLA above the resets ; capture
 --                               read through jtag_axis (HWLA_LINK "jtag")
+-- 2026-11-27  1.7      mrosiere Capture : the difference flags in the probes
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -107,8 +108,9 @@ package body tb_PicoSoC_jtag_status_pkg is
     constant C_ARMED   : std_logic_vector(4-1 downto 0) := "0011";  -- armed, waiting for the trigger
     constant C_SENDING : std_logic_vector(4-1 downto 0) := "1101";  -- triggered, capture being sent
     -- Bytes of a capture of the HWLA : HWLA_DEPTH samples of the probes of
-    -- PicoSoC_top and the timestamp
-    constant C_NB_PROBE: positive := 4 + 3*8 + 1 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH;
+    -- PicoSoC_top (the buses of the user CPU, the difference flags) and the
+    -- timestamp
+    constant C_NB_PROBE: positive := 4 + 3*8 + 1 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH + 3;
     constant C_BYTES   : positive := cfg.hwla_depth * ((C_NB_PROBE + cfg.hwla_ts_width + 7) / 8);
     variable v_word    : std_logic_vector(8 downto 0);  -- {word, valid} of jtag_axis
     variable v_count   : natural;

@@ -60,6 +60,7 @@
 --                               PICOSOC_CHAIN
 -- 2026-11-27  1.5      mrosiere HWLA_LINK : TAP of the HWLA captures in
 --                               PICOSOC_CHAIN, PICOSOC_HWLA_BYTES
+-- 2026-11-27  1.6      mrosiere HWLA : the difference flags in the probes
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -142,11 +143,12 @@ architecture tb of tb_PicoSoC_openocd is
 
   -- HWLA of the DUT : default generics of PicoSoC_top ; probes of
   -- PicoSoC_top (data bus : 4 strobes, address, write and read data ; fetch
-  -- strobe, instruction address and instruction), changes only, 8-bit beats
+  -- strobe, instruction address and instruction ; the 3 difference flags),
+  -- changes only, 8-bit beats
   constant C_HWLA_DEPTH     : positive  := 64;
   constant C_HWLA_PRE       : natural   := 32;
   constant C_HWLA_TS_WIDTH  : natural   := 16;
-  constant C_HWLA_NB_PROBE  : positive  := 4 + 3*8 + 1 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH;
+  constant C_HWLA_NB_PROBE  : positive  := 4 + 3*8 + 1 + ROM_user_ADDR_WIDTH + ROM_user_DATA_WIDTH + 3;
   constant C_HWLA_BYTES     : positive  := C_HWLA_DEPTH * ((C_HWLA_NB_PROBE + C_HWLA_TS_WIDTH + 7) / 8);
 
   -- Switches copied to LED0 by the firmware, before and after OpenOCD

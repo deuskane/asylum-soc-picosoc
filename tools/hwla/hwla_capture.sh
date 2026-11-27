@@ -16,9 +16,10 @@
 #                     NG-MEDIUM targets)
 #                -o : output file (default capture.bin, appended : remove it
 #                     for a new capture)
-#                -s : bytes of a capture (default 704 : HWLA_DEPTH 64
-#                     samples x 11 bytes, WardRV_fsm with the 16-bit
-#                     timestamp ; OpenBlaze8 : 64 x 10 = 640)
+#                -s : bytes of a capture (default 12288 : HWLA_DEPTH 1024
+#                     samples x 12 bytes, WardRV_fsm with the 16-bit
+#                     timestamp, the NG-MEDIUM targets ; OpenBlaze8 :
+#                     1024 x 10 = 10240)
 #                -n : stop after this number of complete captures (default 0 :
 #                     Ctrl-C to stop)
 #              Board : switches S5 S6 = 01 (UART of the HWLA on the UART pads,
@@ -37,6 +38,8 @@
 # 2026-11-27  1.0      mrosiere Created
 # 2026-11-27  1.1      mrosiere Hint : hwla/hwla2vcd.py and hwla/hwla_<cpu>.args
 #                               of the build directory of the target
+# 2026-11-27  1.2      mrosiere Default size 12288 (HWLA_DEPTH 1024 of the
+#                               NG-MEDIUM targets, 74 probes of WardRV_fsm)
 #-----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -56,7 +59,7 @@ error()
 DEV=/dev/ttyUSB0
 BAUD=9600
 OUT=capture.bin
-SIZE=704
+SIZE=12288
 NB=0
 while getopts "d:b:o:s:n:h" opt
 do
