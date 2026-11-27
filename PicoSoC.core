@@ -223,6 +223,22 @@ CAPI=2:
 #                               picosoc_inject_cpu : mask of 4 bits ; tb :
 #                               sim_tap_inject_cpu (12 bits), jtag_inject_cpu (HWLA
 #                               triggered by the bit 3) ; README : Resources
+# 2026-11-27  4.8.5    mrosiere Student branch (ESIEE SEI-5201A labs) :
+#                               cpu_safety : SAFETY = "none" only,
+#                               lock-step and TMR are holes to write ;
+#                               configurations in the order of the labs :
+#                               soc1 = WardRV_fsm, supervisor, SAFETY none,
+#                               fault injection (the reference), soc2 = soc1
+#                               with lock-step, soc3 = soc1 with TMR (holes :
+#                               _sim_ / _emu_ targets) ; integration tests
+#                               sim_soc1_wardrv_fsm_fault_c_test_<ip>,
+#                               OpenOCD co-simulations in soc1, HWLA
+#                               scenarios and co-simulation on soc2 ;
+#                               scenario fault_none (an error in the only
+#                               CPU : the firmware derails, the supervisor
+#                               sees nothing) ; lint_*, syn_*, multi-CPU,
+#                               Modbus RTU, identity and the other targets
+#                               of main removed
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.5
@@ -233,249 +249,6 @@ generate:
 #=========================================
   # Next line is a pragma, don't modify
   #<GENERATE_BEGIN>
-  gen_picoblaze3_user_asm_identity:
-    generator : pbcc_gen
-    parameters:
-      file         : esw/demo/user_identity.psm
-      type         : pblazeide
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
-      logical_name : asylum
-      
-  gen_picoblaze3_user_c_identity_inverted:
-    generator : pbcc_gen
-    parameters:
-      file         : esw/demo/user_identity.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DINVERT_SWITCH
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_identity:
-    generator : pbcc_gen
-    parameters:
-      file         : esw/demo/user_identity.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
-      logical_name : asylum
-
-  gen_picoblaze3_user_c :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_921600 :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_9600 :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_9600_spi :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_921600_spi :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_921600_spi_mem :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
-      logical_name : asylum
-
-  gen_picoblaze3_user_c_uart_9600_spi_mem :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
-      logical_name : asylum
-
-  gen_picoblaze3_user_modbus_rtu_921600 :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/protocol/user_modbus_rtu.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_modbus_rtu_9600 :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/protocol/user_modbus_rtu.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_gpio :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_gpio.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_uart :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_uart.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_spi :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_spi.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_timer :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_timer.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_crc :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_crc.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_spinlock :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_spinlock.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_gic :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_gic.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_mailbox :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_mailbox.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_i2c :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_i2c.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_user_test_pwm :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/test/test_pwm.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_picoblaze3_supervisor_c :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/system/supervisor.c
-      type         : c
-      entity       : ROM_supervisor
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
-      logical_name : asylum
-
-  gen_picoblaze3_supervisor_c_tmr :
-    generator : pbcc_gen
-    parameters :
-      file         : esw/system/supervisor.c
-      type         : c
-      entity       : ROM_supervisor
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves -DSAFETY_TMR
-      logical_name : asylum
-
-  gen_picoblaze3_supervisor_c_dummy :
-    generator  : pbcc_gen
-    parameters :
-      file         : esw/system/dummy.c
-      type         : c
-      entity       : ROM_supervisor
-      cflags       : -Dpicoblaze -Iesw/include --verbose --all-callee-saves
-      logical_name : asylum
-
-  gen_rv32i_user_c_identity_inverted:
-    generator : rvcc_gen
-    parameters:
-      file         : esw/demo/user_identity.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DINVERT_SWITCH
-      logical_name : asylum
-
-  gen_rv32i_user_c_identity:
-    generator : rvcc_gen
-    parameters:
-      file         : esw/demo/user_identity.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose
-      logical_name : asylum
-
   gen_rv32i_user_c :
     generator : rvcc_gen
     parameters :
@@ -485,94 +258,13 @@ generate:
       cflags       : -Iesw/include --verbose
       logical_name : asylum
 
-  gen_rv32i_user_loop :
+  gen_rv32i_user_c_uart_9600 :
     generator : rvcc_gen
     parameters :
-      file         : esw/demo/user_loop.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_rv32i_user_loop_9600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user_loop.c
+      file         : esw/demo/user.c
       type         : c
       entity       : ROM_user
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600
-      logical_name : asylum
-
-  gen_rv32i_user_c_uart_921600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_rv32i_user_c_uart_9600_spi :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI
-      logical_name : asylum
-
-  gen_rv32i_user_c_uart_921600_spi :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI
-      logical_name : asylum
-
-  gen_rv32i_user_c_uart_921600_spi_mem :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600 -DHAVE_SPI -DHAVE_SPI_MEMORY
-      logical_name : asylum
-
-  gen_rv32i_user_c_uart_9600_spi_mem :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600 -DHAVE_SPI -DHAVE_SPI_MEMORY
-      logical_name : asylum
-
-  gen_rv32i_user_modbus_rtu_921600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/protocol/user_modbus_rtu.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
-  gen_rv32i_user_modbus_rtu_9600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/protocol/user_modbus_rtu.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=6250000 -DBAUD_RATE=9600
-      logical_name : asylum
-
-  gen_rv32i_user_hello_921600 :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/demo/user_hello.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
   gen_rv32i_user_test_gpio :
@@ -647,15 +339,6 @@ generate:
       cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
       logical_name : asylum
 
-  gen_rv32i_user_test_mailbox :
-    generator : rvcc_gen
-    parameters :
-      file         : esw/test/test_mailbox.c
-      type         : c
-      entity       : ROM_user
-      cflags       : -Iesw/include --verbose -DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=921600
-      logical_name : asylum
-
   gen_rv32i_user_test_i2c :
     generator : rvcc_gen
     parameters :
@@ -690,15 +373,6 @@ generate:
       type         : c
       entity       : ROM_supervisor
       cflags       : -Iesw/include --verbose -DSAFETY_TMR
-      logical_name : asylum
-
-  gen_rv32i_supervisor_c_dummy :
-    generator  : rvcc_gen
-    parameters :
-      file         : esw/system/dummy.c
-      type         : c
-      entity       : ROM_supervisor
-      cflags       : -Iesw/include --verbose
       logical_name : asylum
 
   #<GENERATE_END>
@@ -767,6 +441,7 @@ filesets:
       - sim/picosoc/tb_PicoSoC_it_user_pkg.vhd
       - sim/picosoc/tb_PicoSoC_uart_pkg.vhd
       - sim/picosoc/tb_PicoSoC_sequence_pkg.vhd
+      - sim/picosoc/tb_PicoSoC_fault_none_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_lock_step_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_tmr_pkg.vhd
       - sim/picosoc/tb_PicoSoC_fault_diff_pkg.vhd
@@ -796,8 +471,6 @@ filesets:
       - sim/picosoc/tb_PicoSoC_test_pwm_pkg.vhd
       - sim/picosoc/tb_PicoSoC_tests_pkg.vhd
       - sim/picosoc/tb_PicoSoC.vhd
-      - sim/tap/tb_PicoSoC_tap_pkg.vhd
-      - sim/tap/tb_PicoSoC_tap.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_bfm_pkg.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_basic_pkg.vhd
       - sim/modbus_rtu/tb_PicoSoC_modbus_rtu_fault_lock_step_pkg.vhd
@@ -852,20 +525,6 @@ filesets:
       - boards/NanoXplore-DK625V0/features.py: {file_type : nx_features}
     file_type : vhdlSource
 
-  #---------------------------------------
-  syn:
-  #---------------------------------------
-    # ghdl_synth.sh / ghdl_synth.mk (pre_run hook of lint_ghdl_synth_*)
-    depend       :
-      - asylum:utils:ghdl_synth
-
-  #---------------------------------------
-  syn_yosys:
-  #---------------------------------------
-    # yosys_synth.sh / yosys_synth.mk / yosys_synth.py (pre_run hook of syn_*)
-    depend       :
-      - asylum:utils:yosys_synth
-
   # Next line is a pragma, don't modify
   #<FILESETS_BEGIN>
   #<FILESETS_END>
@@ -874,12 +533,24 @@ filesets:
 #=========================================
 targets:
 #=========================================
+  # Student branch (ESIEE SEI-5201A labs) : the configurations are numbered
+  # in the order of the labs (they differ from main) :
+  #  * soc1 : WardRV_fsm, supervisor, SAFETY none, fault injection (the
+  #    reference SoC). One CPU, nothing to compare it with : an error
+  #    injected by inject_error_i(0) derails the firmware and the supervisor
+  #    sees nothing (scenario fault_none) ;
+  #  * soc2 : soc1 with the lock-step of cpu_safety (to write) ;
+  #  * soc3 : soc1 with the TMR of cpu_safety (to write).
+  # The soc2 / soc3 targets fail on the assertion of cpu_safety until the
+  # students write it : leading '_', no CI job, not in nonreg, run by hand
+  # (make _sim_soc2_wardrv_fsm_fault_c_user).
+  #
   # Configurations : the parameters of a configuration (DUT and board) are
   # anchored on its first target (parameters : &cfg_<config>), the other
   # targets of the configuration reuse them (parameters : *cfg_<config>) and
   # add their own (test bench, firmware, scenarios) with parameters_append.
   # parameters_append is added to the inherited one (<<) : the last value of
-  # a parameter wins (TESTS_LIST of a target sim_<config>_<test>)
+  # a parameter wins (USER_SAFETY of the soc2 / soc3 targets)
 
   #---------------------------------------
   default: &default
@@ -891,281 +562,6 @@ targets:
     default_tool    : ghdl
 
   #---------------------------------------
-  # Lint : -Wall analysis and elaboration (empty simulation)
-  # Firmware : user_identity.c and dummy.c (OpenBlaze8, pbcc_gen)
-  #---------------------------------------
-  lint_ghdl : &lint_ghdl
-    << : *default
-    description     : Lint with GHDL (-Wall analysis and elaboration of PicoSoC_top)
-    toplevel        : asylum.PicoSoC_top
-    filesets_append : [pbcc_dep,syn]
-    generate        : [gen_picoblaze3_user_c_identity,gen_picoblaze3_supervisor_c_dummy]
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed"]
-
-  #---------------------------------------
-  # Synthesis check : -Wall analysis, ghdl --synth -Wall and elaboration
-  # (no simulation) of PicoSoC_top with the generics of the target.
-  # The pre_run hook (ghdl_synth.sh of asylum:utils:ghdl_synth) adds
-  # ghdl_synth.mk to the edalize Makefile.
-  # FuseSoC merges tools in depth : analyze_options comes from lint_ghdl.
-  # OpenBlaze8 : firmware of lint_ghdl (pbcc_gen)
-  #---------------------------------------
-  lint_ghdl_synth_default : &lint_ghdl_synth
-    << : *lint_ghdl
-    description     : Synthesis check of PicoSoC_top, OpenBlaze8, default generics
-    tools :
-      ghdl :
-        run_options     : ["--no-run"]
-    hooks :
-      pre_run : [ghdl_synth]
-
-  #---------------------------------------
-  lint_ghdl_synth_soc1 :
-  #---------------------------------------
-    << : *lint_ghdl_synth
-    description     : Synthesis check of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
-    parameters      :
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  lint_ghdl_synth_soc4_ng_medium :
-  #---------------------------------------
-    << : *lint_ghdl_synth
-    description     : Synthesis check of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics
-    parameters      :
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=false
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
-  lint_ghdl_synth_4leds_reset_high :
-  #---------------------------------------
-    << : *lint_ghdl_synth
-    description     : Synthesis check of PicoSoC_top, OpenBlaze8, 4 + 1 LEDs and reset active high
-    parameters      :
-      - USER_NB_LED0=4
-      - USER_NB_LED1=1
-      - RESET_POLARITY=high
-
-  #---------------------------------------
-  # WardRV_fsm : the firmware ROMs depend on the CPU (rvcc_gen)
-  #---------------------------------------
-  lint_ghdl_synth_wardrv_soc1 : &lint_ghdl_synth_wardrv
-    << : *lint_ghdl_synth
-    description     : Synthesis check of PicoSoC_top, WardRV_fsm, soc1 (no supervisor, no safety)
-    generate        : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  lint_ghdl_synth_wardrv_soc4_ng_medium :
-  #---------------------------------------
-    << : *lint_ghdl_synth_wardrv
-    description     : Synthesis check of PicoSoC_top, WardRV_fsm, soc4 (supervisor, TMR) with the NG-MEDIUM generics
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=false
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
-  lint_ghdl_synth_wardrv_soc4_ng_medium_debug :
-  #---------------------------------------
-    << : *lint_ghdl_synth_wardrv
-    description     : Synthesis check of PicoSoC_top, WardRV_fsm, soc4 (supervisor, TMR) with the NG-MEDIUM generics, HWLA, JTAG injection / status TAP and both CPU debuggers
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=true
-      - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
-  lint_ghdl_synth_wardrv_soc1x4 :
-  #---------------------------------------
-    << : *lint_ghdl_synth_wardrv
-    description     : Synthesis check of PicoSoC_top, WardRV_fsm, soc1 with 4 user CPUs
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      - DEBUG_ENABLE=false
-      - USER_NB_CPU=4
-
-  #---------------------------------------
-  # Synthesis : size of PicoSoC_top with the generics of the target,
-  # Xilinx Artix-7 (LUT, FF, BRAM, DSP) and sky130 (area), by Yosys and
-  # its GHDL plugin. Two configurations of each lint_ghdl_synth_* CPU :
-  # the smallest SoC (soc1) and the NG-MEDIUM board SoC (soc4 : supervisor,
-  # TMR). The user ROM holds the firmware of lint_ghdl (user_identity.c).
-  # The pre_run hook (yosys_synth.sh of asylum:utils:yosys_synth) adds
-  # yosys_synth.mk to the edalize Makefile.
-  #---------------------------------------
-  syn_soc1 : &syn
-    << : *lint_ghdl
-    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc1 (no supervisor, no safety)
-    filesets_append : [pbcc_dep, syn, syn_yosys]
-    tools :
-      ghdl :
-        run_options     : ["--no-run"]
-    hooks :
-      pre_run : [yosys_synth]
-    parameters      :
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  syn_soc4_ng_medium :
-  #---------------------------------------
-    << : *syn
-    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, OpenBlaze8, soc4 (supervisor, TMR) with the NG-MEDIUM generics
-    parameters      :
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=false
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
-  syn_wardrv_soc1 : &syn_wardrv
-  #---------------------------------------
-    << : *syn
-    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc1 (no supervisor, no safety)
-    generate        : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  syn_wardrv_soc4_ng_medium :
-  #---------------------------------------
-    << : *syn_wardrv
-    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc4 (supervisor, TMR) with the NG-MEDIUM generics
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=false
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
-  syn_wardrv_soc4_ng_medium_debug :
-  #---------------------------------------
-    << : *syn_wardrv
-    description     : Synthesis (Artix-7, sky130) of PicoSoC_top, WardRV_fsm, soc4 (supervisor, TMR) with the NG-MEDIUM generics, HWLA, JTAG injection / status TAP and both CPU debuggers
-    parameters      :
-      - CPU_MODEL=WardRV_fsm
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      - DEBUG_ENABLE=true
-      - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-
-  #---------------------------------------
   sim: &sim
   #---------------------------------------
     << : *default
@@ -1173,7 +569,7 @@ targets:
     default_tool    : ghdl
     toplevel        : tb_PicoSoC
     parameters   :
-      - CPU_MODEL=OpenBlaze8
+      - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
     filesets_append :
@@ -1185,588 +581,23 @@ targets:
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
-  emu_ng_medium_soc4_openblaze8_fault_spi: &emu_ng_medium_default
+  # soc1 : the scenarios of esw/demo/user.c, one target each
+  # (sim_soc1_wardrv_fsm_fault_c_user_<test>)
   #---------------------------------------
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c (SPI)          - With    Supervisor, Safety TMR      , With    Fault Injection
-    default_tool      : nxmap
-    filesets          :
-      - files_hdl
-      - files_ng_medium 
-      - pbcc_dep
-    generate          : [gen_picoblaze3_user_c_uart_9600_spi,gen_picoblaze3_supervisor_c_tmr]
-    parameters        : &cfg_ng_medium_openblaze8
-      - CPU_MODEL=OpenBlaze8
+  sim_soc1_wardrv_fsm_fault_c_user: &sim_soc1_wardrv_fsm_fault_c_user
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, build check (one scenario per target sim_soc1_wardrv_fsm_fault_c_user_<test>)
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    parameters        : &cfg_soc1_wardrv_fsm_fault
+      - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_NB_LED0=8
-      - USER_NB_LED1=8
-      - RESET_POLARITY=low
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
       # SoC User Configuration
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-    parameters_append :
+      - USER_BAUD_RATE=921600
       # Platform Configuration
       - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-    flags             :
-      TARGET  : NANOXPLORE_NG_MEDIUM
-    tools             :
-      nxmap:
-        fpga         : NG-MEDIUM
-        program      : True
-        logical_name : asylum
-    toplevel          : PicoSoC_top
-
-  #---------------------------------------
-  emu_ng_medium_soc1_openblaze8:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_9600_spi_mem,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_openblaze8
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
       - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc1_openblaze8_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : &cfg_ng_medium_openblaze8_modbus_rtu
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=6250000
-      - USER_NB_SWITCH=4
-      - USER_NB_LED0=8
-      - USER_NB_LED1=8
-      - RESET_POLARITY=low
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
-      # SoC User Configuration
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_openblaze8:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_openblaze8
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_openblaze8_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_openblaze8_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety Lock Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c]
-    parameters        : *cfg_ng_medium_openblaze8
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_openblaze8_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc3_openblaze8_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c]
-    parameters        : *cfg_ng_medium_openblaze8
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc3_openblaze8_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c]
-    parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc4_openblaze8_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_9600,gen_picoblaze3_supervisor_c_tmr]
-    parameters        : *cfg_ng_medium_openblaze8
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc4_openblaze8_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_9600,gen_picoblaze3_supervisor_c_tmr]
-    parameters        : *cfg_ng_medium_openblaze8_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-      
-  #---------------------------------------
-  sim_soc1_openblaze8_asm_identity:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user_identity.psm
-    generate          : [gen_picoblaze3_user_asm_identity,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : &cfg_soc1_openblaze8
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=20000
-      - SPI_MODEL=none
-      - FIRMWARE=identity
-      - TESTS_LIST=switch
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_identity:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user_identity.c, SoC clock = clk_i (no division)
-    generate     : [gen_picoblaze3_user_c_identity,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=25000000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=20000
-      - SPI_MODEL=none
-      - FIRMWARE=identity
-      - TESTS_LIST=switch
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=20000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_user_uart:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_user_uart_spi:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_921600_spi,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart_spi
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_user_uart_spi_mem:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_921600_spi_mem,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=m25p40
-      - FIRMWARE=user_uart_spi_mem
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_dummy]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TESTS_LIST=basic,sequence
-
-  #---------------------------------------
-  sim_soc2_openblaze8_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : &cfg_soc2_openblaze8
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection
-    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_diff
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_hwla: &sim_soc2_openblaze8_fault_c_user_hwla
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : &cfg_soc2_openblaze8_fault_hwla
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=2304000
-      - FSYS_INT=1152000
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_DEPTH=512
-      - HWLA_PRE_TRIGGER=384
-      - HWLA_TIMESTAMP_WIDTH=16
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_hwla_tap:
-  #---------------------------------------
-    << : *sim_soc2_openblaze8_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla_tap
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_hwla_jtag:
-  #---------------------------------------
-    << : *sim_soc2_openblaze8_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - HWLA_LINK=jtag
-      - TESTS_LIST=hwla
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_hwla_jtag_tap:
-  #---------------------------------------
-    << : *sim_soc2_openblaze8_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - HWLA_LINK=jtag
-      - TESTS_LIST=hwla_tap
-
-  #---------------------------------------
-  sim_soc2_openblaze8_fault_c_user_uart_jtag:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c (UART)         - Without Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG over the UART pads (115200 baud)
-    generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-
-      # Debug
-      - DEBUG_ENABLE=true
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=pad_mux,jtag_chain,jtag_inject,jtag_status,bitbang_chain
-
-  #---------------------------------------
-  sim_soc2_openblaze8_c_user_uart:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc2_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc2_openblaze8_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_dummy]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc2_openblaze8
-    parameters_append :
-      - TESTS_LIST=basic,sequence
-
-  #---------------------------------------
-  sim_soc3_openblaze8_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c]
-    parameters        : &cfg_soc3_openblaze8
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user
-
-  #---------------------------------------
-  sim_soc3_openblaze8_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc3_openblaze8
-    parameters_append :
-      - TESTS_LIST=basic,sequence
-
-  #---------------------------------------
-  sim_soc3_openblaze8_fault_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c]
-    parameters        : &cfg_soc3_openblaze8_fault
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_lock_step
-
-  #---------------------------------------
-  sim_soc3_openblaze8_fault_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc3_openblaze8_fault
-    parameters_append :
-      - TESTS_LIST=basic,fault_lock_step,sequence
-
-  #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user: &sim_soc4_openblaze8_fault_c_user
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_<test>)
-    generate          : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_tmr]
-    parameters        : &cfg_soc4_openblaze8_fault
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
       - USER_FAULT_INJECTION=true
       # Debug
       - DEBUG_ENABLE=false
@@ -1777,850 +608,210 @@ targets:
       - TESTS_LIST
 
   #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_switch:
+  sim_soc1_wardrv_fsm_fault_c_user_switch:
   #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario switch
+    << : *sim_soc1_wardrv_fsm_fault_c_user
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario switch
     parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
       - TESTS_LIST=switch
 
   #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_it_user:
+  sim_soc1_wardrv_fsm_fault_c_user_it_user:
   #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario it_user
+    << : *sim_soc1_wardrv_fsm_fault_c_user
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario it_user
     parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
       - TESTS_LIST=it_user
 
   #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_fault_tmr:
+  sim_soc1_wardrv_fsm_fault_c_user_fault_none:
   #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
-    parameters_append :
-      - TESTS_LIST=fault_tmr
-
-  #---------------------------------------
-  sim_soc4_openblaze8_c_user_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , Without Fault Injection
-    generate     : [gen_picoblaze3_user_c_uart_921600,gen_picoblaze3_supervisor_c_tmr]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu: &sim_soc4_openblaze8_fault_c_user_modbus_rtu
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, build check (one scenario per target sim_soc4_openblaze8_fault_c_user_modbus_rtu_<test>)
-    generate          : [gen_picoblaze3_user_modbus_rtu_921600,gen_picoblaze3_supervisor_c_tmr]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc4_openblaze8_fault
-    parameters_append :
-      - TESTS_LIST
-
-  #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic:
-  #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario basic
-    parameters_append :
-      - TESTS_LIST=basic
-
-  #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr:
-  #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario fault_tmr
-    parameters_append :
-      - TESTS_LIST=fault_tmr
-
-  #---------------------------------------
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence:
-  #---------------------------------------
-    << : *sim_soc4_openblaze8_fault_c_user_modbus_rtu
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, scenario sequence
-    parameters_append :
-      - TESTS_LIST=sequence
-
-  #---------------------------------------
-  emu_ng_medium_soc4_wardrv_fsm_fault_spi:
-  #---------------------------------------
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c (SPI)          - With    Supervisor, Safety TMR      , With    Fault Injection
-    default_tool      : nxmap
-    filesets          :
-      - files_hdl
-      - files_ng_medium 
-      - pbcc_dep
-    generate          : [gen_rv32i_user_c_uart_9600_spi,gen_rv32i_supervisor_c_tmr]
-    parameters        : &cfg_ng_medium_wardrv_fsm
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_SWITCH=4
-      - USER_NB_LED0=8
-      - USER_NB_LED1=8
-      - RESET_POLARITY=low
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
-      # SoC User Configuration
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-    flags             :
-      TARGET  : NANOXPLORE_NG_MEDIUM
-    tools             :
-      nxmap:
-        fpga         : NG-MEDIUM
-        program      : True
-        logical_name : asylum
-    toplevel          : PicoSoC_top
-
-  #---------------------------------------
-  emu_ng_medium_soc1_wardrv_fsm:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, debugger of the user CPU in the JTAG chain (UART pads, debug_mux_sel_i 10)
-    generate          : [gen_rv32i_user_c_uart_9600_spi_mem,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-      - USER_CPU_DEBUG_ENABLE=true
-
-  #---------------------------------------
-  emu_ng_medium_soc1_wardrv_fsm_user_loop:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc1_wardrv_fsm_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_ng_medium_wardrv_fsm_modbus_rtu
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=6250000
-      - USER_NB_SWITCH=4
-      - USER_NB_LED0=8
-      - USER_NB_LED1=8
-      - RESET_POLARITY=low
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
-      # SoC User Configuration
-      - USER_BAUD_RATE=9600
-      - HWLA_BAUD_RATE=9600
-      - HWLA_DEPTH=1024
-      - HWLA_PRE_TRIGGER=16
-      - JTAG_BAUD_RATE=9600
-      - USER_UART_DEPTH_TX=4
-      - USER_UART_DEPTH_RX=4
-      - USER_SPI_DEPTH_CMD=4
-      - USER_SPI_DEPTH_TX=4
-      - USER_SPI_DEPTH_RX=4
-      - USER_SPI_NB_IO=2
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_wardrv_fsm:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety Lock Step, Without Fault Injection
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_wardrv_fsm_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_wardrv_fsm_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - Without Supervisor, Safety Lock Step, With    Fault Injection
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc2_wardrv_fsm_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc3_wardrv_fsm_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc3_wardrv_fsm_fault_debug:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the error injection, captures on debug_uart_tx_o and the UART pads in mode 01), JTAG chain of 3 TAPs (injection / status, supervisor CPU, user CPU)
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
-
-  #---------------------------------------
-  emu_ng_medium_soc3_wardrv_fsm_fault_debug_hwla_jtag:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the error injection, captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg), JTAG chain of 4 TAPs (injection / status, HWLA jtag_axis, supervisor CPU, user CPU)
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_LINK=jtag
-      - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
-
-  #---------------------------------------
-  emu_ng_medium_soc3_wardrv_fsm_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc4_wardrv_fsm_fault:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user_loop.c           - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate          : [gen_rv32i_user_loop_9600,gen_rv32i_supervisor_c_tmr]
-    parameters        : *cfg_ng_medium_wardrv_fsm
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-
-  #---------------------------------------
-  emu_ng_medium_soc4_wardrv_fsm_fault_modbus_rtu:
-  #---------------------------------------
-    << : *emu_ng_medium_default
-    description       : NanoXplore NG_MEDIUM Board of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_9600,gen_rv32i_supervisor_c_tmr]
-    parameters        : *cfg_ng_medium_wardrv_fsm_modbus_rtu
-    parameters_append :
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=false
-      
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_identity:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user_identity.c
-    generate          : [gen_rv32i_user_c_identity,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_soc1_wardrv_fsm
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=20000
-      - SPI_MODEL=none
-      - FIRMWARE=identity
-      - TESTS_LIST=switch
-
-  #---------------------------------------
-  # Testbench of the injection / status TAP alone (PicoSoC_tap) : INJECT,
-  # [2:0] outside the CPUs (a level), [7:4], [11:8], [15:12] inside the CPU
-  # copy 0, 1, 2 (a pulse per 0 -> 1). The ROMs of the generators are only compiled (PicoSoC_pkg
-  # uses ROM_user_pkg)
-  #---------------------------------------
-  sim_tap: &sim_tap
-  #---------------------------------------
-    << : *sim
-    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, build check (one scenario per target sim_tap_<test>)
-    toplevel          : tb_PicoSoC_tap
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters        :
-      - TESTS_LIST
-
-  #---------------------------------------
-  sim_tap_inject:
-  #---------------------------------------
-    << : *sim_tap
-    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject (INJECT [2:0], the injection outside the CPUs, a level)
-    parameters        :
-      - TESTS_LIST=inject
-
-  #---------------------------------------
-  sim_tap_inject_cpu:
-  #---------------------------------------
-    << : *sim_tap
-    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject_cpu (INJECT [7:4] [11:8] [15:12], one pulse of one clock cycle per 0 -> 1 on the bit of the copy)
-    parameters        :
-      - TESTS_LIST=inject_cpu
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_loop:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user_loop.c           - Without Supervisor, Safety None     , Without Fault Injection, xorwow lines on the UART
-    generate          : [gen_rv32i_user_loop,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
+    << : *sim_soc1_wardrv_fsm_fault_c_user
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, scenario fault_none (an error in the only CPU, the firmware derails, the supervisor sees nothing)
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user_loop
-      - TESTS_LIST=sequence,switch
+      - FIRMWARE=user
+      - TESTS_LIST=fault_none
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_uart:
+  # Integration tests (esw/test/test_<ip>.c) in soc1 : the nonreg of the
+  # SoC when the CPU is modified
   #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, reset active high
-    generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - RESET_POLARITY=high
-      - TESTS_LIST=switch,it_user,uart
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_uart_spi:
+  sim_soc1_wardrv_fsm_fault_c_test_gpio:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_rv32i_user_c_uart_921600_spi,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
+    description       : Integration test esw/test/test_gpio.c - GPIO registers, LED and switch pins, edges polled
+    generate          : [gen_rv32i_user_test_gpio,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user_uart_spi
-      - TESTS_LIST=switch,it_user,uart
+      - FIRMWARE=test_gpio
+      - TESTS_LIST=test_gpio
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_uart_spi_mem:
+  sim_soc1_wardrv_fsm_fault_c_test_uart:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_rv32i_user_c_uart_921600_spi_mem,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
+    description       : Integration test esw/test/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
+    generate          : [gen_rv32i_user_test_uart,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
+    parameters_append :
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_uart
+      - TESTS_LIST=test_uart
+
+  #---------------------------------------
+  sim_soc1_wardrv_fsm_fault_c_test_spi:
+  #---------------------------------------
+    << : *sim
+    description       : Integration test esw/test/test_spi.c - SPI registers, SPI flash model (status, read, page program)
+    generate          : [gen_rv32i_user_test_spi,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=m25p40
-      - FIRMWARE=user_uart_spi_mem
-      - TESTS_LIST=switch,it_user,uart
+      - FIRMWARE=test_spi
+      - TESTS_LIST=test_spi
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety None     , Without Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TESTS_LIST=basic,sequence
-
-  #---------------------------------------
-  sim_soc1x2_wardrv_fsm_c_hello_uart:
+  sim_soc1_wardrv_fsm_fault_c_test_timer:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 2 CPUs
-    generate          : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel          : tb_PicoSoC
-    parameters        : &cfg_soc1x2_wardrv_fsm
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_NB_CPU=2
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=500000
-      - SPI_MODEL=none
-      - FIRMWARE=hello
-      - TESTS_LIST=hello
-
-  #---------------------------------------
-  sim_soc1x4_wardrv_fsm_c_hello_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 4 CPUs
-    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=4
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=500000
-      - SPI_MODEL=none
-      - FIRMWARE=hello
-      - TESTS_LIST=hello
-
-  #---------------------------------------
-  sim_soc1x6_wardrv_fsm_c_hello_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user_hello.c          - Without Supervisor, Safety None     , Without Fault Injection, 6 CPUs
-    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel     : tb_PicoSoC
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=6
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=500000
-      - SPI_MODEL=none
-      - FIRMWARE=hello
-      - TESTS_LIST=hello
-
-  #---------------------------------------
-  sim_soc3x2_wardrv_fsm_c_hello_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user_hello.c          - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs
-    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c]
-    toplevel     : tb_PicoSoC
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=2
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=500000
-      - SPI_MODEL=none
-      - FIRMWARE=hello
-      - TESTS_LIST=hello
-
-  #---------------------------------------
-  sim_soc4x2_wardrv_fsm_c_hello_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user_hello.c          - With    Supervisor, Safety TMR      , Without Fault Injection, 2 CPUs
-    generate     : [gen_rv32i_user_hello_921600,gen_rv32i_supervisor_c_tmr]
-    toplevel     : tb_PicoSoC
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=2
-      - USER_BAUD_RATE=921600
-      
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=500000
-      - SPI_MODEL=none
-      - FIRMWARE=hello
-      - TESTS_LIST=hello
-  #---------------------------------------
-  sim_soc2_wardrv_fsm_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_soc2_wardrv_fsm
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
+    description       : Integration test esw/test/test_timer.c - Timer registers, period and interrupt through the GIC
+    generate          : [gen_rv32i_user_test_timer,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user
+      - FIRMWARE=test_timer
+      - TESTS_LIST=test_timer
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_c_user_uart:
+  sim_soc1_wardrv_fsm_fault_c_test_crc:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc2_wardrv_fsm
+    description       : Integration test esw/test/test_crc.c - CRC registers, CRC16 Modbus of known vectors
+    generate          : [gen_rv32i_user_test_crc,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=switch,it_user,uart
+      - FIRMWARE=test_crc
+      - TESTS_LIST=test_crc
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_c_user_modbus_rtu:
+  sim_soc1_wardrv_fsm_fault_c_test_spinlock:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - Without Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_dummy]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc2_wardrv_fsm
+    description       : Integration test esw/test/test_spinlock.c - Spinlock registers, test-and-set and release
+    generate          : [gen_rv32i_user_test_spinlock,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
-      - TESTS_LIST=basic,sequence
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=test_spinlock
+      - TESTS_LIST=test_spinlock
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_hwla: &sim_soc2_wardrv_fsm_fault_c_user_hwla
+  sim_soc1_wardrv_fsm_fault_c_test_gic:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_soc2_wardrv_fsm_fault_hwla
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=2304000
-      - FSYS_INT=1152000
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_DEPTH=512
-      - HWLA_PRE_TRIGGER=384
-      - HWLA_TIMESTAMP_WIDTH=24
+    description       : Integration test esw/test/test_gic.c - GIC registers, it_user_i masked, pending and taken
+    generate          : [gen_rv32i_user_test_gic,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla
+      - FIRMWARE=test_gic
+      - TESTS_LIST=test_gic
 
   #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_tap:
-  #---------------------------------------
-    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla_tap
-
-  #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
-  #---------------------------------------
-    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the push button, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - HWLA_LINK=jtag
-      - TESTS_LIST=hwla
-
-  #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag_tap:
-  #---------------------------------------
-    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error injected by the TAP INJECT, read through the TAP of jtag_axis (HWLA_LINK jtag), HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - HWLA_LINK=jtag
-      - TESTS_LIST=hwla_tap
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_hwla: &sim_soc1_wardrv_fsm_fault_c_user_hwla
+  sim_soc1_wardrv_fsm_fault_c_test_ram:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_soc1_wardrv_fsm_fault_hwla
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=2304000
-      - FSYS_INT=1152000
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_DEPTH=512
-      - HWLA_PRE_TRIGGER=384
-      - HWLA_TIMESTAMP_WIDTH=24
+    description       : Integration test esw/test/test_ram.c - RAM1 and RAM2 address and data, unmapped address
+    generate          : [gen_rv32i_user_test_ram,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla
+      - FIRMWARE=test_ram
+      - TESTS_LIST=test_ram
 
   #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_hwla_tap:
-  #---------------------------------------
-    << : *sim_soc1_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla_tap
-
-  #---------------------------------------
-  sim_soc5_wardrv_fsm_fault_c_user_hwla: &sim_soc5_wardrv_fsm_fault_c_user_hwla
+  sim_soc1_wardrv_fsm_fault_c_test_i2c:
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety TMR      , With    Fault Injection, HWLA capture of the error injected by the push button on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters        : &cfg_soc5_wardrv_fsm_fault_hwla
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=2304000
-      - FSYS_INT=1152000
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=true
-      # Debug
-      - DEBUG_ENABLE=true
-      - HWLA_DEPTH=512
-      - HWLA_PRE_TRIGGER=384
-      - HWLA_TIMESTAMP_WIDTH=24
+    description       : Integration test esw/test/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
+    generate          : [gen_rv32i_user_test_i2c,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla
+      - FIRMWARE=test_i2c
+      - TESTS_LIST=test_i2c
 
   #---------------------------------------
-  sim_soc5_wardrv_fsm_fault_c_user_hwla_tap:
+  sim_soc1_wardrv_fsm_fault_c_test_pwm:
   #---------------------------------------
-    << : *sim_soc5_wardrv_fsm_fault_c_user_hwla
-    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety TMR      , With    Fault Injection, HWLA capture of the error injected by the TAP INJECT on debug_uart_tx_o, HWLA_DEPTH 512, HWLA_PRE_TRIGGER 384, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud, TCK of 10 SoC clock cycles), scenario hwla_tap
+    << : *sim
+    description       : Integration test esw/test/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
+    generate          : [gen_rv32i_user_test_pwm,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
     parameters_append :
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=hwla_tap
+      - FIRMWARE=test_pwm
+      - TESTS_LIST=test_pwm
 
   #---------------------------------------
-  # OpenOCD + GDB co-simulation (tb_PicoSoC_openocd, GDB scenario
-  # sim/openocd/picosoc.py) through the UART pads : JTAG pins
-  # (debug_mux_sel_i 10, PIN mode of asylum:verification:openocd) or JTAG
-  # over the UART (11, BYTE mode). Needs gcc, openocd and gdb-multiarch
-  # (hooks rbb/cosim.sh of the kit, run in the work root). No waveform.
-  # The mode 11 target runs 18 to 34 minutes : leading '_', no CI job, not
-  # in nonreg, run by hand (make _sim_...).
+  # OpenOCD co-simulations in soc1 (tb_PicoSoC_openocd, JTAG pins of the
+  # UART pads, debug_mux_sel_i 10, PIN mode of asylum:verification:openocd ;
+  # needs gcc, openocd and gdb-multiarch : hooks rbb/cosim.sh of the kit,
+  # run in the work root ; no waveform). SAFETY none : no INJECT step in
+  # picosoc.py (no copy of the CPU to differ from)
+  # * openocd_jtag : chain of the user CPU and injection / status TAPs
+  #   given by sim/openocd/gdb.cfg, GDB scenario sim/openocd/picosoc.py ;
+  #   _openocd_bitbang : the same through JTAG over the UART
+  #   (debug_mux_sel_i 11, too long for the CI)
+  # * openocd_discover, openocd_generic : the chain of
+  #   emu_ng_medium_soc1_wardrv_fsm_fault_debug (user CPU, HWLA jtag_axis,
+  #   injection / status TAP) discovered by tools/openocd/discover.cfg
+  #   (checked by sim/openocd/discover_check.cfg), and by
+  #   tools/openocd/picosoc.cfg without picosoc_chain (GDB scenario
+  #   picosoc.py on sim/openocd/generic.cfg)
   #---------------------------------------
-  sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag: &sim_openocd
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag: &sim_openocd
   #---------------------------------------
     << : *default
-    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - With    Supervisor, Safety None     , With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, no INJECT with SAFETY none)
     default_tool      : ghdl
     toplevel          : tb_PicoSoC_openocd
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     filesets_append   : &filesets_openocd
       - files_sim
       - files_sim_openocd
       - pbcc_dep
-    parameters        : &cfg_soc2_wardrv_fsm_fault_openocd
+    parameters        : &cfg_soc1_wardrv_fsm_fault_openocd
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
       - JTAG_BAUD_RATE=921600
 
       # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=lock-step
+      - SUPERVISOR=true
+      - USER_SAFETY=none
       - USER_FAULT_INJECTION=true
 
       # Debug
@@ -2641,44 +832,36 @@ targets:
       post_run          : [cosim_check]
 
   #---------------------------------------
-  _sim_soc2_wardrv_fsm_fault_c_user_openocd_bitbang:
+  _sim_soc1_wardrv_fsm_fault_c_user_openocd_bitbang:
   #---------------------------------------
     << : *sim_openocd
-    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, INJECT)
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - With    Supervisor, Safety None     , With    Fault Injection, JTAG chain of the user CPU and injection TAPs, JTAG over the UART pads (debug_mux_sel_i 11, 921600 baud), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, no INJECT with SAFETY none)
     parameters_append :
       - DEBUG_MUX_SEL=11
 
   #---------------------------------------
-  # OpenOCD co-simulation of a JTAG chain of 4 TAPs (tb_PicoSoC_openocd,
-  # OpenOCD script sim/openocd/chain.cfg, no GDB) : the hook pre_run of
-  # sim_openocd would add to cosim_start_chain (hooks are merged in depth),
-  # so the target takes its pieces (filesets, tools)
-  #---------------------------------------
-  sim_soc3x2_wardrv_fsm_c_user_openocd_chain:
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_discover:
   #---------------------------------------
     << : *default
-    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs, JTAG chain of 4 TAPs (2 user CPUs, supervisor CPU, injection), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), script sim/openocd/chain.cfg (IDCODE of every TAP, riscv targets examined)
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety None     , With    Fault Injection, JTAG chain of 3 TAPs (user CPU, HWLA jtag_axis, injection, as emu_ng_medium_soc1_wardrv_fsm_fault_debug), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), discovery of the chain tools/openocd/discover.cfg checked by sim/openocd/discover_check.cfg (number of TAPs, IDCODEs, picosoc_chain)
     default_tool      : ghdl
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     filesets_append   : *filesets_openocd
-    parameters        : &cfg_soc3x2_wardrv_fsm_openocd
+    parameters        : &cfg_soc1_wardrv_fsm_fault_openocd_debug
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=2
 
       # Platform Configuration
       - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
+      - USER_SAFETY=none
+      - USER_FAULT_INJECTION=true
 
       # Debug
       - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
       - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
 
       # Test Bench Configuration
       - TB_WATCHDOG=200000
@@ -2686,82 +869,19 @@ targets:
     tools             : *tools_openocd
     hooks :
       pre_build         : [cosim_build]
-      pre_run           : [cosim_start_chain]
+      pre_run           : [cosim_start_discover]
       post_run          : [cosim_check]
 
   #---------------------------------------
-  # OpenOCD co-simulation of the discovery of the JTAG chain
-  # (tb_PicoSoC_openocd, OpenOCD script sim/openocd/discover_check.cfg on
-  # tools/openocd/discover.cfg, no GDB) : the printed number of TAPs,
-  # IDCODEs and picosoc_chain line against the chain of the generics
-  # (PICOSOC_CHAIN of cosim.cfg, written by the testbench). Own hooks, as
-  # sim_soc3x2_wardrv_fsm_c_user_openocd_chain
-  #---------------------------------------
-  sim_soc3x2_wardrv_fsm_c_user_openocd_discover:
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_generic:
   #---------------------------------------
     << : *default
-    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs, JTAG chain of 4 TAPs (2 user CPUs, supervisor CPU, injection), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), discovery of the chain tools/openocd/discover.cfg checked by sim/openocd/discover_check.cfg (number of TAPs, IDCODEs, picosoc_chain)
+    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - With    Supervisor, Safety None     , With    Fault Injection, JTAG chain of 3 TAPs (user CPU, HWLA jtag_axis, injection, as emu_ng_medium_soc1_wardrv_fsm_fault_debug), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), tools/openocd/picosoc.cfg without picosoc_chain (chain discovered), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU, no INJECT with SAFETY none)
     default_tool      : ghdl
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     filesets_append   : *filesets_openocd
-    parameters        : *cfg_soc3x2_wardrv_fsm_openocd
-    tools             : *tools_openocd
-    hooks :
-      pre_build         : [cosim_build]
-      pre_run           : [cosim_start_discover]
-      post_run          : [cosim_check]
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_openocd_discover:
-  #---------------------------------------
-    << : *default
-    description       : OpenOCD co-simulation of the test esw/demo/user.c - Without Supervisor, Safety None     , Without Fault Injection, JTAG chain of 1 TAP (user CPU, as emu_ng_medium_soc1_wardrv_fsm), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), discovery of the chain tools/openocd/discover.cfg checked by sim/openocd/discover_check.cfg (number of TAPs, IDCODEs, picosoc_chain)
-    default_tool      : ghdl
-    toplevel          : tb_PicoSoC_openocd
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    filesets_append   : *filesets_openocd
-    parameters        : &cfg_soc1_wardrv_fsm_openocd
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-      - USER_CPU_DEBUG_ENABLE=true
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - DEBUG_MUX_SEL=10
-    tools             : *tools_openocd
-    hooks :
-      pre_build         : [cosim_build]
-      pre_run           : [cosim_start_discover]
-      post_run          : [cosim_check]
-
-  #---------------------------------------
-  # OpenOCD co-simulations of tools/openocd/picosoc.cfg without
-  # picosoc_chain (tb_PicoSoC_openocd) : the chain discovered, the TAPs
-  # and targets created from the IDCODEs, checked against the chain of
-  # the generics (PICOSOC_CHAIN of cosim.cfg). Chain of 1 TAP : GDB
-  # scenario sim/openocd/picosoc.py on sim/openocd/generic.cfg ; chain of
-  # 4 TAPs : OpenOCD script sim/openocd/generic_check.cfg, no GDB. Own
-  # hooks, as sim_soc3x2_wardrv_fsm_c_user_openocd_chain
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_openocd_generic:
-  #---------------------------------------
-    << : *default
-    description       : OpenOCD + GDB co-simulation of the test esw/demo/user.c - Without Supervisor, Safety None     , Without Fault Injection, JTAG chain of 1 TAP (user CPU, as emu_ng_medium_soc1_wardrv_fsm), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), tools/openocd/picosoc.cfg without picosoc_chain (chain discovered), scenario sim/openocd/picosoc.py (IDCODEs, GDB halt / resume of the user CPU)
-    default_tool      : ghdl
-    toplevel          : tb_PicoSoC_openocd
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    filesets_append   : *filesets_openocd
-    parameters        : *cfg_soc1_wardrv_fsm_openocd
+    parameters        : *cfg_soc1_wardrv_fsm_fault_openocd_debug
     tools             : *tools_openocd
     hooks :
       pre_build         : [cosim_build]
@@ -2769,43 +889,61 @@ targets:
       post_run          : [cosim_check]
 
   #---------------------------------------
-  sim_soc3x2_wardrv_fsm_c_user_openocd_generic:
+  # soc2 (lock-step) and soc3 (TMR) : fail until cpu_safety is written
+  #---------------------------------------
+  _sim_soc2_wardrv_fsm_fault_c_user:
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
+    parameters_append :
+      - USER_SAFETY=lock-step
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user,fault_lock_step
+
+  #---------------------------------------
+  _sim_soc3_wardrv_fsm_fault_c_user:
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board) (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_tmr]
+    parameters        : *cfg_soc1_wardrv_fsm_fault
+    parameters_append :
+      - USER_SAFETY=tmr
+      - USER_IT_POLARITY=low
+      - USER_FAULT_POLARITY=low
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=switch,it_user,fault_tmr
+
+  #---------------------------------------
+  # HWLA (DEBUG_ENABLE) : it captures the bus of the user CPU around a
+  # difference of the redundant CPUs, so its checks need soc2 (lock-step,
+  # to write) : without difference (soc1) the HWLA stays armed
+  # * _openocd_hwla : soc2, HWLA_LINK jtag, OpenOCD script
+  #   sim/openocd/hwla_check.cfg on tools/openocd/picosoc.cfg (chain
+  #   discovered, picosoc_hwla_status, picosoc_inject : one error, the
+  #   supervisor resets the user SoC once, picosoc_hwla_dump of the capture
+  #   to hwla.bin, decoded by hwla/hwla2vcd.py with
+  #   hwla/hwla_wardrv_fsm.args : hooks of sim/openocd/hwla_vcd.sh)
+  # * _hwla, _hwla_jtag : scenario hwla (capture checked against the user
+  #   ROM, on debug_uart_tx_o or read through the TAP of jtag_axis). It
+  #   needs led_diff_o = the difference flags and a flag that stays set :
+  #   soc2 WITHOUT the supervisor. SoC clock 1.152 MHz (10 cycles per bit
+  #   at 115200 baud)
+  #---------------------------------------
+  _sim_soc2_wardrv_fsm_fault_c_user_openocd_hwla:
   #---------------------------------------
     << : *default
-    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, Without Fault Injection, 2 CPUs, JTAG chain of 4 TAPs (2 user CPUs, supervisor CPU, injection), JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), tools/openocd/picosoc.cfg without picosoc_chain (chain discovered) checked by sim/openocd/generic_check.cfg (IDCODEs, riscv targets named and examined, halt / resume, INJECT)
+    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of 3 TAPs (user CPU, HWLA jtag_axis, injection), HWLA_LINK jtag, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), script sim/openocd/hwla_check.cfg (chain discovered, picosoc_hwla_status, picosoc_inject, picosoc_hwla_dump), capture decoded by hwla2vcd.py (fails until the lock-step of cpu_safety is written)
     default_tool      : ghdl
     toplevel          : tb_PicoSoC_openocd
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
     filesets_append   : *filesets_openocd
-    parameters        : *cfg_soc3x2_wardrv_fsm_openocd
-    tools             : *tools_openocd
-    hooks :
-      pre_build         : [cosim_build]
-      pre_run           : [cosim_start_generic_check]
-      post_run          : [cosim_check]
-
-  #---------------------------------------
-  # OpenOCD co-simulation of the HWLA captures over JTAG
-  # (tb_PicoSoC_openocd, HWLA_LINK jtag, OpenOCD script
-  # sim/openocd/hwla_check.cfg on tools/openocd/picosoc.cfg, no GDB) : the
-  # chain discovered (the TAP of jtag_axis named picosoc hwla),
-  # picosoc_hwla_status before the error / after it / after the dump, an
-  # error in CPU1 (picosoc_inject, the supervisor resets the user SoC once),
-  # picosoc_hwla_dump of one capture to hwla.bin, decoded by
-  # hwla/hwla2vcd.py with hwla/hwla_wardrv_fsm.args (hooks of
-  # sim/openocd/hwla_vcd.sh)
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla:
-  #---------------------------------------
-    << : *default
-    description       : OpenOCD co-simulation of the test esw/demo/user.c - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of 3 TAPs (user CPU, HWLA jtag_axis, injection), HWLA_LINK jtag, JTAG pins on the UART pads (debug_mux_sel_i 10, TCK = FSYS_INT / 8), script sim/openocd/hwla_check.cfg (chain discovered, picosoc_hwla_status, picosoc_inject, picosoc_hwla_dump), capture decoded by hwla2vcd.py
-    default_tool      : ghdl
-    toplevel          : tb_PicoSoC_openocd
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
-    filesets_append   :
-      - files_sim
-      - files_sim_openocd
-      - pbcc_dep
     parameters        :
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
@@ -2831,744 +969,174 @@ targets:
       post_run          : [cosim_check, hwla_vcd]
 
   #---------------------------------------
-  sim_soc3_wardrv_fsm_c_user:
+  _sim_soc2_wardrv_fsm_fault_c_user_hwla: &sim_soc2_wardrv_fsm_fault_c_user_hwla
   #---------------------------------------
     << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, Without Fault Injection
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error on debug_uart_tx_o, SoC clock 1.152 MHz (10 cycles per bit at 115200 baud) (fails until the lock-step of cpu_safety is written)
     generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
-    parameters        : &cfg_soc3_wardrv_fsm
+    parameters        :
       - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      # Platform Configuration
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=false
-      # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user
+      - FSYS=2304000
+      - FSYS_INT=1152000
 
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, Without Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc3_wardrv_fsm
-    parameters_append :
-      - TESTS_LIST=basic,sequence
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c]
-    parameters        : &cfg_soc3_wardrv_fsm_fault
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
       # Platform Configuration
-      - SUPERVISOR=true
+      - SUPERVISOR=false
       - USER_SAFETY=lock-step
       - USER_FAULT_INJECTION=true
+
       # Debug
-      - DEBUG_ENABLE=false
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_lock_step
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety Lock-Step, With    Fault Injection
-    generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc3_wardrv_fsm_fault
-    parameters_append :
-      - TESTS_LIST=basic,fault_lock_step,sequence
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag: &sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, build check (one scenario per target sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_<test>)
-    generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c]
-    parameters        : &cfg_soc3_wardrv_fsm_fault_jtag
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_BAUD_RATE=921600
-      - JTAG_BAUD_RATE=921600
-      - SUPERVISOR=true
-      - USER_SAFETY=lock-step
-      - USER_FAULT_INJECTION=true
       - DEBUG_ENABLE=true
-      - USER_CPU_DEBUG_ENABLE=true
-      - SUPERVISOR_CPU_DEBUG_ENABLE=true
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
-    parameters_append :
+      - HWLA_DEPTH=128
+      - HWLA_PRE_TRIGGER=48
+      - HWLA_TIMESTAMP_WIDTH=24
+
+      # Test Bench Configuration
       - TB_WATCHDOG=200000
       - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
 
   #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_pad_mux:
+  _sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
   #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario pad_mux
-    parameters_append :
-      - TESTS_LIST=pad_mux
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_chain:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_chain
-    parameters_append :
-      - TESTS_LIST=jtag_chain
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject
-    parameters_append :
-      - TESTS_LIST=jtag_inject
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject_cpu (INJECT [7:4] [11:8] [15:12] in the whole SoC, read back, HWLA triggered by the bit 3 of copy 0, no side effect on the reference CPUs)
-    parameters_append :
-      - TESTS_LIST=jtag_inject_cpu
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_status
-    parameters_append :
-      - TESTS_LIST=jtag_status
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_user
-    parameters_append :
-      - TESTS_LIST=jtag_cpu_user
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_supervisor:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_cpu_supervisor
-    parameters_append :
-      - TESTS_LIST=jtag_cpu_supervisor
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
-    parameters_append :
-      - TESTS_LIST=bitbang_chain
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_inject (JTAG over the UART pads, 921600 baud)
-    parameters_append :
-      - TESTS_LIST=bitbang_inject
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario bitbang_cpu (JTAG over the UART pads, 921600 baud)
-    parameters_append :
-      - TESTS_LIST=bitbang_cpu
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_glitch (bounces on TCK of the JTAG pads)
-    parameters_append :
-      - TESTS_LIST=jtag_glitch
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu0:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_cpu0 (request of one cycle in CPU0, trapped until diff, one reset)
-    parameters_append :
-      - TESTS_LIST=trap_cpu0
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu1:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_cpu1 (request of one cycle in CPU1, cleared by diff(0), one reset)
-    parameters_append :
-      - TESTS_LIST=trap_cpu1
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_reset:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_reset (trap set while the supervisor holds the user SoC in reset, kept by this reset)
-    parameters_append :
-      - TESTS_LIST=trap_reset
-
-  #---------------------------------------
-  # soc3 with the HWLA captures over JTAG (HWLA_LINK jtag) : the TAP of
-  # jtag_axis in the chain, between the supervisor CPU and the injection /
-  # status TAP ; the scenarios of the chain
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag: &sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, build check (one scenario per target sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_<test>)
-    generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c]
-    parameters        : *cfg_soc3_wardrv_fsm_fault_jtag
+    << : *sim_soc2_wardrv_fsm_fault_c_user_hwla
+    description       : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as _sim_soc2_wardrv_fsm_fault_c_user_hwla (fails until the lock-step of cpu_safety is written)
     parameters_append :
       - HWLA_LINK=jtag
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST
 
   #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_chain:
+  # NG-MEDIUM board, soc1 : the reference build of the labs (DEBUG_ENABLE
+  # false, no CPU debugger : its LUT, FF and Fmax are the reference
+  # figures) ; _debug : the HWLA (HWLA_LINK jtag), the injection / status
+  # TAP and the debugger of the user CPU (OpenOCD on the board :
+  # tools/openocd). soc2 / soc3 : fail until cpu_safety is written
   #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_chain
-    parameters_append :
-      - TESTS_LIST=jtag_chain
-
+  emu_ng_medium_soc1_wardrv_fsm_fault: &emu_ng_medium_soc1_wardrv_fsm_fault
   #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_inject:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_inject
-    parameters_append :
-      - TESTS_LIST=jtag_inject
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_status:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_status (HWLA flags, capture read through jtag_axis)
-    parameters_append :
-      - TESTS_LIST=jtag_status
-
-  #---------------------------------------
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_bitbang_chain:
-  #---------------------------------------
-    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
-    parameters_append :
-      - TESTS_LIST=bitbang_chain
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , With    Fault Injection, injection / status TAP and user CPU debugger (chain of 2 TAPs), scenario trap_tap (no difference flag, the trap cleared by a 1 -> 0 of INJECT)
-    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters   :
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection (reference build, no debug)
+    default_tool      : nxmap
+    filesets          :
+      - files_hdl
+      - files_ng_medium
+      - pbcc_dep
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters        : &cfg_ng_medium_wardrv_fsm
       - CPU_MODEL=WardRV_fsm
       - FSYS=25000000
       - FSYS_INT=12500000
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=true
-
-      # Debug
-      - DEBUG_ENABLE=true
-      - USER_CPU_DEBUG_ENABLE=true
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=trap_tap
-
-  #---------------------------------------
-  sim_soc5_wardrv_fsm_c_user_uart_jtag:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c (UART)         - Without Supervisor, Safety TMR      , Without Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU TAP only (no DEBUG_ENABLE)
-    generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-      - USER_CPU_DEBUG_ENABLE=true
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=pad_mux,jtag_chain,jtag_cpu_user
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_user_jtag_last:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, generics of emu_ng_medium_soc1_wardrv_fsm (the TAP of the user CPU is the only TAP, the last stages of the JTAG chain are wires), JTAG pads and JTAG over the UART pads (921600 baud)
-    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
+      - USER_NB_SWITCH=4
+      - USER_NB_LED0=8
+      - USER_NB_LED1=8
       - RESET_POLARITY=low
       - USER_IT_POLARITY=low
       - USER_FAULT_POLARITY=low
-      - JTAG_BAUD_RATE=921600
-
+      # SoC User Configuration
+      - USER_BAUD_RATE=9600
+      - HWLA_BAUD_RATE=9600
+      - HWLA_DEPTH=1024
+      - HWLA_PRE_TRIGGER=16
+      - JTAG_BAUD_RATE=9600
+      - USER_UART_DEPTH_TX=4
+      - USER_UART_DEPTH_RX=4
+      - USER_SPI_DEPTH_CMD=4
+      - USER_SPI_DEPTH_TX=4
+      - USER_SPI_DEPTH_RX=4
+      - USER_SPI_NB_IO=2
+    parameters_append :
       # Platform Configuration
-      - SUPERVISOR=false
+      - SUPERVISOR=true
       - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
+      - USER_FAULT_INJECTION=true
       # Debug
       - DEBUG_ENABLE=false
-      - USER_CPU_DEBUG_ENABLE=true
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=jtag_last,jtag_chain,bitbang_chain
+    flags             :
+      TARGET  : NANOXPLORE_NG_MEDIUM
+    tools             :
+      nxmap:
+        fpga         : NG-MEDIUM
+        program      : True
+        logical_name : asylum
+    toplevel          : PicoSoC_top
 
   #---------------------------------------
-  sim_soc1x2_wardrv_fsm_c_user_jtag:
+  emu_ng_medium_soc1_wardrv_fsm_fault_debug:
   #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety None     , Without Fault Injection, 2 user CPU clusters, JTAG chain of their 2 debug units and the injection / status TAP (user.c is single-cluster, scenario jtag_chain only)
-    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      - USER_NB_CPU=2
-
+    << : *emu_ng_medium_soc1_wardrv_fsm_fault
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety None     , With    Fault Injection, HWLA (captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg, no trigger without difference), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU), OpenOCD on the UART pads (debug_mux_sel_i 10 or 11)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters_append :
       # Platform Configuration
-      - SUPERVISOR=false
+      - SUPERVISOR=true
       - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
+      - USER_FAULT_INJECTION=true
       # Debug
       - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
       - USER_CPU_DEBUG_ENABLE=true
 
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=jtag_chain
+  #---------------------------------------
+  _emu_ng_medium_soc2_wardrv_fsm_fault:
+  #---------------------------------------
+    << : *emu_ng_medium_soc1_wardrv_fsm_fault
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters_append :
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      # Debug
+      - DEBUG_ENABLE=false
 
   #---------------------------------------
-  sim_soc4_wardrv_fsm_fault_c_user:
+  _emu_ng_medium_soc2_wardrv_fsm_fault_debug:
   #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
-    generate          : [gen_rv32i_user_c,gen_rv32i_supervisor_c_tmr]
-    parameters        : &cfg_soc4_wardrv_fsm_fault
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
+    << : *emu_ng_medium_soc1_wardrv_fsm_fault
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the lock-step of cpu_safety is written)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters_append :
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
+      - USER_CPU_DEBUG_ENABLE=true
+
+  #---------------------------------------
+  _emu_ng_medium_soc3_wardrv_fsm_fault:
+  #---------------------------------------
+    << : *emu_ng_medium_soc1_wardrv_fsm_fault
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
+    parameters_append :
       # Platform Configuration
       - SUPERVISOR=true
       - USER_SAFETY=tmr
       - USER_FAULT_INJECTION=true
       # Debug
       - DEBUG_ENABLE=false
-      - USER_IT_POLARITY=low
-      - USER_FAULT_POLARITY=low
+
+  #---------------------------------------
+  _emu_ng_medium_soc3_wardrv_fsm_fault_debug:
+  #---------------------------------------
+    << : *emu_ng_medium_soc1_wardrv_fsm_fault
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , With    Fault Injection, HWLA (trigger on a TMR difference, HWLA_LINK jtag), JTAG chain of 3 TAPs (injection / status, HWLA jtag_axis, user CPU) (fails until the TMR of cpu_safety is written)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c_tmr]
     parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user
-      - TESTS_LIST=switch,it_user,fault_tmr
-
-  #---------------------------------------
-  sim_soc4_wardrv_fsm_c_user_uart:
-  #---------------------------------------
-    << : *sim
-    description  : Simulation of the test esw/demo/user.c                - With    Supervisor, Safety TMR      , Without Fault Injection
-    generate     : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c_tmr]
-    parameters   :
-      - CPU_MODEL=WardRV_fsm
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_BAUD_RATE=921600
-      
       # Platform Configuration
       - SUPERVISOR=true
       - USER_SAFETY=tmr
-      - USER_FAULT_INJECTION=false
-
+      - USER_FAULT_INJECTION=true
       # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=user_uart
-      - TESTS_LIST=switch,it_user,uart
-
-  #---------------------------------------
-  sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu:
-  #---------------------------------------
-    << : *sim
-    description       : Simulation of the test esw/protocol/user_modbus_rtu.c - With    Supervisor, Safety TMR      , With    Fault Injection, IT and fault inputs active low (board)
-    generate          : [gen_rv32i_user_modbus_rtu_921600,gen_rv32i_supervisor_c_tmr]
-    toplevel          : tb_PicoSoC_modbus_rtu
-    parameters        : *cfg_soc4_wardrv_fsm_fault
-    parameters_append :
-      - TESTS_LIST=basic,fault_tmr,sequence
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_gpio:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_gpio.c - GPIO registers, LED and switch pins, edges polled
-    generate          : [gen_rv32i_user_test_gpio,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_gpio
-      - TESTS_LIST=test_gpio
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_gpio:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_gpio.c - GPIO registers, LED and switch pins, edges polled
-    generate          : [gen_picoblaze3_user_test_gpio,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_gpio
-      - TESTS_LIST=test_gpio
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_uart:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
-    generate          : [gen_rv32i_user_test_uart,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_uart
-      - TESTS_LIST=test_uart
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_uart:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_uart.c - UART registers, TX and RX pins, RX interrupt through the GIC
-    generate          : [gen_picoblaze3_user_test_uart,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_uart
-      - TESTS_LIST=test_uart
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_spi:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_spi.c - SPI registers, SPI flash model (status, read, page program)
-    generate          : [gen_rv32i_user_test_spi,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=m25p40
-      - FIRMWARE=test_spi
-      - TESTS_LIST=test_spi
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_spi:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_spi.c - SPI registers, SPI flash model (status, read, page program)
-    generate          : [gen_picoblaze3_user_test_spi,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=m25p40
-      - FIRMWARE=test_spi
-      - TESTS_LIST=test_spi
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_timer:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_timer.c - Timer registers, period and interrupt through the GIC
-    generate          : [gen_rv32i_user_test_timer,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_timer
-      - TESTS_LIST=test_timer
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_timer:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_timer.c - Timer registers, period and interrupt through the GIC
-    generate          : [gen_picoblaze3_user_test_timer,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_timer
-      - TESTS_LIST=test_timer
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_crc:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_crc.c - CRC registers, CRC16 Modbus of known vectors
-    generate          : [gen_rv32i_user_test_crc,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_crc
-      - TESTS_LIST=test_crc
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_crc:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_crc.c - CRC registers, CRC16 Modbus of known vectors
-    generate          : [gen_picoblaze3_user_test_crc,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_crc
-      - TESTS_LIST=test_crc
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_spinlock:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_spinlock.c - Spinlock registers, test-and-set and release
-    generate          : [gen_rv32i_user_test_spinlock,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_spinlock
-      - TESTS_LIST=test_spinlock
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_spinlock:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_spinlock.c - Spinlock registers, test-and-set and release
-    generate          : [gen_picoblaze3_user_test_spinlock,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_spinlock
-      - TESTS_LIST=test_spinlock
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_gic:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_gic.c - GIC registers, it_user_i masked, pending and taken
-    generate          : [gen_rv32i_user_test_gic,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_gic
-      - TESTS_LIST=test_gic
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_gic:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_gic.c - GIC registers, it_user_i masked, pending and taken
-    generate          : [gen_picoblaze3_user_test_gic,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_gic
-      - TESTS_LIST=test_gic
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_ram:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_ram.c - RAM1 and RAM2 address and data, unmapped address
-    generate          : [gen_rv32i_user_test_ram,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_ram
-      - TESTS_LIST=test_ram
-
-  #---------------------------------------
-  sim_soc1x2_wardrv_fsm_c_test_mailbox:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
-    generate          : [gen_rv32i_user_test_mailbox,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1x2_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_mailbox
-      - TESTS_LIST=test_mailbox
-
-  #---------------------------------------
-  sim_soc1x2_openblaze8_c_test_mailbox:
-  #---------------------------------------
-    << : *sim
-    description  : Integration test esw/test/test_mailbox.c - Mailbox between 2 CPUs, FIFO status, interrupts of both GICs
-    generate     : [gen_picoblaze3_user_test_mailbox,gen_picoblaze3_supervisor_c_dummy]
-    parameters   :
-      - CPU_MODEL=OpenBlaze8
-      - FSYS=25000000
-      - FSYS_INT=12500000
-
-      # SoC User Configuration
-      - USER_NB_CPU=2
-      - USER_BAUD_RATE=921600
-
-      # Platform Configuration
-      - SUPERVISOR=false
-      - USER_SAFETY=none
-      - USER_FAULT_INJECTION=false
-
-      # Debug
-      - DEBUG_ENABLE=false
-
-      # Test Bench Configuration
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_mailbox
-      - TESTS_LIST=test_mailbox
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_i2c:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
-    generate          : [gen_rv32i_user_test_i2c,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_i2c
-      - TESTS_LIST=test_i2c
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_i2c:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_i2c.c - I2C registers, master and slave transfers with the I2C BFM, NACK, SCL at 100 kHz
-    generate          : [gen_picoblaze3_user_test_i2c,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_i2c
-      - TESTS_LIST=test_i2c
-
-  #---------------------------------------
-  sim_soc1_wardrv_fsm_c_test_pwm:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
-    generate          : [gen_rv32i_user_test_pwm,gen_rv32i_supervisor_c_dummy]
-    parameters        : *cfg_soc1_wardrv_fsm
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_pwm
-      - TESTS_LIST=test_pwm
-
-  #---------------------------------------
-  sim_soc1_openblaze8_c_test_pwm:
-  #---------------------------------------
-    << : *sim
-    description       : Integration test esw/test/test_pwm.c - PWM registers, period and duty cycle of pwm_o for 2 duties, low when disabled
-    generate          : [gen_picoblaze3_user_test_pwm,gen_picoblaze3_supervisor_c_dummy]
-    parameters        : *cfg_soc1_openblaze8
-    parameters_append :
-      - TB_WATCHDOG=200000
-      - SPI_MODEL=none
-      - FIRMWARE=test_pwm
-      - TESTS_LIST=test_pwm
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
+      - USER_CPU_DEBUG_ENABLE=true
 
 #=========================================
 scripts:
 #=========================================
-
-  #---------------------------------------
-  # pre_run hook of lint_ghdl_synth_* (cwd = work_root)
-  #---------------------------------------
-  ghdl_synth :
-    cmd : [bash, ghdl_synth.sh]
-
-  #---------------------------------------
-  # pre_run hook of syn_* (cwd = work_root)
-  #---------------------------------------
-  yosys_synth :
-    cmd : [bash, yosys_synth.sh]
 
   #---------------------------------------
   # Hooks of sim_*_openocd_* (cwd = work_root, rbb/cosim.sh of the kit
@@ -3580,17 +1148,11 @@ scripts:
   cosim_start :
     cmd : [bash, rbb/cosim.sh, start, openocd/gdb.cfg, openocd/picosoc.py]
 
-  cosim_start_chain :
-    cmd : [bash, rbb/cosim.sh, start, openocd/chain.cfg]
-
   cosim_start_discover :
     cmd : [bash, rbb/cosim.sh, start, openocd/discover_check.cfg]
 
   cosim_start_generic :
     cmd : [bash, rbb/cosim.sh, start, openocd/generic.cfg, openocd/picosoc.py]
-
-  cosim_start_generic_check :
-    cmd : [bash, rbb/cosim.sh, start, openocd/generic_check.cfg]
 
   cosim_start_hwla :
     cmd : [bash, rbb/cosim.sh, start, openocd/hwla_check.cfg]
@@ -3731,7 +1293,7 @@ parameters :
   SUPERVISOR :
     description : Instanciate the supervisor
     datatype    : bool
-    default     : false
+    default     : true
     paramtype   : generic
 
   USER_SAFETY :
@@ -3741,9 +1303,9 @@ parameters :
     paramtype   : generic
 
   USER_FAULT_INJECTION :
-    description : Polarity of arst_i signal (low / high)
+    description : Fault injection (inject_error_i flips an instruction bit of a CPU)
     datatype    : bool
-    default     : false
+    default     : true
     paramtype   : generic
 
   USER_IT_POLARITY :
@@ -3779,7 +1341,7 @@ parameters :
   CPU_MODEL :
     description : CPU Model (OpenBlaze8 / WardRV_fsm)
     datatype    : str
-    default     : OpenBlaze8
+    default     : WardRV_fsm
     paramtype   : generic
 
   SPI_MODEL :
@@ -3789,12 +1351,12 @@ parameters :
     paramtype   : generic
 
   TESTS_LIST :
-    description : Testbench scenarios, separated by ',' (switch, it_user, uart, sequence, fault_lock_step, fault_tmr, fault_diff, hwla, hwla_tap, hello, pad_mux, jtag_chain, jtag_inject, jtag_inject_cpu, jtag_status, jtag_cpu_user, jtag_cpu_supervisor, bitbang_chain, bitbang_inject, bitbang_cpu, jtag_last, test_<ip> / basic, fault_lock_step, fault_tmr, sequence for tb_PicoSoC_modbus_rtu)
+    description : Testbench scenarios, separated by ',' of tb_PicoSoC (switch, it_user, fault_none, fault_lock_step, fault_tmr, hwla, test_<ip>)
     datatype    : str
     paramtype   : generic
 
   FIRMWARE :
-    description : Program of the user ROM for tb_PicoSoC (identity / user / user_uart / user_uart_spi / user_uart_spi_mem / user_loop / hello)
+    description : Program of the user ROM for tb_PicoSoC (user / test_<ip>)
     datatype    : str
     default     : user
     paramtype   : generic

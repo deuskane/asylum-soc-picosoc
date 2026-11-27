@@ -27,15 +27,18 @@
 --              The firmware copies the switches to LED0. Before OpenOCD : the
 --              firmware runs, no difference flag ; after OpenOCD quits : the
 --              firmware still runs (LED0 follows new switches) ; with
---              USER_FAULT_INJECTION the difference flag of CPU0 vs CPU1
---              raised by the injection of the GDB scenario (INJECT), else no
---              difference flag (no scenario injects). Error after
---              C_COSIM_TIMEOUT.
+--              USER_FAULT_INJECTION and a safety other than none the
+--              difference flag of CPU0 vs CPU1 raised by the injection of
+--              the GDB scenario (INJECT), else no difference flag (no
+--              scenario injects ; SAFETY none : no copy of the CPU to differ
+--              from, no INJECT step). Error after C_COSIM_TIMEOUT.
 --              cosim.cfg (read by the hooks of the kit, exported to
 --              OpenOCD) : PICOSOC_CHAIN, the JTAG chain of the generics
 --              (chip, TAP, IDCODE of each TAP from TDO, as discover.cfg
 --              prints it), checked by discover_check.cfg,
 --              generic_check.cfg, hwla_check.cfg and picosoc.py ;
+--              PICOSOC_SAFETY, USER_SAFETY (picosoc.py : no INJECT step
+--              with "none") ;
 --              PICOSOC_HWLA_BYTES, the bytes of a capture of the HWLA
 --              (hwla_check.cfg), from the generics of the HWLA (those of
 --              tools/hwla/hwla_wardrv_fsm.args, used by the hook hwla_vcd)
@@ -61,6 +64,8 @@
 -- 2026-11-27  1.5      mrosiere HWLA_LINK : TAP of the HWLA captures in
 --                               PICOSOC_CHAIN, PICOSOC_HWLA_BYTES
 -- 2026-11-27  1.6      mrosiere HWLA : the difference flags in the probes
+-- 2026-11-27  1.7      mrosiere Student branch : PICOSOC_SAFETY in cosim.cfg,
+--                               no difference flag expected with SAFETY none
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -128,10 +133,11 @@ architecture tb of tb_PicoSoC_openocd is
   constant C_BITBANG        : t_uart_bfm_config := bitbang_config;
 
   -- Difference flags after OpenOCD : CPU0 vs CPU1, from the INJECT of the
-  -- GDB scenario, only with the fault injection
+  -- GDB scenario, only with the fault injection and a copy of the CPU to
+  -- compare with (SAFETY none : no INJECT step)
   function diff_after return std_logic_vector is
   begin
-    if USER_FAULT_INJECTION
+    if USER_FAULT_INJECTION and USER_SAFETY /= "none"
     then
       return "001";
     else
@@ -377,6 +383,8 @@ begin  -- architecture tb
     write(v_line, string'(""""));
     log(ID_LOG_HDR, "Co-simulation : " & v_line.all, C_SCOPE);
     writeline(f_cfg, v_line);
+    write(v_line, "PICOSOC_SAFETY=" & USER_SAFETY);
+    writeline(f_cfg, v_line);
     write(v_line, "PICOSOC_HWLA_BYTES=" & integer'image(C_HWLA_BYTES));
     writeline(f_cfg, v_line);
     file_close(f_cfg);
@@ -406,7 +414,7 @@ begin  -- architecture tb
     log(ID_LOG_HDR, "OpenOCD quit at " & integer'image(now / 1 us) & " us", C_SCOPE);
 
     -- Seen by the testbench after the debug session
-    if SUPERVISOR and USER_FAULT_INJECTION
+    if SUPERVISOR and USER_FAULT_INJECTION and USER_SAFETY /= "none"
     then
       -- led_diff_o counts the resets of the user SoC : the trap of CPU1 is
       -- set again while INJECT holds the request (until OpenOCD writes 0)

@@ -7,643 +7,93 @@ on:
     branches: [ main, develop ]
 jobs:
 #<GENERATE_BEGIN>
-  sim_soc1_openblaze8_asm_identity:
+  sim_soc1_wardrv_fsm_fault_c_test_crc:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_asm_identity
+      name: sim_soc1_wardrv_fsm_fault_c_test_crc
 
-  sim_soc1_openblaze8_c_identity:
+  sim_soc1_wardrv_fsm_fault_c_test_gic:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_identity
+      name: sim_soc1_wardrv_fsm_fault_c_test_gic
 
-  sim_soc1_openblaze8_c_test_crc:
+  sim_soc1_wardrv_fsm_fault_c_test_gpio:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_crc
+      name: sim_soc1_wardrv_fsm_fault_c_test_gpio
 
-  sim_soc1_openblaze8_c_test_gic:
+  sim_soc1_wardrv_fsm_fault_c_test_i2c:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_gic
+      name: sim_soc1_wardrv_fsm_fault_c_test_i2c
 
-  sim_soc1_openblaze8_c_test_gpio:
+  sim_soc1_wardrv_fsm_fault_c_test_pwm:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_gpio
+      name: sim_soc1_wardrv_fsm_fault_c_test_pwm
 
-  sim_soc1_openblaze8_c_test_i2c:
+  sim_soc1_wardrv_fsm_fault_c_test_ram:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_i2c
+      name: sim_soc1_wardrv_fsm_fault_c_test_ram
 
-  sim_soc1_openblaze8_c_test_pwm:
+  sim_soc1_wardrv_fsm_fault_c_test_spi:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_pwm
+      name: sim_soc1_wardrv_fsm_fault_c_test_spi
 
-  sim_soc1_openblaze8_c_test_spi:
+  sim_soc1_wardrv_fsm_fault_c_test_spinlock:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_spi
+      name: sim_soc1_wardrv_fsm_fault_c_test_spinlock
 
-  sim_soc1_openblaze8_c_test_spinlock:
+  sim_soc1_wardrv_fsm_fault_c_test_timer:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_spinlock
+      name: sim_soc1_wardrv_fsm_fault_c_test_timer
 
-  sim_soc1_openblaze8_c_test_timer:
+  sim_soc1_wardrv_fsm_fault_c_test_uart:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_timer
+      name: sim_soc1_wardrv_fsm_fault_c_test_uart
 
-  sim_soc1_openblaze8_c_test_uart:
+  sim_soc1_wardrv_fsm_fault_c_user:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_test_uart
+      name: sim_soc1_wardrv_fsm_fault_c_user
 
-  sim_soc1_openblaze8_c_user:
+  sim_soc1_wardrv_fsm_fault_c_user_fault_none:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_user
+      name: sim_soc1_wardrv_fsm_fault_c_user_fault_none
 
-  sim_soc1_openblaze8_c_user_modbus_rtu:
+  sim_soc1_wardrv_fsm_fault_c_user_it_user:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_user_modbus_rtu
+      name: sim_soc1_wardrv_fsm_fault_c_user_it_user
 
-  sim_soc1_openblaze8_c_user_uart:
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_discover:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_user_uart
+      name: sim_soc1_wardrv_fsm_fault_c_user_openocd_discover
 
-  sim_soc1_openblaze8_c_user_uart_spi:
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_generic:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_user_uart_spi
+      name: sim_soc1_wardrv_fsm_fault_c_user_openocd_generic
 
-  sim_soc1_openblaze8_c_user_uart_spi_mem:
+  sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_openblaze8_c_user_uart_spi_mem
+      name: sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag
 
-  sim_soc1_wardrv_fsm_c_identity:
+  sim_soc1_wardrv_fsm_fault_c_user_switch:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:
-      name: sim_soc1_wardrv_fsm_c_identity
-
-  sim_soc1_wardrv_fsm_c_test_crc:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_crc
-
-  sim_soc1_wardrv_fsm_c_test_gic:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_gic
-
-  sim_soc1_wardrv_fsm_c_test_gpio:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_gpio
-
-  sim_soc1_wardrv_fsm_c_test_i2c:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_i2c
-
-  sim_soc1_wardrv_fsm_c_test_pwm:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_pwm
-
-  sim_soc1_wardrv_fsm_c_test_ram:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_ram
-
-  sim_soc1_wardrv_fsm_c_test_spi:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_spi
-
-  sim_soc1_wardrv_fsm_c_test_spinlock:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_spinlock
-
-  sim_soc1_wardrv_fsm_c_test_timer:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_timer
-
-  sim_soc1_wardrv_fsm_c_test_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_test_uart
-
-  sim_soc1_wardrv_fsm_c_user_jtag_last:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_jtag_last
-
-  sim_soc1_wardrv_fsm_c_user_loop:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_loop
-
-  sim_soc1_wardrv_fsm_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_modbus_rtu
-
-  sim_soc1_wardrv_fsm_c_user_openocd_discover:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_openocd_discover
-
-  sim_soc1_wardrv_fsm_c_user_openocd_generic:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_openocd_generic
-
-  sim_soc1_wardrv_fsm_c_user_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_uart
-
-  sim_soc1_wardrv_fsm_c_user_uart_spi:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_uart_spi
-
-  sim_soc1_wardrv_fsm_c_user_uart_spi_mem:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_c_user_uart_spi_mem
-
-  sim_soc1_wardrv_fsm_fault_c_user_hwla:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_fault_c_user_hwla
-
-  sim_soc1_wardrv_fsm_fault_c_user_hwla_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_fault_c_user_hwla_tap
-
-  sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap
-
-  sim_soc1x2_openblaze8_c_test_mailbox:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x2_openblaze8_c_test_mailbox
-
-  sim_soc1x2_wardrv_fsm_c_hello_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x2_wardrv_fsm_c_hello_uart
-
-  sim_soc1x2_wardrv_fsm_c_test_mailbox:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x2_wardrv_fsm_c_test_mailbox
-
-  sim_soc1x2_wardrv_fsm_c_user_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x2_wardrv_fsm_c_user_jtag
-
-  sim_soc1x4_wardrv_fsm_c_hello_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x4_wardrv_fsm_c_hello_uart
-
-  sim_soc1x6_wardrv_fsm_c_hello_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc1x6_wardrv_fsm_c_hello_uart
-
-  sim_soc2_openblaze8_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_c_user
-
-  sim_soc2_openblaze8_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_c_user_modbus_rtu
-
-  sim_soc2_openblaze8_c_user_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_c_user_uart
-
-  sim_soc2_openblaze8_fault_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user
-
-  sim_soc2_openblaze8_fault_c_user_hwla:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user_hwla
-
-  sim_soc2_openblaze8_fault_c_user_hwla_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user_hwla_jtag
-
-  sim_soc2_openblaze8_fault_c_user_hwla_jtag_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user_hwla_jtag_tap
-
-  sim_soc2_openblaze8_fault_c_user_hwla_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user_hwla_tap
-
-  sim_soc2_openblaze8_fault_c_user_uart_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_openblaze8_fault_c_user_uart_jtag
-
-  sim_soc2_wardrv_fsm_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_c_user
-
-  sim_soc2_wardrv_fsm_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_c_user_modbus_rtu
-
-  sim_soc2_wardrv_fsm_c_user_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_c_user_uart
-
-  sim_soc2_wardrv_fsm_fault_c_user_hwla:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_fault_c_user_hwla
-
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag
-
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag_tap
-
-  sim_soc2_wardrv_fsm_fault_c_user_hwla_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_fault_c_user_hwla_tap
-
-  sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag
-
-  sim_soc3_openblaze8_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_openblaze8_c_user
-
-  sim_soc3_openblaze8_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_openblaze8_c_user_modbus_rtu
-
-  sim_soc3_openblaze8_fault_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_openblaze8_fault_c_user
-
-  sim_soc3_openblaze8_fault_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_openblaze8_fault_c_user_modbus_rtu
-
-  sim_soc3_wardrv_fsm_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_c_user
-
-  sim_soc3_wardrv_fsm_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_c_user_modbus_rtu
-
-  sim_soc3_wardrv_fsm_fault_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user
-
-  sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu
-
-  sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_bitbang_chain:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_bitbang_chain
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_chain:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_chain
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_inject:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_inject
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_status:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_status
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_chain:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_chain
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_supervisor:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_supervisor
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_pad_mux:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_pad_mux
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu0:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu0
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu1:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu1
-
-  sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_reset:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_reset
-
-  sim_soc3x2_wardrv_fsm_c_hello_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3x2_wardrv_fsm_c_hello_uart
-
-  sim_soc3x2_wardrv_fsm_c_user_openocd_chain:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3x2_wardrv_fsm_c_user_openocd_chain
-
-  sim_soc3x2_wardrv_fsm_c_user_openocd_discover:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3x2_wardrv_fsm_c_user_openocd_discover
-
-  sim_soc3x2_wardrv_fsm_c_user_openocd_generic:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc3x2_wardrv_fsm_c_user_openocd_generic
-
-  sim_soc4_openblaze8_c_user_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_c_user_uart
-
-  sim_soc4_openblaze8_fault_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user
-
-  sim_soc4_openblaze8_fault_c_user_fault_tmr:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_fault_tmr
-
-  sim_soc4_openblaze8_fault_c_user_it_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_it_user
-
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_modbus_rtu
-
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic
-
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr
-
-  sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence
-
-  sim_soc4_openblaze8_fault_c_user_switch:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_openblaze8_fault_c_user_switch
-
-  sim_soc4_wardrv_fsm_c_user_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_wardrv_fsm_c_user_uart
-
-  sim_soc4_wardrv_fsm_fault_c_user:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_wardrv_fsm_fault_c_user
-
-  sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu
-
-  sim_soc4x2_wardrv_fsm_c_hello_uart:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc4x2_wardrv_fsm_c_hello_uart
-
-  sim_soc5_wardrv_fsm_c_user_uart_jtag:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc5_wardrv_fsm_c_user_uart_jtag
-
-  sim_soc5_wardrv_fsm_fault_c_user_hwla:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc5_wardrv_fsm_fault_c_user_hwla
-
-  sim_soc5_wardrv_fsm_fault_c_user_hwla_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_soc5_wardrv_fsm_fault_c_user_hwla_tap
-
-  sim_tap:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_tap
-
-  sim_tap_inject:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_tap_inject
-
-  sim_tap_inject_cpu:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: sim_tap_inject_cpu
-
-  lint_ghdl:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl
-
-  lint_ghdl_synth_4leds_reset_high:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_4leds_reset_high
-
-  lint_ghdl_synth_default:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_default
-
-  lint_ghdl_synth_soc1:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_soc1
-
-  lint_ghdl_synth_soc4_ng_medium:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_soc4_ng_medium
-
-  lint_ghdl_synth_wardrv_soc1:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_wardrv_soc1
-
-  lint_ghdl_synth_wardrv_soc1x4:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_wardrv_soc1x4
-
-  lint_ghdl_synth_wardrv_soc4_ng_medium:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_wardrv_soc4_ng_medium
-
-  lint_ghdl_synth_wardrv_soc4_ng_medium_debug:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: lint_ghdl_synth_wardrv_soc4_ng_medium_debug
-
-  syn_soc1:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: syn_soc1
-
-  syn_soc4_ng_medium:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: syn_soc4_ng_medium
-
-  syn_wardrv_soc1:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: syn_wardrv_soc1
-
-  syn_wardrv_soc4_ng_medium:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: syn_wardrv_soc4_ng_medium
-
-  syn_wardrv_soc4_ng_medium_debug:
-    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
-    with:
-      name: syn_wardrv_soc4_ng_medium_debug
+      name: sim_soc1_wardrv_fsm_fault_c_user_switch
 
   badges:
-    needs: [sim_soc1_openblaze8_asm_identity, sim_soc1_openblaze8_c_identity, sim_soc1_openblaze8_c_test_crc, sim_soc1_openblaze8_c_test_gic, sim_soc1_openblaze8_c_test_gpio, sim_soc1_openblaze8_c_test_i2c, sim_soc1_openblaze8_c_test_pwm, sim_soc1_openblaze8_c_test_spi, sim_soc1_openblaze8_c_test_spinlock, sim_soc1_openblaze8_c_test_timer, sim_soc1_openblaze8_c_test_uart, sim_soc1_openblaze8_c_user, sim_soc1_openblaze8_c_user_modbus_rtu, sim_soc1_openblaze8_c_user_uart, sim_soc1_openblaze8_c_user_uart_spi, sim_soc1_openblaze8_c_user_uart_spi_mem, sim_soc1_wardrv_fsm_c_identity, sim_soc1_wardrv_fsm_c_test_crc, sim_soc1_wardrv_fsm_c_test_gic, sim_soc1_wardrv_fsm_c_test_gpio, sim_soc1_wardrv_fsm_c_test_i2c, sim_soc1_wardrv_fsm_c_test_pwm, sim_soc1_wardrv_fsm_c_test_ram, sim_soc1_wardrv_fsm_c_test_spi, sim_soc1_wardrv_fsm_c_test_spinlock, sim_soc1_wardrv_fsm_c_test_timer, sim_soc1_wardrv_fsm_c_test_uart, sim_soc1_wardrv_fsm_c_user_jtag_last, sim_soc1_wardrv_fsm_c_user_loop, sim_soc1_wardrv_fsm_c_user_modbus_rtu, sim_soc1_wardrv_fsm_c_user_openocd_discover, sim_soc1_wardrv_fsm_c_user_openocd_generic, sim_soc1_wardrv_fsm_c_user_uart, sim_soc1_wardrv_fsm_c_user_uart_spi, sim_soc1_wardrv_fsm_c_user_uart_spi_mem, sim_soc1_wardrv_fsm_fault_c_user_hwla, sim_soc1_wardrv_fsm_fault_c_user_hwla_tap, sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap, sim_soc1x2_openblaze8_c_test_mailbox, sim_soc1x2_wardrv_fsm_c_hello_uart, sim_soc1x2_wardrv_fsm_c_test_mailbox, sim_soc1x2_wardrv_fsm_c_user_jtag, sim_soc1x4_wardrv_fsm_c_hello_uart, sim_soc1x6_wardrv_fsm_c_hello_uart, sim_soc2_openblaze8_c_user, sim_soc2_openblaze8_c_user_modbus_rtu, sim_soc2_openblaze8_c_user_uart, sim_soc2_openblaze8_fault_c_user, sim_soc2_openblaze8_fault_c_user_hwla, sim_soc2_openblaze8_fault_c_user_hwla_jtag, sim_soc2_openblaze8_fault_c_user_hwla_jtag_tap, sim_soc2_openblaze8_fault_c_user_hwla_tap, sim_soc2_openblaze8_fault_c_user_uart_jtag, sim_soc2_wardrv_fsm_c_user, sim_soc2_wardrv_fsm_c_user_modbus_rtu, sim_soc2_wardrv_fsm_c_user_uart, sim_soc2_wardrv_fsm_fault_c_user_hwla, sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag, sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag_tap, sim_soc2_wardrv_fsm_fault_c_user_hwla_tap, sim_soc2_wardrv_fsm_fault_c_user_openocd_jtag, sim_soc3_openblaze8_c_user, sim_soc3_openblaze8_c_user_modbus_rtu, sim_soc3_openblaze8_fault_c_user, sim_soc3_openblaze8_fault_c_user_modbus_rtu, sim_soc3_wardrv_fsm_c_user, sim_soc3_wardrv_fsm_c_user_modbus_rtu, sim_soc3_wardrv_fsm_fault_c_user, sim_soc3_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla, sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag, sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_bitbang_chain, sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_chain, sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_inject, sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_status, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_chain, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_cpu, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_bitbang_inject, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_chain, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_supervisor, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_cpu_user, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_glitch, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_status, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_pad_mux, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu0, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_cpu1, sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_trap_reset, sim_soc3x2_wardrv_fsm_c_hello_uart, sim_soc3x2_wardrv_fsm_c_user_openocd_chain, sim_soc3x2_wardrv_fsm_c_user_openocd_discover, sim_soc3x2_wardrv_fsm_c_user_openocd_generic, sim_soc4_openblaze8_c_user_uart, sim_soc4_openblaze8_fault_c_user, sim_soc4_openblaze8_fault_c_user_fault_tmr, sim_soc4_openblaze8_fault_c_user_it_user, sim_soc4_openblaze8_fault_c_user_modbus_rtu, sim_soc4_openblaze8_fault_c_user_modbus_rtu_basic, sim_soc4_openblaze8_fault_c_user_modbus_rtu_fault_tmr, sim_soc4_openblaze8_fault_c_user_modbus_rtu_sequence, sim_soc4_openblaze8_fault_c_user_switch, sim_soc4_wardrv_fsm_c_user_uart, sim_soc4_wardrv_fsm_fault_c_user, sim_soc4_wardrv_fsm_fault_c_user_modbus_rtu, sim_soc4x2_wardrv_fsm_c_hello_uart, sim_soc5_wardrv_fsm_c_user_uart_jtag, sim_soc5_wardrv_fsm_fault_c_user_hwla, sim_soc5_wardrv_fsm_fault_c_user_hwla_tap, sim_tap, sim_tap_inject, sim_tap_inject_cpu, lint_ghdl, lint_ghdl_synth_4leds_reset_high, lint_ghdl_synth_default, lint_ghdl_synth_soc1, lint_ghdl_synth_soc4_ng_medium, lint_ghdl_synth_wardrv_soc1, lint_ghdl_synth_wardrv_soc1x4, lint_ghdl_synth_wardrv_soc4_ng_medium, lint_ghdl_synth_wardrv_soc4_ng_medium_debug, syn_soc1, syn_soc4_ng_medium, syn_wardrv_soc1, syn_wardrv_soc4_ng_medium, syn_wardrv_soc4_ng_medium_debug]
+    needs: [sim_soc1_wardrv_fsm_fault_c_test_crc, sim_soc1_wardrv_fsm_fault_c_test_gic, sim_soc1_wardrv_fsm_fault_c_test_gpio, sim_soc1_wardrv_fsm_fault_c_test_i2c, sim_soc1_wardrv_fsm_fault_c_test_pwm, sim_soc1_wardrv_fsm_fault_c_test_ram, sim_soc1_wardrv_fsm_fault_c_test_spi, sim_soc1_wardrv_fsm_fault_c_test_spinlock, sim_soc1_wardrv_fsm_fault_c_test_timer, sim_soc1_wardrv_fsm_fault_c_test_uart, sim_soc1_wardrv_fsm_fault_c_user, sim_soc1_wardrv_fsm_fault_c_user_fault_none, sim_soc1_wardrv_fsm_fault_c_user_it_user, sim_soc1_wardrv_fsm_fault_c_user_openocd_discover, sim_soc1_wardrv_fsm_fault_c_user_openocd_generic, sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag, sim_soc1_wardrv_fsm_fault_c_user_switch]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write

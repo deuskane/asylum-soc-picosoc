@@ -25,7 +25,8 @@
 #                         INJECT (picosoc_inject : irscan, drscan) : an error
 #                         in CPU1 (trapped until it is flagged) raises the
 #                         difference flag CPU0 vs CPU1, read back by the next
-#                         scan
+#                         scan ; not with PICOSOC_SAFETY none (cosim.cfg :
+#                         no copy of the CPU to differ from)
 #              The testbench checks the difference flag on led_diff_o and
 #              that the firmware runs after the session.
 #              Prints ok / ERROR for each check, then SCENARIO PASS / FAIL.
@@ -39,6 +40,8 @@
 # 2026-11-24  1.0      mrosiere Created
 # 2026-11-26  1.1      mrosiere Chain of PICOSOC_CHAIN (given or discovered),
 #                               inject only with the injection TAP
+# 2026-11-27  1.2      mrosiere Student branch : no inject with
+#                               PICOSOC_SAFETY none
 #-----------------------------------------------------------------------------
 
 import os
@@ -111,4 +114,5 @@ def step_inject():
     check(diff == 0b001, f"INJECT : difference flags 0b{diff:03b}, CPU0 vs CPU1")
     check(inject(0b000) == 0b001, "INJECT : end of the injection, the flag is sticky")
 
-main([step_chain, step_halt, step_resume] + ([step_inject] if ("picosoc.inject", 0x10003001) in CHAIN else []))
+INJECT        = ("picosoc.inject", 0x10003001) in CHAIN and os.environ.get("PICOSOC_SAFETY") != "none"
+main([step_chain, step_halt, step_resume] + ([step_inject] if INJECT else []))

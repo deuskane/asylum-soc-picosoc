@@ -49,6 +49,8 @@
 --                               error injection (button, TAP), every safety
 -- 2026-11-27  1.17     mrosiere jtag_inject_cpu (INJECT [6:4], [10:8], [14:12] :
 --                               injection inside the CPUs)
+-- 2026-11-27  1.18     mrosiere Student branch : fault_none (SAFETY none, the
+--                               firmware derails, the supervisor sees nothing)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -77,7 +79,7 @@ package tb_PicoSoC_tests_pkg is
   constant C_INTEGRATION : string := "test_gpio,test_uart,test_spi,test_timer,test_crc,test_spinlock,test_gic,test_ram,test_mailbox,test_i2c,test_pwm";
 
   -- Names of the scenarios (valid items of TESTS_LIST)
-  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_lock_step,fault_tmr,fault_diff,hwla,hwla_tap,hello,pad_mux,jtag_chain,jtag_inject,jtag_inject_cpu,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
+  constant C_TESTS : string := "switch,it_user,uart,sequence,fault_none,fault_lock_step,fault_tmr,fault_diff,hwla,hwla_tap,hello,pad_mux,jtag_chain,jtag_inject,jtag_inject_cpu,jtag_status,jtag_cpu_user,jtag_cpu_supervisor,bitbang_chain,bitbang_inject,bitbang_cpu,jtag_last,jtag_glitch,trap_cpu0,trap_cpu1,trap_reset,trap_tap," & C_INTEGRATION;
 
   -- Firmware in the user ROM (generator of the target, FIRMWARE generic)
   constant C_FIRMWARES : string := "identity,user,user_uart,user_uart_spi,user_uart_spi_mem,user_loop,hello," & C_INTEGRATION;
@@ -146,6 +148,7 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "it_user"        ) then return C_USER;
     elsif string_eq(name, "uart"           ) then return C_UART;
     elsif string_eq(name, "sequence"       ) then return string_eq(firmware, "user_loop");
+    elsif string_eq(name, "fault_none"     ) then return C_USER and supervisor and fault and string_eq(safety, "none");
     elsif string_eq(name, "fault_lock_step") then return C_USER and supervisor and fault and string_eq(safety, "lock-step");
     elsif string_eq(name, "fault_tmr"      ) then return C_USER and supervisor and fault and string_eq(safety, "tmr");
     elsif string_eq(name, "fault_diff"     ) then return C_USER and not supervisor and fault and not string_eq(safety, "none");
@@ -221,6 +224,9 @@ package body tb_PicoSoC_tests_pkg is
     elsif string_eq(name, "sequence")
     then
       work.tb_PicoSoC_sequence_pkg.run(cfg, clk, switch, led0, led_diff, uart_tx);
+    elsif string_eq(name, "fault_none")
+    then
+      work.tb_PicoSoC_fault_none_pkg.run(cfg, clk, switch, inject, led0, led_diff);
     elsif string_eq(name, "fault_lock_step")
     then
       work.tb_PicoSoC_fault_lock_step_pkg.run(cfg, clk, switch, inject, led0, led_diff);
