@@ -15,10 +15,8 @@
 --              TESTS_LIST : scenarios run in sequence, separated by ','
 --                           (tb_PicoSoC_tests_pkg), each one after a reset
 --                           pulse ; "" : build and elaboration only
---              FIRMWARE   : program of the user ROM (identity, user,
---                           user_uart, user_uart_spi, user_uart_spi_mem,
---                           user_loop, hello, test_<ip>) : selects the
---                           scenarios that apply
+--              FIRMWARE   : program of the user ROM (user, user_loop,
+--                           test_<ip>) : selects the scenarios that apply
 --              UART console : with an integration firmware, every line
 --                           is logged and "FAIL <step>" is an error at once
 -------------------------------------------------------------------------------
@@ -61,6 +59,10 @@
 --                               (was p_bitbang)
 -- 2026-11-27  2.12     mrosiere HWLA_LINK : HWLA captures on debug_uart_tx_o
 --                               or through the TAP of jtag_axis (JTAG chain)
+-- 2026-11-27  2.13     mrosiere Student branch : the scenarios of the targets
+--                               of the labs only : no JTAG over the UART
+--                               (remote_bitbang BFM), no SPI byte of the
+--                               "Loop" lines
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -78,7 +80,6 @@ use     bitvis_vip_i2c.i2c_bfm_pkg.all;
 
 library asylum_uvvm;
 use     asylum_uvvm.jtag_bfm_pkg.all;
-use     asylum_uvvm.rbb_bfm_pkg.all;
 
 library asylum;
 use     asylum.PicoSoC_pkg.all;
@@ -90,7 +91,6 @@ library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
 use     work.tb_PicoSoC_tests_pkg.all;
 use     work.tb_PicoSoC_jtag_pkg.all;
-use     work.tb_PicoSoC_bitbang_pkg.all;
 
 entity tb_PicoSoC is
   generic
@@ -143,7 +143,6 @@ architecture tb of tb_PicoSoC is
 
   -- Bit time of the DUT : the baud tick counter divides the internal clock by FSYS_INT/USER_BAUD_RATE
   constant C_UART_BIT_TIME         : time     := (FSYS_INT/USER_BAUD_RATE) * (1 sec / FSYS_INT);
-  constant C_JTAG_BIT_TIME         : time     := (FSYS_INT/JTAG_BAUD_RATE) * (1 sec / FSYS_INT);
 
   -- JTAG chain of the DUT
   constant C_JTAG                  : t_jtag_chain := jtag_chain(USER_NB_CPU * boolean'pos(USER_CPU_DEBUG_ENABLE), SUPERVISOR_CPU_DEBUG_ENABLE,
@@ -153,17 +152,11 @@ architecture tb of tb_PicoSoC is
     clk_period => TB_PERIOD,
     clk_ratio  => FSYS/FSYS_INT,
     timeout    => TB_WATCHDOG * TB_PERIOD,
-    nb_cpu     => USER_NB_CPU,
-    tmr        => USER_SAFETY = "tmr",
-    debug      => DEBUG_ENABLE,
     hwla_depth       => HWLA_DEPTH,
     hwla_pre_trigger => HWLA_PRE_TRIGGER,
     hwla_ts_width    => HWLA_TIMESTAMP_WIDTH,
     hwla_jtag        => HWLA_LINK = "jtag",
-    fault      => USER_FAULT_INJECTION and USER_SAFETY /= "none",
-    supervisor => SUPERVISOR,
     jtag       => C_JTAG,
-    spi_byte   => to_spi_byte(FIRMWARE),
     it_on      => C_IT_ON,
     fault_on   => C_FAULT_ON,
     uart       => (
@@ -173,22 +166,6 @@ architecture tb of tb_PicoSoC is
       num_stop_bits                         => STOP_BITS_ONE,
       parity                                => PARITY_NONE,
       timeout                               => TB_WATCHDOG * TB_PERIOD,
-      timeout_severity                      => error,
-      num_bytes_to_log_before_expected_data => 10,
-      match_strictness                      => MATCH_EXACT,
-      id_for_bfm                            => ID_NEVER,
-      id_for_bfm_wait                       => ID_NEVER,
-      id_for_bfm_poll                       => ID_NEVER,
-      id_for_bfm_poll_summary               => ID_NEVER,
-      error_injection                       => C_BFM_ERROR_INJECTION_INACTIVE
-      ),
-    bitbang    => (
-      bit_time                              => C_JTAG_BIT_TIME,
-      num_data_bits                         => 8,
-      idle_state                            => '1',
-      num_stop_bits                         => STOP_BITS_ONE,
-      parity                                => PARITY_NONE,
-      timeout                               => 0 ns,          -- p_bitbang waits for the answers
       timeout_severity                      => error,
       num_bytes_to_log_before_expected_data => 10,
       match_strictness                      => MATCH_EXACT,
@@ -228,13 +205,6 @@ architecture tb of tb_PicoSoC is
   signal  uart_cts_b               : std_logic := '0';
   signal  jtag_if                  : t_jtag_if := init_jtag_if_signals;
   signal  jtag_mode                : boolean;
-  -- JTAG over the UART (debug_mux_sel_i 11) : the cable is a UART, the
-  -- commands of the remote_bitbang BFM on RX, the answers of jtag_bitbang
-  -- received on the TX pad
-  signal  bitbang_mode             : boolean;
-  signal  bitbang_off              : std_logic;
-  signal  rbb_if                   : t_rbb_if      := init_rbb_if_signals;
-  signal  bitbang                  : t_rbb_answers := C_RBB_ANSWERS_INIT;
 
   -- I2C bus (open drain with pull-ups) : DUT master and BFM slave
   signal  i2c_if                   : t_i2c_if  := (scl => 'Z', sda => 'Z');
@@ -312,26 +282,12 @@ begin  -- architecture tb
   uart_rts_b_io <= 'H';
 
   jtag_mode     <= debug_mux_sel_i = C_MUX_JTAG;
-  uart_rx_i     <= jtag_if.tck   when jtag_mode    else
-                   rbb_if.tx     when bitbang_mode else
+  uart_rx_i     <= jtag_if.tck   when jtag_mode else
                    uart_rx;
   uart_tx_io    <= jtag_if.tdi   when jtag_mode else 'Z';
   uart_cts_b_io <= 'Z'           when jtag_mode else uart_cts_b;
   uart_rts_b_io <= jtag_if.tms   when jtag_mode else 'Z';
   jtag_if.tdo   <= uart_cts_b_io when jtag_mode else 'Z';
-
-  -----------------------------------------------------------------------------
-  -- JTAG over the UART (debug_mux_sel_i 11) : each byte of the TX pad is an answer
-  -- of jtag_bitbang to 'R' ('0' / '1'), kept in bitbang (count, last bits)
-  -----------------------------------------------------------------------------
-  bitbang_mode  <= debug_mux_sel_i = C_MUX_BITBANG;
-  bitbang_off   <= '0' when bitbang_mode else '1';
-
-  rbb_uart_monitor(rx      => uart_tx_io,
-                   stop    => bitbang_off,
-                   answers => bitbang,
-                   scope   => C_SCOPE,
-                   config  => rbb_config(C_CFG));
 
   -- Capture-IR value of the whole chain ("00001" per TAP) at each IR scan
   gen_jtag_monitor:
@@ -468,7 +424,7 @@ begin  -- architecture tb
       if not list_contains(C_TESTS, list_item(TESTS_LIST, i))
       then
         alert(TB_ERROR, "Unknown test """ & list_item(TESTS_LIST, i) & """ (tests : " & C_TESTS & ")", C_SCOPE);
-      elsif not test_applies(list_item(TESTS_LIST, i), FIRMWARE, SUPERVISOR, USER_SAFETY, USER_FAULT_INJECTION, DEBUG_ENABLE, C_JTAG)
+      elsif not test_applies(list_item(TESTS_LIST, i), FIRMWARE, SUPERVISOR, USER_SAFETY, USER_FAULT_INJECTION, DEBUG_ENABLE)
       then
         alert(TB_ERROR, "Test """ & list_item(TESTS_LIST, i) & """ does not apply to the firmware " & FIRMWARE &
                         " and the configuration", C_SCOPE);
@@ -484,7 +440,6 @@ begin  -- architecture tb
       uart_rx        <= '1';
       uart_cts_b     <= '0';
       jtag_if        <= init_jtag_if_signals;
-      rbb_if         <= init_rbb_if_signals;
       i2c_if         <= init_i2c_if_signals(VOID);
       if (SPI_MODEL /= "none") and (now < C_MEM_POWER_UP)
       then
@@ -494,8 +449,7 @@ begin  -- architecture tb
 
       log(ID_LOG_HDR, "TEST " & integer'image(i) & "/" & integer'image(list_length(TESTS_LIST)) & " : " & list_item(TESTS_LIST, i), C_SCOPE);
       run_test(list_item(TESTS_LIST, i), C_CFG, clk_i, switch_i, debug_mux_sel_i, it_user_i, inject_error_i, led0_o, led1_o, led_diff_o, uart_rx, uart_tx_io,
-               uart_cts_b, uart_cts_b_io, uart_rts_b_io, jtag_if, rbb_if, bitbang, i2c_if, pwm_o,
-               debug_uart_tx_o, rom_addr, rom_data);
+               jtag_if, i2c_if, pwm_o, debug_uart_tx_o, rom_addr, rom_data);
     end loop;
 
     report_alert_counters(FINAL);

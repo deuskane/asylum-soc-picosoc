@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Description:
 // Drives the sbi_spinlock of the user SoC from one CPU, scenario
-// test_spinlock of tb_PicoSoC (the locks shared by several CPUs are in
-// esw/demo/user_hello.c) :
+// test_spinlock of tb_PicoSoC (the locks shared by several CPUs : see
+// esw/demo/user_hello.c on the branch main) :
 // * a read takes a free lock (returns 0) and returns non 0 while taken
 // * the 2 locks are independent
 // * a write of 0 releases a lock, a write never takes it

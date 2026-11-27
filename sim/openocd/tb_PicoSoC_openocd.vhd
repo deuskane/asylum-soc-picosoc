@@ -10,9 +10,8 @@
 --              JTAG chain through the UART pads (hooks rbb/cosim.sh of the
 --              co-simulation kit asylum:verification:openocd), with the
 --              scenario of the target : GDB runs sim/openocd/picosoc.py, or
---              OpenOCD runs the checks of sim/openocd/chain.cfg, of
---              sim/openocd/discover_check.cfg or of
---              sim/openocd/generic_check.cfg
+--              OpenOCD runs the checks of sim/openocd/discover_check.cfg or
+--              of sim/openocd/hwla_check.cfg
 --              DEBUG_MUX_SEL : function of the UART pads (debug_mux_sel_i)
 --                "10" : JTAG pins, driven by rbb_jtag of the kit (PIN mode) :
 --                       TCK = uart_rx_i, TDI = uart_tx_io, TMS =
@@ -36,7 +35,7 @@
 --              OpenOCD) : PICOSOC_CHAIN, the JTAG chain of the generics
 --              (chip, TAP, IDCODE of each TAP from TDO, as discover.cfg
 --              prints it), checked by discover_check.cfg,
---              generic_check.cfg, hwla_check.cfg and picosoc.py ;
+--              hwla_check.cfg and picosoc.py ;
 --              PICOSOC_SAFETY, USER_SAFETY (picosoc.py : no INJECT step
 --              with "none") ;
 --              PICOSOC_HWLA_BYTES, the bytes of a capture of the HWLA
