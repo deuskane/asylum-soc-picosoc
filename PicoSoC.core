@@ -183,9 +183,11 @@ CAPI=2:
 #                               picosoc_hwla_dump : hexadecimal text without the Tcl
 #                               command binary (xPack OpenOCD) or for *.hex ;
 #                               tools/udev (rules of the FTDI cables, install.sh)
+# 2026-11-27  4.8.2    mrosiere README : Resources measured again ; doc/picosoc.drawio :
+#                               TAP of the HWLA in the JTAG chain (page jtag)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.8.1
+name        : asylum:soc:PicoSoC:4.8.2
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
