@@ -23,9 +23,9 @@
 --              * back to 00 : the loop lines are on the TX pad again (a
 --                quiet line with CTS*, the end of the current line, then a
 --                full loop line)
---              * 01, with DEBUG_ENABLE and fault injection : an error in
---                CPU0 triggers the HWLA, its capture is on the TX pad, bit by
---                bit equal to debug_uart_tx_o
+--              * 01, with DEBUG_ENABLE, fault injection and HWLA_LINK
+--                "uart" : an error in CPU0 triggers the HWLA, its capture is
+--                on the TX pad, bit by bit equal to debug_uart_tx_o
 --              Pull-ups of the tb : a pad driven by nobody is 'H' ; cts_b is
 --              the CTS* of the cable ('Z' : released)
 -------------------------------------------------------------------------------
@@ -41,6 +41,8 @@
 --                               after a quiet line (uart_quiet)
 -- 2026-11-23  1.3      mrosiere Functions selected by debug_mux_sel_i (was the
 --                               switch MSBs), switches with MSBs 00
+-- 2026-11-27  1.4      mrosiere HWLA capture in mode 01 with HWLA_LINK "uart"
+--                               only
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -176,7 +178,7 @@ package body tb_PicoSoC_pad_mux_pkg is
     check_value(v_len >= 5 and v_line(1 to 5) = "Loop ", ERROR, "00 : the loop lines are on the TX pad again : " & v_line(1 to v_len), C_TB_SCOPE);
     check_rts_driven("00");
 
-    if cfg.debug and cfg.fault
+    if cfg.debug and cfg.fault and not cfg.hwla_jtag
     then
       -- 01 again : an error in CPU0 triggers the HWLA, its capture is sent
       -- on debug_uart_tx_o and on the TX pad (last : after the error, the

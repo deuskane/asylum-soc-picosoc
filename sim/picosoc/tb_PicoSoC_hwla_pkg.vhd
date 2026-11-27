@@ -9,7 +9,17 @@
 --              supervisor, lock-step or TMR, fault injection, DEBUG_ENABLE) :
 --              the HWLA of PicoSoC_top captures the bus of the user CPU
 --              around a difference of the redundant CPUs and sends the
---              capture on debug_uart_tx_o (UART 115200 8N1).
+--              capture on its link (cfg.hwla_jtag, HWLA_LINK) :
+--              - "uart" : on debug_uart_tx_o (UART 115200 8N1), received
+--                with the UART BFM ;
+--              - "jtag" : to the TX FIFO of jtag_axis, read through its TAP
+--                (UART pads in mode 10, JTAG BFM : TX scans of 9 bits, a
+--                word when its bit 0 (valid) is set) ; TCK of 10 SoC clock
+--                cycles at least (1 us otherwise), the limit of the TCK
+--                resynchronized in PicoSoC_top. Then CONFIG of the TAP :
+--                TX only, 8-bit words ; debug_uart_tx_o idle all along.
+--              The stimulus and the checks of the capture are the same for
+--              both links (same bytes for the same configuration).
 --              * No byte on debug_uart_tx_o before the error
 --              * New switches : the firmware writes them to LED0 (time of
 --                the change of LED0), then an error in CPU1 (time of the
@@ -52,6 +62,8 @@
 -- 2026-11-24  1.3      mrosiere DEPTH, PRE_TRIGGER and timestamp width from
 --                               the generics of the DUT (cfg)
 -- 2026-11-24  1.4      mrosiere HWLA_TIMESTAMP_WIDTH = 0 (no timestamp)
+-- 2026-11-27  1.5      mrosiere HWLA_LINK "jtag" : capture read through the
+--                               TAP of jtag_axis (JTAG BFM), its CONFIG
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -64,24 +76,32 @@ context uvvm_util.uvvm_util_context;
 library bitvis_vip_uart;
 use     bitvis_vip_uart.uart_bfm_pkg.all;
 
+library asylum_uvvm;
+use     asylum_uvvm.jtag_bfm_pkg.all;
+
 library asylum;
 use     asylum.PicoSoC_pkg.all;
 use     asylum.GPIO_irq_csr_pkg.all;
+use     asylum.jtag_pkg.all;
 
 library work;
 use     work.tb_PicoSoC_bfm_pkg.all;
+use     work.tb_PicoSoC_jtag_pkg.all;
 
 package tb_PicoSoC_hwla_pkg is
 
-  -- Capture of an error in CPU1, received on debug_uart_tx_o
+  -- Capture of an error in CPU1, received on debug_uart_tx_o or through the
+  -- TAP of jtag_axis (cfg.hwla_jtag)
   procedure run
     (constant cfg           : in    t_tb_cfg
     ;signal   clk           : in    std_logic
     ;signal   switch        : out   std_logic_vector
+    ;signal   mux_sel       : out   std_logic_vector
     ;signal   inject        : out   std_logic_vector
     ;signal   led0          : in    std_logic_vector
     ;signal   led_diff      : in    std_logic_vector
     ;signal   debug_uart_tx : in    std_logic
+    ;signal   jtag_if       : inout t_jtag_if
     ;signal   rom_addr      : out   std_logic_vector
     ;signal   rom_data      : in    std_logic_vector
     );
@@ -94,10 +114,12 @@ package body tb_PicoSoC_hwla_pkg is
     (constant cfg           : in    t_tb_cfg
     ;signal   clk           : in    std_logic
     ;signal   switch        : out   std_logic_vector
+    ;signal   mux_sel       : out   std_logic_vector
     ;signal   inject        : out   std_logic_vector
     ;signal   led0          : in    std_logic_vector
     ;signal   led_diff      : in    std_logic_vector
     ;signal   debug_uart_tx : in    std_logic
+    ;signal   jtag_if       : inout t_jtag_if
     ;signal   rom_addr      : out   std_logic_vector
     ;signal   rom_data      : in    std_logic_vector
     ) is
@@ -155,6 +177,13 @@ package body tb_PicoSoC_hwla_pkg is
     variable v_rom          : std_logic_vector(C_DW-1 downto 0);
     variable v_idata        : std_logic_vector(C_DW-1 downto 0);
 
+    -- HWLA_LINK "jtag" : TAP of jtag_axis, the other TAPs in BYPASS ; TCK of
+    -- at least 10 SoC clock cycles (resynchronized in PicoSoC_top)
+    variable v_jtag         : t_jtag_bfm_config;
+    variable v_word         : std_logic_vector(8 downto 0);  -- {word, valid}
+    variable v_config       : std_logic_vector(JTAG_AXIS_CONFIG_WIDTH-1 downto 0);
+    variable v_t_byte       : time;
+
     -- Field of a sample
     function field (s : t_sample; lsb : natural; width : positive) return std_logic_vector is
     begin
@@ -179,7 +208,15 @@ package body tb_PicoSoC_hwla_pkg is
     end function;
 
   begin
-    log(ID_SEQUENCER, "hwla : capture of an error in CPU1 on debug_uart_tx_o", C_TB_SCOPE);
+    if cfg.hwla_jtag
+    then
+      log(ID_SEQUENCER, "hwla : capture of an error in CPU1 through the TAP of jtag_axis", C_TB_SCOPE);
+      mux_sel <= C_MUX_JTAG;  -- At once : the same stimulus times as the UART link
+      v_jtag            := jtag_config(cfg, cfg.jtag.hwla);
+      v_jtag.tck_period := maximum(v_jtag.tck_period, 10 * cfg.clk_ratio * cfg.clk_period);
+    else
+      log(ID_SEQUENCER, "hwla : capture of an error in CPU1 on debug_uart_tx_o", C_TB_SCOPE);
+    end if;
     v_t0 := now;
 
     set_slv     (C_SW1, clk, switch);
@@ -209,13 +246,42 @@ package body tb_PicoSoC_hwla_pkg is
     -- LSB, then the first sample of the next capture (the difference flag
     -- stays set : a new capture after each extraction)
     v_uart.bit_time := C_BIT_TIME;
+    if cfg.hwla_jtag
+    then
+      -- Test-Logic-Reset, instruction TX of jtag_axis ; one TX scan per word,
+      -- not logged (one scan per byte)
+      jtag_reset   (msg => "Test-Logic-Reset", jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag);
+      jtag_write_ir(ir_value => JTAG_AXIS_IR_TX, msg => "TX of jtag_axis", jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag);
+      v_jtag.id_for_bfm := ID_NEVER;
+    end if;
     for i in 0 to (C_DEPTH+1)*C_SAMPLE_BYTES-1 loop
-      uart_receive(data_value     => v_byte,
-                   msg            => "HWLA byte " & integer'image(i),
-                   rx             => debug_uart_tx,
-                   terminate_loop => uart_no_terminate,
-                   config         => v_uart,
-                   scope          => C_TB_SCOPE);
+      if cfg.hwla_jtag
+      then
+        -- TX scans until a valid word (the FIFO is empty until the capture)
+        v_t_byte := now;
+        loop
+          jtag_scan_dr(data_value => "000000000",
+                       data_out   => v_word,
+                       msg        => "HWLA byte " & integer'image(i),
+                       jtag_if    => jtag_if,
+                       scope      => C_TB_SCOPE,
+                       config     => v_jtag);
+          exit when v_word(0) = '1';
+          if now - v_t_byte > cfg.timeout
+          then
+            alert(ERROR, "HWLA byte " & integer'image(i) & " : TX FIFO of jtag_axis empty for " & time'image(cfg.timeout), C_TB_SCOPE);
+            exit;
+          end if;
+        end loop;
+        v_byte := v_word(8 downto 1);
+      else
+        uart_receive(data_value     => v_byte,
+                     msg            => "HWLA byte " & integer'image(i),
+                     rx             => debug_uart_tx,
+                     terminate_loop => uart_no_terminate,
+                     config         => v_uart,
+                     scope          => C_TB_SCOPE);
+      end if;
       v_capture(i / C_SAMPLE_BYTES)(8*(i mod C_SAMPLE_BYTES)+7 downto 8*(i mod C_SAMPLE_BYTES)) := v_byte;
     end loop;
     for s in 0 to C_DEPTH-1 loop
@@ -295,6 +361,19 @@ package body tb_PicoSoC_hwla_pkg is
     end loop;
     check_value(v_err_sample, 0, ERROR, "Samples : timestamps increase (if any), probes change (but the trigger sample)", C_TB_SCOPE);
     check_value(v_err_rom   , 0, ERROR, "Instruction bus of the capture matches the user ROM", C_TB_SCOPE);
+
+    -- HWLA_LINK "jtag" : CONFIG of jtag_axis (TX enabled, RX disabled : its
+    -- flags empty and full, 8-bit words ; the TX flags depend on the next
+    -- capture), nothing on debug_uart_tx_o
+    if cfg.hwla_jtag
+    then
+      v_jtag.id_for_bfm := ID_BFM;
+      jtag_write_ir(ir_value => JTAG_AXIS_IR_CONFIG, msg => "CONFIG of jtag_axis", jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag);
+      jtag_scan_dr (data_value => x"0000", data_out => v_config, msg => "CONFIG of jtag_axis", jtag_if => jtag_if, scope => C_TB_SCOPE, config => v_jtag);
+      check_value(v_config and x"FF71", x"0861", ERROR,
+                  "CONFIG of jtag_axis : TX_ENABLE 1, RX_ENABLE 0, RX empty and full, DATA_WIDTH 8", C_TB_SCOPE);
+      check_stable(debug_uart_tx, now - v_t0, ERROR, "debug_uart_tx_o : idle with HWLA_LINK jtag", C_TB_SCOPE);
+    end if;
   end procedure;
 
 end package body tb_PicoSoC_hwla_pkg;

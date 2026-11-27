@@ -677,7 +677,7 @@ filesets:
       - ">=asylum:communication:I2C:1.0.0"
       - ">=asylum:component:PWM:1.0.0"
       - ">=asylum:debug:HWLA:3.0.0"
-      - ">=asylum:debug:jtag:1.1.0" # jtag_bitbang
+      - ">=asylum:debug:jtag:1.3.0" # jtag_bitbang, jtag_axis (HWLA_LINK jtag)
       - ">=asylum:component:fifo:1.0.0"
       - ">=asylum:component:timer:2.0.0"
       - ">=asylum:component:ram:1.2.0"
@@ -1499,6 +1499,32 @@ targets:
       - TESTS_LIST=hwla
 
   #---------------------------------------
+  sim_soc2_openblaze8_fault_c_user_hwla_jtag:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as sim_soc2_openblaze8_fault_c_user_hwla
+    generate     : [gen_picoblaze3_user_c,gen_picoblaze3_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=OpenBlaze8
+      - FSYS=2304000
+      - FSYS_INT=1152000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
+
+  #---------------------------------------
   sim_soc2_openblaze8_fault_c_user_uart_jtag:
   #---------------------------------------
     << : *sim
@@ -1920,6 +1946,24 @@ targets:
       - SUPERVISOR_CPU_DEBUG_ENABLE=true
 
   #---------------------------------------
+  emu_ng_medium_soc3_wardrv_fsm_fault_debug_hwla_jtag:
+  #---------------------------------------
+    << : *emu_ng_medium_default
+    description       : NanoXplore NG_MEDIUM Board of the test esw/demo/user.c                - With    Supervisor, Safety Lock-Step, With    Fault Injection, HWLA (trigger on the lock-step difference, captures read through JTAG with HWLA_LINK jtag and picosoc_hwla_dump of tools/openocd/picosoc.cfg), JTAG chain of 4 TAPs (injection / status, HWLA jtag_axis, supervisor CPU, user CPU)
+    generate          : [gen_rv32i_user_c_uart_9600,gen_rv32i_supervisor_c]
+    parameters        : *cfg_ng_medium_wardrv_fsm
+    parameters_append :
+      # Platform Configuration
+      - SUPERVISOR=true
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
+      - USER_CPU_DEBUG_ENABLE=true
+      - SUPERVISOR_CPU_DEBUG_ENABLE=true
+
+  #---------------------------------------
   emu_ng_medium_soc3_wardrv_fsm_fault_modbus_rtu:
   #---------------------------------------
     << : *emu_ng_medium_default
@@ -2053,7 +2097,6 @@ targets:
     parameters        : *cfg_soc1_wardrv_fsm
     parameters_append :
       - TESTS_LIST=basic,sequence
-
 
   #---------------------------------------
   sim_soc1x2_wardrv_fsm_c_hello_uart:
@@ -2266,6 +2309,35 @@ targets:
 
       # Debug
       - DEBUG_ENABLE=true
+      - HWLA_DEPTH=128
+      - HWLA_PRE_TRIGGER=48
+      - HWLA_TIMESTAMP_WIDTH=24
+
+      # Test Bench Configuration
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user
+      - TESTS_LIST=hwla
+
+  #---------------------------------------
+  sim_soc2_wardrv_fsm_fault_c_user_hwla_jtag:
+  #---------------------------------------
+    << : *sim
+    description  : Simulation of the test esw/demo/user.c                - Without Supervisor, Safety Lock-Step, With    Fault Injection, HWLA capture of the error read through the TAP of jtag_axis (HWLA_LINK jtag, TCK of 10 SoC clock cycles), same configuration and stimulus as sim_soc2_wardrv_fsm_fault_c_user_hwla
+    generate     : [gen_rv32i_user_c,gen_rv32i_supervisor_c_dummy]
+    parameters   :
+      - CPU_MODEL=WardRV_fsm
+      - FSYS=2304000
+      - FSYS_INT=1152000
+
+      # Platform Configuration
+      - SUPERVISOR=false
+      - USER_SAFETY=lock-step
+      - USER_FAULT_INJECTION=true
+
+      # Debug
+      - DEBUG_ENABLE=true
+      - HWLA_LINK=jtag
       - HWLA_DEPTH=128
       - HWLA_PRE_TRIGGER=48
       - HWLA_TIMESTAMP_WIDTH=24
@@ -2667,6 +2739,56 @@ targets:
     description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario trap_reset (trap set while the supervisor holds the user SoC in reset, kept by this reset)
     parameters_append :
       - TESTS_LIST=trap_reset
+
+  #---------------------------------------
+  # soc3 with the HWLA captures over JTAG (HWLA_LINK jtag) : the TAP of
+  # jtag_axis in the chain, between the supervisor CPU and the injection /
+  # status TAP ; the scenarios of the chain
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag: &sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
+  #---------------------------------------
+    << : *sim
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, build check (one scenario per target sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_<test>)
+    generate          : [gen_rv32i_user_c_uart_921600,gen_rv32i_supervisor_c]
+    parameters        : *cfg_soc3_wardrv_fsm_fault_jtag
+    parameters_append :
+      - HWLA_LINK=jtag
+      - TB_WATCHDOG=200000
+      - SPI_MODEL=none
+      - FIRMWARE=user_uart
+      - TESTS_LIST
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_chain:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_chain
+    parameters_append :
+      - TESTS_LIST=jtag_chain
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_inject:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_inject
+    parameters_append :
+      - TESTS_LIST=jtag_inject
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_jtag_status:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario jtag_status (HWLA flags, capture read through jtag_axis)
+    parameters_append :
+      - TESTS_LIST=jtag_status
+
+  #---------------------------------------
+  sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag_bitbang_chain:
+  #---------------------------------------
+    << : *sim_soc3_wardrv_fsm_fault_c_user_uart_hwla_jtag
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, JTAG chain of the user CPU, supervisor CPU, HWLA (jtag_axis, HWLA_LINK jtag) and injection TAPs, IT and fault inputs active low, scenario bitbang_chain (JTAG over the UART pads, 921600 baud)
+    parameters_append :
+      - TESTS_LIST=bitbang_chain
 
   #---------------------------------------
   sim_soc1_wardrv_fsm_fault_c_user_jtag_trap_tap:
@@ -3225,6 +3347,12 @@ parameters :
     description : Width of the timestamp of a sample of the HWLA (DEBUG_ENABLE)
     datatype    : int
     default     : 16
+    paramtype   : generic
+
+  HWLA_LINK :
+    description : Link of the HWLA captures (DEBUG_ENABLE), uart (debug_uart_tx_o, UART pads in mode 01) or jtag (TAP of jtag_axis in the JTAG chain)
+    datatype    : str
+    default     : uart
     paramtype   : generic
 
   JTAG_BAUD_RATE :

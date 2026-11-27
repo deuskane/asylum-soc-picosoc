@@ -30,6 +30,9 @@
 --                               user CPU TAP per cluster
 -- 2026-11-23  1.2      mrosiere Chain fields of the BFM (asylum:verification:
 --                               uvvm 1.2.0) : chain_ir / chain_dr removed
+-- 2026-11-27  1.3      mrosiere TAP of the HWLA captures (jtag_axis, HWLA_LINK
+--                               "jtag") between the supervisor CPU and the
+--                               injection / status TAP
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -67,10 +70,11 @@ package tb_PicoSoC_jtag_pkg is
     ) return t_jtag_bfm_config;
 
   -- Chain of PicoSoC_top with the TAPs present (CPU debuggers of nb_user
-  -- clusters, supervisor CPU debugger, injection)
+  -- clusters, supervisor CPU debugger, HWLA captures, injection)
   function jtag_chain
     (nb_user    : natural
     ;supervisor : boolean
+    ;hwla       : boolean
     ;inject     : boolean
     ) return t_jtag_chain;
 
@@ -151,12 +155,13 @@ package body tb_PicoSoC_jtag_pkg is
   function jtag_chain
     (nb_user    : natural
     ;supervisor : boolean
+    ;hwla       : boolean
     ;inject     : boolean
     ) return t_jtag_chain is
-    variable v_chain : t_jtag_chain := (nb_tap => 0, user => -1, nb_user => nb_user, supervisor => -1, inject => -1);
+    variable v_chain : t_jtag_chain := (nb_tap => 0, user => -1, nb_user => nb_user, supervisor => -1, hwla => -1, inject => -1);
   begin
     -- Chain order from TDI : user CPUs (cluster 0 first), supervisor CPU,
-    -- injection
+    -- HWLA captures, injection
     if nb_user > 0
     then
       v_chain.user       := v_chain.nb_tap;
@@ -165,6 +170,11 @@ package body tb_PicoSoC_jtag_pkg is
     if supervisor
     then
       v_chain.supervisor := v_chain.nb_tap;
+      v_chain.nb_tap     := v_chain.nb_tap + 1;
+    end if;
+    if hwla
+    then
+      v_chain.hwla       := v_chain.nb_tap;
       v_chain.nb_tap     := v_chain.nb_tap + 1;
     end if;
     if inject
@@ -186,6 +196,9 @@ package body tb_PicoSoC_jtag_pkg is
     elsif tap = cfg.jtag.supervisor
     then
       return PICOSOC_JTAG_IDCODE_SUPERVISOR_CPU;
+    elsif tap = cfg.jtag.hwla
+    then
+      return PICOSOC_JTAG_IDCODE_HWLA;
     elsif tap = cfg.jtag.inject
     then
       return PICOSOC_JTAG_IDCODE_INJECT;

@@ -37,6 +37,7 @@
 --                               (jtag_config(cfg, tap))
 -- 2026-11-23  1.2      mrosiere UART pads to JTAG with debug_mux_sel_i (was
 --                               the switch MSBs) : switches 0x1A, 0x25
+-- 2026-11-27  1.3      mrosiere STATUS : 4 flags of the HWLA above the resets
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -104,7 +105,7 @@ package body tb_PicoSoC_jtag_cpu_pkg is
     -- The halted CPU does nothing during C_HALTED cycles
     constant C_HALTED    : positive := 2000*cfg.clk_ratio;
     variable v_data      : std_logic_vector(32-1 downto 0);
-    variable v_status    : std_logic_vector(2+8+3+8+8-1 downto 0) := (others => '0');
+    variable v_status    : std_logic_vector(4+2+8+3+8+8-1 downto 0) := (others => '0');  -- HWLA flags, resets, switches, led_diff, LED1, LED0
     variable v_resets    : std_logic_vector(2-1 downto 0);
     variable v_sw        : std_logic_vector(8-1 downto 0);
   begin
@@ -174,11 +175,12 @@ package body tb_PicoSoC_jtag_cpu_pkg is
     wait_value(led0, x"00", cfg, C_NAME & " ndmreset : user SoC in reset (LED0 = 0)");
     if cfg.jtag.inject >= 0
     then
-      -- Reset bits of the status TDR (MSBs) : supervisor SoC, user SoC
+      -- Reset bits of the status TDR (below the HWLA flags) : supervisor
+      -- SoC, user SoC
       jtag_write_ir(ir_value => PICOSOC_JTAG_IR_STATUS, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, cfg.jtag.inject));
       v_resets := "00" when supervisor else "10";
       jtag_scan_dr (data_value => v_status, data_out => v_status, msg => "STATUS", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, cfg.jtag.inject));
-      check_value(v_status(v_status'high downto v_status'high-1), v_resets, ERROR,
+      check_value(v_status(2+8+3+8+8-1 downto 8+3+8+8), v_resets, ERROR,
                   C_NAME & " ndmreset : reset bits of the status TDR (supervisor SoC, user SoC)", C_TB_SCOPE);
     end if;
     dmi_write (cfg, C_TAP, DM_DMCONTROL, x"00000001", jtag_if);
