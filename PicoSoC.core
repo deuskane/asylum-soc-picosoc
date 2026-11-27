@@ -186,7 +186,9 @@ CAPI=2:
 # 2026-11-27  4.8.2    mrosiere README : Resources measured again ; doc/picosoc.drawio :
 #                               TAP of the HWLA in the JTAG chain (page jtag)
 # 2026-11-27  4.8.3    mrosiere cpu_safety : SEU_BIT of WardRV on the rd field
-#                               (bits 7 / 8 / 9, were 0 / 1 / 2)
+#                               (bits 7 / 8 / 9, were 0 / 1 / 2) ;
+#                               tools/openocd/picosoc_cmds.tcl (short commands of the
+#                               telnet session : status, stop / run, read_mem ...)
 #-----------------------------------------------------------------------------
 
 name        : asylum:soc:PicoSoC:4.8.3
@@ -780,6 +782,7 @@ filesets:
       - tools/openocd/discover.cfg       : {file_type : user, copyto : openocd/discover.cfg}
       - tools/openocd/discover.tcl       : {file_type : user, copyto : openocd/discover.tcl}
       - tools/openocd/jtag_axis.tcl      : {file_type : user, copyto : openocd/jtag_axis.tcl}
+      - tools/openocd/picosoc_cmds.tcl   : {file_type : user, copyto : openocd/picosoc_cmds.tcl}
       - sim/openocd/gdb.cfg              : {file_type : user, copyto : openocd/gdb.cfg}
       - sim/openocd/generic.cfg          : {file_type : user, copyto : openocd/generic.cfg}
       - sim/openocd/picosoc.py           : {file_type : user, copyto : openocd/picosoc.py}
