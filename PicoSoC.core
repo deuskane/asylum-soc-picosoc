@@ -177,9 +177,12 @@ CAPI=2:
 #                               co-simulation
 #                               sim_soc3_wardrv_fsm_fault_c_user_openocd_hwla ;
 #                               emu_ng_medium_soc3_wardrv_fsm_fault_debug_hwla_jtag
+# 2026-11-27  4.8.1    mrosiere tools/openocd/jtag_axis.tcl : copy of the procedures
+#                               of asylum-debug-jtag, sourced by picosoc.cfg from its
+#                               own directory ; sim/openocd/hwla_vcd.sh (was hwla_tools.sh)
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.8.0
+name        : asylum:soc:PicoSoC:4.8.1
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
