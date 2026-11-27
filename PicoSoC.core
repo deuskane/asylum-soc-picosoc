@@ -194,9 +194,30 @@ CAPI=2:
 #                               sequence (lines checked against xorwow) ;
 #                               sim_soc1_wardrv_fsm_c_user_loop,
 #                               emu_ng_medium_soc1_wardrv_fsm_user_loop
+# 2026-11-27  4.8.4    mrosiere HWLA : trigger on the error injection (rising edge of
+#                               the traps of PicoSoC_inject of the copies present :
+#                               push buttons or TAP, every safety configuration), the
+#                               difference flags in the probes (WardRV_fsm 74,
+#                               OpenBlaze8 60) ; NG-MEDIUM targets : HWLA_DEPTH 1024,
+#                               HWLA_PRE_TRIGGER 16 (tools/hwla/*.args, hwla_capture.sh,
+#                               picosoc_hwla_dump : 12288 bytes) ; WardRV_fsm boards on
+#                               user_loop.c (but the SPI flash and Modbus builds) ;
+#                               tb : scenarios hwla (push button) and hwla_tap (TAP
+#                               INJECT), field diff, one capture per injection,
+#                               sim_soc{1,2,5}_<cpu>_fault_c_user_hwla* ;
+#                               INJECT of the injection / status TAP on 16 bits :
+#                               [6:4], [10:8], [14:12] injection inside the CPU copy
+#                               0, 1, 2 (3 requests per copy, a pulse per 0 -> 1 on
+#                               inject_cpu_i of cpu_safety, inject_i of cpu_wrapper,
+#                               unused by the reference CPUs) ; picosoc_inject_cpu
+#                               <copy> <mask> ;
+#                               tb : scenario jtag_inject_cpu, tb_PicoSoC_tap (the TAP
+#                               alone : sim_tap_inject, sim_tap_inject_cpu) ; README :
+#                               Resources of DEBUG_ENABLE measured again ;
+#                               tools/openocd/ft232r.cfg : adapter speed 1 MHz
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.8.3
+name        : asylum:soc:PicoSoC:4.8.4
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
