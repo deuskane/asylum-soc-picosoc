@@ -27,7 +27,7 @@
 
 [![CI](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml/badge.svg?branch=student)](https://github.com/deuskane/asylum-soc-picosoc/actions/workflows/ci.yml?query=branch%3Astudent)
 
-> **Student branch of the ESIEE SEI-5201A labs.** The safety of PicoSoC is removed: `cpu_safety` implements `SAFETY = "none"` only, lock-step and TMR are holes to write (see [CPU safety](#cpu-safety)). The configurations are numbered in the order of the labs, `soc1` (WardRV_fsm, supervisor, no safety, fault injection), `soc2` / `soc3` (`soc1` with the lock-step / the TMR to write), see [Configuration](#configuration); only their targets are kept (see [Targets](#targets)). The complete SoC, its safety, OpenBlaze8 (its path stays in the RTL, without target), the multi-core, Modbus, lint and synthesis targets are on the branch `main`.
+> **Student branch of the ESIEE SEI-5201A labs.** The safety of PicoSoC is removed: `cpu_safety` implements `SAFETY = "none"` only, lock-step and TMR are holes to write (see [CPU safety](#cpu-safety)). The configurations are numbered in the order of the labs, `soc1` (WardRV_fsm, supervisor, no safety, fault injection), `soc2` / `soc3` (`soc1` with the lock-step / the TMR to write), see [Configuration](#configuration); only their targets are kept (see [Targets](#targets)), with the firmware [esw/demo/user_loop.c](esw/demo/user_loop.c) (LED0 = switches and one UART line per iteration: the loop number and a pseudo random number). The complete SoC, its safety, OpenBlaze8 (its path stays in the RTL, without target), the multi-core, Modbus, lint and synthesis targets are on the branch `main`.
 
 # PicoSoC
 
@@ -102,15 +102,15 @@ The branch keeps the version of `main` it comes from (VLNV `asylum:soc:PicoSoC:4
 pip install fusesoc
 fusesoc library add https://github.com/deuskane/asylum-cores
 git clone -b student https://github.com/deuskane/asylum-soc-picosoc && cd asylum-soc-picosoc
-make sim_soc1_wardrv_fsm_fault_c_user_switch          # GHDL + RISC-V toolchain, log in log/
-fusesoc --cores-root . run --target sim_soc1_wardrv_fsm_fault_c_user_fault_none asylum:soc:PicoSoC:4.8.5
+make sim_soc1_wardrv_fsm_fault_c_user_loop_sequence  # GHDL + RISC-V toolchain, log in log/
+fusesoc --cores-root . run --target sim_soc1_wardrv_fsm_fault_c_user_loop_fault_none asylum:soc:PicoSoC:4.8.5
 ```
 
 `make help`, `make nonreg_sim` (see [How to Run](#how-to-run)).
 
 ### Firmware
 
-A target names its firmware with its `generate` entries (see [PicoSoC.core](PicoSoC.core)): for example `gen_rv32i_user_c_uart_9600` compiles [esw/demo/user.c](esw/demo/user.c) with `-DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600` into the entity `ROM_user`, and `gen_rv32i_supervisor_c_tmr` compiles [esw/system/supervisor.c](esw/system/supervisor.c) with `-DSAFETY_TMR` into `ROM_supervisor`. To run another program, add a generator entry with its file and flags and a target that uses it. `CLOCK_FREQ` and `BAUD_RATE` of the firmware must match `FSYS_INT` and `USER_BAUD_RATE` of the target. The [integration firmwares](#integration-firmwares) `esw/test/test_<ip>.c` are short examples of each peripheral driven from C.
+A target names its firmware with its `generate` entries (see [PicoSoC.core](PicoSoC.core)): for example `gen_rv32i_user_loop_9600` compiles [esw/demo/user_loop.c](esw/demo/user_loop.c) with `-DHAVE_UART -DCLOCK_FREQ=12500000 -DBAUD_RATE=9600` into the entity `ROM_user`, and `gen_rv32i_supervisor_c_tmr` compiles [esw/system/supervisor.c](esw/system/supervisor.c) with `-DSAFETY_TMR` into `ROM_supervisor`. To run another program, add a generator entry with its file and flags and a target that uses it. `CLOCK_FREQ` and `BAUD_RATE` of the firmware must match `FSYS_INT` and `USER_BAUD_RATE` of the target. The [integration firmwares](#integration-firmwares) `esw/test/test_<ip>.c` are short examples of each peripheral driven from C.
 
 ### Board
 
@@ -125,7 +125,7 @@ The `emu_ng_medium_*` targets build the SoC for the NanoXplore NG-MEDIUM kit (DK
 | `10` | 1 | 0 | JTAG pins of the JTAG chain | TCK, TDI, TDO, TMS | FT232R cable (`ft232r.cfg`) or FTDI MPSSE cable (`ft232h.cfg`): OpenOCD (see [OpenOCD and GDB on the board](#openocd-and-gdb-on-the-board)) |
 | `11` | 1 | 1 | JTAG over the UART (`JTAG_BAUD_RATE`) | RX, TX | Any USB-UART cable: `socat` and OpenOCD (`remote_bitbang.cfg`) |
 
-The WardRV_fsm board targets run [esw/demo/user_loop.c](esw/demo/user_loop.c) (LED0 = switches and, in mode `00`, one line per iteration at 9600 baud, `Loop <loop number> <pseudo random number>`: the same sequence after every reset, so a wrong line shows an error), but the SPI flash (`emu_ng_medium_soc1_wardrv_fsm`, `emu_ng_medium_soc4_wardrv_fsm_fault_spi`) and Modbus builds; the OpenBlaze8 board targets run [esw/demo/user.c](esw/demo/user.c) (a banner, the echo and a loop line at every iteration). The Basys1 pad file ([boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)) has no pin for the UART, SPI, I2C and PWM, nor for `debug_mux_sel_i`. NXmap is not in the asylum-env image: these targets are not run by the CI.
+The board targets run [esw/demo/user_loop.c](esw/demo/user_loop.c): LED0 follows the switches, and in mode `00` a terminal at 9600 baud shows one line per iteration, `Loop <loop number> <pseudo random number>` (8 hexadecimal digits each, the xorwow sequence from a fixed seed: the same lines after every reset), for example `Loop 00000000 0EB70507`, `Loop 00000001 DBF10AA0`, `Loop 00000002 4B5FF98D`. The Basys1 pad file ([boards/Digilent-Basys1/pads.ucf](boards/Digilent-Basys1/pads.ucf)) has no pin for the UART, SPI, I2C and PWM, nor for `debug_mux_sel_i`. NXmap is not in the asylum-env image: these targets are not run by the CI.
 
 ```bash
 make emu_ng_medium_soc1_wardrv_fsm_fault      # TOOL=nxmap (mk/defs.mk), the default TARGET
@@ -401,7 +401,7 @@ Fault injection: `inject_error(i)` XORs one instruction bit of CPU `i` (bit 17 /
 - Priority: clear wins over set in the same cycle, the cycle of the edge only. A request that stays active (button held, INJECT bit at 1) sets the trap again on the next cycle: a held request keeps injecting, as a continuous error. A trap set after the edge (a request held past the detection, or made while the flags of its copy are already set) waits for the next edge: a 1 -> 0 of INJECT clears it, else it stays until the reset of the user SoC clears the flags and its error is detected again after the reset.
 - Reset: the power-on reset of the supervisor domain (as the TAPs), not the reset of the user SoC: a trap set while the supervisor holds the user SoC in reset waits for the CPU to run.
 
-Fault injection in `soc1` (`SAFETY = "none"`, scenario `fault_none`): a push of the button, even of one SoC clock cycle, sets the trap of CPU0, and nothing clears it (no difference flag): the bit 7 of every instruction stays flipped until the power-on reset (button S11 on the board) or a 1 -> 0 of the INJECT bit of the TAP (`_debug` bitstreams). The firmware derails: in simulation, LED0 no longer follows the switches (it keeps its last value), [esw/demo/user.c](esw/demo/user.c) with UART stops printing after the character in progress, and an `it_user_i` interrupt then writes 0 to LED0 and LED1. The supervisor sees nothing: no difference flag, no reset of the user SoC, `led_diff_o` stays 0.
+Fault injection in `soc1` (`SAFETY = "none"`, scenario `fault_none`): a push of the button, even of one SoC clock cycle, sets the trap of CPU0, and nothing clears it (no difference flag): the bit 7 of every instruction stays flipped until the power-on reset (button S11 on the board) or a 1 -> 0 of the INJECT bit of the TAP (`_debug` bitstreams). The firmware derails: in simulation, [esw/demo/user_loop.c](esw/demo/user_loop.c) stops printing after the character in progress (no new line) and LED0 no longer follows the switches; with [esw/demo/user.c](esw/demo/user.c), LED0 freezes, its UART lines stop and an `it_user_i` interrupt then writes 0 to LED0 and LED1. The supervisor sees nothing: no difference flag, no reset of the user SoC, `led_diff_o` stays 0.
 
 ### Supervisor
 
@@ -710,8 +710,8 @@ Install on the host:
 | File | Description |
 |------|-------------|
 | [esw/system/supervisor.c](esw/system/supervisor.c) | Supervisor (see [Supervisor](#supervisor)) |
-| [esw/demo/user.c](esw/demo/user.c) | Peripheral test: LED0 = switches, LED1 counts the `it_user_i` interrupts, UART echo in the interrupt routine; one UART line per loop with the loop counter, the switches, an SPI byte (loopback or flash, `HAVE_SPI` / `HAVE_SPI_MEMORY`), a spinlock test and a mailbox test that also checks the mailbox sources of the GIC (prints `KO` and stops on a mismatch; on hart 0 only: with several clusters, the others share the mailbox and its GIC sources and skip it) |
-| [esw/demo/user_loop.c](esw/demo/user_loop.c) | LED0 = switches and one UART line per iteration, `Loop <loop number> <pseudo random number>`, both in 8 hexadecimal digits; the numbers come from the xorwow generator of Marsaglia (5 x 32-bit xorshift state and a Weyl counter `d += 362437`: shifts, xor and additions, no multiply on RV32I), fixed seed (`Loop 00000000 0EB70507`, `Loop 00000001 DBF10AA0` ...): the same lines after every reset, a wrong or missing line shows an error (WardRV) |
+| [esw/demo/user.c](esw/demo/user.c) | Kept for the OpenOCD co-simulations (their testbench follows LED0 = switches without UART). Peripheral test: LED0 = switches, LED1 counts the `it_user_i` interrupts, UART echo in the interrupt routine; one UART line per loop with the loop counter, the switches, an SPI byte (loopback or flash, `HAVE_SPI` / `HAVE_SPI_MEMORY`), a spinlock test and a mailbox test that also checks the mailbox sources of the GIC (prints `KO` and stops on a mismatch; on hart 0 only: with several clusters, the others share the mailbox and its GIC sources and skip it) |
+| [esw/demo/user_loop.c](esw/demo/user_loop.c) | LED0 = switches and one UART line per iteration, `Loop <loop number> <pseudo random number>`, both in 8 hexadecimal digits; the numbers come from the xorwow generator of Marsaglia (5 x 32-bit xorshift state and a Weyl counter `d += 362437`: shifts, xor and additions, no multiply on RV32I), fixed seed (`Loop 00000000 0EB70507`, `Loop 00000001 DBF10AA0` ...): the same lines after every reset, a wrong or missing line shows an error (WardRV). The firmware of the lab targets (sims and boards) |
 | [esw/test/test_&lt;ip&gt;.c](esw/test/) | Integration firmwares, see below |
 
 ### Integration firmwares
@@ -780,7 +780,7 @@ Clear the old events of a GIC source before unmasking it: the `isr` register als
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `debug_mux_sel_i`, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP) or through the TAP of `jtag_axis` (JTAG BFM `jtag_bfm_pkg` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) on the JTAG pins of the UART pads, `HWLA_LINK = "jtag"`), with a copy of the user ROM `ROM_user` as the reference of the instruction bus; the I2C bus has pull-ups and the UVVM I2C BFM; the UART pads have pull-ups and a model of the FTDI cable. Generics: the DUT configuration, `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `user` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd) and [tb_PicoSoC_jtag_pkg](sim/picosoc/tb_PicoSoC_jtag_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>` |
+| [sim/picosoc/tb_PicoSoC.vhd](sim/picosoc/tb_PicoSoC.vhd) | `PicoSoC_top` | Self-checking UVVM testbench driven by the firmware of the target: drives the switches, `debug_mux_sel_i`, `it_user_i` and `inject_error_i`, checks LED0, LED1, `led_diff_o`, `pwm_o`, the UART lines (UART VIP; the lines of `user_loop.c` with a receiver of `tb_PicoSoC_sequence_pkg` that returns on a silent line) and the captures of the HWLA on `debug_uart_tx_o` (UART VIP) or through the TAP of `jtag_axis` (JTAG BFM `jtag_bfm_pkg` of [asylum-verification-uvvm](https://github.com/deuskane/asylum-verification-uvvm) on the JTAG pins of the UART pads, `HWLA_LINK = "jtag"`), with a copy of the user ROM `ROM_user` as the reference of the instruction bus; the I2C bus has pull-ups and the UVVM I2C BFM; the UART pads have pull-ups and a model of the FTDI cable. Generics: the DUT configuration, `TESTS_LIST`, `FIRMWARE` (program of the user ROM: `user_loop`, `user` or an integration firmware `test_<ip>`; it selects the scenarios that apply), `TB_WATCHDOG` (timeout of each wait, in `clk_i` cycles) and `SPI_MODEL` (`m25p40` / `s25fl512s` flash model preloaded with [sim/mem/memory.mem](sim/mem/memory.mem)). Scenarios in `tb_PicoSoC_<name>_pkg`, names, applicability and dispatch in [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), helpers in [tb_PicoSoC_bfm_pkg](sim/picosoc/tb_PicoSoC_bfm_pkg.vhd) and [tb_PicoSoC_jtag_pkg](sim/picosoc/tb_PicoSoC_jtag_pkg.vhd). With an integration firmware, a UART console logs every line and stops on `FAIL <step>` |
 | [sim/openocd/tb_PicoSoC_openocd.vhd](sim/openocd/tb_PicoSoC_openocd.vhd) | `PicoSoC_top` | OpenOCD + GDB co-simulation (see [Co-simulation with OpenOCD and GDB](#co-simulation-with-openocd-and-gdb)) |
 
 The scenarios of the JTAG chain, of JTAG over the UART, of the pad multiplexer, of the trap of the error injection, of the multi-core and of Modbus, and the mutant campaigns that validated the testbenches, are on `main`.
@@ -791,11 +791,10 @@ The scenarios are chosen at run time with the generic `TESTS_LIST`: names separa
 
 | Name | Checks | Applies to | Description |
 |------|--------|------------|-------------|
-| `switch` | 11 | `user` | Switches set one by one from bit 7 to bit 0, then `0x5A` and `0xA5`: LED0 follows; `led_diff_o = 0` |
-| `it_user` | 10 | `user` | Two short `it_user_i` pulses give exactly one interrupt each (LED1 + 1), a long pulse at least one, LED1 stable without interrupt; LED0 still follows the switches afterwards |
-| `fault_none` | 5 | `user`, supervisor, `SAFETY = "none"`, fault injection | LED0 = switches `0x69`, `led_diff_o = 0`; a request of one SoC clock cycle on `inject_error_i(0)` (a short push of the button): the trap keeps the error, the firmware derails (LED0 does not follow the new switches `0x96`); the supervisor does not react (`led_diff_o` stable at 0: no difference flag, no reset of the user SoC) |
-| `fault_lock_step` | 13 | `user`, supervisor, lock-step, fault injection | Errors in CPU0, CPU1, CPU0: after each one the user SoC is reset (LED0 = 0, then the switches again) and `led_diff_o` counts the errors; one reset per error |
-| `fault_tmr` | 29 | `user`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Requests of one SoC clock cycle. Errors in CPU0 (voted out: no reset, LED0 then follows new switches), CPU1 (second error: reset, `led_diff_o` = 1), CPU2 (voted out), CPU2 again (its flags already set: the trap stays pending), CPU1 (reset, 2; the pending error of CPU2 fires after the reset: voted out), CPU0 (reset, 3), CPU1 (voted out) |
+| `sequence` | 10 | `user_loop` | Switches `0x5A`, then 3 lines; `0xA5`, then 3 more: the 6 lines are the reference lines of the loops 0 to 5 (`Loop <n> <xorwow>`, the xorwow sequence computed by the testbench from the seed of the firmware, [tb_PicoSoC_sequence_pkg](sim/picosoc/tb_PicoSoC_sequence_pkg.vhd), with a UART line receiver that returns on a silent line); LED0 = the switches after each run of lines; `led_diff_o` stable at 0 |
+| `fault_none` | 6 | `user_loop`, supervisor, `SAFETY = "none"`, fault injection | 2 reference lines; a request of one SoC clock cycle on `inject_error_i(0)` just after a line (a short push of the button): the trap keeps the error, the firmware derails: its next lines leave the sequence or it stops printing (no start bit within `TB_WATCHDOG`; observed: it stops); the supervisor does not react (`led_diff_o` stable at 0: no difference flag, no reset of the user SoC) |
+| `fault_lock_step` | 19 | `user_loop`, supervisor, lock-step, fault injection | 2 reference lines, then errors in CPU0, CPU1, CPU0 (requests of one SoC clock cycle): after each one `led_diff_o` counts the errors and the firmware prints the sequence again from the loop 0 (the end of a line, a line cut by the reset may precede it), then the loops 1 to 3 |
+| `fault_tmr` | 20 | `user_loop`, supervisor (`-DSAFETY_TMR`), TMR, fault injection | Requests of one SoC clock cycle. Error in CPU0: voted out, the lines go on in sequence, `led_diff_o` = 0; CPU1: second error, reset (`led_diff_o` = 1), the sequence restarts from the loop 0; CPU2: first error after the reset, voted out, the lines go on; CPU0: second error, reset (`led_diff_o` = 2), restart |
 | `hwla` | 11 (`HWLA_LINK = "uart"`), 15 (`"jtag"`) | `user`, no supervisor, lock-step or TMR, fault injection, `DEBUG_ENABLE` | Switches `0x5A` then `0x96`, `debug_uart_tx_o` idle until the error; error in CPU1 just after LED0 changes; the capture, received on `debug_uart_tx_o` or read through the TAP of `jtag_axis`, is checked: the write of the new switches to LED0 before the trigger, the trigger sample `HWLA_PRE_TRIGGER`, timestamps, the instruction bus against the copy of the user ROM (see [Debug: HWLA](#debug-hwla)) |
 | `test_gpio` | 5 (+ 16 in the firmware) | `test_gpio` | LED0 = `0xA5` and LED1 = `0x5A` on the pins, switches `0x3C` (rising edges) copied into LED0, then `0x00` (falling edges); `PASS` |
 | `test_uart` | 3 (+ 11) | `test_uart` | On each prompt `>`, a byte sent on `uart_rx_i`: `0x5A` read by polling, `0xA5` by the interrupt routine; `PASS` |
@@ -828,12 +827,12 @@ A target is a firmware build: its generators compile the user and supervisor pro
 
 | Target | Toplevel | Description |
 |--------|----------|-------------|
-| `sim_soc1_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `soc1`, firmware `user.c`: build and elaboration (`TESTS_LIST` empty) |
-| `sim_soc1_wardrv_fsm_fault_c_user_<test>` | `tb_PicoSoC` | One target per scenario: `switch`, `it_user`, `fault_none` |
+| `sim_soc1_wardrv_fsm_fault_c_user_loop` | `tb_PicoSoC` | `soc1`, firmware `user_loop.c`: build and elaboration (`TESTS_LIST` empty) |
+| `sim_soc1_wardrv_fsm_fault_c_user_loop_<test>` | `tb_PicoSoC` | One target per scenario: `sequence`, `fault_none` |
 | `sim_soc1_wardrv_fsm_fault_c_test_<ip>` | `tb_PicoSoC` | Integration firmware `esw/test/test_<ip>.c` in `soc1`: scenario `test_<ip>`, for `<ip>` in `gpio`, `uart`, `spi`, `timer`, `crc`, `spinlock`, `gic`, `ram`, `i2c`, `pwm` (`sim_soc1_wardrv_fsm_c_test_<ip>` of `main`, without supervisor) |
-| `sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag`, `_discover`, `_generic`, `_sim_soc1_wardrv_fsm_fault_c_user_openocd_bitbang` | `tb_PicoSoC_openocd` | OpenOCD co-simulations in `soc1` (see above) |
-| `_sim_soc2_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `soc2` (lock-step): `switch`, `it_user`, `fault_lock_step` |
-| `_sim_soc3_wardrv_fsm_fault_c_user` | `tb_PicoSoC` | `soc3` (TMR, IT and fault inputs active low): `switch`, `it_user`, `fault_tmr` |
+| `sim_soc1_wardrv_fsm_fault_c_user_openocd_jtag`, `_discover`, `_generic`, `_sim_soc1_wardrv_fsm_fault_c_user_openocd_bitbang` | `tb_PicoSoC_openocd` | OpenOCD co-simulations in `soc1`, firmware `user.c` (see above) |
+| `_sim_soc2_wardrv_fsm_fault_c_user_loop` | `tb_PicoSoC` | `soc2` (lock-step), `user_loop.c`: `sequence`, `fault_lock_step` |
+| `_sim_soc3_wardrv_fsm_fault_c_user_loop` | `tb_PicoSoC` | `soc3` (TMR, IT and fault inputs active low), `user_loop.c`: `sequence`, `fault_tmr` |
 | `_sim_soc2_wardrv_fsm_fault_c_user_hwla`, `_hwla_jtag` | `tb_PicoSoC` | `soc2` without the supervisor, `DEBUG_ENABLE`, SoC clock 1.152 MHz, `HWLA_DEPTH = 128`, `HWLA_PRE_TRIGGER = 48`, `HWLA_TIMESTAMP_WIDTH = 24`: scenario `hwla` on the UART / JTAG link |
 | `_sim_soc2_wardrv_fsm_fault_c_user_openocd_hwla` | `tb_PicoSoC_openocd` | `soc2`, HWLA captures over JTAG with OpenOCD (see above) |
 | `emu_ng_medium_soc1_wardrv_fsm_fault` | `PicoSoC_top` | NG-MEDIUM board, `soc1`, no debug: the reference build of the labs, default `TARGET` of [mk/defs.mk](mk/defs.mk) |
@@ -848,19 +847,19 @@ From a clone of this branch (in the asylum-env image, or with GHDL, FuseSoC and 
 
 ```bash
 make help                                             # variables, rules and targets
-make sim_soc1_wardrv_fsm_fault_c_user_fault_none      # one scenario, log in log/
+make sim_soc1_wardrv_fsm_fault_c_user_loop_fault_none # one scenario, log in log/
 make sim_soc1_wardrv_fsm_fault_c_test_gpio            # one integration test
 make sim_soc1_wardrv_fsm_fault_c_user_openocd_generic # OpenOCD + GDB co-simulation
 make nonreg_sim                                       # every sim_* target (soc1)
-make _sim_soc2_wardrv_fsm_fault_c_user                # lock-step written : its scenarios
-make _sim_soc3_wardrv_fsm_fault_c_user                # TMR written : its scenarios
+make _sim_soc2_wardrv_fsm_fault_c_user_loop           # lock-step written : its scenarios
+make _sim_soc3_wardrv_fsm_fault_c_user_loop           # TMR written : its scenarios
 ```
 
 To run a list of scenarios, build the target once, then run the list without recompiling (same `--build-root` and `--no-export` as the Makefile; any generic of the target can be overridden after the VLNV):
 
 ```bash
-make sim_soc1_wardrv_fsm_fault_c_user                 # build and elaboration (TESTS_LIST empty)
-fusesoc --cores-root . run --build-root build --no-export --run --target sim_soc1_wardrv_fsm_fault_c_user asylum:soc:PicoSoC:4.8.5 --TESTS_LIST=switch,fault_none
+make sim_soc1_wardrv_fsm_fault_c_user_loop            # build and elaboration (TESTS_LIST empty)
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_soc1_wardrv_fsm_fault_c_user_loop asylum:soc:PicoSoC:4.8.5 --TESTS_LIST=sequence,fault_none
 ```
 
 To add a scenario: a package `tb_PicoSoC_<name>_pkg` with a procedure `run`, its name in `C_TESTS`, its applicability in `test_applies` and its case in `run_test` of [tb_PicoSoC_tests_pkg](sim/picosoc/tb_PicoSoC_tests_pkg.vhd), the file in the `files_sim` fileset, the name in the `TESTS_LIST` of a target, then `make mk/targets.txt` and `make ci_generate`.
