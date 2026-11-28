@@ -129,6 +129,7 @@ help : $(FILE_TARGETS)
 	@echo "update               : Update the FuseSoC core libraries"
 	@echo "ci_generate          : Regenerate the GitHub Actions job block between markers"
 	@echo "clean                : Delete build directory"
+	@echo "purge                : clean and delete fusesoc cache"
 	@echo "nonreg               : Run all targets for type set in NONREG"
 	@echo "                       Aka nonreg_$(NONREG)"
 	@echo "nonreg_<type>        : Run all steps for all <type> targets"
@@ -309,3 +310,10 @@ clean :
 	rm -fr $(PATH_LOG)
 
 .PHONY : clean
+
+#--------------------------------------------------------
+purge : clean
+#--------------------------------------------------------
+	rm -fr $(FUSESOC_CACHE)/*
+
+.PHONY : purge
