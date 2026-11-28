@@ -18,6 +18,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-27  1.0      mrosiere Created
+-- 2026-11-28  1.1      mrosiere inject_cpu_o of 12 bits
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -57,7 +58,7 @@ architecture tb of tb_PicoSoC_tap is
   signal  diff_i                   : std_logic_vector(3-1 downto 0) := (others => '0');
   signal  status_i                 : std_logic_vector(8-1 downto 0) := x"A5";
   signal  inject_error_o           : std_logic_vector(3-1 downto 0);
-  signal  inject_cpu_o             : std_logic_vector(9-1 downto 0);
+  signal  inject_cpu_o             : std_logic_vector(12-1 downto 0);
   signal  count                    : t_count := (pulses => (others => 0), cycles => (others => 0));
 
 begin  -- architecture tb
@@ -93,12 +94,12 @@ begin  -- architecture tb
 
   -- Pulses and clk_i cycles at 1 of each bit of inject_cpu_o
   p_count : process (clk_i) is
-    variable v_last  : std_logic_vector(9-1 downto 0) := (others => '0');
+    variable v_last  : std_logic_vector(12-1 downto 0) := (others => '0');
     variable v_count : t_count := (pulses => (others => 0), cycles => (others => 0));
   begin
     if rising_edge(clk_i)
     then
-      for j in 0 to 9-1 loop
+      for j in 0 to 12-1 loop
         if inject_cpu_o(j) = '1'
         then
           v_count.cycles(j) := v_count.cycles(j) + 1;

@@ -7,13 +7,14 @@
 -------------------------------------------------------------------------------
 -- Description: Scenario jtag_inject_cpu of tb_PicoSoC, from reset (firmware
 --              user*, DEBUG_ENABLE) : the injection inside the CPUs, bits
---              [6:4], [10:8], [14:12] (CPU copy 0, 1, 2) of INJECT of the
+--              [7:4], [11:8], [15:12] (CPU copy 0, 1, 2) of INJECT of the
 --              injection / status TAP (JTAG on the UART pads,
 --              debug_mux_sel_i 10), in the whole SoC :
---              * for each copy i : INJECT written with its 3 bits, then 0 :
---                the capture reads diff (000) in [2:0], 0 in [15:3]
 --              * with fault injection, the HWLA (armed before) is triggered
---                by the pulses of the copy 0 (flags of STATUS)
+--                by the bit 3 of the copy 0 alone (INJECT [7], flags of
+--                STATUS) ; then INJECT 0
+--              * for each copy i : INJECT written with its 4 bits, then 0 :
+--                the capture reads diff (000) in [2:0], 0 in [15:3]
 --              * [2:0] stayed 0 : no error injected outside the CPUs, and
 --                the reference CPUs do not use inject_i : no difference
 --                flag, the firmware still runs (LED0 follows new switches)
@@ -27,6 +28,8 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-27  1.0      mrosiere Created
+-- 2026-11-28  1.1      mrosiere 4 bits per CPU copy ; the HWLA triggered by
+--                               the bit 3 of the copy 0 alone
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -100,7 +103,7 @@ package body tb_PicoSoC_jtag_inject_cpu_pkg is
 
     variable v_flags   : std_logic_vector(4-1 downto 0);
   begin
-    log(ID_SEQUENCER, "jtag_inject_cpu : injection inside the CPUs, INJECT [6:4], [10:8], [14:12]", C_TB_SCOPE);
+    log(ID_SEQUENCER, "jtag_inject_cpu : injection inside the CPUs, INJECT [7:4], [11:8], [15:12]", C_TB_SCOPE);
 
     set_slv    (C_MUX_JTAG, clk, mux_sel);
     set_slv    (C_SW1, clk, switch);
@@ -109,19 +112,24 @@ package body tb_PicoSoC_jtag_inject_cpu_pkg is
     read_hwla(true, v_flags);
     check_value(v_flags, C_ARMED, ERROR, "HWLA armed before the injection inside the CPUs", C_TB_SCOPE);
 
+    -- The bit 3 of the copy 0 alone (INJECT [7]) triggers the HWLA (with
+    -- fault injection)
+    jtag_scan_dr(data_value => x"0080", data_out => v_read, msg => "INJECT : CPU copy 0, bit 3", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+    check_value (v_read, x"0000", ERROR, "INJECT reads diff 000 in [2:0], 0 in [15:3] (before copy 0, bit 3)", C_TB_SCOPE);
+    jtag_scan_dr(data_value => x"0000", data_out => v_read, msg => "INJECT 0", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+    if cfg.fault
+    then
+      read_hwla(false, v_flags);
+      check_value(v_flags(2), '1', ERROR, "HWLA triggered by the bit 3 of the CPU copy 0 alone (flags " & to_string(v_flags) & ")", C_TB_SCOPE);
+    end if;
+
     for i in 0 to 3-1 loop
       v_write                     := (others => '0');
-      v_write(4+4*i+2 downto 4+4*i) := "111";
-      jtag_scan_dr(data_value => v_write, data_out => v_read, msg => "INJECT : CPU copy " & integer'image(i) & ", 3 bits", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
+      v_write(4+4*i+3 downto 4+4*i) := "1111";
+      jtag_scan_dr(data_value => v_write, data_out => v_read, msg => "INJECT : CPU copy " & integer'image(i) & ", 4 bits", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
       check_value (v_read, x"0000", ERROR, "INJECT reads diff 000 in [2:0], 0 in [15:3] (before copy " & integer'image(i) & ")", C_TB_SCOPE);
       jtag_scan_dr(data_value => x"0000", data_out => v_read, msg => "INJECT 0", jtag_if => jtag_if, scope => C_TB_SCOPE, config => jtag_config(cfg, C_TAP));
       check_value (v_read, x"0000", ERROR, "INJECT reads diff 000 in [2:0], 0 in [15:3] (after copy " & integer'image(i) & ")", C_TB_SCOPE);
-      -- The pulses of the copy 0 trigger the HWLA (with fault injection)
-      if i = 0 and cfg.fault
-      then
-        read_hwla(false, v_flags);
-        check_value(v_flags(2), '1', ERROR, "HWLA triggered by the injection inside the CPU copy 0 (flags " & to_string(v_flags) & ")", C_TB_SCOPE);
-      end if;
     end loop;
 
     -- No error outside the CPUs : no difference flag, the firmware runs

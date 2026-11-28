@@ -1888,7 +1888,7 @@
         <mxCell id="picosoc-jtag-78" value="cpu_wrapper : WardRV_debug (TAP, DTM, Debug Module)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="400" y="700" width="200" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="picosoc-jtag-79" value="INJECT 00010&lt;br&gt;tdr_inout 3 b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-79" value="INJECT 00010&lt;br&gt;tdr_inout 16 b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
           <mxGeometry x="920" y="700" width="95" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-80" value="STATUS 00011&lt;br&gt;tdr_in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
@@ -1912,7 +1912,7 @@
             <mxPoint x="967" y="800" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
-        <mxCell id="picosoc-jtag-84" value="sync2dffrn&lt;br&gt;x 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="picosoc-jtag-84" value="sync2dffrn&lt;br&gt;x 15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="920" y="800" width="95" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-85" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;" edge="1" parent="1">
@@ -1939,8 +1939,8 @@
             <mxPoint x="1090" y="880" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
-        <mxCell id="picosoc-jtag-90" value="inject_error of cpu_safety" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=center;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="880" width="220" height="20" as="geometry"/>
+        <mxCell id="picosoc-jtag-90" value="inject_error ([2:0]) ; inject_cpu ([15:4],&lt;br&gt;a pulse per 0 -&amp;gt; 1, not ORed) of cpu_safety" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="880" width="220" height="30" as="geometry"/>
         </mxCell>
         <mxCell id="picosoc-jtag-91" value="reads diff (INJECT) ;&lt;br&gt;LEDs, switches, resets,&lt;br&gt;HWLA flags (STATUS)" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;verticalAlign=middle;rounded=0;fontSize=10;fontColor=#666666;fontStyle=2;align=left;" vertex="1" parent="1">
           <mxGeometry x="1130" y="705" width="240" height="50" as="geometry"/>

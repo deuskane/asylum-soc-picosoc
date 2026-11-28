@@ -23,6 +23,7 @@
 # Date        Version  Author   Description
 # 2026-11-27  1.0      mrosiere Created
 # 2026-11-27  1.1      mrosiere Help : picosoc_inject (16 bits), picosoc_inject_cpu
+# 2026-11-28  1.2      mrosiere Help : 4 bits per CPU copy
 #-----------------------------------------------------------------------------
 
 # OpenOCD names of x0 to x31 (x8 is fp, also named s0)
@@ -58,8 +59,8 @@ PicoSoC commands       [cpu] : user.cpu0 / user / user0, supervisor.cpu / sup,
    bp_add <addr> / bp_del <addr>   hardware breakpoint (needs triggers)
  SoC (injection / status TAP, HWLA)
    picosoc_status, picosoc_inject <errors> (raw 16 bits : [2:0] outside the CPUs,
-     [6:4] [10:8] [14:12] inside the CPU copy 0 1 2, a write of these also writes [2:0])
-   picosoc_inject_cpu <copy 0..2> <mask 3 bits> (inside a CPU copy, one pulse per bit)
+     [7:4] [11:8] [15:12] inside the CPU copy 0 1 2, a write of these also writes [2:0])
+   picosoc_inject_cpu <copy 0..2> <mask 4 bits> (inside a CPU copy, one pulse per bit)
    picosoc_hwla_status, picosoc_hwla_dump <file>
 }
 }

@@ -46,6 +46,7 @@
 -- 2026-11-23  3.17     mrosiere Debug record : cpu_ics
 -- 2026-11-27  3.18     mrosiere inject_cpu_i : injection inside the CPU of
 --                               each copy (cpu_safety), every cluster
+-- 2026-11-28  3.19     mrosiere inject_cpu_i of 12 bits : 4 requests per copy
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -149,7 +150,7 @@ entity PicoSoC_user is
                           
     ;it_i                  : in  std_logic
     ;inject_error_i        : in  std_logic_vector(        3-1 downto 0)
-    ;inject_cpu_i          : in  std_logic_vector(        9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i, one cycle per injection
+    ;inject_cpu_i          : in  std_logic_vector(       12-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 4*i+3 downto 4*i, one cycle per injection
     ;diff_o                : out std_logic_vector(        3-1 downto 0) -- bit 0 : cpu0 vs cpu1
                                                                         -- bit 1 : cpu1 vs cpu2
                                                                         -- bit 2 : cpu2 vs cpu0

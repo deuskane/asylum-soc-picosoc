@@ -2151,7 +2151,7 @@ targets:
 
   #---------------------------------------
   # Testbench of the injection / status TAP alone (PicoSoC_tap) : INJECT,
-  # [2:0] outside the CPUs (a level), [6:4], [10:8], [14:12] inside the CPU
+  # [2:0] outside the CPUs (a level), [7:4], [11:8], [15:12] inside the CPU
   # copy 0, 1, 2 (a pulse per 0 -> 1). The ROMs of the generators are only compiled (PicoSoC_pkg
   # uses ROM_user_pkg)
   #---------------------------------------
@@ -2176,7 +2176,7 @@ targets:
   sim_tap_inject_cpu:
   #---------------------------------------
     << : *sim_tap
-    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject_cpu (INJECT [6:4] [10:8] [14:12], one pulse of one clock cycle per 0 -> 1 on the bit of the copy)
+    description       : Testbench of PicoSoC_tap (injection / status TAP) alone, scenario inject_cpu (INJECT [7:4] [11:8] [15:12], one pulse of one clock cycle per 0 -> 1 on the bit of the copy)
     parameters        :
       - TESTS_LIST=inject_cpu
 
@@ -2946,7 +2946,7 @@ targets:
   sim_soc3_wardrv_fsm_fault_c_user_uart_jtag_jtag_inject_cpu:
   #---------------------------------------
     << : *sim_soc3_wardrv_fsm_fault_c_user_uart_jtag
-    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject_cpu (INJECT [6:4] [10:8] [14:12] in the whole SoC, read back, HWLA triggered, no side effect on the reference CPUs)
+    description       : Simulation of the test esw/demo/user.c (UART)         - With    Supervisor, Safety Lock-Step, With    Fault Injection, UART pads shared with the HWLA UART and JTAG, JTAG chain of the user CPU, supervisor CPU and injection TAPs, IT and fault inputs active low, scenario jtag_inject_cpu (INJECT [7:4] [11:8] [15:12] in the whole SoC, read back, HWLA triggered by the bit 3 of copy 0, no side effect on the reference CPUs)
     parameters_append :
       - TESTS_LIST=jtag_inject_cpu
 

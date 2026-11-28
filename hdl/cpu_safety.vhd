@@ -15,8 +15,8 @@
 --              inputs
 --              Error injection : inject_error_i(i) flips the instruction bit
 --              SEU_BIT(i) of the copy i (outside the CPU) ; inject_cpu_i
---              (3*i+2 downto 3*i) goes to inject_i of the cpu_wrapper of
---              the copy i (inside the CPU : 3 requests, one clock cycle per
+--              (4*i+3 downto 4*i) goes to inject_i of the cpu_wrapper of
+--              the copy i (inside the CPU : 4 requests, one clock cycle per
 --              injection, unused by the reference CPUs, free for a hardened
 --              CPU), with FAULT_INJECTION
 -------------------------------------------------------------------------------
@@ -47,6 +47,7 @@
 --                               in place of 0 / 1 / 2 (opcode low bits)
 -- 2026-11-27  1.9      mrosiere inject_cpu_i : injection inside the CPU of
 --                               each copy (inject_i of cpu_wrapper)
+-- 2026-11-28  1.10     mrosiere inject_cpu_i of 12 bits : 4 requests per copy
 -------------------------------------------------------------------------------
 library ieee;
 use     ieee.std_logic_1164.all;
@@ -92,7 +93,7 @@ entity cpu_safety is
 
     -- Error injection and difference output
     ;inject_error_i        : in  std_logic_vector(3-1 downto 0)
-    ;inject_cpu_i          : in  std_logic_vector(9-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 3*i+2 downto 3*i (one cycle per injection)
+    ;inject_cpu_i          : in  std_logic_vector(12-1 downto 0) := (others => '0') -- Inside the CPU copy i : bits 4*i+3 downto 4*i (one cycle per injection)
     ;diff_o                : out std_logic_vector(3-1 downto 0)
 
     -- Debug unit (DEBUG_ENABLE) : JTAG pins, power-on reset of the debug unit,
@@ -271,7 +272,7 @@ begin
   generate
     signal   cpu_in    : cpu_in_t;  -- Inputs of the copy
     signal   idata     : std_logic_vector(IMEM_DATA_WIDTH-1 downto 0);
-    signal   inject    : std_logic_vector(3-1 downto 0);  -- Injection inside the CPU of the copy
+    signal   inject    : std_logic_vector(4-1 downto 0);  -- Injection inside the CPU of the copy
     signal   out_cpu   : cpu_out_t;
   begin
     -- A signal assignment, not a direct read of the pipe registers : the
@@ -291,8 +292,8 @@ begin
 
     -- Fault Injection inside the CPU (a hardened CPU uses it, not the
     -- reference ones)
-    inject <= inject_cpu_i(3*i+2 downto 3*i) when FAULT_INJECTION else
-              "000";
+    inject <= inject_cpu_i(4*i+3 downto 4*i) when FAULT_INJECTION else
+              "0000";
 
     ins_cpu : entity asylum.cpu_wrapper
       generic map

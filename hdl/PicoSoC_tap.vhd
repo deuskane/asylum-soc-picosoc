@@ -18,13 +18,13 @@
 --                - written [2:0] : the error injection outside the CPUs (bit
 --                  i : copy i, the instruction bit SEU_BIT, trapped in
 --                  PicoSoC_inject), a level (a 1 -> 0 clears the trap) ;
---                - written [6:4], [10:8], [14:12] : the error injection
+--                - written [7:4], [11:8], [15:12] : the error injection
 --                  inside the CPU copy 0, 1, 2 : the bit 4+4*i+k is the
---                  injection request k of copy i (e.g. the copy k of a TMR
---                  register of that CPU), a pulse of one clk_i cycle on
---                  inject_cpu_o(3*i+k) for each 0 -> 1 of the bit (one error
---                  per write) ;
---                - written [3], [7], [11], [15] : reserved (write 0) ;
+--                  injection request k of copy i (e.g. bits 2:0 the copies
+--                  of a TMR register of that CPU, bit 3 its register file),
+--                  a pulse of one clk_i cycle on inject_cpu_o(4*i+k) for
+--                  each 0 -> 1 of the bit (one error per write) ;
+--                - written [3] : reserved (write 0) ;
 --                - read : diff_i in [2:0], 0 above
 --              * PICOSOC_JTAG_IR_STATUS : jtag_tdr_in, reads status_i
 --                (unconstrained : the width comes from the actual, map a
@@ -55,6 +55,10 @@
 -- 2026-11-27  1.3      mrosiere INJECT of 16 bits : 3 bits of injection
 --                               inside each CPU copy (inject_cpu_o, a pulse
 --                               per 0 -> 1)
+-- 2026-11-28  1.4      mrosiere 4 bits of injection inside each CPU copy
+--                               ([7:4], [11:8], [15:12], inject_cpu_o of 12
+--                               bits) : the reserved bits 7, 11, 15 are the
+--                               bit 3 of each copy
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -80,10 +84,10 @@ entity PicoSoC_tap is
 
     -- Error injection written through JTAG (synchronized on clk_i, active
     -- high) : outside the CPUs (bit i : copy i, a level), inside the CPUs
-    -- (bits 3*i+2 downto 3*i : copy i, a pulse of one cycle for each 0 -> 1
+    -- (bits 4*i+3 downto 4*i : copy i, a pulse of one cycle for each 0 -> 1
     -- of a bit)
     ;inject_error_o   : out std_logic_vector(3-1 downto 0)
-    ;inject_cpu_o     : out std_logic_vector(9-1 downto 0)
+    ;inject_cpu_o     : out std_logic_vector(12-1 downto 0)
     );
 end entity PicoSoC_tap;
 
@@ -103,10 +107,10 @@ architecture rtl of PicoSoC_tap is
   signal   sel_status          : std_logic;
   signal   tdo_inject          : std_logic;
   signal   tdo_status          : std_logic;
-  signal   inject_tck_domain   : std_logic_vector(16-1 downto 0); -- [2:0] outside, [4+4*i+2:4+4*i] inside the CPU i
+  signal   inject_tck_domain   : std_logic_vector(16-1 downto 0); -- [2:0] outside, [4+4*i+3:4+4*i] inside the CPU i
   signal   diff_capture        : std_logic_vector(16-1 downto 0);
-  signal   inject_cpu          : std_logic_vector(9-1 downto 0);  -- Inside the CPUs, synchronized (3*i+k : CPU i, bit k)
-  signal   inject_cpu_r        : std_logic_vector(9-1 downto 0);
+  signal   inject_cpu          : std_logic_vector(12-1 downto 0); -- Inside the CPUs, synchronized (4*i+k : CPU i, bit k)
+  signal   inject_cpu_r        : std_logic_vector(12-1 downto 0);
 
 begin  -- architecture rtl
 
@@ -182,14 +186,14 @@ begin  -- architecture rtl
       ,q_o                => inject_error_o(i)
       );
 
-    gen_inject_cpu_sync: for k in 0 to 3-1
+    gen_inject_cpu_sync: for k in 0 to 4-1
     generate
       ins_inject_cpu_sync : sync2dffrn
         port map
         (clk_i            => clk_i
         ,arst_b_i         => arst_b_i
         ,d_i              => inject_tck_domain(4+4*i+k)
-        ,q_o              => inject_cpu(3*i+k)
+        ,q_o              => inject_cpu(4*i+k)
         );
     end generate gen_inject_cpu_sync;
   end generate gen_inject_sync;

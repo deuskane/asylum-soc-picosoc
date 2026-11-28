@@ -11,13 +11,13 @@
 --                level of its copy on inject_error_o (synchronized) until a
 --                write of 0 ; no pulse on inject_cpu_o ; the capture reads
 --                diff_i in [2:0], 0 in [15:3]
---              * inject_cpu : [6:4], [10:8], [14:12] (inside the CPU copy 0,
---                1, 2) : for each copy i and bit k, a write of the bit
---                4+4*i+k alone gives exactly one pulse of one clk_i cycle on
---                inject_cpu_o(3*i+k), none on the other bits nor on
---                inject_error_o ; the same value written again (no 0 -> 1)
---                and 0 give no pulse ; the 9 bits together : one pulse on
---                each ; the reserved bits [3], [7], [11], [15] : no pulse
+--              * inject_cpu : [7:4], [11:8], [15:12] (inside the CPU copy 0,
+--                1, 2) : for each copy i and bit k (bit 3 included), a write
+--                of the bit 4+4*i+k alone gives exactly one pulse of one
+--                clk_i cycle on inject_cpu_o(4*i+k), none on the other bits
+--                nor on inject_error_o ; the same value written again (no
+--                0 -> 1) and 0 give no pulse ; the 12 bits together : one
+--                pulse on each ; the reserved bit [3] : no pulse
 --              Pulses counted by tb_PicoSoC_tap (t_count) : rising edges
 --              and clk_i cycles at 1 of each bit of inject_cpu_o
 -------------------------------------------------------------------------------
@@ -26,6 +26,7 @@
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-27  1.0      mrosiere Created
+-- 2026-11-28  1.1      mrosiere 4 bits per CPU copy (bit 3 : [7], [11], [15])
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -48,10 +49,10 @@ package tb_PicoSoC_tap_pkg is
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TAP_TESTS    : string := "inject,inject_cpu";
 
-  type t_naturals9 is array (0 to 9-1) of natural;
+  type t_naturals12 is array (0 to 12-1) of natural;
   type t_count is record
-    pulses     : t_naturals9;   -- rising edges of inject_cpu_o(j)
-    cycles     : t_naturals9;   -- clk_i cycles with inject_cpu_o(j) at 1
+    pulses     : t_naturals12;   -- rising edges of inject_cpu_o(j)
+    cycles     : t_naturals12;   -- clk_i cycles with inject_cpu_o(j) at 1
   end record t_count;
 
   -- BFM configuration of the TAP alone : TCK 1 us (slow against clk_i)
@@ -108,7 +109,7 @@ package body tb_PicoSoC_tap_pkg is
     end procedure;
 
     -- Pulses and cycles at 1 of the bit j of inject_cpu_o since the last
-    -- write, pulses of all the bits but j (j = 9 : all of them)
+    -- write, pulses of all the bits but j (j = 12 : all of them)
     impure function pulses (j : natural) return natural is
     begin
       return count.pulses(j) - v_before.pulses(j);
@@ -122,7 +123,7 @@ package body tb_PicoSoC_tap_pkg is
     impure function others_pulses (j : natural) return natural is
       variable v_sum : natural := 0;
     begin
-      for b in 0 to 9-1 loop
+      for b in 0 to 12-1 loop
         if b /= j
         then
           v_sum := v_sum + pulses(b);
@@ -142,36 +143,36 @@ package body tb_PicoSoC_tap_pkg is
       write_inject(x"0002", "INJECT 010");
       check_value(v_read , x"0005", ERROR, "INJECT reads diff_i in [2:0], 0 in [15:3]", C_TB_TAP_SCOPE);
       check_value(inject , "010"  , ERROR, "inject_error_o = 010 after the write", C_TB_TAP_SCOPE);
-      check_value(others_pulses(9), 0, ERROR, "no pulse on inject_cpu_o", C_TB_TAP_SCOPE);
+      check_value(others_pulses(12), 0, ERROR, "no pulse on inject_cpu_o", C_TB_TAP_SCOPE);
       write_inject(x"0000", "INJECT 000");
       check_value(inject , "000"    , ERROR, "inject_error_o = 000 after the write of 0", C_TB_TAP_SCOPE);
     elsif string_eq(name, "inject_cpu")
     then
-      log(ID_SEQUENCER, "inject_cpu : [6:4], [10:8], [14:12], the injection inside the CPU copies (a pulse per 0 -> 1)", C_TB_TAP_SCOPE);
+      log(ID_SEQUENCER, "inject_cpu : [7:4], [11:8], [15:12], the injection inside the CPU copies (a pulse per 0 -> 1)", C_TB_TAP_SCOPE);
       for i in 0 to 3-1 loop
-        for k in 0 to 3-1 loop
+        for k in 0 to 4-1 loop
           v_write          := (others => '0');
           v_write(4+4*i+k) := '1';
           write_inject(v_write, "INJECT : CPU copy " & integer'image(i) & ", bit " & integer'image(k));
           check_value(v_read(15 downto 3), "0000000000000", ERROR, "INJECT reads 0 in [15:3]", C_TB_TAP_SCOPE);
-          check_value(pulses(3*i+k), 1, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : one pulse on inject_cpu_o(" & integer'image(3*i+k) & ")", C_TB_TAP_SCOPE);
-          check_value(cycles(3*i+k), 1, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : the pulse lasts one clk_i cycle", C_TB_TAP_SCOPE);
-          check_value(others_pulses(3*i+k), 0, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : no pulse on the other bits", C_TB_TAP_SCOPE);
+          check_value(pulses(4*i+k), 1, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : one pulse on inject_cpu_o(" & integer'image(4*i+k) & ")", C_TB_TAP_SCOPE);
+          check_value(cycles(4*i+k), 1, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : the pulse lasts one clk_i cycle", C_TB_TAP_SCOPE);
+          check_value(others_pulses(4*i+k), 0, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : no pulse on the other bits", C_TB_TAP_SCOPE);
           check_value(inject, "000", ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " : inject_error_o stays 000", C_TB_TAP_SCOPE);
           write_inject(v_write, "INJECT : the same value again");
-          check_value(others_pulses(9), 0, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " written again (no 0 -> 1) : no pulse", C_TB_TAP_SCOPE);
+          check_value(others_pulses(12), 0, ERROR, "copy " & integer'image(i) & ", bit " & integer'image(k) & " written again (no 0 -> 1) : no pulse", C_TB_TAP_SCOPE);
           write_inject(x"0000", "INJECT 0");
-          check_value(others_pulses(9), 0, ERROR, "INJECT 0 : no pulse", C_TB_TAP_SCOPE);
+          check_value(others_pulses(12), 0, ERROR, "INJECT 0 : no pulse", C_TB_TAP_SCOPE);
         end loop;
       end loop;
-      write_inject(x"7770", "INJECT : the 9 bits inside the CPUs");
-      for j in 0 to 9-1 loop
-        check_value(pulses(j), 1, ERROR, "the 9 bits : one pulse on inject_cpu_o(" & integer'image(j) & ")", C_TB_TAP_SCOPE);
+      write_inject(x"FFF0", "INJECT : the 12 bits inside the CPUs");
+      for j in 0 to 12-1 loop
+        check_value(pulses(j), 1, ERROR, "the 12 bits : one pulse on inject_cpu_o(" & integer'image(j) & ")", C_TB_TAP_SCOPE);
       end loop;
       write_inject(x"0000", "INJECT 0");
-      write_inject(x"8888", "INJECT : the reserved bits [3], [7], [11], [15]");
-      check_value(others_pulses(9), 0, ERROR, "the reserved bits : no pulse", C_TB_TAP_SCOPE);
-      check_value(inject, "000", ERROR, "the reserved bits : inject_error_o stays 000", C_TB_TAP_SCOPE);
+      write_inject(x"0008", "INJECT : the reserved bit [3]");
+      check_value(others_pulses(12), 0, ERROR, "the reserved bit : no pulse", C_TB_TAP_SCOPE);
+      check_value(inject, "000", ERROR, "the reserved bit : inject_error_o stays 000", C_TB_TAP_SCOPE);
     else
       alert(TB_ERROR, "Unknown test " & name, C_TB_TAP_SCOPE);
     end if;

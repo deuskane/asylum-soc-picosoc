@@ -86,6 +86,9 @@
 -- 2026-11-27  2.29     mrosiere INJECT of the TAP : 3 bits of injection inside
 --                               each CPU copy (inject_cpu to PicoSoC_user, a
 --                               pulse per 0 -> 1), also a trigger of the HWLA
+-- 2026-11-28  2.30     mrosiere 4 bits of injection inside each CPU copy
+--                               ([7:4], [11:8], [15:12], inject_cpu of 12
+--                               bits), all of them triggers of the HWLA
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -254,7 +257,7 @@ architecture rtl of PicoSoC_top is
   -- trapped in PicoSoC_inject
   signal   inject_error_button          : std_logic_vector(3-1 downto 0);
   signal   inject_error_jtag            : std_logic_vector(3-1 downto 0);
-  signal   inject_cpu                   : std_logic_vector(9-1 downto 0);  -- Inside the CPUs (3*i+k : copy i, bit k) : a pulse per injection (TAP)
+  signal   inject_cpu                   : std_logic_vector(12-1 downto 0); -- Inside the CPUs (4*i+k : copy i, bit k) : a pulse per injection (TAP)
   
   signal   debug_user                   : PicoSoC_user_debug_t      ;
   signal   debug_supervisor             : PicoSoC_supervisor_debug_t;
@@ -638,7 +641,7 @@ begin  -- architecture rtl
 
     gen_hwla_inject: for i in 0 to 3-1
     generate
-      hwla_inject_copy(i) <= (inject_error(i) or inject_cpu(3*i) or inject_cpu(3*i+1) or inject_cpu(3*i+2)) when i < HWLA_NB_COPIES else
+      hwla_inject_copy(i) <= (inject_error(i) or inject_cpu(4*i) or inject_cpu(4*i+1) or inject_cpu(4*i+2) or inject_cpu(4*i+3)) when i < HWLA_NB_COPIES else
                              '0';
     end generate gen_hwla_inject;
 
@@ -694,11 +697,11 @@ begin  -- architecture rtl
   -- in PicoSoC_tap (IDCODE PICOSOC_JTAG_IDCODE_INJECT, TCK of jtag_ini) :
   -- * PICOSOC_JTAG_IR_INJECT (16 bits) : writes the error injection,
   --   [2:0] outside the CPUs (bit i : copy i, like inject_error_i,
-  --   synchronized on clk, trapped in PicoSoC_inject), [6:4], [10:8],
-  --   [14:12] inside the CPU copy 0, 1, 2 (3 requests per copy, a pulse of
+  --   synchronized on clk, trapped in PicoSoC_inject), [7:4], [11:8],
+  --   [15:12] inside the CPU copy 0, 1, 2 (4 requests per copy, a pulse of
   --   one clk cycle per 0 -> 1 on inject_cpu, to inject_i of cpu_wrapper :
-  --   unused by the reference CPUs, free for a hardened CPU), [3], [7],
-  --   [11], [15] reserved ; reads diff in [2:0]
+  --   unused by the reference CPUs, free for a hardened CPU), [3] reserved ;
+  --   reads diff in [2:0]
   -- * PICOSOC_JTAG_IR_STATUS : reads (from the LSB) led0_o, led1_o,
   --   led_diff_o, switch_i, then the resets : user SoC, supervisor SoC
   --   (1 : running), then the flags of the HWLA : arm, armed, triggered,
