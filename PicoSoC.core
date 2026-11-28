@@ -215,9 +215,17 @@ CAPI=2:
 #                               alone : sim_tap_inject, sim_tap_inject_cpu) ; README :
 #                               Resources of DEBUG_ENABLE measured again ;
 #                               tools/openocd/ft232r.cfg : adapter speed 1 MHz
+# 2026-11-28  4.8.5    mrosiere INJECT : 4 bits of injection inside each CPU copy
+#                               ([7:4], [11:8], [15:12] : the reserved bits 7, 11, 15
+#                               become the bit 3 of each copy), inject_cpu_i of 12
+#                               bits, inject_i of cpu_wrapper of 4 bits (e.g. bit 3 :
+#                               the register file), also a trigger of the HWLA ;
+#                               picosoc_inject_cpu : mask of 4 bits ; tb :
+#                               sim_tap_inject_cpu (12 bits), jtag_inject_cpu (HWLA
+#                               triggered by the bit 3) ; README : Resources
 #-----------------------------------------------------------------------------
 
-name        : asylum:soc:PicoSoC:4.8.4
+name        : asylum:soc:PicoSoC:4.8.5
 description : SoC with OpenBlaze8/WardRV, switch, led, UART, SPI, I2C, PWM, GIC, Timer, RAM, CRC, Spinlock and Mailbox
 
 #=========================================
